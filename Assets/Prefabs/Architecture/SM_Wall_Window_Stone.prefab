@@ -56,6 +56,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: SM_Window_Frame (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 8567fea2d9ef92347908514f3fb20074, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -76,15 +80,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: a6e2e32565319db4da15185b107789ac, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -3
+      value: -10
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: a6e2e32565319db4da15185b107789ac, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.0019996043
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: a6e2e32565319db4da15185b107789ac, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: -14
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: a6e2e32565319db4da15185b107789ac, type: 3}
       propertyPath: m_LocalRotation.w
@@ -117,10 +121,14 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: a6e2e32565319db4da15185b107789ac, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: f42a19d763731db4eb2ca2d61f380b93, type: 2}
+      objectReference: {fileID: 2100000, guid: 2fca631de08d1d44e82bf5ad34d7167c, type: 2}
     - target: {fileID: 919132149155446097, guid: a6e2e32565319db4da15185b107789ac, type: 3}
       propertyPath: m_Name
       value: SM_Wall_Window_Stone
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: a6e2e32565319db4da15185b107789ac, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -222,6 +230,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 87ad66c670f1c9343891e3c21442610a, type: 3}
       propertyPath: m_Name
       value: SM_Window_Glass (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 87ad66c670f1c9343891e3c21442610a, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

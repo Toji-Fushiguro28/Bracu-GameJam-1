@@ -46,13 +46,13 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Light_Boost: 1.2
+    - _Light_Boost: 1.22
     - _QueueControl: 0
     - _QueueOffset: 0
     - _Steps: 6
     m_Colors:
     - _Emission_Color: {r: 1, g: 1, b: 1, a: 1}
-    - _Light_Tint: {r: 0.8867924, g: 0.75420594, b: 0.50614095, a: 1}
+    - _Light_Tint: {r: 1, g: 0.92698115, b: 0.7971698, a: 1}
     - _Shadow_Tint: {r: 0.51140976, g: 0.41531682, b: 0.5754717, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

@@ -10,19 +10,19 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 2d680cffdc57cfd4586d253aae8ddfc6, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 13
+      value: -16
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2d680cffdc57cfd4586d253aae8ddfc6, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.0019996043
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 2d680cffdc57cfd4586d253aae8ddfc6, type: 3}
-      propertyPath: m_LocalPosition.z
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2d680cffdc57cfd4586d253aae8ddfc6, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -2
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 2d680cffdc57cfd4586d253aae8ddfc6, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: 0.70710784
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2d680cffdc57cfd4586d253aae8ddfc6, type: 3}
       propertyPath: m_LocalRotation.x
@@ -30,7 +30,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2d680cffdc57cfd4586d253aae8ddfc6, type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0
+      value: -0.70710576
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2d680cffdc57cfd4586d253aae8ddfc6, type: 3}
       propertyPath: m_LocalRotation.z
@@ -42,7 +42,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2d680cffdc57cfd4586d253aae8ddfc6, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
+      value: -90
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2d680cffdc57cfd4586d253aae8ddfc6, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
@@ -51,10 +51,14 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: 2d680cffdc57cfd4586d253aae8ddfc6, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: f42a19d763731db4eb2ca2d61f380b93, type: 2}
+      objectReference: {fileID: 2100000, guid: 2fca631de08d1d44e82bf5ad34d7167c, type: 2}
     - target: {fileID: 919132149155446097, guid: 2d680cffdc57cfd4586d253aae8ddfc6, type: 3}
       propertyPath: m_Name
       value: SM_Wall_2m_Stone
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 2d680cffdc57cfd4586d253aae8ddfc6, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

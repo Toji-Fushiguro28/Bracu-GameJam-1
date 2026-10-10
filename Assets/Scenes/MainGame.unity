@@ -910,7 +910,7 @@ Light:
   m_Enabled: 1
   serializedVersion: 13
   m_Type: 2
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.9716981, g: 0.86934817, b: 0.71960664, a: 1}
   m_Intensity: 26.78
   m_Range: 10
   m_SpotAngle: 30
@@ -1647,10 +1647,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: SM_Floor_Checker_Corner (2)
       objectReference: {fileID: 0}
-    - target: {fileID: 7282897221756102541, guid: def2c28bb86c8d5468e9a46871522634, type: 3}
-      propertyPath: m_StaticEditorFlags
-      value: 2147483647
-      objectReference: {fileID: 0}
     - target: {fileID: 7951629348598185271, guid: def2c28bb86c8d5468e9a46871522634, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -1983,7 +1979,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4215669865557877101, guid: 5194f8715b18b1a42973e0b22bd3367c, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -6.140727
+      value: -4
       objectReference: {fileID: 0}
     - target: {fileID: 4215669865557877101, guid: 5194f8715b18b1a42973e0b22bd3367c, type: 3}
       propertyPath: m_LocalPosition.y
@@ -1995,7 +1991,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4215669865557877101, guid: 5194f8715b18b1a42973e0b22bd3367c, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: 0.8660259
       objectReference: {fileID: 0}
     - target: {fileID: 4215669865557877101, guid: 5194f8715b18b1a42973e0b22bd3367c, type: 3}
       propertyPath: m_LocalRotation.x
@@ -2003,7 +1999,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4215669865557877101, guid: 5194f8715b18b1a42973e0b22bd3367c, type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0
+      value: -0.49999917
       objectReference: {fileID: 0}
     - target: {fileID: 4215669865557877101, guid: 5194f8715b18b1a42973e0b22bd3367c, type: 3}
       propertyPath: m_LocalRotation.z
@@ -2015,7 +2011,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4215669865557877101, guid: 5194f8715b18b1a42973e0b22bd3367c, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
+      value: -60
       objectReference: {fileID: 0}
     - target: {fileID: 4215669865557877101, guid: 5194f8715b18b1a42973e0b22bd3367c, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
@@ -2421,17 +2417,9 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 568578703}
     m_Modifications:
-    - target: {fileID: 1095772062065016057, guid: df9551088ae455943b9f08e7c8e6252f, type: 3}
-      propertyPath: m_StaticEditorFlags
-      value: 2147483647
-      objectReference: {fileID: 0}
     - target: {fileID: 4855279091241238665, guid: df9551088ae455943b9f08e7c8e6252f, type: 3}
       propertyPath: m_Name
       value: SM_Wall_Window_Stone (2)
-      objectReference: {fileID: 0}
-    - target: {fileID: 4855279091241238665, guid: df9551088ae455943b9f08e7c8e6252f, type: 3}
-      propertyPath: m_StaticEditorFlags
-      value: 2147483647
       objectReference: {fileID: 0}
     - target: {fileID: 5200173467091114547, guid: df9551088ae455943b9f08e7c8e6252f, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2472,10 +2460,6 @@ PrefabInstance:
     - target: {fileID: 5200173467091114547, guid: df9551088ae455943b9f08e7c8e6252f, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8088286602248143595, guid: df9551088ae455943b9f08e7c8e6252f, type: 3}
-      propertyPath: m_StaticEditorFlags
-      value: 2147483647
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2604,10 +2588,6 @@ PrefabInstance:
     - target: {fileID: 710762779748500189, guid: adec08ed5e02362408396d5617e56554, type: 3}
       propertyPath: m_Name
       value: SM_Floor_Checker (28)
-      objectReference: {fileID: 0}
-    - target: {fileID: 710762779748500189, guid: adec08ed5e02362408396d5617e56554, type: 3}
-      propertyPath: m_StaticEditorFlags
-      value: 2147483647
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -3788,10 +3768,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: SM_Floor_Checker_Edge (7)
       objectReference: {fileID: 0}
-    - target: {fileID: 2937586326408487810, guid: 878a7adc0c12ee14a84cf8997a602c6c, type: 3}
-      propertyPath: m_StaticEditorFlags
-      value: 2147483647
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -4944,7 +4920,7 @@ Light:
   m_Enabled: 1
   serializedVersion: 13
   m_Type: 2
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.9716981, g: 0.86934817, b: 0.71960664, a: 1}
   m_Intensity: 26.78
   m_Range: 4
   m_SpotAngle: 30
@@ -5385,10 +5361,6 @@ PrefabInstance:
     - target: {fileID: 6682152334941851822, guid: 805554733ef44ad4eb96220ac415b273, type: 3}
       propertyPath: m_Name
       value: SM_Wall_Corner_L_Stone (3)
-      objectReference: {fileID: 0}
-    - target: {fileID: 6682152334941851822, guid: 805554733ef44ad4eb96220ac415b273, type: 3}
-      propertyPath: m_StaticEditorFlags
-      value: 2147483647
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -6111,10 +6083,6 @@ PrefabInstance:
     - target: {fileID: 7611500120737848968, guid: 113655ccf65d884439db552019224d7a, type: 3}
       propertyPath: m_Name
       value: SM_Wall_2m_Stone (12)
-      objectReference: {fileID: 0}
-    - target: {fileID: 7611500120737848968, guid: 113655ccf65d884439db552019224d7a, type: 3}
-      propertyPath: m_StaticEditorFlags
-      value: 2147483647
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
