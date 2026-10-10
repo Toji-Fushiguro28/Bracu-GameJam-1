@@ -51,7 +51,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: 661ee8fe29aa9734d822c83d9257f4f8, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: 2fca631de08d1d44e82bf5ad34d7167c, type: 2}
+      objectReference: {fileID: 2100000, guid: f42a19d763731db4eb2ca2d61f380b93, type: 2}
     - target: {fileID: 919132149155446097, guid: 661ee8fe29aa9734d822c83d9257f4f8, type: 3}
       propertyPath: m_Name
       value: SM_Stairs_Flight_2m

@@ -51,7 +51,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: dbd54f1c20da85e4d9f7f67ab4c6bbd7, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: 6e7d19ae14fa104469385283127c205a, type: 2}
+      objectReference: {fileID: 2100000, guid: 9d661c3c95ef49240876522e5368a2d5, type: 2}
     - target: {fileID: 919132149155446097, guid: dbd54f1c20da85e4d9f7f67ab4c6bbd7, type: 3}
       propertyPath: m_Name
       value: SM_Bookcase_Tall_1m_Filled

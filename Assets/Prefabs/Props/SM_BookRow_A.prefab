@@ -51,7 +51,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: e17a4c62bb1ead646a3aceeebb864179, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: 6e7d19ae14fa104469385283127c205a, type: 2}
+      objectReference: {fileID: 2100000, guid: 9d661c3c95ef49240876522e5368a2d5, type: 2}
     - target: {fileID: 919132149155446097, guid: e17a4c62bb1ead646a3aceeebb864179, type: 3}
       propertyPath: m_Name
       value: SM_BookRow_A
