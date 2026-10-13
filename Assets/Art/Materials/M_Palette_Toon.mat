@@ -59,10 +59,10 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Light_Boost: 1.2
+    - _Light_Boost: 5
     - _QueueControl: 0
     - _QueueOffset: 0
-    - _Steps: 4.01
+    - _Steps: 4.06
     m_Colors:
     - _Emission_Color: {r: 7.377212, g: 6.020442, b: 2.401074, a: 1}
     - _Light_Tint: {r: 1, g: 0.945098, b: 0.8392157, a: 1}
