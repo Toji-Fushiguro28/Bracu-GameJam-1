@@ -6820,10 +6820,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: SM_Wall_Door_Plaster
       objectReference: {fileID: 0}
-    - target: {fileID: 257391354150284543, guid: 437bb06b7cb0ab743b44c53c51fe9929, type: 3}
-      propertyPath: m_StaticEditorFlags
-      value: 2147483647
-      objectReference: {fileID: 0}
     - target: {fileID: 637717561006503493, guid: 437bb06b7cb0ab743b44c53c51fe9929, type: 3}
       propertyPath: m_LocalPosition.x
       value: 30
@@ -16821,7 +16817,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 6086504658880827878, guid: b1f6b7fe72f6d6f4682abbd4bc4f9f3f, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 30.3
+      value: 31.322
       objectReference: {fileID: 0}
     - target: {fileID: 6086504658880827878, guid: b1f6b7fe72f6d6f4682abbd4bc4f9f3f, type: 3}
       propertyPath: m_LocalPosition.y
@@ -16829,39 +16825,43 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6086504658880827878, guid: b1f6b7fe72f6d6f4682abbd4bc4f9f3f, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 9
+      value: 8.223
       objectReference: {fileID: 0}
     - target: {fileID: 6086504658880827878, guid: b1f6b7fe72f6d6f4682abbd4bc4f9f3f, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.7071068
+      value: 0.0010208786
       objectReference: {fileID: 0}
     - target: {fileID: 6086504658880827878, guid: b1f6b7fe72f6d6f4682abbd4bc4f9f3f, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0
+      value: -0.0012569581
       objectReference: {fileID: 0}
     - target: {fileID: 6086504658880827878, guid: b1f6b7fe72f6d6f4682abbd4bc4f9f3f, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.7071068
+      value: 0.9999986
       objectReference: {fileID: 0}
     - target: {fileID: 6086504658880827878, guid: b1f6b7fe72f6d6f4682abbd4bc4f9f3f, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0
+      value: 0.0004918067
       objectReference: {fileID: 0}
     - target: {fileID: 6086504658880827878, guid: b1f6b7fe72f6d6f4682abbd4bc4f9f3f, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
+      value: -0.057
       objectReference: {fileID: 0}
     - target: {fileID: 6086504658880827878, guid: b1f6b7fe72f6d6f4682abbd4bc4f9f3f, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
+      value: 179.883
       objectReference: {fileID: 0}
     - target: {fileID: 6086504658880827878, guid: b1f6b7fe72f6d6f4682abbd4bc4f9f3f, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
+      value: -0.144
       objectReference: {fileID: 0}
     - target: {fileID: 6862442472063781724, guid: b1f6b7fe72f6d6f4682abbd4bc4f9f3f, type: 3}
       propertyPath: m_Name
       value: SM_PassGate_Rope
+      objectReference: {fileID: 0}
+    - target: {fileID: 6862442472063781724, guid: b1f6b7fe72f6d6f4682abbd4bc4f9f3f, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6862442472063781724, guid: b1f6b7fe72f6d6f4682abbd4bc4f9f3f, type: 3}
       propertyPath: m_StaticEditorFlags
@@ -30796,10 +30796,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: SM_Book_Stack (1)
       objectReference: {fileID: 0}
-    - target: {fileID: 4200886774996545272, guid: 6f7556b539b0a6c4998de2a1c00d2888, type: 3}
-      propertyPath: m_StaticEditorFlags
-      value: 2147483646
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -34452,10 +34448,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: SM_Wall_Door_Stone
       objectReference: {fileID: 0}
-    - target: {fileID: 2161960613875128634, guid: ee1c3a68b0cb98d4798686854b2cb293, type: 3}
-      propertyPath: m_StaticEditorFlags
-      value: 2147483647
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -35184,10 +35176,6 @@ PrefabInstance:
     - target: {fileID: 6751361642965055043, guid: 7360be634ff21334aa6944479ee98489, type: 3}
       propertyPath: m_Name
       value: SM_Desk_Circulation (1)
-      objectReference: {fileID: 0}
-    - target: {fileID: 6751361642965055043, guid: 7360be634ff21334aa6944479ee98489, type: 3}
-      propertyPath: m_StaticEditorFlags
-      value: 2147483647
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
