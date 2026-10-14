@@ -73,3 +73,8 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+
+# AI assistant / MCP (local only)
+/ProjectSettings/Packages/com.unity.ai.assistant/
+/CLAUDE.md
+/.claude/
