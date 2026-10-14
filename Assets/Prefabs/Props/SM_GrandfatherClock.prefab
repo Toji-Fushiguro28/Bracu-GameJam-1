@@ -63,7 +63,18 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 85bbd9ca760bc584ca3ca9b9a82d916f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7794070947059709773}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 85bbd9ca760bc584ca3ca9b9a82d916f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6735478166903062702}
+    - targetCorrespondingSourceObject: {fileID: -3944273063695609967, guid: 85bbd9ca760bc584ca3ca9b9a82d916f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7005796156424897546}
   m_SourcePrefab: {fileID: 100100000, guid: 85bbd9ca760bc584ca3ca9b9a82d916f, type: 3}
+--- !u!4 &1896644490293068139 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4146912096138181261, guid: 85bbd9ca760bc584ca3ca9b9a82d916f, type: 3}
+  m_PrefabInstance: {fileID: 2584774308455316454}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &3395607844702504631 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 85bbd9ca760bc584ca3ca9b9a82d916f, type: 3}
@@ -90,3 +101,44 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.54, y: 0.348, z: 2.2974885}
   m_Center: {x: 0, y: -0.17400095, z: 1.1487442}
+--- !u!114 &6735478166903062702
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3395607844702504631}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e12397cfd1f9ef443b64da066be37cc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClockHands
+  minuteHand: {fileID: 1896644490293068139}
+  hourHand: {fileID: 6984133970598993808}
+  axis: {x: 0, y: 1, z: 0}
+  invert: 0
+--- !u!4 &6984133970598993808 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4842027512399815798, guid: 85bbd9ca760bc584ca3ca9b9a82d916f, type: 3}
+  m_PrefabInstance: {fileID: 2584774308455316454}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &7682531844067226743 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -3944273063695609967, guid: 85bbd9ca760bc584ca3ca9b9a82d916f, type: 3}
+  m_PrefabInstance: {fileID: 2584774308455316454}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7005796156424897546
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7682531844067226743}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5bf153df2bb40f841aa8b632fd0ece86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PropSwing
+  axis: {x: 0, y: 1, z: 0}
+  amplitude: 8
+  period: 2
