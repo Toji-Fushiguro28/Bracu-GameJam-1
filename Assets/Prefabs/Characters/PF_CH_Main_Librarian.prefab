@@ -189,6 +189,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 1dc008966f056fc43a1a930b098c86e4, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6670749563137077882}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 1dc008966f056fc43a1a930b098c86e4, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7971346948823154580}
   m_SourcePrefab: {fileID: 100100000, guid: 1dc008966f056fc43a1a930b098c86e4, type: 3}
 --- !u!1 &277599063988865022 stripped
 GameObject:
@@ -283,6 +286,20 @@ MonoBehaviour:
   strideLength: 0.7
   volume: 0.22
   pitchRange: {x: 0.94, y: 1.06}
+--- !u!114 &7971346948823154580
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 277599063988865022}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 35af9897b59cc3c4ba4b96ad63e69981, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InteractionController
+  maxRayDistance: 80
+  outlineMaterial: {fileID: 2100000, guid: 9e59a7e9baf7ed849a8dbc9841994241, type: 2}
 --- !u!4 &617532236697820484 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 1dc008966f056fc43a1a930b098c86e4, type: 3}

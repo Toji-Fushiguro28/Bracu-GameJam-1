@@ -1,0 +1,17 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="GameUI.uss" />
+    <ui:VisualElement name="world-layer" class="layer" picking-mode="Ignore">
+        <ui:VisualElement name="prompt" class="prompt" picking-mode="Ignore">
+            <ui:VisualElement class="prompt-icon" picking-mode="Ignore" />
+            <ui:Label name="prompt-label" class="prompt-label" picking-mode="Ignore" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:VisualElement name="dialogue" class="layer dialogue" picking-mode="Ignore">
+        <ui:VisualElement name="choices" class="choices" picking-mode="Ignore" />
+        <ui:VisualElement class="dialogue-box">
+            <ui:Label name="speaker" class="speaker" />
+            <ui:Label name="line" class="line" />
+            <ui:VisualElement name="continue" class="continue" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
