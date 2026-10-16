@@ -1,17 +1,18 @@
 using UnityEngine;
 
 /// <summary>
-/// Day chores: readers leave teacups, browsers leave stray books at closing time,
-/// and hired staff (Repairer, Cleaner) work in the background. Lives on the GameManager.
+/// Day chores: readers leave their teacup on the table, browsers leave open books out at
+/// closing time (using the cups and books already placed in the scene), and hired staff
+/// (Repairer, Cleaner) work in the background. Lives on the GameManager.
 /// </summary>
 public class Housekeeping : MonoBehaviour
 {
     public static Housekeeping Instance { get; private set; }
 
-    public GameObject cupModel, bookModel;
-    public Material propMaterial;
-    [Range(0f, 1f)] public float cupChance = 0.5f;
-    public Vector2Int strayBooksAtClosing = new Vector2Int(1, 3);
+    [Range(0f, 1f)] public float cupChance = 0.6f;
+    [Tooltip("How far from the seat a placed cup can be to count as theirs.")]
+    public float cupRange = 4f;
+    public Vector2Int openBooksAtClosing = new Vector2Int(1, 3);
     public float cleanerInterval = 10f;
     public float repairerInterval = 6f;
 
@@ -25,41 +26,32 @@ public class Housekeeping : MonoBehaviour
         if (GameManager.Instance != null) GameManager.Instance.PhaseChanged += OnPhase;
     }
 
-    /// <summary>A reader got up: maybe they left their tea.</summary>
+    /// <summary>A reader got up: maybe they left their tea on the table.</summary>
     public void ReaderLeft(Vector3 seatPosition)
     {
-        if (Random.value < cupChance) MessSpot.Spawn(cupModel, propMaterial, TablePoint(seatPosition));
+        if (Random.value > cupChance) return;
+        var cup = MessSpot.NearestTidy(MessSpot.Kind.Cup, seatPosition, cupRange);
+        if (cup != null) cup.MakeMess();
     }
 
     void OnPhase(GameManager.Phase phase)
     {
         if (phase != GameManager.Phase.Closing) return;
-        // Browsers left a few books on the reading tables.
+        // Browsers left a few books open on the tables: real copies off the shelves.
         var gm = GameManager.Instance;
-        var seats = FindObjectsByType<SeatPoint>();
-        int n = Random.Range(strayBooksAtClosing.x, strayBooksAtClosing.y + 1);
-        for (int i = 0; i < n && seats.Length > 0; i++)
+        int n = Random.Range(openBooksAtClosing.x, openBooksAtClosing.y + 1);
+        for (int i = 0; i < n; i++)
         {
-            var seat = seats[Random.Range(0, seats.Length)];
-            if (seat.rareBooksOnly) continue;
-            var pool = gm.Books.FindAll(b => b.Sellable && b.Quantity > 0 && b.Format == BookFormat.Book);
-            if (pool.Count == 0) break;
+            var spots = MessSpot.Placed.FindAll(m => m.kind == MessSpot.Kind.Book && !m.IsDirty);
+            if (spots.Count == 0) break;
+            var spot = spots[Random.Range(0, spots.Count)];
+            var pool = gm.Books.FindAll(b => b.Sellable && b.Format == BookFormat.Book && b.BestCopy != null);
+            if (pool.Count == 0) { spot.MakeMess(); continue; }
             var book = pool[Random.Range(0, pool.Count)];
-            var best = book.BestCopy;
-            if (best == null || !book.TakeCopy(best.Value)) continue;
-            var cond = best.Value;
-            MessSpot.Spawn(bookModel, propMaterial, TablePoint(seat.SeatPosition(0)), book, cond);
+            var cond = book.BestCopy.Value;
+            if (book.TakeCopy(cond)) spot.MakeMess(book, cond);
         }
         gm.NotifyBooksChanged();
-    }
-
-    /// <summary>Somewhere on the table next to a seat (or the floor if there's no table).</summary>
-    static Vector3 TablePoint(Vector3 seat)
-    {
-        Vector3 p = seat + Random.insideUnitSphere * 0.6f;
-        p.y = seat.y + 2f;
-        return Physics.Raycast(p, Vector3.down, out var hit, 3f, ~0, QueryTriggerInteraction.Ignore)
-            ? hit.point : new Vector3(p.x, seat.y, p.z);
     }
 
     void Update()
