@@ -17,7 +17,10 @@ public abstract class ClickInteractable : Interactable
     Renderer rend;
 
     protected virtual string DefaultVerb => "Inspect";
-    public string Verb => string.IsNullOrEmpty(verb) ? DefaultVerb : verb;
+    public virtual string Verb => string.IsNullOrEmpty(verb) ? DefaultVerb : verb;
+
+    /// <summary>Where the hover prompt floats. Defaults to just above the object.</summary>
+    public virtual Vector3 PromptAnchor => TopAnchor;
 
     protected virtual void Awake()
     {
@@ -42,6 +45,9 @@ public abstract class ClickInteractable : Interactable
             return new Vector3(b.center.x, b.max.y, b.center.z);
         }
     }
+
+    /// <summary>False hides the prompt/outline and ignores clicks (e.g. a customer still walking in).</summary>
+    public virtual bool CanInteract => true;
 
     public abstract void Interact(GameObject player);
 }

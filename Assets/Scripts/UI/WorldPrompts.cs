@@ -16,6 +16,27 @@ public class WorldPrompts : MonoBehaviour
 
     class Bubble { public VisualElement el; public ClickInteractable target; public float until; }
 
+    /// <summary>A UI element kept above a moving world point (e.g. a customer's patience bar).</summary>
+    public class Follower { public VisualElement el; public System.Func<Vector3> anchor; }
+    readonly List<Follower> followers = new List<Follower>();
+
+    public Follower Follow(VisualElement el, System.Func<Vector3> anchor)
+    {
+        if (layer == null) return null;
+        el.pickingMode = PickingMode.Ignore;
+        layer.Add(el);
+        var f = new Follower { el = el, anchor = anchor };
+        followers.Add(f);
+        return f;
+    }
+
+    public void Unfollow(Follower f)
+    {
+        if (f == null) return;
+        f.el.RemoveFromHierarchy();
+        followers.Remove(f);
+    }
+
     VisualElement layer, prompt;
     Label promptLabel;
     Camera cam;
@@ -79,7 +100,10 @@ public class WorldPrompts : MonoBehaviour
         if (cam == null && (cam = Camera.main) == null) return;
 
         if (hoverTarget != null && prompt != null && !prompt.ClassListContains("hidden"))
-            Place(prompt, hoverTarget.TopAnchor);
+            Place(prompt, hoverTarget.PromptAnchor);
+
+        for (int i = followers.Count - 1; i >= 0; i--)
+            Place(followers[i].el, followers[i].anchor());
 
         for (int i = bubbles.Count - 1; i >= 0; i--)
         {

@@ -13,8 +13,15 @@ public static class PlayerLock
 
     public static bool IsLocked => owners.Count > 0;
 
+    /// <summary>Frame the last lock was released; the click that closed a UI must not also interact.</summary>
+    public static int UnlockedFrame { get; private set; } = -1;
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    static void ResetStatics() => owners.Clear();
+    static void ResetStatics()
+    {
+        owners.Clear();
+        UnlockedFrame = -1;
+    }
 
     public static void Lock(object owner)
     {
@@ -23,7 +30,11 @@ public static class PlayerLock
 
     public static void Unlock(object owner)
     {
-        if (owners.Remove(owner) && owners.Count == 0) Apply(false);
+        if (owners.Remove(owner) && owners.Count == 0)
+        {
+            UnlockedFrame = Time.frameCount;
+            Apply(false);
+        }
     }
 
     static void Apply(bool locked)

@@ -1,0 +1,160 @@
+/* Front-desk PC: CRT monitor (T_PC_Screen) with a mint-on-teal terminal inside. */
+:root {
+    --mint: rgb(99, 210, 181);
+    --mint-dim: rgba(99, 210, 181, 0.55);
+    --mint-faint: rgba(99, 210, 181, 0.14);
+    --screen: rgb(38, 52, 62);
+}
+
+#container {
+    flex-grow: 1;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(10, 14, 18, 0.55);
+}
+
+/* Monitor: 415x312 art at 2.5x. Padding = bezel + a little breathing room. */
+.pc-window {
+    width: 1040px;
+    height: 782px;
+    padding: 84px 100px 80px 96px;
+    background-image: url("project://database/Assets/Art/UI/T_PC_Screen.png");
+    -unity-background-scale-mode: stretch-to-fill;
+}
+
+/* ---------- Header bar ---------- */
+.pc-header {
+    flex-direction: row;
+    align-items: center;
+    padding-bottom: 10px;
+    margin-bottom: 18px;
+    border-bottom-width: 2px;
+    border-bottom-color: var(--mint-dim);
+}
+.pc-title { flex-grow: 1; color: var(--mint); font-size: 44px; }
+.pc-subtitle { color: var(--mint-dim); font-size: 22px; }
+
+/* ---------- Buttons ---------- */
+.pc-button, .pc-tile {
+    margin: 0;
+    border-width: 2px;
+    border-color: var(--mint);
+    border-top-left-radius: 6px; border-top-right-radius: 6px;
+    border-bottom-left-radius: 6px; border-bottom-right-radius: 6px;
+    background-color: rgba(0, 0, 0, 0);
+    background-image: none;
+    color: var(--mint);
+}
+.pc-button:hover, .pc-tile:hover {
+    background-color: var(--mint);
+    color: var(--screen);
+}
+.pc-button { padding: 2px 16px 6px 16px; font-size: 24px; margin-right: 18px; }
+
+/* ---------- Main menu ---------- */
+.pc-grid {
+    flex-grow: 1;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-content: flex-start;
+}
+.pc-tile {
+    width: 48.6%;
+    height: 46%;
+    margin-bottom: 20px;
+    font-size: 40px;
+    -unity-text-align: middle-center;
+    background-color: var(--mint-faint);
+}
+.pc-footer { color: var(--mint-dim); font-size: 20px; margin-top: 12px; -unity-text-align: middle-center; }
+
+/* ---------- Books: list on the left, details on the right (like the shelf) ---------- */
+.pc-columns { flex-grow: 1; flex-direction: row; }
+.pc-left { width: 56%; margin-right: 22px; }
+.pc-right {
+    flex-grow: 1;
+    padding: 16px 20px;
+    border-width: 2px;
+    border-color: var(--mint-dim);
+    border-top-left-radius: 6px; border-top-right-radius: 6px;
+    border-bottom-left-radius: 6px; border-bottom-right-radius: 6px;
+    background-color: var(--mint-faint);
+}
+
+.pc-search { margin-bottom: 12px; }
+#book-search { margin: 0; }
+#book-search .unity-base-text-field__input {
+    min-height: 44px;
+    padding: 6px 12px 8px 12px;
+    border-width: 2px;
+    border-color: var(--mint);
+    border-top-left-radius: 6px; border-top-right-radius: 6px;
+    border-bottom-left-radius: 6px; border-bottom-right-radius: 6px;
+    background-color: rgba(0, 0, 0, 0.25);
+    color: var(--mint);
+    font-size: 24px;
+    --unity-cursor-color: rgb(99, 210, 181);
+}
+#search-placeholder { position: absolute; left: 16px; top: 9px; color: var(--mint-dim); font-size: 24px; }
+
+#books-list { flex-grow: 1; border-width: 0; background-color: rgba(0, 0, 0, 0); }
+#books-list .unity-list-view__item { background-color: rgba(0, 0, 0, 0); }
+#books-list .unity-list-view__item:hover { background-color: var(--mint-faint); }
+#books-list .unity-list-view__item:checked { background-color: rgba(99, 210, 181, 0.28); }
+
+.pc-book { padding: 8px 12px; border-bottom-width: 1px; border-bottom-color: var(--mint-faint); }
+#book-title { color: var(--mint); font-size: 26px; }
+#book-sub { color: var(--mint-dim); font-size: 19px; }
+#book-meta { color: rgb(235, 200, 120); font-size: 19px; }
+
+/* Details pane */
+.detail-title { color: var(--mint); font-size: 32px; white-space: normal; }
+.detail-author { color: var(--mint-dim); font-size: 22px; margin-bottom: 14px; }
+.detail-row { flex-direction: row; justify-content: space-between; margin-bottom: 6px; }
+.detail-key { color: var(--mint-dim); font-size: 21px; }
+.detail-value { color: var(--mint); font-size: 21px; -unity-text-align: middle-right; }
+.detail-value.warn { color: rgb(235, 200, 120); }
+.detail-value.bad { color: rgb(240, 120, 100); }
+.detail-abstract {
+    color: var(--mint);
+    font-size: 21px;
+    white-space: normal;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top-width: 1px;
+    border-top-color: var(--mint-dim);
+}
+.detail-empty { color: var(--mint-dim); font-size: 24px; white-space: normal; -unity-text-align: middle-center; flex-grow: 1; }
+
+/* ---------- Kit scrollbar, tinted mint for the screen ---------- */
+#books-list .unity-scroll-view__content-container { padding-right: 14px; }
+#books-list .unity-scroller--vertical {
+    width: 18px;
+    margin-left: 6px;
+    border-width: 0;
+    background-color: rgba(0, 0, 0, 0);
+}
+#books-list .unity-scroller__low-button,
+#books-list .unity-scroller__high-button { display: none; }
+#books-list .unity-scroller__slider { margin: 0; }
+#books-list .unity-base-slider__tracker {
+    left: 5px; right: 5px; width: auto;
+    border-width: 0;
+    background-color: rgba(0, 0, 0, 0);
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Bar01a.png");
+    -unity-background-image-tint-color: rgb(60, 120, 108);
+    -unity-slice-left: 2; -unity-slice-right: 2; -unity-slice-top: 1; -unity-slice-bottom: 1;
+    -unity-slice-scale: 4px;
+}
+#books-list .unity-base-slider__dragger {
+    left: 0; width: 18px; min-height: 40px;
+    border-width: 0;
+    background-color: rgba(0, 0, 0, 0);
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Handle03a.png");
+    -unity-background-image-tint-color: rgb(140, 235, 210);
+    -unity-slice-left: 3; -unity-slice-right: 3; -unity-slice-top: 3; -unity-slice-bottom: 3;
+    -unity-slice-scale: 3px;
+}
+#books-list .unity-base-slider__dragger-border { display: none; }
+#books-list .unity-scroller--horizontal { display: none; }

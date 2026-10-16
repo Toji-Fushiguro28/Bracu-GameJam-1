@@ -62,7 +62,7 @@
 .dialogue {
     justify-content: flex-end;
     align-items: center;
-    padding-bottom: 32px;
+    padding-bottom: 104px;
 }
 .dialogue-box {
     width: 70%;
@@ -123,3 +123,166 @@
 
 /* Menus (later): Jersey 15 */
 .font-title { -unity-font-definition: url("project://database/Assets/UI%20Toolkit/Fonts/FA_Jersey15.asset?fileID=11400000&guid=09d0977d6e9c37c46bccdc3269737834&type=2#FA_Jersey15"); }
+
+/* ---------- Shared kit pieces ---------- */
+.kit-button {
+    padding: 4px 14px 8px 14px;
+    margin: 0;
+    border-width: 0;
+    color: var(--ink);
+    font-size: 22px;
+    background-color: rgba(0, 0, 0, 0);
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Frame01a.png");
+    -unity-slice-left: 3; -unity-slice-right: 3; -unity-slice-top: 3; -unity-slice-bottom: 3;
+    -unity-slice-scale: 4px;
+}
+.kit-button:hover {
+    color: rgb(255, 245, 230);
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_FrameSelect01a.png");
+}
+.kit-button:disabled { opacity: 0.45; }
+.kit-button.wide { align-self: stretch; margin-top: 10px; -unity-text-align: middle-center; }
+.icon-coin {
+    width: 33px; height: 36px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconCoin01a.png");
+}
+
+/* ---------- HUD ---------- */
+.hud { justify-content: flex-end; }
+.hud-bar {
+    position: absolute;
+    bottom: 18px;
+    align-self: center;
+    flex-direction: row;
+    align-items: center;
+    padding: 6px 24px 10px 24px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Popup01a.png");
+    -unity-slice-left: 4; -unity-slice-right: 4; -unity-slice-top: 4; -unity-slice-bottom: 4;
+    -unity-slice-scale: 4px;
+}
+.hud-day, .hud-clock, .hud-coins Label { color: var(--ink); font-size: 30px; }
+.hud-clock { margin: 0 28px; }
+.hud-coins { flex-direction: row; align-items: center; }
+.hud-coins Label { margin-left: 8px; }
+.hud-carry {
+    flex-direction: row;
+    align-items: center;
+    align-self: flex-start;
+    margin: 0 0 24px 24px;
+    padding: 10px 20px 14px 14px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Popup01a.png");
+    -unity-slice-left: 4; -unity-slice-right: 4; -unity-slice-top: 4; -unity-slice-bottom: 4;
+    -unity-slice-scale: 4px;
+}
+.hud-carry-icon {
+    width: 60px; height: 60px; margin-right: 12px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Slot01a.png");
+}
+.hud-carry-label { color: var(--ink); font-size: 24px; max-width: 360px; white-space: normal; }
+
+/* ---------- Shelf (open book) ---------- */
+.modal {
+    background-color: rgba(30, 18, 14, 0.45);
+    justify-content: center;
+    align-items: center;
+}
+.book-spread {
+    width: 896px; height: 640px;
+    flex-direction: row;
+    padding: 26px 32px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_BookCover01a.png");
+}
+.page { width: 416px; height: 588px; padding: 36px 34px 30px 34px; }
+.page-left { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_BookPageLeft01a.png"); }
+.page-right { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_BookPageRight01a.png"); }
+.page-title { color: var(--ink); font-size: 34px; margin-bottom: 12px; -unity-text-align: middle-center; }
+.shelf-list { flex-grow: 1; }
+.shelf-row {
+    flex-direction: row;
+    align-items: center;
+    padding: 6px 0 8px 0;
+    border-bottom-width: 2px;
+    border-bottom-color: rgba(128, 92, 70, 0.35);
+}
+.shelf-row-text { flex-grow: 1; flex-shrink: 1; margin-right: 8px; }
+#row-title { color: var(--ink); font-size: 22px; white-space: normal; }
+#row-sub { color: var(--ink-soft); font-size: 17px; white-space: normal; }
+.hand-info { align-items: center; flex-grow: 1; justify-content: center; }
+.hand-book {
+    width: 120px; height: 120px; margin-bottom: 14px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Slot01a.png");
+}
+.hand-info.empty .hand-book { opacity: 0.4; }
+.hand-title { color: var(--ink); font-size: 28px; white-space: normal; -unity-text-align: middle-center; }
+.hand-sub { color: var(--ink-soft); font-size: 20px; white-space: normal; -unity-text-align: middle-center; margin-top: 6px; }
+.shelf-note { color: rgb(170, 60, 40); font-size: 20px; -unity-text-align: middle-center; min-height: 26px; }
+.close-button {
+    position: absolute;
+    top: -14px; right: -14px;
+    width: 56px; height: 56px;
+    border-width: 0;
+    background-color: rgba(0, 0, 0, 0);
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconCross01a.png");
+}
+.close-button:hover { scale: 1.1 1.1; }
+.kit-button.small { font-size: 17px; padding: 2px 8px 6px 8px; margin-left: 4px; }
+
+/* ---------- Kit scrollbar (shelf list) ---------- */
+.shelf-list .unity-scroll-view__content-container { padding-right: 14px; }
+.shelf-list .unity-scroller--vertical {
+    width: 18px;
+    margin-left: 6px;
+    border-width: 0;
+    background-color: rgba(0, 0, 0, 0);
+}
+.shelf-list .unity-scroller__low-button,
+.shelf-list .unity-scroller__high-button { display: none; }
+.shelf-list .unity-scroller__slider { margin: 0; }
+.shelf-list .unity-base-slider__tracker {
+    left: 5px; right: 5px; width: auto;
+    border-width: 0;
+    background-color: rgba(0, 0, 0, 0);
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Bar01a.png");
+    -unity-slice-left: 2; -unity-slice-right: 2; -unity-slice-top: 1; -unity-slice-bottom: 1;
+    -unity-slice-scale: 4px;
+}
+.shelf-list .unity-base-slider__dragger {
+    left: 0; width: 18px; min-height: 40px;
+    border-width: 0;
+    background-color: rgba(0, 0, 0, 0);
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Handle03a.png");
+    -unity-slice-left: 3; -unity-slice-right: 3; -unity-slice-top: 3; -unity-slice-bottom: 3;
+    -unity-slice-scale: 3px;
+}
+.shelf-list .unity-base-slider__dragger-border { display: none; }
+.shelf-list .unity-scroller--horizontal { display: none; }
+
+/* ---------- Customers: speech + patience over their heads ---------- */
+.customer-tag { position: absolute; align-items: center; }
+.customer-speech {
+    max-width: 320px;
+    margin-bottom: 6px;
+    padding: 10px 16px 14px 16px;
+    color: var(--ink);
+    font-size: 20px;
+    white-space: normal;
+    -unity-text-align: middle-center;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Popup01a.png");
+    -unity-slice-left: 4; -unity-slice-right: 4; -unity-slice-top: 4; -unity-slice-bottom: 4;
+    -unity-slice-scale: 4px;
+}
+.patience-bar {
+    width: 124px; height: 16px;
+    padding: 4px 4px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Bar01a.png");
+    -unity-slice-left: 2; -unity-slice-right: 2; -unity-slice-top: 1; -unity-slice-bottom: 1;
+    -unity-slice-scale: 4px;
+}
+.patience-fill {
+    height: 100%;
+    width: 100%;
+    background-color: rgb(120, 200, 100);
+    transition-property: width, background-color; transition-duration: 0.2s;
+}
+.patience-fill.mid { background-color: rgb(240, 190, 70); }
+.patience-fill.low { background-color: rgb(225, 85, 65); }

@@ -1,15 +1,18 @@
-<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <ui:VisualElement name="container" style="flex-grow: 1; opacity: 1; background-color: rgba(0, 0, 0, 0.502); justify-content: center; align-items: center; display: flex;">
-        <ui:VisualElement name="menu-window" style="background-color: rgba(14, 20, 30, 0.97); border-width: 2px; border-color: rgb(120, 200, 190); border-top-left-radius: 12px; border-top-right-radius: 12px; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; padding: 28px; min-width: 420px;">
-            <ui:Label name="welcome-label" text="Welcome" style="font-size: 32px; color: rgb(235, 240, 235); margin-bottom: 20px; -unity-text-align: middle-center;" />
-            <ui:VisualElement name="row-1" style="flex-direction: row;">
-                <ui:Button name="books-button" text="Books" style="flex-grow: 1; margin-left: 6px; margin-right: 6px; padding: 14px; font-size: 20px; background-color: rgb(32, 46, 62); color: rgb(220, 235, 230); border-top-left-radius: 8px; border-top-right-radius: 8px; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;" />
-                <ui:Button name="members-button" text="Members" style="flex-grow: 1; margin-left: 6px; margin-right: 6px; padding: 14px; font-size: 20px; background-color: rgb(32, 46, 62); color: rgb(220, 235, 230); border-top-left-radius: 8px; border-top-right-radius: 8px; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;" />
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="PC.uss" />
+    <ui:VisualElement name="container">
+        <ui:VisualElement name="menu-window" class="pc-window">
+            <ui:VisualElement class="pc-header">
+                <ui:Label name="welcome-label" text="WHITMORE OS" class="pc-title font-title" />
+                <ui:Label text="front desk terminal" class="pc-subtitle" />
             </ui:VisualElement>
-            <ui:VisualElement name="row-2" style="flex-direction: row; margin-top: 12px;">
-                <ui:Button name="upgrades-button" text="Upgrades" style="flex-grow: 1; margin-left: 6px; margin-right: 6px; padding: 14px; font-size: 20px; background-color: rgb(32, 46, 62); color: rgb(220, 235, 230); border-top-left-radius: 8px; border-top-right-radius: 8px; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;" />
-                <ui:Button name="settings-button" text="Settings" style="flex-grow: 1; margin-left: 6px; margin-right: 6px; padding: 14px; font-size: 20px; background-color: rgb(32, 46, 62); color: rgb(220, 235, 230); border-top-left-radius: 8px; border-top-right-radius: 8px; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;" />
+            <ui:VisualElement class="pc-grid">
+                <ui:Button name="books-button" text="Books" class="pc-tile" />
+                <ui:Button name="members-button" text="Members" class="pc-tile" />
+                <ui:Button name="upgrades-button" text="Upgrades" class="pc-tile" />
+                <ui:Button name="settings-button" text="Settings" class="pc-tile" />
             </ui:VisualElement>
+            <ui:Label text="click outside the screen or press Esc to log off" class="pc-footer" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>
