@@ -1,0 +1,10 @@
+@import url("unity-theme://default");
+
+/* Jersey 10 for all text; menus opt into Jersey 15 with .font-title */
+:root {
+    -unity-font-definition: url("project://database/Assets/UI%20Toolkit/Fonts/FA_Jersey10.asset?fileID=11400000&guid=695e028e43a4c024b8862f8088123e3c&type=2#FA_Jersey10");
+}
+
+.font-title {
+    -unity-font-definition: url("project://database/Assets/UI%20Toolkit/Fonts/FA_Jersey15.asset?fileID=11400000&guid=09d0977d6e9c37c46bccdc3269737834&type=2#FA_Jersey15");
+}

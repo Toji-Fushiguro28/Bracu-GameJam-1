@@ -78,3 +78,6 @@ crashlytics-build.properties
 /ProjectSettings/Packages/com.unity.ai.assistant/
 /CLAUDE.md
 /.claude/
+
+# Auto-generated UI Toolkit schema
+/UIElementsSchema/

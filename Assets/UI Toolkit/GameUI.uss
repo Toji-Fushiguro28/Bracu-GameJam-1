@@ -1,0 +1,125 @@
+/* Shared game UI theme built from the TravelBook Lite kit (pixel art, 4x scale). */
+:root {
+    --ink: rgb(74, 48, 38);
+    --ink-soft: rgb(128, 92, 70);
+    --accent: rgb(214, 120, 64);
+}
+
+.hidden { display: none; }
+
+.layer {
+    -unity-font-definition: url("project://database/Assets/UI%20Toolkit/Fonts/FA_Jersey10.asset?fileID=11400000&guid=695e028e43a4c024b8862f8088123e3c&type=2#FA_Jersey10");
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+}
+
+/* ---------- Hover prompt ---------- */
+.prompt {
+    position: absolute;
+    flex-direction: row;
+    align-items: center;
+    padding: 6px 14px 8px 10px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Frame01a.png");
+    -unity-slice-left: 3; -unity-slice-right: 3; -unity-slice-top: 3; -unity-slice-bottom: 3;
+    -unity-slice-scale: 4px;
+    transition-property: opacity; transition-duration: 0.12s;
+}
+.prompt.far { opacity: 0.55; }
+.prompt-icon {
+    /* Mouse_L1 is 95x120: keep that ratio */
+    width: 24px; height: 30px;
+    flex-shrink: 0;
+    margin-right: 6px;
+    background-image: url("project://database/Assets/Art/UI/Mouse_L1.png");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position-x: center;
+    background-position-y: center;
+}
+.prompt-label {
+    color: var(--ink);
+    font-size: 20px;
+    -unity-font-style: bold;
+}
+
+/* ---------- Inspect bubble ---------- */
+.bubble {
+    position: absolute;
+    max-width: 340px;
+    padding: 12px 18px 16px 18px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Popup01a.png");
+    -unity-slice-left: 4; -unity-slice-right: 4; -unity-slice-top: 4; -unity-slice-bottom: 4;
+    -unity-slice-scale: 4px;
+}
+.bubble-text {
+    color: var(--ink);
+    font-size: 20px;
+    white-space: normal;
+    -unity-text-align: middle-center;
+}
+
+/* ---------- Dialogue ---------- */
+.dialogue {
+    justify-content: flex-end;
+    align-items: center;
+    padding-bottom: 32px;
+}
+.dialogue-box {
+    width: 70%;
+    max-width: 980px;
+    min-height: 170px;
+    padding: 34px 40px 30px 40px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Popup01a.png");
+    -unity-slice-left: 4; -unity-slice-right: 4; -unity-slice-top: 4; -unity-slice-bottom: 4;
+    -unity-slice-scale: 6px;
+}
+.speaker {
+    position: absolute;
+    top: -26px; left: 34px;
+    padding: 6px 18px 10px 18px;
+    color: rgb(255, 245, 230);
+    font-size: 22px;
+    -unity-font-style: bold;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_FrameSelect01a.png");
+    -unity-slice-left: 3; -unity-slice-right: 3; -unity-slice-top: 3; -unity-slice-bottom: 3;
+    -unity-slice-scale: 4px;
+}
+.line {
+    color: var(--ink);
+    font-size: 26px;
+    white-space: normal;
+}
+.continue {
+    position: absolute;
+    right: 30px; bottom: 22px;
+    width: 32px; height: 26px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconArrow01a.png");
+    -unity-background-scale-mode: scale-to-fit;
+    rotate: 90deg;
+}
+.choices {
+    width: 70%;
+    max-width: 980px;
+    align-items: flex-end;
+    margin-bottom: 12px;
+}
+.choice {
+    min-width: 280px;
+    margin: 4px 0;
+    padding: 8px 20px 12px 20px;
+    border-width: 0;
+    color: var(--ink);
+    font-size: 22px;
+    -unity-text-align: middle-left;
+    background-color: rgba(0, 0, 0, 0);
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Frame01a.png");
+    -unity-slice-left: 3; -unity-slice-right: 3; -unity-slice-top: 3; -unity-slice-bottom: 3;
+    -unity-slice-scale: 4px;
+}
+.choice:hover {
+    color: rgb(255, 245, 230);
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_FrameSelect01a.png");
+}
+
+/* Menus (later): Jersey 15 */
+.font-title { -unity-font-definition: url("project://database/Assets/UI%20Toolkit/Fonts/FA_Jersey15.asset?fileID=11400000&guid=09d0977d6e9c37c46bccdc3269737834&type=2#FA_Jersey15"); }

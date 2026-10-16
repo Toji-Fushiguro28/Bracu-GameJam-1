@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f0404ccca8e5452469fb3665d0764664, type: 3}
+  m_Name: DLG_Maya_Cozy
+  m_EditorClassIdentifier: Assembly-CSharp::DialogueAsset
+  speaker: Maya
+  voicePitch: 1.3
+  lines:
+  - id: 
+    speaker: 
+    text: Hi! Is the reading room always this cozy?
+    next: 
+    choices:
+    - text: Always.
+      next: cozy
+    - text: Only when the fire's lit.
+      next: fire
+  - id: cozy
+    speaker: 
+    text: Then I'm moving in. Kidding! ...Mostly.
+    next: end
+    choices: []
+  - id: fire
+    speaker: 
+    text: Then never let it go out, okay?
+    next: end
+    choices: []

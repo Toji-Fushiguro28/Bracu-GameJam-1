@@ -1,0 +1,5 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:VisualElement name="prompt-icon" picking-mode="Ignore" style="position: absolute; left: 0; top: 0; width: 64px; height: 64px; display: none; background-image: url(&quot;project://database/Assets/Art/UI/mouse_left.svg?fileID=7388822144124034973&amp;guid=805e7011e1ccae9e8b0ea6efb944843b&amp;type=3#mouse_left&quot;); justify-content: center; align-items: center;">
+        <ui:Image style="background-image: url(&quot;project://database/Assets/Art/UI/pc-ui.png?fileID=2800000&amp;guid=b836dee6aae25d9d89b31997a1b97e5e&amp;type=3#pc-ui&quot;);"/>
+    </ui:VisualElement>
+</ui:UXML>
