@@ -30,10 +30,12 @@ public class GameManager : MonoBehaviour
     [Serializable]
     public class DayStats
     {
-        public int served, angry, booksSold, booksRead, returns, income, tips;
+        public int served, angry, booksSold, booksRead, returns, income, tips, repairsPerfect, repairsNormal, cleaned, signups;
     }
     public DayStats Today { get; private set; } = new DayStats();
     public int Reputation { get; private set; }
+    /// <summary>Reputation when this day opened (for the report).</summary>
+    public int ReputationAtStart { get; private set; }
     public void AddReputation(int amount) => Reputation = Mathf.Max(0, Reputation + amount);
 
     public int Coins { get; private set; }
@@ -44,6 +46,156 @@ public class GameManager : MonoBehaviour
     public event Action<int, int> CoinsChanged;   // new total, delta
     public event Action<Phase> PhaseChanged;
     public event Action BooksChanged;
+    public event Action DayStarted;
+
+    // ---------------- Progress: staff, upgrades, unlocks ----------------
+
+    public enum StaffRole { Repairer, Cleaner, RareAttendant }
+    public enum UpgradeKind { RepairTools, RestorationKit, ComfyQueue, RunningShoes, CozyLamps, ReadingNooks, TownFlyers }
+    public static readonly string[] StaffNames = { "Repairer", "Cleaner", "Rare Books attendant" };
+    public static readonly string[] StaffInfo =
+    {
+        "Picks up damaged copies from the returns and repairs them.",
+        "Tidies cups and stray books while you work.",
+        "Checks in Rare Books readers for you.",
+    };
+    public static readonly int[] StaffWage = { 15, 10, 12 };
+    public static readonly string[] UpgradeNames = { "Repair tools", "Restoration kit", "Comfy queue", "Running shoes", "Cozy lamps", "Reading nooks", "Town flyers" };
+    public static readonly string[] UpgradeInfo =
+    {
+        "Repairs take less time.",
+        "+7% Perfect Restoration chance.",
+        "Customers wait 15% longer.",
+        "You walk and run 10% faster.",
+        "Warm light: +10% tips.",
+        "Comfier seats: +15% reading fees.",
+        "Posters around town bring more visitors.",
+    };
+    public const int MaxUpgrade = 3;
+    public static int UpgradeCost(int level) => 40 + level * 40;
+
+    [NonSerialized] public List<Member> members = new List<Member>();
+    [NonSerialized] public bool[] staff = new bool[3];
+    [NonSerialized] public int[] upgrades = new int[7];
+    public bool Hired(StaffRole r) => staff[(int)r];
+    public int Upgrade(UpgradeKind u) => upgrades[(int)u];
+    public float PatienceMultiplier => 1f + 0.15f * Upgrade(UpgradeKind.ComfyQueue);
+    public float TipMultiplier => 1f + 0.1f * Upgrade(UpgradeKind.CozyLamps);
+    public float ReadingFeeMultiplier => 1f + 0.15f * Upgrade(UpgradeKind.ReadingNooks);
+    public float VisitorMultiplier => 1f + 0.25f * Upgrade(UpgradeKind.TownFlyers);
+    public int DailyWages { get { int w = 0; for (int i = 0; i < staff.Length; i++) if (staff[i]) w += StaffWage[i]; return w; } }
+
+    /// <summary>Archive opens to readers on day 2, Rare Books on day 3 (or earlier with reputation).</summary>
+    public bool ArchiveOpen => day >= 2 || Reputation >= 8;
+    public bool RareOpen => day >= 3 || Reputation >= 15;
+
+    public void ToggleStaff(StaffRole r) { staff[(int)r] = !staff[(int)r]; ApplyUpgrades(); }
+
+    public bool BuyUpgrade(UpgradeKind u)
+    {
+        int lvl = upgrades[(int)u];
+        if (lvl >= MaxUpgrade || !TrySpend(UpgradeCost(lvl))) return false;
+        upgrades[(int)u]++;
+        ApplyUpgrades();
+        return true;
+    }
+
+    float baseWalk = -1f, baseRun;
+
+    void ApplyUpgrades()
+    {
+        var mover = GameObject.FindWithTag("Player")?.GetComponent<PlayerMover>();
+        if (mover != null)
+        {
+            if (baseWalk < 0f) { baseWalk = mover.walkSpeed; baseRun = mover.runSpeed; }
+            float shoes = 1f + 0.1f * Upgrade(UpgradeKind.RunningShoes);
+            mover.walkSpeed = baseWalk * shoes;
+            mover.runSpeed = baseRun * shoes;
+        }
+        var desk = RepairDesk.Instance;
+        if (desk == null) return;
+        desk.speedMultiplier = 1f + 0.35f * Upgrade(UpgradeKind.RepairTools);
+        desk.chanceBonus = 0.07f * Upgrade(UpgradeKind.RestorationKit);
+    }
+
+    /// <summary>After the report: pay staff, open the doors on the next morning, save.</summary>
+    public void StartNextDay()
+    {
+        day++;
+        int wages = DailyWages;
+        if (wages > 0)
+        {
+            if (Coins >= wages) AddCoins(-wages);
+            else { for (int i = 0; i < staff.Length; i++) staff[i] = false; } // can't pay: they quit
+        }
+        Today = new DayStats();
+        ReputationAtStart = Reputation;
+        Hour = openHour;
+        SetPhase(Phase.Open);
+        ApplyUpgrades();
+        Save();
+        DayStarted?.Invoke();
+    }
+
+    // ---------------- Save (PlayerPrefs, WebGL safe) ----------------
+
+    const string SaveKey = "LibrarySave";
+    [Tooltip("Load the last save when the scene starts.")]
+    public bool loadSave = true;
+
+    [Serializable] class BookSave { public string title; public int good, worn, damaged; }
+    [Serializable] class SaveData { public int day, coins, reputation; public bool[] staff; public int[] upgrades; public List<BookSave> books = new List<BookSave>(); public List<Member> members = new List<Member>(); }
+
+    public void Save()
+    {
+        var data = new SaveData { day = day, coins = Coins, reputation = Reputation, staff = staff, upgrades = upgrades, members = members };
+        foreach (var b in Books) data.books.Add(new BookSave { title = b.Title, good = b.GoodCopies, worn = b.WornCopies, damaged = b.DamagedCopies });
+        // Copies out of the shelves (returns, repair table, hands) still belong to the library.
+        void Count(BookData b, BookCondition c)
+        {
+            var s = data.books.Find(x => x.title == b.Title);
+            if (s == null) return;
+            if (c == BookCondition.Good) s.good++; else if (c == BookCondition.Worn) s.worn++; else s.damaged++;
+        }
+        if (ReturnBin.Instance != null) foreach (var (b, c) in ReturnBin.Instance.Copies) Count(b, c);
+        if (RepairDesk.Instance != null)
+        {
+            foreach (var j in RepairDesk.Instance.Waiting) Count(j.book, j.condition);
+            foreach (var j in RepairDesk.Instance.Working) Count(j.book, j.condition);
+        }
+        var carry = GameObject.FindWithTag("Player")?.GetComponent<PlayerCarry>();
+        if (carry != null && !carry.IsEmpty) Count(carry.Carried, carry.CarriedCondition);
+        PlayerPrefs.SetString(SaveKey, JsonUtility.ToJson(data));
+        PlayerPrefs.Save();
+    }
+
+    void Load()
+    {
+        if (!loadSave || !PlayerPrefs.HasKey(SaveKey)) return;
+        var data = JsonUtility.FromJson<SaveData>(PlayerPrefs.GetString(SaveKey));
+        if (data == null) return;
+        day = data.day; Coins = data.coins; Reputation = data.reputation;
+        if (data.staff != null && data.staff.Length == 3) staff = data.staff;
+        if (data.upgrades != null) Array.Copy(data.upgrades, upgrades, Mathf.Min(data.upgrades.Length, upgrades.Length));
+        if (data.members != null) members = data.members;
+        foreach (var s in data.books)
+        {
+            var b = Books.Find(x => x.Title == s.title);
+            if (b == null) continue;
+            b.GoodCopies = s.good; b.WornCopies = s.worn; b.DamagedCopies = s.damaged;
+        }
+    }
+
+    [ContextMenu("Delete Save")]
+    public void DeleteSave() { PlayerPrefs.DeleteKey(SaveKey); Debug.Log("[Game] Save deleted."); }
+
+    /// <summary>Wipes the save and starts again from day 1.</summary>
+    public void NewGame()
+    {
+        DeleteSave();
+        PlayerLock.Reset();
+        UnityEngine.SceneManagement.SceneManager.LoadScene(gameObject.scene.name);
+    }
 
     void Awake()
     {
@@ -54,6 +206,14 @@ public class GameManager : MonoBehaviour
         Coins = startingCoins;
         Hour = openHour;
         CurrentPhase = Phase.Open;
+        Load();
+        ReputationAtStart = Reputation;
+    }
+
+    void Start()
+    {
+        GameSettings.Apply();
+        ApplyUpgrades();
     }
 
     void OnDestroy()

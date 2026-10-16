@@ -39,6 +39,57 @@
             <ui:Button name="shelf-close" class="close-button" />
         </ui:VisualElement>
     </ui:VisualElement>
+    <ui:VisualElement name="repair" class="layer modal" picking-mode="Position">
+        <ui:VisualElement class="book-spread">
+            <ui:VisualElement class="page page-left">
+                <ui:Label class="page-title" text="Repair Desk" />
+                <ui:ScrollView name="repair-list" class="shelf-list" />
+                <ui:Label name="repair-total" class="repair-total" />
+                <ui:Button name="repair-all" class="kit-button wide" text="Repair All" />
+            </ui:VisualElement>
+            <ui:VisualElement class="page page-right">
+                <ui:VisualElement name="repair-status" class="repair-status">
+                    <ui:Label class="page-title" text="On the table" />
+                    <ui:VisualElement name="repair-work" class="repair-work" />
+                    <ui:Label name="repair-result" class="repair-result" />
+                </ui:VisualElement>
+                <ui:VisualElement name="repair-game" class="repair-game hidden">
+                    <ui:Label name="rg-title" class="page-title" />
+                    <ui:Label name="rg-hint" class="rg-hint" />
+                    <ui:VisualElement class="rg-track">
+                        <ui:VisualElement name="rg-zone" class="rg-zone" />
+                        <ui:VisualElement name="rg-fill" class="rg-fill" />
+                        <ui:VisualElement name="rg-marker" class="rg-marker" />
+                    </ui:VisualElement>
+                    <ui:Label name="rg-feedback" class="rg-feedback" />
+                    <ui:Button name="rg-action" class="kit-button wide rg-action" />
+                    <ui:Button name="rg-skip" class="kit-button small rg-skip" text="Skip (no bonus)" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:Button name="repair-close" class="close-button" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:VisualElement name="report" class="layer modal" picking-mode="Position">
+        <ui:VisualElement class="book-spread">
+            <ui:VisualElement class="page page-left">
+                <ui:Label name="report-title" class="page-title" text="Day Report" />
+                <ui:Label name="report-stars" class="report-stars" />
+                <ui:Label name="report-stats" class="report-stats" />
+                <ui:Label name="report-rep" class="report-rep" />
+            </ui:VisualElement>
+            <ui:VisualElement class="page page-right">
+                <ui:VisualElement class="plan-tabs">
+                    <ui:Button name="tab-shop" class="kit-button plan-tab" text="Shop" />
+                    <ui:Button name="tab-staff" class="kit-button plan-tab" text="Staff" />
+                    <ui:Button name="tab-upgrades" class="kit-button plan-tab" text="Upgrades" />
+                </ui:VisualElement>
+                <ui:Label name="plan-coins" class="repair-total" />
+                <ui:ScrollView name="plan-list" class="shelf-list" />
+                <ui:Button name="report-next" class="kit-button wide" text="Open next day" />
+            </ui:VisualElement>
+            <ui:Button name="report-close" class="close-button" />
+        </ui:VisualElement>
+    </ui:VisualElement>
     <ui:VisualElement name="dialogue" class="layer dialogue" picking-mode="Ignore">
         <ui:VisualElement name="choices" class="choices" picking-mode="Ignore" />
         <ui:VisualElement class="dialogue-box">

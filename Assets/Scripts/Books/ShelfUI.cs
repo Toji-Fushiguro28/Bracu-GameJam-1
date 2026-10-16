@@ -64,6 +64,7 @@ public class ShelfUI : MonoBehaviour
         carry = playerCarry;
         PlayerLock.Lock(this);
         root.RemoveFromClassList("hidden");
+        GameAudio.Play(a => a.panelOpen, 0.6f);
         note.text = "";
         Refresh();
     }
@@ -72,6 +73,7 @@ public class ShelfUI : MonoBehaviour
     {
         if (!IsOpen) return;
         shelf = null;
+        GameAudio.Play(a => a.panelClose, 0.6f);
         root.AddToClassList("hidden");
         PlayerLock.Unlock(this);
     }

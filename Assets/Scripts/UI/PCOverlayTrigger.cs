@@ -146,9 +146,9 @@ public class PCOverlayTrigger : MonoBehaviour
     void WireMenuView()
     {
         RehookBackdrop();
-        RegisterMenuButton("members-button", "Members");
-        RegisterMenuButton("upgrades-button", "Upgrades");
-        RegisterMenuButton("settings-button", "Settings");
+        overlayDoc.rootVisualElement.Q<Button>("members-button")?.RegisterCallback<ClickEvent>(_ => { if (JustOpened) return; ShowMembers(); });
+        overlayDoc.rootVisualElement.Q<Button>("upgrades-button")?.RegisterCallback<ClickEvent>(_ => { if (JustOpened) return; ShowView("PCShopTemplate", PCShopView.Wire); });
+        overlayDoc.rootVisualElement.Q<Button>("settings-button")?.RegisterCallback<ClickEvent>(_ => { if (JustOpened) return; ShowView("PCSettingsTemplate", PCSettingsView.Wire); });
 
         var books = overlayDoc.rootVisualElement.Q<Button>("books-button");
         if (books == null)
@@ -170,6 +170,19 @@ public class PCOverlayTrigger : MonoBehaviour
         RehookBackdrop();
         WireBooksView();
         Debug.Log("[PCUI] Books opened");
+    }
+
+    void ShowMembers() => ShowView("PCMembersTemplate", PCMembersView.Wire);
+
+    /// <summary>Swaps the screen to a Resources template and lets its view wire itself up.</summary>
+    void ShowView(string templateName, System.Action<VisualElement, System.Action> wire)
+    {
+        var template = Resources.Load<VisualTreeAsset>(templateName);
+        if (template == null || overlayDoc == null) return;
+        overlayDoc.visualTreeAsset = template;
+        RehookBackdrop();
+        GameAudio.HookClicks(overlayDoc.rootVisualElement);
+        wire(overlayDoc.rootVisualElement, ShowMenu);
     }
 
     void ShowMenu()
@@ -350,6 +363,8 @@ public class PCOverlayTrigger : MonoBehaviour
         PlayerLock.Lock(this);
         openedAt = Time.unscaledTime;
         overlayObject.SetActive(true);
+        GameAudio.Play(a => a.pcOpen, 0.7f);
+        GameAudio.HookClicks(overlayDoc.rootVisualElement);
 
         // Fresh tree after every activation — reset to menu and (re)wire it.
         if (menuTemplate != null)
@@ -376,6 +391,7 @@ public class PCOverlayTrigger : MonoBehaviour
         if (!isOpen)
             return;
         isOpen = false;
+        GameAudio.Play(a => a.pcClose, 0.7f);
         PlayerLock.Unlock(this);
         if (overlayObject != null)
             overlayObject.SetActive(false);

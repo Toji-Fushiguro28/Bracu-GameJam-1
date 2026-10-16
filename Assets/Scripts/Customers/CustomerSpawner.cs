@@ -9,11 +9,13 @@ public class CustomerSpawner : MonoBehaviour
     [Tooltip("Character prefabs customers are picked from.")]
     public GameObject[] customerPrefabs;
     public float firstDelay = 4f;
-    public Vector2 interval = new Vector2(18f, 32f);
+    public Vector2 interval = new Vector2(15f, 26f);
     [Tooltip("Most customers in the library at once.")]
-    public int maxCustomers = 3;
-    [Range(0f, 1f)] public float readerChance = 0.35f;
-    [Range(0f, 1f)] public float returnerChance = 0.15f;
+    public int maxCustomers = 4;
+    [Range(0f, 1f)] public float readerChance = 0.55f;
+    [Range(0f, 1f)] public float returnerChance = 0.12f;
+    [Tooltip("Chance a visitor without a library card comes to sign up.")]
+    [Range(0f, 1f)] public float signUpChance = 0.2f;
 
     float nextSpawn;
     int lastPrefab = -1;
@@ -26,8 +28,11 @@ public class CustomerSpawner : MonoBehaviour
         var queue = CounterQueue.Instance;
         if (gm == null || queue == null || gm.CurrentPhase != GameManager.Phase.Open) return;
         if (Time.time < nextSpawn) return;
-        nextSpawn = Time.time + Random.Range(interval.x, interval.y);
-        if (FindObjectsByType<Customer>(FindObjectsSortMode.None).Length >= maxCustomers) return;
+        // Reputation brings more visitors, more often.
+        float busy = (1f + Mathf.Min(gm.Reputation, 60) / 40f) * gm.VisitorMultiplier;
+        nextSpawn = Time.time + Random.Range(interval.x, interval.y) / busy;
+        int cap = maxCustomers + Mathf.Min(3, gm.Reputation / 15);
+        if (FindObjectsByType<Customer>().Length >= cap) return;
         Spawn(queue);
     }
 
@@ -58,6 +63,10 @@ public class CustomerSpawner : MonoBehaviour
             : r < readerChance ? Customer.Kind.Reader
             : r < readerChance + returnerChance ? Customer.Kind.Returner
             : Customer.Kind.Buyer;
+        // Visitors without a card sometimes come to sign up.
+        customer.profileKey = n;
+        if (Members.Find(n) == null && Members.TryProfile(n, out _) && Random.value < signUpChance)
+            customer.kind = Customer.Kind.SignUp;
         go.SetActive(true);
     }
 }

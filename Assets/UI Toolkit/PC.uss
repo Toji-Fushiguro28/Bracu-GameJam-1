@@ -128,17 +128,17 @@
 .detail-empty { color: var(--mint-dim); font-size: 24px; white-space: normal; -unity-text-align: middle-center; flex-grow: 1; }
 
 /* ---------- Kit scrollbar, tinted mint for the screen ---------- */
-#books-list .unity-scroll-view__content-container { padding-right: 14px; }
-#books-list .unity-scroller--vertical {
+#books-list .unity-scroll-view__content-container, .pc-scroll .unity-scroll-view__content-container { padding-right: 14px; }
+#books-list .unity-scroller--vertical, .pc-scroll .unity-scroller--vertical {
     width: 18px;
     margin-left: 6px;
     border-width: 0;
     background-color: rgba(0, 0, 0, 0);
 }
-#books-list .unity-scroller__low-button,
-#books-list .unity-scroller__high-button { display: none; }
-#books-list .unity-scroller__slider { margin: 0; }
-#books-list .unity-base-slider__tracker {
+#books-list .unity-scroller__low-button, .pc-scroll .unity-scroller__low-button,
+#books-list .unity-scroller__high-button, .pc-scroll .unity-scroller__high-button { display: none; }
+#books-list .unity-scroller__slider, .pc-scroll .unity-scroller__slider { margin: 0; }
+#books-list .unity-base-slider__tracker, .pc-scroll .unity-base-slider__tracker {
     left: 5px; right: 5px; width: auto;
     border-width: 0;
     background-color: rgba(0, 0, 0, 0);
@@ -147,7 +147,7 @@
     -unity-slice-left: 2; -unity-slice-right: 2; -unity-slice-top: 1; -unity-slice-bottom: 1;
     -unity-slice-scale: 4px;
 }
-#books-list .unity-base-slider__dragger {
+#books-list .unity-base-slider__dragger, .pc-scroll .unity-base-slider__dragger {
     left: 0; width: 18px; min-height: 40px;
     border-width: 0;
     background-color: rgba(0, 0, 0, 0);
@@ -156,5 +156,47 @@
     -unity-slice-left: 3; -unity-slice-right: 3; -unity-slice-top: 3; -unity-slice-bottom: 3;
     -unity-slice-scale: 3px;
 }
-#books-list .unity-base-slider__dragger-border { display: none; }
-#books-list .unity-scroller--horizontal { display: none; }
+#books-list .unity-base-slider__dragger-border, .pc-scroll .unity-base-slider__dragger-border { display: none; }
+#books-list .unity-scroller--horizontal, .pc-scroll .unity-scroller--horizontal { display: none; }
+
+/* ---------- Members ---------- */
+.members-list { flex-grow: 1; }
+#member-empty { color: var(--mint-dim); font-size: 24px; white-space: normal; -unity-text-align: middle-center; margin-top: 40px; }
+.member-hearts { flex-direction: row; margin-top: 4px; }
+.member-heart {
+    width: 22px; height: 22px; margin-right: 4px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconHeart01a.png");
+}
+.member-heart.empty { opacity: 0.25; }
+.card-options { flex-direction: row; flex-wrap: wrap; margin: 4px 0 12px 0; }
+.card-option { font-size: 21px; margin: 0 8px 8px 0; padding: 2px 10px 6px 10px; }
+.card-option.picked { background-color: rgba(99, 210, 181, 0.35); color: rgb(255, 255, 255); }
+.card-issue { align-self: center; margin-top: 8px; font-size: 26px; }
+#card-body.hidden, #card-empty.hidden { display: none; }
+#card-feedback { color: rgb(240, 120, 100); }
+
+/* ---------- Shop & Settings ---------- */
+.pc-tabs { flex-direction: row; margin-bottom: 12px; }
+.pc-tab { font-size: 26px; margin-right: 12px; }
+.pc-tab.selected { background-color: var(--mint); color: var(--screen); }
+.pc-scroll { flex-grow: 1; }
+.shop-row { flex-direction: row; align-items: center; padding: 8px 12px; border-bottom-width: 1px; border-bottom-color: var(--mint-faint); }
+.shop-row:hover { background-color: var(--mint-faint); }
+.shop-row-text { flex-grow: 1; flex-shrink: 1; margin-right: 12px; }
+.shop-row .pc-button { margin-right: 0; min-width: 120px; -unity-text-align: middle-center; }
+.shop-row .pc-button:disabled { opacity: 0.35; }
+.shop-level { flex-direction: row; margin-top: 4px; }
+.shop-pip { width: 16px; height: 10px; margin-right: 4px; border-width: 2px; border-color: var(--mint); }
+.shop-pip.on { background-color: var(--mint); }
+.pc-coins { color: rgb(235, 200, 120); font-size: 28px; }
+
+.setting-row { flex-direction: row; align-items: center; padding: 12px 12px; border-bottom-width: 1px; border-bottom-color: var(--mint-faint); }
+.setting-name { color: var(--mint); font-size: 28px; width: 260px; }
+.setting-value { color: var(--mint); font-size: 26px; flex-grow: 1; -unity-text-align: middle-center; }
+.setting-bar { flex-direction: row; flex-grow: 1; justify-content: center; }
+.setting-pip { width: 26px; height: 22px; margin: 0 3px; border-width: 2px; border-color: var(--mint); }
+.setting-pip.on { background-color: var(--mint); }
+.setting-row .pc-button { margin: 0 0 0 10px; min-width: 56px; -unity-text-align: middle-center; }
+.setting-row .pc-button.danger { border-color: rgb(240, 120, 100); color: rgb(240, 120, 100); }
+.setting-row .pc-button.danger:hover { background-color: rgb(240, 120, 100); color: var(--screen); }
+.setting-note { color: var(--mint-dim); font-size: 20px; white-space: normal; margin-top: 12px; -unity-text-align: middle-center; }

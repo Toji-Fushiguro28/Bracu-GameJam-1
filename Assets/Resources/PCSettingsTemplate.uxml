@@ -1,0 +1,13 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="../UI Toolkit/PC.uss" />
+    <ui:VisualElement name="container">
+        <ui:VisualElement name="settings-window" class="pc-window">
+            <ui:VisualElement class="pc-header">
+                <ui:Button name="back-button" text="&lt; Back" class="pc-button" />
+                <ui:Label text="SETTINGS" class="pc-title font-title" />
+            </ui:VisualElement>
+            <ui:ScrollView name="settings-list" class="pc-scroll" />
+            <ui:Label name="settings-note" class="setting-note" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

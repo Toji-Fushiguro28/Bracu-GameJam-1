@@ -77,7 +77,9 @@ public class BookRequest
     public static BookRequest Create(IList<BookData> items, bool forReading = false, bool vip = false)
     {
         bool InStock(BookData b) => b.GoodCopies + b.WornCopies > 0;
-        var candidates = items.Where(b => InStock(b) && (b.Sellable || (forReading && (IsArchive(b) || (vip && IsRare(b)))))).ToList();
+        var gm = GameManager.Instance;
+        bool archive = gm == null || gm.ArchiveOpen, rareOpen = gm == null || gm.RareOpen;
+        var candidates = items.Where(b => InStock(b) && (b.Sellable || (forReading && ((archive && IsArchive(b)) || (vip && rareOpen && IsRare(b)))))).ToList();
         if (vip && forReading && Random.value < 0.7f)
         {
             var rare = candidates.Where(IsRare).ToList();

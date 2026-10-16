@@ -16,6 +16,9 @@ public static class PlayerLock
     /// <summary>Frame the last lock was released; the click that closed a UI must not also interact.</summary>
     public static int UnlockedFrame { get; private set; } = -1;
 
+    /// <summary>Drops every lock (scene reload).</summary>
+    public static void Reset() => ResetStatics();
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void ResetStatics()
     {

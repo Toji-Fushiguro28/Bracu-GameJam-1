@@ -1,0 +1,115 @@
+using System;
+using UnityEngine;
+using UnityEngine.UIElements;
+
+/// <summary>
+/// PC "Shop" screen: buy book copies, buy upgrades, hire staff. Same terminal look as the catalogue.
+/// </summary>
+public static class PCShopView
+{
+    const float BookPriceShare = 0.6f;
+    static int tab;
+
+    public static int BookPrice(BookData b) => Mathf.Max(3, Mathf.RoundToInt(b.BaseValue * BookPriceShare));
+
+    public static void Wire(VisualElement root, Action back)
+    {
+        root.Q<Button>("back-button")?.RegisterCallback<ClickEvent>(_ => back());
+        string[] names = { "tab-books", "tab-upgrades", "tab-staff" };
+        for (int i = 0; i < names.Length; i++)
+        {
+            int t = i;
+            root.Q<Button>(names[i])?.RegisterCallback<ClickEvent>(_ => { tab = t; Refresh(root); });
+        }
+        Refresh(root);
+    }
+
+    static void Refresh(VisualElement root)
+    {
+        var gm = GameManager.Instance;
+        if (gm == null) return;
+        root.Q("tab-books")?.EnableInClassList("selected", tab == 0);
+        root.Q("tab-upgrades")?.EnableInClassList("selected", tab == 1);
+        root.Q("tab-staff")?.EnableInClassList("selected", tab == 2);
+        root.Q<Label>("shop-coins").text = $"{gm.Coins} coins";
+
+        var list = root.Q<ScrollView>("shop-list");
+        float scroll = list.scrollOffset.y;
+        list.Clear();
+        var note = root.Q<Label>("shop-note");
+        if (tab == 0)
+        {
+            note.text = "New copies arrive in good condition, straight onto their shelf. Rare books can't be bought.";
+            foreach (var b in gm.Books)
+            {
+                if (BookRequest.IsRare(b)) continue;
+                var book = b;
+                int price = BookPrice(book);
+                Row(list, book.Title, $"{book.FormatName} · {book.Subject} · {ShelfInteractable.NameOf(book.ShelfLocation)} · in stock {book.Quantity}",
+                    null, $"Buy {price}", gm.Coins >= price, () =>
+                    {
+                        if (!gm.TrySpend(price)) return;
+                        book.AddCopy(BookCondition.Good);
+                        gm.NotifyBooksChanged();
+                        GameAudio.Play(a => a.buy);
+                    }, root);
+            }
+        }
+        else if (tab == 1)
+        {
+            note.text = "Upgrades last forever and are saved with your library.";
+            for (int i = 0; i < GameManager.UpgradeNames.Length; i++)
+            {
+                var kind = (GameManager.UpgradeKind)i;
+                int lvl = gm.Upgrade(kind);
+                bool maxed = lvl >= GameManager.MaxUpgrade;
+                int cost = GameManager.UpgradeCost(lvl);
+                Row(list, GameManager.UpgradeNames[i], GameManager.UpgradeInfo[i], lvl,
+                    maxed ? "Max" : $"Buy {cost}", !maxed && gm.Coins >= cost,
+                    () => { if (gm.BuyUpgrade(kind)) GameAudio.Play(a => a.buy); }, root);
+            }
+        }
+        else
+        {
+            note.text = gm.DailyWages > 0 ? $"Wages are paid each morning: {gm.DailyWages} coins a day." : "Staff are paid each morning. If you can't pay, they quit.";
+            for (int i = 0; i < GameManager.StaffNames.Length; i++)
+            {
+                var role = (GameManager.StaffRole)i;
+                bool hired = gm.Hired(role);
+                Row(list, GameManager.StaffNames[i] + (hired ? "  (hired)" : ""),
+                    $"{GameManager.StaffInfo[i]}  Wage {GameManager.StaffWage[i]} a day.", null,
+                    hired ? "Let go" : "Hire", true, () => gm.ToggleStaff(role), root);
+            }
+        }
+        list.schedule.Execute(() => list.scrollOffset = new Vector2(0, scroll));
+    }
+
+    static void Row(ScrollView list, string title, string sub, int? level, string button, bool enabled, Action onClick, VisualElement root)
+    {
+        var row = new VisualElement();
+        row.AddToClassList("shop-row");
+        var text = new VisualElement();
+        text.AddToClassList("shop-row-text");
+        text.Add(new Label(title) { name = "book-title" });
+        text.Add(new Label(sub) { name = "book-sub" });
+        if (level.HasValue)
+        {
+            var pips = new VisualElement();
+            pips.AddToClassList("shop-level");
+            for (int i = 0; i < GameManager.MaxUpgrade; i++)
+            {
+                var pip = new VisualElement();
+                pip.AddToClassList("shop-pip");
+                pip.EnableInClassList("on", i < level.Value);
+                pips.Add(pip);
+            }
+            text.Add(pips);
+        }
+        row.Add(text);
+        var b = new Button(() => { onClick(); Refresh(root); }) { text = button };
+        b.AddToClassList("pc-button");
+        b.SetEnabled(enabled);
+        row.Add(b);
+        list.Add(row);
+    }
+}

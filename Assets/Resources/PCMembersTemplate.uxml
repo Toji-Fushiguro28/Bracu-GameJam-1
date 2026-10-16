@@ -1,0 +1,30 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="../UI Toolkit/PC.uss" />
+    <ui:VisualElement name="container">
+        <ui:VisualElement name="members-window" class="pc-window">
+            <ui:VisualElement class="pc-header">
+                <ui:Button name="back-button" text="&lt; Back" class="pc-button" />
+                <ui:Label text="MEMBERS" class="pc-title font-title" />
+            </ui:VisualElement>
+            <ui:VisualElement class="pc-columns">
+                <ui:VisualElement class="pc-left">
+                    <ui:ScrollView name="members-list" class="members-list pc-scroll" />
+                </ui:VisualElement>
+                <ui:VisualElement name="card-form" class="pc-right">
+                    <ui:Label text="NEW LIBRARY CARD" class="detail-title" />
+                    <ui:Label name="card-empty" text="Nobody is waiting for a card. Talk to a visitor who asks for one first." class="detail-empty" />
+                    <ui:VisualElement name="card-body">
+                        <ui:Label text="Name" class="detail-key" />
+                        <ui:VisualElement name="card-name" class="card-options" />
+                        <ui:Label text="Date of birth" class="detail-key" />
+                        <ui:VisualElement name="card-dob" class="card-options" />
+                        <ui:Label text="Access" class="detail-key" />
+                        <ui:VisualElement name="card-access" class="card-options" />
+                        <ui:Button name="card-issue" text="Issue card" class="pc-button card-issue" />
+                        <ui:Label name="card-feedback" class="detail-abstract" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
