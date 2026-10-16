@@ -5611,7 +5611,7 @@ Transform:
   m_GameObject: {fileID: 360388545}
   serializedVersion: 2
   m_LocalRotation: {x: -0.2546322, y: 0.29631096, z: -0.082288325, w: -0.9168375}
-  m_LocalPosition: {x: 19.73564, y: 5.293154, z: -2.1518621}
+  m_LocalPosition: {x: 19.748306, y: 5.293154, z: -2.1427197}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -11590,7 +11590,7 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 6c19e5e34defdb54486320e56d6d050a, type: 3}
   - {fileID: 8300000, guid: f6c2b8f3918967a45ac9575628ab74ea, type: 3}
   strideLength: 0.7
-  volume: 0.55
+  volume: 0.22
   pitchRange: {x: 0.94, y: 1.06}
 --- !u!114 &808728795
 MonoBehaviour:
@@ -16287,7 +16287,7 @@ Transform:
   m_GameObject: {fileID: 961739749}
   serializedVersion: 2
   m_LocalRotation: {x: -0.2546322, y: 0.29631096, z: -0.082288325, w: -0.9168375}
-  m_LocalPosition: {x: 19.73564, y: 5.293154, z: -2.1518621}
+  m_LocalPosition: {x: 19.748306, y: 5.293154, z: -2.1427197}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -30499,10 +30499,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: SM_Desk_Circulation
       objectReference: {fileID: 0}
-    - target: {fileID: 6751361642965055043, guid: 7360be634ff21334aa6944479ee98489, type: 3}
-      propertyPath: m_StaticEditorFlags
-      value: 2147483647
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -35231,6 +35227,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1647340885}
     m_Modifications:
+    - target: {fileID: 1410909984450540266, guid: 7360be634ff21334aa6944479ee98489, type: 3}
+      propertyPath: m_Size.z
+      value: 0.9265168
+      objectReference: {fileID: 0}
+    - target: {fileID: 1410909984450540266, guid: 7360be634ff21334aa6944479ee98489, type: 3}
+      propertyPath: m_Center.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1410909984450540266, guid: 7360be634ff21334aa6944479ee98489, type: 3}
+      propertyPath: m_Center.z
+      value: 0.016741619
+      objectReference: {fileID: 0}
     - target: {fileID: 6267452708850068729, guid: 7360be634ff21334aa6944479ee98489, type: 3}
       propertyPath: m_LocalPosition.x
       value: 18.03
