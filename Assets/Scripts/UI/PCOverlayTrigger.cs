@@ -27,8 +27,9 @@ public class PCOverlayTrigger : MonoBehaviour
     ComputerInteractable computer;
     HoverPrompt hover;
     RuntimeOutline outline;
-    PlayerMover mover;
-    PlayerFootsteps footsteps;
+    // Looked up by type name so this compiles without the player scripts.
+    Behaviour mover;
+    Behaviour footsteps;
     Camera cam;
 
     GameObject overlayObject;
@@ -63,9 +64,12 @@ public class PCOverlayTrigger : MonoBehaviour
         outline = GetComponent<RuntimeOutline>();
         cam = Camera.main;
 
-        mover = Object.FindFirstObjectByType<PlayerMover>();
-        if (mover != null)
-            footsteps = mover.GetComponent<PlayerFootsteps>();
+        var player = GameObject.FindWithTag("Player");
+        if (player != null)
+        {
+            mover = player.GetComponent("PlayerMover") as Behaviour;
+            footsteps = player.GetComponent("PlayerFootsteps") as Behaviour;
+        }
 
         attackAction = InputSystem.actions?.FindAction("Attack");
         if (attackAction == null)
@@ -292,9 +296,9 @@ public class PCOverlayTrigger : MonoBehaviour
         if (cam == null && (cam = Camera.main) == null)
             return;
 
-        Vector2 pointer = Mouse.current != null
-            ? Mouse.current.position.ReadValue()
-            : (Vector2)Input.mousePosition;
+        if (Pointer.current == null)
+            return;
+        Vector2 pointer = Pointer.current.position.ReadValue();
         Ray ray = cam.ScreenPointToRay(pointer);
         if (Physics.Raycast(ray, out RaycastHit hit, ClickRange, ~0, QueryTriggerInteraction.Collide)
             && hit.collider.GetComponentInParent<ComputerInteractable>() == computer)

@@ -90,9 +90,8 @@ public class HoverPrompt : MonoBehaviour
     }
 
     /// <summary>
-    /// Adds the hover mesh (sharedMesh auto-assigned from the MeshFilter,
-    /// exactly like adding a MeshCollider in the Inspector). Solid, so it
-    /// fires no trigger events and the range logic is untouched. Created
+    /// Adds a tight hover box around the object's renderer on a child object.
+    /// Only raycast against, so the range logic is untouched. Created
     /// on range-enter, destroyed on range-exit; idle objects carry nothing.
     /// </summary>
     void EnsureHoverMesh()
@@ -104,25 +103,42 @@ public class HoverPrompt : MonoBehaviour
         //     Debug.LogWarning("[Prompt] No MeshFilter mesh on " + name + " — hover skipped.", this);
         //     return;
         // }
-        hoverMesh = gameObject.AddComponent<BoxCollider>();
-        // hoverMesh.sharedMesh = meshFilter.sharedMesh;
-        // hoverMesh.convex = true;
+        // Lives on a child so Unity doesn't try (and fail) to auto-size it from
+        // a static-batched mesh; size comes from the renderer's world bounds.
+        var box = new GameObject("HoverBox");
+        box.layer = gameObject.layer;
+        box.transform.SetParent(transform, false);
+        hoverMesh = box.AddComponent<BoxCollider>();
         hoverMesh.isTrigger = true;
-        // Same GameObject = same local space: copy the range trigger's
-        // center X/Y as-is, halve Z to pull the hover box toward the mesh.
-        if (rangeBox != null)
+
+        var rend = GetComponentInChildren<Renderer>();
+        if (rend != null)
+        {
+            Bounds wb = rend.bounds;
+            Vector3 min = Vector3.positiveInfinity, max = Vector3.negativeInfinity;
+            for (int i = 0; i < 8; i++)
+            {
+                Vector3 corner = wb.center + Vector3.Scale(wb.extents, new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1));
+                Vector3 local = box.transform.InverseTransformPoint(corner);
+                min = Vector3.Min(min, local);
+                max = Vector3.Max(max, local);
+            }
+            hoverMesh.center = (min + max) * 0.5f;
+            hoverMesh.size = (max - min) * 1.5f;
+        }
+        else if (rangeBox != null)
         {
             Vector3 c = rangeBox.center;
             hoverMesh.center = new Vector3(c.x, c.y, c.z * 0.5f);
+            hoverMesh.size = Vector3.one * 1.5f;
         }
-        hoverMesh.size = hoverMesh.size * 1.5f;
     }
 
     void DestroyHoverMesh()
     {
         if (hoverMesh != null)
         {
-            Destroy(hoverMesh);
+            Destroy(hoverMesh.gameObject);
             hoverMesh = null;
         }
     }
@@ -136,9 +152,9 @@ public class HoverPrompt : MonoBehaviour
     {
         if (hoverMesh == null || !hoverMesh.enabled)
             return false;
-        Vector2 pointer = Mouse.current != null
-            ? Mouse.current.position.ReadValue()
-            : (Vector2)Input.mousePosition;
+        if (Pointer.current == null)
+            return false;
+        Vector2 pointer = Pointer.current.position.ReadValue();
         Ray ray = cam.ScreenPointToRay(pointer);
         int mask = 1 << gameObject.layer;
         if (Physics.Raycast(ray, out RaycastHit hit, hoverDistance, mask, QueryTriggerInteraction.Collide))
