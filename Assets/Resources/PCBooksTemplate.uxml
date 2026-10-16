@@ -1,12 +1,36 @@
-<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <ui:VisualElement name="container" style="flex-grow: 1; opacity: 1; background-color: rgba(0, 0, 0, 0.502); justify-content: center; align-items: center; display: flex;">
-        <ui:VisualElement name="books-window" style="width: 70%; max-width: 760px; height: 70%; max-height: 640px; background-color: rgba(14, 20, 30, 0.97); border-width: 2px; border-color: rgb(120, 200, 190); border-top-left-radius: 12px; border-top-right-radius: 12px; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; padding: 20px;">
-            <ui:Button name="back-button" text="&#8592; Back" style="align-self: flex-start; padding: 8px; padding-left: 14px; padding-right: 14px; font-size: 16px; background-color: rgb(32, 46, 62); color: rgb(220, 235, 230); border-top-left-radius: 8px; border-top-right-radius: 8px; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;" />
-            <ui:VisualElement name="search-wrap" style="margin-top: 12px;">
-                <ui:TextField name="book-search" style="background-color: rgb(24, 34, 48); color: rgb(235, 240, 235); font-size: 16px; padding: 8px; border-width: 1px; border-color: rgb(70, 110, 105); border-top-left-radius: 8px; border-top-right-radius: 8px; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;" />
-                <ui:Label name="search-placeholder" text="Search books" picking-mode="Ignore" style="position: absolute; left: 12px; top: 10px; font-size: 16px; color: rgb(130, 145, 140);" />
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="../UI Toolkit/PC.uss" />
+    <ui:VisualElement name="container">
+        <ui:VisualElement name="books-window" class="pc-window">
+            <ui:VisualElement class="pc-header">
+                <ui:Button name="back-button" text="&lt; Back" class="pc-button" />
+                <ui:Label text="CATALOGUE" class="pc-title font-title" />
             </ui:VisualElement>
-            <ui:ListView name="books-list" selection-type="Single" show-border="true" show-alternating-row-backgrounds="false" fixed-item-height="96" style="flex-grow: 1; margin-top: 12px; background-color: rgba(0, 0, 0, 0.25);" />
+            <ui:VisualElement class="pc-columns">
+                <ui:VisualElement class="pc-left">
+                    <ui:VisualElement name="search-wrap" class="pc-search">
+                        <ui:TextField name="book-search" />
+                        <ui:Label name="search-placeholder" text="search title, author, subject, tag, type" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:ListView name="books-list" selection-type="Single" fixed-item-height="96" />
+                </ui:VisualElement>
+                <ui:VisualElement name="book-details" class="pc-right">
+                    <ui:Label name="detail-empty" text="Select a book to see where it lives." class="detail-empty" />
+                    <ui:VisualElement name="detail-body">
+                        <ui:Label name="detail-title" class="detail-title" />
+                        <ui:Label name="detail-author" class="detail-author" />
+                        <ui:VisualElement class="detail-row"><ui:Label text="Shelf" class="detail-key" /><ui:Label name="detail-shelf" class="detail-value" /></ui:VisualElement>
+                        <ui:VisualElement class="detail-row"><ui:Label text="In stock" class="detail-key" /><ui:Label name="detail-stock" class="detail-value" /></ui:VisualElement>
+                        <ui:VisualElement class="detail-row"><ui:Label text="Type" class="detail-key" /><ui:Label name="detail-type" class="detail-value" /></ui:VisualElement>
+                        <ui:VisualElement class="detail-row"><ui:Label text="Subject" class="detail-key" /><ui:Label name="detail-subject" class="detail-value" /></ui:VisualElement>
+                        <ui:VisualElement class="detail-row"><ui:Label text="Tags" class="detail-key" /><ui:Label name="detail-tags" class="detail-value" /></ui:VisualElement>
+                        <ui:VisualElement class="detail-row"><ui:Label text="Tier" class="detail-key" /><ui:Label name="detail-tier" class="detail-value" /></ui:VisualElement>
+                        <ui:VisualElement class="detail-row"><ui:Label text="Condition" class="detail-key" /><ui:Label name="detail-condition" class="detail-value" /></ui:VisualElement>
+                        <ui:VisualElement class="detail-row"><ui:Label text="Sale" class="detail-key" /><ui:Label name="detail-sale" class="detail-value" /></ui:VisualElement>
+                        <ui:Label name="detail-abstract" class="detail-abstract" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

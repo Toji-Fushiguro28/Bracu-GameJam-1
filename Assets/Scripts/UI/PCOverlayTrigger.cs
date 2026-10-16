@@ -27,9 +27,6 @@ public class PCOverlayTrigger : MonoBehaviour
     ComputerInteractable computer;
     HoverPrompt hover;
     RuntimeOutline outline;
-    // Looked up by type name so this compiles without the player scripts.
-    Behaviour mover;
-    Behaviour footsteps;
     Camera cam;
 
     GameObject overlayObject;
@@ -54,8 +51,6 @@ public class PCOverlayTrigger : MonoBehaviour
     float openedAt = -10f;
     bool prevCursorVisible;
     CursorLockMode prevLock;
-    bool prevMoverEnabled = true;
-    bool prevStepsEnabled = true;
 
     void Awake()
     {
@@ -64,12 +59,6 @@ public class PCOverlayTrigger : MonoBehaviour
         outline = GetComponent<RuntimeOutline>();
         cam = Camera.main;
 
-        var player = GameObject.FindWithTag("Player");
-        if (player != null)
-        {
-            mover = player.GetComponent("PlayerMover") as Behaviour;
-            footsteps = player.GetComponent("PlayerFootsteps") as Behaviour;
-        }
 
         attackAction = InputSystem.actions?.FindAction("Attack");
         if (attackAction == null)
@@ -168,7 +157,7 @@ public class PCOverlayTrigger : MonoBehaviour
             return;
         }
         if (booksAvailable)
-            books.RegisterCallback<ClickEvent>(_ => ShowBooks());
+            books.RegisterCallback<ClickEvent>(_ => { if (JustOpened) return; ShowBooks(); });
         else
             books.RegisterCallback<ClickEvent>(_ => Debug.Log("[PCUI] Books clicked (templates missing)"));
     }
@@ -216,11 +205,47 @@ public class PCOverlayTrigger : MonoBehaviour
             booksList.bindItem = BindBookItem;
             booksList.fixedItemHeight = 96;
             booksList.selectionType = SelectionType.Single;
+            booksList.selectionChanged += sel => ShowDetails(sel.OfType<BookData>().FirstOrDefault());
         }
 
         filteredBooks = new List<BookData>(allBooks);
         RefreshBooksList();
         UpdateSearchPlaceholder();
+        ShowDetails(null);
+    }
+
+    /// <summary>Right-hand pane: where the selected book lives and its state.</summary>
+    void ShowDetails(BookData b)
+    {
+        var root = overlayDoc.rootVisualElement;
+        var empty = root.Q("detail-empty");
+        var body = root.Q("detail-body");
+        if (empty == null || body == null)
+            return;
+        empty.style.display = b == null ? DisplayStyle.Flex : DisplayStyle.None;
+        body.style.display = b == null ? DisplayStyle.None : DisplayStyle.Flex;
+        if (b == null)
+            return;
+
+        void Set(string name, string text, string state = null)
+        {
+            var l = root.Q<Label>(name);
+            if (l == null) return;
+            l.text = text;
+            l.EnableInClassList("warn", state == "warn");
+            l.EnableInClassList("bad", state == "bad");
+        }
+        Set("detail-title", b.Title);
+        Set("detail-author", "by " + b.Author);
+        Set("detail-shelf", ShelfInteractable.NameOf(b.ShelfLocation));
+        Set("detail-stock", b.Quantity > 0 ? b.Quantity + " on shelf" : "none left", b.Quantity > 0 ? null : "bad");
+        Set("detail-type", b.FormatName);
+        Set("detail-subject", b.Subject);
+        Set("detail-tags", string.IsNullOrEmpty(b.Tag) ? "-" : b.Tag);
+        Set("detail-tier", b.Rarity, b.Tier != BookTier.Normal ? "warn" : null);
+        Set("detail-condition", b.Quantity > 0 ? b.ConditionSummary : "-", b.DamagedCopies > 0 ? "bad" : b.WornCopies > 0 ? "warn" : null);
+        Set("detail-sale", b.Sellable ? "can be sold" : "read in library only", b.Sellable ? null : "warn");
+        Set("detail-abstract", b.Abstract);
     }
 
     void ApplySearchFilter()
@@ -237,7 +262,8 @@ public class PCOverlayTrigger : MonoBehaviour
                 (b.Title ?? "").ToLowerInvariant().Contains(needle) ||
                 (b.Author ?? "").ToLowerInvariant().Contains(needle) ||
                 (b.Subject ?? "").ToLowerInvariant().Contains(needle) ||
-                (b.Tag ?? "").ToLowerInvariant().Contains(needle)).ToList();
+                (b.Tag ?? "").ToLowerInvariant().Contains(needle) ||
+                b.FormatName.ToLowerInvariant().Contains(needle)).ToList();
         }
         RefreshBooksList();
     }
@@ -262,12 +288,14 @@ public class PCOverlayTrigger : MonoBehaviour
         if (title != null)
             title.text = b.Title;
         if (sub != null)
-            sub.text = b.Author + "  ·  " + b.Subject;
+            sub.text = (b.Format == BookFormat.Book ? "" : b.FormatName + "  ·  ") + b.Author + "  ·  " + b.Subject;
         if (meta != null)
         {
-            string m = b.Tag + "  ·  Qty: " + b.Quantity + "  ·  Shelf: " + b.ShelfLocation + "  ·  " + b.Rarity;
-            if (b.Damaged)
-                m += "  ·  DAMAGED";
+            string m = "x" + b.Quantity + "  ·  " + ShelfInteractable.NameOf(b.ShelfLocation);
+            if (b.Tier != BookTier.Normal)
+                m += "  ·  " + b.Rarity;
+            if (b.DamagedCopies > 0)
+                m += "  ·  " + b.DamagedCopies + " damaged";
             meta.text = m;
         }
     }
@@ -289,6 +317,9 @@ public class PCOverlayTrigger : MonoBehaviour
             return;
         }
 
+        // The shared InteractionController opens us through ComputerClick.Open().
+        if (GetComponent<ComputerClick>() != null)
+            return;
         if (computer == null || !computer.IsPlayerInRange)
             return;
         if (attackAction == null || !attackAction.WasPressedThisFrame())
@@ -305,11 +336,18 @@ public class PCOverlayTrigger : MonoBehaviour
             Show();
     }
 
+    /// <summary>True right after opening: the click that opened the PC must not also press a menu tile.</summary>
+    bool JustOpened => Time.unscaledTime - openedAt < CloseGraceSeconds;
+
+    /// <summary>Open the PC overlay (used by the shared click system).</summary>
+    public void Open() => Show();
+
     void Show()
     {
         if (isOpen || overlayObject == null)
             return;
         isOpen = true;
+        PlayerLock.Lock(this);
         openedAt = Time.unscaledTime;
         overlayObject.SetActive(true);
 
@@ -323,16 +361,7 @@ public class PCOverlayTrigger : MonoBehaviour
         UnityEngine.Cursor.visible = true;
         UnityEngine.Cursor.lockState = CursorLockMode.None;
 
-        if (mover != null)
-        {
-            prevMoverEnabled = mover.enabled;
-            mover.enabled = false;
-        }
-        if (footsteps != null)
-        {
-            prevStepsEnabled = footsteps.enabled;
-            footsteps.enabled = false;
-        }
+        // Player movement is frozen by PlayerLock above.
         if (hover != null)
         {
             hover.enabled = false;
@@ -347,16 +376,13 @@ public class PCOverlayTrigger : MonoBehaviour
         if (!isOpen)
             return;
         isOpen = false;
+        PlayerLock.Unlock(this);
         if (overlayObject != null)
             overlayObject.SetActive(false);
 
         UnityEngine.Cursor.visible = prevCursorVisible;
         UnityEngine.Cursor.lockState = prevLock;
 
-        if (mover != null)
-            mover.enabled = prevMoverEnabled;
-        if (footsteps != null)
-            footsteps.enabled = prevStepsEnabled;
         if (hover != null)
             hover.enabled = true; // its Update re-shows the icon when appropriate
         if (outline != null && computer != null && computer.IsPlayerInRange)
@@ -388,7 +414,7 @@ public class PCOverlayTrigger : MonoBehaviour
             Debug.LogWarning("[PCUI] Menu button '" + elementName + "' missing in overlay template.", this);
             return;
         }
-        button.RegisterCallback<ClickEvent>(_ => Debug.Log("[PCUI] " + label + " clicked"));
+        button.RegisterCallback<ClickEvent>(_ => { if (JustOpened) return; Debug.Log("[PCUI] " + label + " clicked"); });
     }
 
     /// <summary>Click-outside-to-close: only clicks whose target IS the backdrop close.</summary>

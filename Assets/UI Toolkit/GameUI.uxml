@@ -6,6 +6,39 @@
             <ui:Label name="prompt-label" class="prompt-label" picking-mode="Ignore" />
         </ui:VisualElement>
     </ui:VisualElement>
+    <ui:VisualElement name="hud" class="layer hud" picking-mode="Ignore">
+        <ui:VisualElement class="hud-bar" picking-mode="Ignore">
+            <ui:Label name="hud-day" class="hud-day" text="Day 1" picking-mode="Ignore" />
+            <ui:Label name="hud-clock" class="hud-clock" text="09:00" picking-mode="Ignore" />
+            <ui:VisualElement class="hud-coins" picking-mode="Ignore">
+                <ui:VisualElement class="icon-coin" picking-mode="Ignore" />
+                <ui:Label name="hud-coins" text="0" picking-mode="Ignore" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="hud-carry-slot" class="hud-carry hidden" picking-mode="Ignore">
+            <ui:VisualElement class="hud-carry-icon" picking-mode="Ignore" />
+            <ui:Label name="hud-carry" class="hud-carry-label" picking-mode="Ignore" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:VisualElement name="shelf" class="layer modal" picking-mode="Position">
+        <ui:VisualElement class="book-spread">
+            <ui:VisualElement class="page page-left">
+                <ui:Label name="shelf-title" class="page-title" text="Shelf" />
+                <ui:ScrollView name="shelf-list" class="shelf-list" />
+            </ui:VisualElement>
+            <ui:VisualElement class="page page-right">
+                <ui:Label class="page-title" text="In your hands" />
+                <ui:VisualElement name="hand-info" class="hand-info">
+                    <ui:VisualElement class="hand-book" />
+                    <ui:Label name="hand-title" class="hand-title" />
+                    <ui:Label name="hand-sub" class="hand-sub" />
+                </ui:VisualElement>
+                <ui:Label name="shelf-note" class="shelf-note" />
+                <ui:Button name="put-back" class="kit-button wide" text="Put back" />
+            </ui:VisualElement>
+            <ui:Button name="shelf-close" class="close-button" />
+        </ui:VisualElement>
+    </ui:VisualElement>
     <ui:VisualElement name="dialogue" class="layer dialogue" picking-mode="Ignore">
         <ui:VisualElement name="choices" class="choices" picking-mode="Ignore" />
         <ui:VisualElement class="dialogue-box">

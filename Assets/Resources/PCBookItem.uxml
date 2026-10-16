@@ -1,7 +1,8 @@
-<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <ui:VisualElement name="book-item" style="padding: 10px;">
-        <ui:Label name="book-title" style="font-size: 17px; color: rgb(235, 240, 235);" />
-        <ui:Label name="book-sub" style="font-size: 14px; color: rgb(170, 185, 180);" />
-        <ui:Label name="book-meta" style="font-size: 13px; color: rgb(140, 200, 190);" />
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="../UI Toolkit/PC.uss" />
+    <ui:VisualElement name="book-item" class="pc-book">
+        <ui:Label name="book-title" />
+        <ui:Label name="book-sub" />
+        <ui:Label name="book-meta" />
     </ui:VisualElement>
 </ui:UXML>

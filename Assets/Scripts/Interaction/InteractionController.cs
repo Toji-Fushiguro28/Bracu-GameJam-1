@@ -10,13 +10,15 @@ using UnityEngine.InputSystem;
 public class InteractionController : MonoBehaviour
 {
     public float maxRayDistance = 80f;
+    [Tooltip("Extra slack around the cursor when nothing is directly under it.")]
+    public float pickRadius = 0.35f;
     [Tooltip("Inverted-hull material drawn around the hovered object (M_Outline).")]
     public Material outlineMaterial;
 
     InputAction clickAction;
     Camera cam;
     ClickInteractable hovered;
-    readonly RaycastHit[] hits = new RaycastHit[16];
+    readonly RaycastHit[] hits = new RaycastHit[32];
 
     void Awake()
     {
@@ -38,27 +40,38 @@ public class InteractionController : MonoBehaviour
         if (WorldPrompts.Instance != null)
             WorldPrompts.Instance.SetHover(hovered, inReach);
 
-        if (inReach && clickAction != null && clickAction.WasPressedThisFrame())
+        if (inReach && clickAction != null && clickAction.WasPressedThisFrame() && Time.frameCount != PlayerLock.UnlockedFrame)
             hovered.Interact(gameObject);
     }
 
-    /// <summary>Nearest solid thing under the cursor; returns it only if it's interactable (walls block).</summary>
+    /// <summary>
+    /// Forgiving pick: a fat ray under the cursor, nearest interactable wins.
+    /// Non-interactable things (props, floor, walls) never block it, so you don't have to aim precisely.
+    /// </summary>
     ClickInteractable Pick()
     {
         if (Pointer.current == null) return null;
         if (cam == null && (cam = Camera.main) == null) return null;
 
         Ray ray = cam.ScreenPointToRay(Pointer.current.position.ReadValue());
-        int count = Physics.RaycastNonAlloc(ray, hits, maxRayDistance, ~0, QueryTriggerInteraction.Ignore);
+        var found = Nearest(Physics.RaycastNonAlloc(ray, hits, maxRayDistance, ~0, QueryTriggerInteraction.Ignore));
+        if (found == null)
+            found = Nearest(Physics.SphereCastNonAlloc(ray, pickRadius, hits, maxRayDistance, ~0, QueryTriggerInteraction.Ignore));
+        return found;
+    }
+
+    ClickInteractable Nearest(int count)
+    {
         float best = float.MaxValue;
         ClickInteractable found = null;
         for (int i = 0; i < count; i++)
         {
             var h = hits[i];
             if (h.distance >= best || h.collider.transform.IsChildOf(transform)) continue;
-            best = h.distance;
             var target = h.collider.GetComponentInParent<ClickInteractable>();
-            found = target != null && target.isActiveAndEnabled ? target : null;
+            if (target == null || !target.isActiveAndEnabled || !target.CanInteract) continue;
+            best = h.distance;
+            found = target;
         }
         return found;
     }
