@@ -104,6 +104,12 @@ What changed in `MainGame.unity` and `Assets/Scripts`, and where. Nothing here c
 
 - **Counter requests:** a visitor waiting at the counter only shows a small orange **?** bubble until you talk to them. After the conversation, their request (plus any hint) stays above their head as a reminder. This is `Customer.heard`.
 - **Hints cost a third of the tip:** the choice reads *"Could you give me a hint? (smaller tip)"* (`Customer.usedHint`). Cozy's free hint has no cost.
+- **Repaired books wait on the repair table** (`RepairDesk.Done`) and the desk glows green.
+  - Click the desk (or **Take** in the repair screen) to pick them up, then shelve them yourself.
+  - The archivist also collects them and walks each one back to its shelf.
+  - Repairs keep progressing while the repair screen is open.
+- **Staff chat:** click Sam, Omar or Arthur (`StaffTalk`, 8 lines each, two replies each). They stop and face you while you talk.
+- **Name tags** only show for VIPs. Members' names appear in the conversation.
 - **Reader chats:**
   - The first chat with a seated reader is the "where would I find more like this?" shelf question, which earns a tip bonus.
   - The second chat is one bit of small talk (two replies). Topics come from a shared pool of 35 in `Customer.Topics` (12 general + all 23 notice-board jokes), so different readers say different things, with no repeats until all are used. After that the reader just says "Shh... I'm at a good part!"-type lines.

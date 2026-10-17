@@ -127,6 +127,7 @@ All of it is in `Core/GameManager.cs`, in the *Play mode* section:
 
 | I want to change... | Where |
 |---|---|
+| Staff chat lines (Sam, Omar, Arthur) | `Day/StaffTalk.cs` → `Sam`, `Omar`, `Arthur` arrays |
 | Reader small talk (35 topics) | `Customers/Customer.cs` → `Topics` (line, reply A, reply B, answer A, answer B; `{0}` title, `{1}` author, `{2}` subject) |
 | First reader chat (shelf question) | `Customers/Customer.cs` → `Chat()` |
 | "Shh, good part" lines | `Customers/Customer.cs` → `Chat()` (the `Pick(...)` line) |

@@ -22,6 +22,10 @@ public class CharacterAnimator : MonoBehaviour
     public void SetSpeed(float normalized) => anim.SetFloat(SpeedId, normalized, 0.08f, Time.deltaTime);
     public void SetCarrying(bool carrying) => anim.SetBool(CarryingId, carrying);
     public void SetActivity(Activity activity) => anim.SetInteger(ActivityId, (int)activity);
-    public void PlayStamp() => anim.SetTrigger(StampId);
+    public void PlayStamp()
+    {
+        anim.ResetTrigger(StampId);
+        anim.CrossFadeInFixedTime("Stamp", 0.08f, 0, 0f);
+    }
     public void PlayReachShelf() => anim.SetTrigger(ReachShelfId);
 }

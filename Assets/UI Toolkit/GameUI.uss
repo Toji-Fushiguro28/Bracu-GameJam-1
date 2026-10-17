@@ -441,3 +441,7 @@
     -unity-text-outline-color: rgb(40, 30, 20);
 }
 #hud-coin-delta.negative { color: rgb(235, 85, 70); }
+
+/* Shelf note wraps inside the page instead of running off it. */
+.shelf-note { white-space: normal; max-width: 100%; margin: 0 10px; }
+.ready-head { color: var(--accent); margin-top: 14px; }

@@ -42,6 +42,9 @@ public class RepairDesk : ClickInteractable
     /// <summary>Paid repairs, worked through one at a time.</summary>
     public readonly List<Job> Working = new List<Job>();
 
+    /// <summary>Repaired copies waiting on the table to be shelved (by you or the archivist).</summary>
+    public readonly List<(BookData book, BookCondition condition)> Done = new List<(BookData, BookCondition)>();
+
     public event Action Changed;
     public event Action<Job, bool> Finished; // job, perfect
 
@@ -79,9 +82,29 @@ public class RepairDesk : ClickInteractable
                 DropOff(book, cond);
                 dropped++;
             }
-            if (dropped == 0) { Bubble("Those copies are fine - they don't need repairs."); return; }
+            if (dropped == 0 && Done.Count == 0) { Bubble("Those copies are fine - they don't need repairs."); return; }
         }
+        // Pick up whatever's finished, as much as your hands can hold.
+        int taken = 0;
+        while (Done.Count > 0 && carry != null && !carry.IsFull)
+        {
+            var (book, cond) = Done[0];
+            Done.RemoveAt(0);
+            carry.PickUp(book, cond);
+            taken++;
+        }
+        if (taken > 0) { Bubble(taken == 1 ? "Picked up the repaired book." : $"Picked up {taken} repaired books."); Changed?.Invoke(); }
         if (RepairUI.Instance != null) RepairUI.Instance.Open(this);
+    }
+
+    /// <summary>Takes one finished copy off the table (staff or the repair screen).</summary>
+    public bool TakeDone(out BookData book, out BookCondition condition)
+    {
+        if (Done.Count == 0) { book = null; condition = BookCondition.Good; return false; }
+        (book, condition) = Done[0];
+        Done.RemoveAt(0);
+        Changed?.Invoke();
+        return true;
     }
 
     public void DropOff(BookData book, BookCondition condition)
@@ -126,13 +149,14 @@ public class RepairDesk : ClickInteractable
     {
         if (Working.Count == 0) return;
         var job = Working[0]; // one book on the table at a time
-        job.elapsed += GameManager.Dt;
+        // The clock is paused while menus are open, but you should see the repair you're watching move.
+        job.elapsed += RepairUI.Instance != null && RepairUI.Instance.IsOpen ? Time.deltaTime : GameManager.Dt;
         if (job.elapsed < job.duration) return;
 
         Working.RemoveAt(0);
         bool perfect = UnityEngine.Random.value < Chance(job);
-        // Perfect: like new. Normal: usable but worn (sells for less).
-        job.book.AddCopy(perfect ? BookCondition.Good : BookCondition.Worn);
+        // Perfect: like new. Normal: usable but worn (sells for less). It waits on the table to be shelved.
+        Done.Add((job.book, perfect ? BookCondition.Good : BookCondition.Worn));
         var gm = GameManager.Instance;
         if (gm != null)
         {
@@ -140,7 +164,7 @@ public class RepairDesk : ClickInteractable
             gm.NotifyBooksChanged();
         }
         if (doneSound != null) AudioSource.PlayClipAtPoint(doneSound, transform.position, 0.8f);
-        Bubble(perfect ? $"\"{job.book.Title}\" - Perfect Restoration!" : $"\"{job.book.Title}\" repaired.");
+        Bubble(perfect ? $"\"{job.book.Title}\" - Perfect Restoration! It's ready on the table." : $"\"{job.book.Title}\" repaired. It's ready on the table.");
         Finished?.Invoke(job, perfect);
         Changed?.Invoke();
     }

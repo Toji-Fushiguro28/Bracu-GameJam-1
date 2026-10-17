@@ -151,7 +151,7 @@ public class RepairUI : MonoBehaviour
         repairAll.SetEnabled(gameJob == null && desk.Waiting.Count > 0 && GameManager.Instance != null && GameManager.Instance.Coins >= total);
 
         workList.Clear();
-        if (desk.Working.Count == 0) workList.Add(new Label("The table is free.") { name = "row-sub" });
+        if (desk.Working.Count == 0 && desk.Done.Count == 0) workList.Add(new Label("The table is free.") { name = "row-sub" });
         for (int i = 0; i < desk.Working.Count; i++)
         {
             var job = desk.Working[i];
@@ -167,6 +167,39 @@ public class RepairUI : MonoBehaviour
             bar.Add(f);
             item.Add(bar);
             workList.Add(item);
+        }
+
+        // Finished copies waiting to be shelved.
+        if (desk.Done.Count > 0)
+        {
+            var head = new Label("Ready to collect") { name = "row-title" };
+            head.AddToClassList("ready-head");
+            workList.Add(head);
+            var carry = GameObject.FindWithTag("Player")?.GetComponent<PlayerCarry>();
+            for (int d = 0; d < desk.Done.Count; d++)
+            {
+                var (book, cond) = desk.Done[d];
+                var row = new VisualElement();
+                row.AddToClassList("shelf-row");
+                var text = new VisualElement();
+                text.AddToClassList("shelf-row-text");
+                text.Add(new Label(book.Title) { name = "row-title" });
+                text.Add(new Label(cond == BookCondition.Good ? "Good as new" : "Repaired, a bit worn") { name = "row-sub" });
+                row.Add(text);
+                int index = d;
+                var take = new Button(() =>
+                {
+                    if (carry == null || carry.IsFull || index >= desk.Done.Count) return;
+                    var (b, c) = desk.Done[index];
+                    desk.Done.RemoveAt(index);
+                    carry.PickUp(b, c);
+                    Refresh();
+                }) { text = "Take" };
+                take.AddToClassList("kit-button");
+                take.SetEnabled(carry != null && !carry.IsFull);
+                row.Add(take);
+                workList.Add(row);
+            }
         }
     }
 
