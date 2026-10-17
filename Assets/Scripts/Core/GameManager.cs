@@ -51,7 +51,7 @@ public class GameManager : MonoBehaviour
     // ---------------- Progress: staff, upgrades, unlocks ----------------
 
     public enum StaffRole { Repairer, Cleaner, RareAttendant }
-    public enum UpgradeKind { RepairTools, RestorationKit, ComfyQueue, RunningShoes, CozyLamps, ReadingNooks, TownFlyers }
+    public enum UpgradeKind { RepairTools, RestorationKit, ComfyQueue, RunningShoes, CozyLamps, ReadingNooks, TownFlyers, BookBag }
     public static readonly string[] StaffNames = { "Repairer", "Cleaner", "Rare Books attendant" };
     public static readonly string[] StaffInfo =
     {
@@ -60,7 +60,7 @@ public class GameManager : MonoBehaviour
         "Checks in Rare Books readers for you.",
     };
     public static readonly int[] StaffWage = { 15, 10, 12 };
-    public static readonly string[] UpgradeNames = { "Repair tools", "Restoration kit", "Comfy queue", "Running shoes", "Cozy lamps", "Reading nooks", "Town flyers" };
+    public static readonly string[] UpgradeNames = { "Repair tools", "Restoration kit", "Comfy queue", "Running shoes", "Cozy lamps", "Reading nooks", "Town flyers", "Book bag" };
     public static readonly string[] UpgradeInfo =
     {
         "Repairs take less time.",
@@ -70,24 +70,79 @@ public class GameManager : MonoBehaviour
         "Warm light: +10% tips.",
         "Comfier seats: +15% reading fees.",
         "Posters around town bring more visitors.",
+        "Carry one more book at a time.",
     };
     public const int MaxUpgrade = 3;
     public static int UpgradeCost(int level) => 40 + level * 40;
 
     [NonSerialized] public List<Member> members = new List<Member>();
     [NonSerialized] public bool[] staff = new bool[3];
-    [NonSerialized] public int[] upgrades = new int[7];
+    [NonSerialized] public int[] upgrades = new int[8];
     public bool Hired(StaffRole r) => staff[(int)r];
     public int Upgrade(UpgradeKind u) => upgrades[(int)u];
     public float PatienceMultiplier => 1f + 0.15f * Upgrade(UpgradeKind.ComfyQueue);
     public float TipMultiplier => 1f + 0.1f * Upgrade(UpgradeKind.CozyLamps);
     public float ReadingFeeMultiplier => 1f + 0.15f * Upgrade(UpgradeKind.ReadingNooks);
     public float VisitorMultiplier => 1f + 0.25f * Upgrade(UpgradeKind.TownFlyers);
+    public int BagCapacity => 1 + Upgrade(UpgradeKind.BookBag);
     public int DailyWages { get { int w = 0; for (int i = 0; i < staff.Length; i++) if (staff[i]) w += StaffWage[i]; return w; } }
 
-    /// <summary>Archive opens to readers on day 2, Rare Books on day 3 (or earlier with reputation).</summary>
-    public bool ArchiveOpen => day >= 2 || Reputation >= 8;
-    public bool RareOpen => day >= 3 || Reputation >= 15;
+    public const int ArchiveDay = 2, RareDay = 3;
+    /// <summary>The Archive opens on day 2, Rare Books on day 3 (the rope gates come down).</summary>
+    public bool ArchiveOpen => day >= ArchiveDay;
+    public bool RareOpen => day >= RareDay;
+
+    /// <summary>The clock (and patience, reading, repairs...) stands still while a menu or chat is open.</summary>
+    public bool Paused => PlayerLock.IsLocked;
+    /// <summary>Game-time delta: 0 while paused.</summary>
+    public static float Dt => Instance != null && Instance.Paused ? 0f : Time.deltaTime;
+
+    // ---------------- Orders, deliveries, reservations ----------------
+
+    [Serializable]
+    public class Reservation { public string key, name, title; public int day; public bool ordered; }
+    class Order { public BookData book; public float arriveHour; public int arriveDay; }
+
+    [NonSerialized] public List<Reservation> reservations = new List<Reservation>();
+    readonly List<Order> orders = new List<Order>();
+    public event Action<int> Delivered; // copies that just arrived
+
+    public const float ExpressHours = 2f;
+    public static int OrderPrice(BookData b, bool express) => Mathf.Max(3, Mathf.RoundToInt(b.BaseValue * 0.6f * (express ? 1.5f : 1f)));
+    public int OnOrder(BookData b) { int n = 0; foreach (var o in orders) if (o.book == b) n++; return n; }
+
+    /// <summary>Standard orders arrive next morning; express ones a couple of hours later today.</summary>
+    public bool OrderBook(BookData b, bool express)
+    {
+        if (b == null || !TrySpend(OrderPrice(b, express))) return false;
+        bool sameDay = express && CurrentPhase != Phase.Closed && Hour + ExpressHours < closeHour;
+        orders.Add(new Order { book = b, arriveDay = sameDay ? day : day + 1, arriveHour = sameDay ? Hour + ExpressHours : openHour });
+        foreach (var r in reservations) if (r.title == b.Title) r.ordered = true;
+        return true;
+    }
+
+    void DeliverDue()
+    {
+        int n = 0;
+        for (int i = orders.Count - 1; i >= 0; i--)
+        {
+            var o = orders[i];
+            if (o.arriveDay > day || (o.arriveDay == day && o.arriveHour > Hour)) continue;
+            orders.RemoveAt(i);
+            if (DeliveryCart.Instance != null) DeliveryCart.Instance.Add(o.book);
+            else o.book.AddCopy(BookCondition.Good);
+            n++;
+        }
+        if (n > 0) { NotifyBooksChanged(); Delivered?.Invoke(n); }
+    }
+
+    public Reservation ReservationFor(string key) => reservations.Find(r => r.key == key);
+
+    public void Reserve(string key, string name, BookData b)
+    {
+        reservations.RemoveAll(r => r.key == key);
+        reservations.Add(new Reservation { key = key, name = name, title = b.Title, day = day + 1, ordered = OnOrder(b) > 0 });
+    }
 
     public void ToggleStaff(StaffRole r) { staff[(int)r] = !staff[(int)r]; ApplyUpgrades(); }
 
@@ -133,8 +188,23 @@ public class GameManager : MonoBehaviour
         Hour = openHour;
         SetPhase(Phase.Open);
         ApplyUpgrades();
+        DeliverDue(); // last night's orders are waiting in the cart
+        ReturnPlayerToStart();
+        reservations.RemoveAll(r => r.day < day - 1); // nobody waits forever
         Save();
         DayStarted?.Invoke();
+    }
+
+    /// <summary>A new morning starts with the librarian back at their spot behind the counter.</summary>
+    void ReturnPlayerToStart()
+    {
+        var player = GameObject.FindWithTag("Player");
+        if (!hasPlayerStart || player == null) return;
+        // The CharacterController would undo a plain move, so switch it off for the teleport.
+        var cc = player.GetComponent<CharacterController>();
+        if (cc != null) cc.enabled = false;
+        player.transform.SetPositionAndRotation(playerStartPos, playerStartRot);
+        if (cc != null) cc.enabled = true;
     }
 
     // ---------------- Save (PlayerPrefs, WebGL safe) ----------------
@@ -144,11 +214,11 @@ public class GameManager : MonoBehaviour
     public bool loadSave = true;
 
     [Serializable] class BookSave { public string title; public int good, worn, damaged; }
-    [Serializable] class SaveData { public int day, coins, reputation; public bool[] staff; public int[] upgrades; public List<BookSave> books = new List<BookSave>(); public List<Member> members = new List<Member>(); }
+    [Serializable] class SaveData { public int day, coins, reputation; public bool[] staff; public int[] upgrades; public List<BookSave> books = new List<BookSave>(); public List<Member> members = new List<Member>(); public List<Reservation> reservations = new List<Reservation>(); }
 
     public void Save()
     {
-        var data = new SaveData { day = day, coins = Coins, reputation = Reputation, staff = staff, upgrades = upgrades, members = members };
+        var data = new SaveData { day = day, coins = Coins, reputation = Reputation, staff = staff, upgrades = upgrades, members = members, reservations = reservations };
         foreach (var b in Books) data.books.Add(new BookSave { title = b.Title, good = b.GoodCopies, worn = b.WornCopies, damaged = b.DamagedCopies });
         // Copies out of the shelves (returns, repair table, hands) still belong to the library.
         void Count(BookData b, BookCondition c)
@@ -164,7 +234,9 @@ public class GameManager : MonoBehaviour
             foreach (var j in RepairDesk.Instance.Working) Count(j.book, j.condition);
         }
         var carry = GameObject.FindWithTag("Player")?.GetComponent<PlayerCarry>();
-        if (carry != null && !carry.IsEmpty) Count(carry.Carried, carry.CarriedCondition);
+        if (carry != null) foreach (var (b, c) in carry.Items) Count(b, c);
+        if (DeliveryCart.Instance != null) foreach (var b in DeliveryCart.Instance.Copies) Count(b, BookCondition.Good);
+        foreach (var o in orders) Count(o.book, BookCondition.Good); // paid for: it arrives with the save
         PlayerPrefs.SetString(SaveKey, JsonUtility.ToJson(data));
         PlayerPrefs.Save();
     }
@@ -178,12 +250,22 @@ public class GameManager : MonoBehaviour
         if (data.staff != null && data.staff.Length == 3) staff = data.staff;
         if (data.upgrades != null) Array.Copy(data.upgrades, upgrades, Mathf.Min(data.upgrades.Length, upgrades.Length));
         if (data.members != null) members = data.members;
+        if (data.reservations != null) reservations = data.reservations;
         foreach (var s in data.books)
         {
             var b = Books.Find(x => x.Title == s.title);
             if (b == null) continue;
             b.GoodCopies = s.good; b.WornCopies = s.worn; b.DamagedCopies = s.damaged;
         }
+    }
+
+    public bool HasSave => PlayerPrefs.HasKey(SaveKey);
+
+    /// <summary>Back to the title screen (progress since this morning's save is lost).</summary>
+    public void ReturnToMenu()
+    {
+        PlayerLock.Reset();
+        UnityEngine.SceneManagement.SceneManager.LoadScene(gameObject.scene.name);
     }
 
     [ContextMenu("Delete Save")]
@@ -210,8 +292,15 @@ public class GameManager : MonoBehaviour
         ReputationAtStart = Reputation;
     }
 
+    // Where the librarian starts the day (their spot in the scene).
+    Vector3 playerStartPos;
+    Quaternion playerStartRot;
+    bool hasPlayerStart;
+
     void Start()
     {
+        var player = GameObject.FindWithTag("Player");
+        if (player != null) { playerStartPos = player.transform.position; playerStartRot = player.transform.rotation; hasPlayerStart = true; }
         GameSettings.Apply();
         ApplyUpgrades();
     }
@@ -223,7 +312,8 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
-        if (CurrentPhase == Phase.Closed) return;
+        if (CurrentPhase == Phase.Closed || Paused) return;
+        if (orders.Count > 0) DeliverDue();
         float hoursPerSecond = (closeHour - openHour) / Mathf.Max(0.1f, realMinutesPerDay * 60f);
         Hour = Mathf.Min(closeHour, Hour + hoursPerSecond * Time.deltaTime);
 

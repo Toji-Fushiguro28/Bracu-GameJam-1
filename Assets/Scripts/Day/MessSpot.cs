@@ -56,7 +56,7 @@ public class MessSpot : ClickInteractable
         if (book != null)
         {
             var carry = player.GetComponent<PlayerCarry>();
-            if (carry == null || !carry.IsEmpty)
+            if (carry == null || carry.IsFull)
             {
                 WorldPrompts.Instance?.ShowBubble(this, "Your hands are full.", 2f);
                 return;

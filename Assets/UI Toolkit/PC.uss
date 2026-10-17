@@ -200,3 +200,11 @@
 .setting-row .pc-button.danger { border-color: rgb(240, 120, 100); color: rgb(240, 120, 100); }
 .setting-row .pc-button.danger:hover { background-color: rgb(240, 120, 100); color: var(--screen); }
 .setting-note { color: var(--mint-dim); font-size: 20px; white-space: normal; margin-top: 12px; -unity-text-align: middle-center; }
+
+/* ---------- Catalogue filters ---------- */
+.pc-filters { flex-direction: row; margin-bottom: 10px; }
+.pc-filter { font-size: 20px; margin-right: 10px; padding: 2px 12px 5px 12px; }
+.shop-row .pc-button.second { margin-left: 8px; }
+.shop-header { color: rgb(235, 200, 120); font-size: 24px; padding: 8px 12px 4px 12px; }
+.shop-reserve { color: var(--mint); font-size: 20px; padding: 2px 12px; white-space: normal; }
+.shop-reserve.warn { color: rgb(240, 120, 100); }

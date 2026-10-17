@@ -51,7 +51,7 @@ public class RepairDesk : ClickInteractable
         get
         {
             var carry = GameObject.FindWithTag("Player")?.GetComponent<PlayerCarry>();
-            return carry != null && !carry.IsEmpty && carry.CarriedCondition != BookCondition.Good ? "Drop off" : "Repair desk";
+            return carry != null && carry.Find((b, c) => c != BookCondition.Good) >= 0 ? "Drop off" : "Repair desk";
         }
     }
 
@@ -71,13 +71,15 @@ public class RepairDesk : ClickInteractable
         var carry = player.GetComponent<PlayerCarry>();
         if (carry != null && !carry.IsEmpty)
         {
-            if (carry.CarriedCondition == BookCondition.Good)
+            // Every worn or damaged copy in your hands goes on the table.
+            int i, dropped = 0;
+            while ((i = carry.Find((b, c) => c != BookCondition.Good)) >= 0)
             {
-                Bubble("That copy is fine - it doesn't need repairs.");
-                return;
+                var (book, cond) = carry.TakeAt(i);
+                DropOff(book, cond);
+                dropped++;
             }
-            var cond = carry.CarriedCondition;
-            DropOff(carry.Drop(), cond);
+            if (dropped == 0) { Bubble("Those copies are fine - they don't need repairs."); return; }
         }
         if (RepairUI.Instance != null) RepairUI.Instance.Open(this);
     }
@@ -124,7 +126,7 @@ public class RepairDesk : ClickInteractable
     {
         if (Working.Count == 0) return;
         var job = Working[0]; // one book on the table at a time
-        job.elapsed += Time.deltaTime;
+        job.elapsed += GameManager.Dt;
         if (job.elapsed < job.duration) return;
 
         Working.RemoveAt(0);

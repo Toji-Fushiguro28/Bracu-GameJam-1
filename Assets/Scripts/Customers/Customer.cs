@@ -1,20 +1,24 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.UIElements;
 
 /// <summary>
-/// A visiting customer. Three kinds:
-///  Buyer    - asks for an item, pays for it and leaves with it.
-///  Reader   - asks for an item, sits on a chair/sofa/armchair to read it, then brings it back,
-///             pays a reading fee and leaves. The copy goes into the return bin.
-///  Returner - only brings back a book they borrowed earlier.
-/// Patience only runs while they stand at the counter. Added at runtime by CustomerSpawner.
+/// A visiting customer. Kinds:
+///  Browser  - picks a book off a shelf themselves and brings it to the counter: you just stamp it out.
+///  Buyer    - asks for something; you find it (or order and reserve it if it's sold out).
+///  Reader   - asks for something, reads it on a seat, then checks it back in and pays a reading fee.
+///  Returner - brings back a book they borrowed.
+///  SignUp   - wants a library card (filled in on the PC).
+///  Pickup   - comes back for a book they reserved yesterday.
+/// Talking to someone at the counter opens a conversation (hint, give a book, "it's sold out"...).
+/// All timers use game time, so they stand still while a menu or chat is open.
 /// </summary>
 [RequireComponent(typeof(NavMeshAgent))]
 public class Customer : ClickInteractable
 {
-    public enum Kind { Buyer, Reader, Returner, SignUp }
-    enum State { Queueing, Waiting, ToSeat, Reading, CheckIn, Leaving }
+    public enum Kind { Buyer, Reader, Returner, SignUp, Browser, Pickup }
+    enum State { Queueing, Waiting, ToSeat, Reading, CheckIn, Leaving, ToShelf, Browsing, Checkout }
 
     public Kind kind;
     [Tooltip("Dean / professors: read Rare Books in the Rare Books room.")]
@@ -24,55 +28,80 @@ public class Customer : ClickInteractable
     public Member Membership => Members.Find(profileKey);
     public float walkSpeed = 1.6f;
     [Tooltip("Share of patience lost for a wrong book.")]
-    public float wrongBookPenalty = 0.25f;
+    public float wrongBookPenalty = 0.2f;
     public Vector2 readSeconds = new Vector2(25f, 45f);
+    [Tooltip("Everyone waits this much longer than the base request time: cozy, not frantic.")]
+    public float patienceScale = 1.6f;
+    [Tooltip("Browsers who sit and read their pick here (the rest take it home).")]
+    [Range(0f, 1f)] public float readHereChance = 0.6f;
 
     NavMeshAgent agent;
     CharacterAnimator anim;
     State state;
     BookRequest request;
     float patience, maxPatience;
-    float reactionUntil;
+    float reactionLeft;
     string clue;
     bool impatientLoop;
 
-    // The copy they're holding (reading or returning)
+    // The copy they're holding (browsing, reading or returning)
     BookData heldBook;
     BookCondition heldCondition;
     SeatPoint seat;
     int seatIndex;
-    float readUntil;
+    float timer; // read / browse time left
+    ShelfInteractable browseShelf;
+    GameManager.Reservation reservation;
 
-    VisualElement overhead, bar, fill;
-    Label speech;
+    VisualElement overhead, mood, mouth;
+    Label speech, nameplate;
     WorldPrompts.Follower follower;
 
     public BookRequest CurrentRequest => request;
     public bool IsWaiting => state == State.Waiting;
     public float PatienceLeft => maxPatience > 0f ? Mathf.Clamp01(patience / maxPatience) : 1f;
+    static float Dt => GameManager.Dt;
+    static GameManager GM => GameManager.Instance;
 
-    protected override string DefaultVerb => "Ask";
+    protected override string DefaultVerb => "Talk";
     public override string Verb
     {
         get
         {
-            if (state == State.CheckIn) return "Check in";
-            if (state == State.Reading) return chatted ? "Reading..." : "Chat";
+            switch (state)
+            {
+                case State.CheckIn: return "Check in";
+                case State.Checkout: return "Stamp out";
+                case State.Reading: return chatted ? "Reading..." : "Chat";
+            }
             if (kind == Kind.SignUp) return introduced ? "Card on the PC" : "Talk";
             var carry = GameObject.FindWithTag("Player")?.GetComponent<PlayerCarry>();
-            return carry != null && !carry.IsEmpty ? "Give book" : "Ask";
+            return carry != null && MatchIndex(carry) >= 0 ? "Give book" : "Talk";
         }
     }
     public override Vector3 PromptAnchor => transform.position + Vector3.up * 1.0f;
-    public override bool CanInteract => state == State.Waiting || state == State.CheckIn || state == State.Reading;
+    public override bool CanInteract => state == State.Waiting || state == State.CheckIn || state == State.Reading || state == State.Checkout;
 
     bool introduced;
     /// <summary>The sign-up visitor waiting at the counter who has told you their details.</summary>
     public static Customer WaitingForCard { get; private set; }
-    string SignUpText => !introduced ? "I'd like a library card, please!"
+    string FirstName => Members.TryProfile(profileKey, out var p) ? p.name.Split(' ')[0] : "Visitor";
+    string FullName => Members.TryProfile(profileKey, out var p) ? p.name : "Visitor";
+
+    string SignUpText => !introduced
+        ? (vip ? "Good day. I'll need a library card with Rare Books access." : "I'd like a library card, please!")
         : Members.TryProfile(profileKey, out var p) ? $"I'm {p.name}, born {p.dob}.\n<i>{p.line}</i>" : "";
 
-    string RequestText => kind == Kind.SignUp ? SignUpText : request == null ? "" : clue == null ? request.Line : $"{request.Line}\n<i>{clue}</i>";
+    string RequestText
+    {
+        get
+        {
+            if (kind == Kind.SignUp) return SignUpText;
+            if (kind == Kind.Pickup && reservation != null) return $"Hello again! I reserved \"{reservation.title}\" yesterday.";
+            if (request == null) return "";
+            return clue == null ? request.Line : $"{request.Line}\n<i>{clue}</i>";
+        }
+    }
 
     protected override void Awake()
     {
@@ -92,8 +121,7 @@ public class Customer : ClickInteractable
         if (kind == Kind.Returner)
         {
             // A copy they borrowed some days ago, in whatever state they kept it.
-            var list = GameManager.Instance.Books;
-            var lendable = list.FindAll(b => b.Format == BookFormat.Book && b.Sellable);
+            var lendable = GM.Books.FindAll(b => b.Format == BookFormat.Book && b.Sellable);
             if (lendable.Count > 0)
             {
                 heldBook = lendable[Random.Range(0, lendable.Count)];
@@ -101,6 +129,15 @@ public class Customer : ClickInteractable
             }
             else kind = Kind.Buyer;
         }
+        if (kind == Kind.Pickup)
+        {
+            reservation = GM.ReservationFor(profileKey);
+            if (reservation == null) kind = Kind.Buyer;
+            else request = new BookRequest { Hint = HintType.Title, Target = GM.Books.Find(b => b.Title == reservation.title), Line = "" };
+            if (request != null && request.Target == null) { kind = Kind.Buyer; request = null; reservation = null; }
+        }
+        if (kind == Kind.Browser && GoBrowse()) return;
+        if (kind == Kind.Browser) kind = Kind.Buyer; // nothing on the shelves: ask instead
         JoinQueue();
     }
 
@@ -109,6 +146,7 @@ public class Customer : ClickInteractable
         if (CounterQueue.Instance != null) CounterQueue.Instance.Leave(this);
         if (WorldPrompts.Instance != null) WorldPrompts.Instance.Unfollow(follower);
         if (seat != null) seat.Release(this);
+        if (WaitingForCard == this) WaitingForCard = null;
     }
 
     bool closingHandled;
@@ -117,42 +155,151 @@ public class Customer : ClickInteractable
     void HandleClosed()
     {
         closingHandled = true;
-        if (state == State.Reading) { readUntil = Time.time; return; }
-        if (state == State.Queueing || state == State.Waiting)
+        switch (state)
         {
-            Say("Oh, closing time already? Tomorrow, then.", 2.5f);
-            Leave();
+            case State.Reading: timer = 0f; return;
+            case State.ToShelf:
+            case State.Browsing:
+                Say("Oh, closing already!", 2.5f);
+                Leave();
+                return;
+            case State.Queueing:
+            case State.Waiting:
+                if (kind == Kind.Browser || kind == Kind.Reader && heldBook != null) return; // let them finish up
+                Say("Oh, closing time already? Tomorrow, then.", 2.5f);
+                Leave();
+                return;
         }
     }
 
     void Update()
     {
-        if (!closingHandled && GameManager.Instance != null && GameManager.Instance.CurrentPhase == GameManager.Phase.Closed) HandleClosed();
+        if (!closingHandled && GM != null && GM.CurrentPhase == GameManager.Phase.Closed) HandleClosed();
         if (agent.enabled && anim) anim.SetSpeed(Mathf.Clamp01(agent.velocity.magnitude / walkSpeed) * 0.5f);
 
         switch (state)
         {
             case State.Queueing: UpdateQueue(); break;
             case State.Waiting:
-            case State.CheckIn: UpdatePatience(); break;
+            case State.CheckIn:
+            case State.Checkout: UpdatePatience(); break;
+            case State.ToShelf:
+                if (Arrived()) StartBrowsing();
+                break;
+            case State.Browsing:
+                FaceTowards(browseShelf ? browseShelf.transform.position : transform.position + transform.forward);
+                timer -= Dt;
+                if (timer <= 0f) PickFromShelf();
+                break;
             case State.ToSeat:
                 if (Arrived()) SitDown();
                 break;
             case State.Reading:
+                timer -= Dt;
                 // Don't get up in the middle of a chat.
-                if (Time.time >= readUntil && (DialogueUI.Instance == null || !DialogueUI.Instance.IsOpen)) StandUp();
+                if (timer <= 0f && (DialogueUI.Instance == null || !DialogueUI.Instance.IsOpen)) StandUp();
                 break;
             case State.Leaving:
                 if (Arrived()) Destroy(gameObject);
                 break;
         }
 
-        if (reactionUntil > 0f && Time.time > reactionUntil)
+        if (reactionLeft > 0f)
         {
-            reactionUntil = 0f;
-            speech.text = state == State.Waiting ? RequestText : state == State.CheckIn ? CheckInLine : "";
-            speech.EnableInClassList("hidden", string.IsNullOrEmpty(speech.text));
+            reactionLeft -= Time.deltaTime;
+            if (reactionLeft <= 0f) ShowIdleLine();
         }
+    }
+
+    void ShowIdleLine()
+    {
+        speech.text = state == State.Waiting ? RequestText
+                    : state == State.CheckIn ? CheckInLine
+                    : state == State.Checkout ? CheckoutLine : "";
+        speech.EnableInClassList("hidden", string.IsNullOrEmpty(speech.text));
+    }
+
+    void FaceTowards(Vector3 p)
+    {
+        var d = p - transform.position; d.y = 0f;
+        if (d.sqrMagnitude > 0.01f) transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(d), 360f * Time.deltaTime);
+    }
+
+    // ---------------- Browsing (self-service) ----------------
+
+    bool GoBrowse()
+    {
+        var shelves = new List<ShelfInteractable>();
+        foreach (var s in FindObjectsByType<ShelfInteractable>())
+        {
+            if (RoomGate.IsLockedAt(s.transform.position)) continue;
+            foreach (var b in s.Books) if (b.Sellable && BookRequest.InStock(b)) { shelves.Add(s); break; }
+        }
+        if (shelves.Count == 0) return false;
+        browseShelf = shelves[Random.Range(0, shelves.Count)];
+        state = State.ToShelf;
+        agent.SetDestination(NearestOnNavMesh(browseShelf.transform.position, 2.5f));
+        return true;
+    }
+
+    void StartBrowsing()
+    {
+        state = State.Browsing;
+        timer = Random.Range(4f, 7f);
+        if (anim) anim.PlayReachShelf();
+    }
+
+    void PickFromShelf()
+    {
+        var pool = new List<BookData>();
+        if (browseShelf != null) foreach (var b in browseShelf.Books) if (b.Sellable && BookRequest.InStock(b)) pool.Add(b);
+        if (pool.Count == 0)
+        {
+            // Someone took the last one: try another shelf, or give up kindly.
+            if (GoBrowse()) return;
+            Say("Nothing for me today. Bye!", 2.5f);
+            Leave();
+            return;
+        }
+        var book = pool[Random.Range(0, pool.Count)];
+        var cond = book.GoodCopies > 0 ? BookCondition.Good : BookCondition.Worn;
+        if (!book.TakeCopy(cond)) { timer = 1f; return; }
+        heldBook = book;
+        heldCondition = cond;
+        GM.NotifyBooksChanged();
+        if (anim) anim.PlayReachShelf();
+
+        // Most browsers sit down and read it here, then check it in at the counter (reading fee).
+        // The rest take it home: they bring it to the counter to be stamped out.
+        if (Random.value < readHereChance && SeatPoint.TryReserve(this, false, out seat, out seatIndex))
+        {
+            kind = Kind.Reader;
+            Say(Pick("Ooh, I'll read this one here.", "Perfect, time for a sit down.", "This looks lovely. I'll find a seat."), 2.5f);
+            state = State.ToSeat;
+            agent.SetDestination(NearestOnNavMesh(seat.ApproachPosition(seatIndex)));
+            return;
+        }
+        Say(Pick("Ooh, this one!", "Found it!", "This looks lovely."), 2f);
+        JoinQueue();
+    }
+
+    string CheckoutLine => heldBook == null ? "" : $"I'd like to take \"{heldBook.Title}\", please.";
+
+    void StampOut(GameObject player)
+    {
+        var playerAnim = player.GetComponent<CharacterAnimator>();
+        if (playerAnim) playerAnim.PlayStamp();
+        bool worn = heldCondition == BookCondition.Worn;
+        int price = Mathf.RoundToInt(heldBook.BaseValue * (worn ? 0.8f : 1f));
+        int tip = Mathf.RoundToInt(heldBook.BaseValue * 0.15f * PatienceLeft * Members.TipFactor(Membership));
+        Members.Satisfy(Membership, PatienceLeft > 0.5f ? 0.4f : 0.15f, price + tip);
+        GM.AddCoins(price + tip);
+        GM.Today.served++; GM.Today.booksSold++; GM.Today.income += price + tip; GM.Today.tips += tip;
+        GM.AddReputation(1);
+        heldBook = null; // it leaves with them
+        GameAudio.Play(a => a.served);
+        Say(tip > 0 ? $"Thank you!  +{price + tip}" : $"Thanks!  +{price}", 2.5f);
+        Leave();
     }
 
     // ---------------- Counter ----------------
@@ -170,59 +317,87 @@ public class Customer : ClickInteractable
         agent.SetDestination(queue.SlotPosition(index));
         if (index != 0 || !Arrived()) return;
         transform.rotation = queue.FacingDesk;
+        GameAudio.Play(a => a.customerArrives);
 
+        if (kind == Kind.Browser && heldBook != null)
+        {
+            state = State.Checkout;
+            StartPatience(60f);
+            Say(CheckoutLine);
+            return;
+        }
         if (heldBook != null) { BeginCheckIn(); return; }
 
         if (kind == Kind.SignUp)
         {
             StartPatience(70f);
             state = State.Waiting;
-            GameAudio.Play(a => a.customerArrives);
             Say(RequestText);
             return;
         }
-        request = BookRequest.Create(GameManager.Instance.Books, kind == Kind.Reader, vip);
+        if (kind != Kind.Pickup)
+            request = BookRequest.Create(GM.Books, kind == Kind.Reader, vip);
         if (request == null) { Say("Oh... nothing I want today."); Leave(); return; }
-        StartPatience(request.Patience);
+        StartPatience(kind == Kind.Pickup ? 70f : request.Patience);
         state = State.Waiting;
-        GameAudio.Play(a => a.customerArrives);
         Say(RequestText);
     }
 
     void StartPatience(float seconds)
     {
-        maxPatience = patience = seconds * (GameManager.Instance != null ? GameManager.Instance.PatienceMultiplier : 1f) * Members.PatienceFactor(Membership);
+        maxPatience = patience = seconds * patienceScale * GM.PatienceMultiplier * Members.PatienceFactor(Membership);
         impatientLoop = false;
-        bar.RemoveFromClassList("hidden");
+        mood.RemoveFromClassList("hidden");
+        SetMood(1f);
     }
 
     void UpdatePatience()
     {
         transform.rotation = Quaternion.RotateTowards(transform.rotation, CounterQueue.Instance.FacingDesk, 360f * Time.deltaTime);
-        patience -= Time.deltaTime;
-        float t = Mathf.Clamp01(patience / maxPatience);
-        fill.style.width = Length.Percent(t * 100f);
-        fill.EnableInClassList("mid", t < 0.6f && t >= 0.3f);
-        fill.EnableInClassList("low", t < 0.3f);
+        patience -= Dt;
+        float t = PatienceLeft;
+        SetMood(t);
 
-        bool low = t < 0.3f;
+        bool low = t < 0.25f;
         if (low != impatientLoop && anim)
         {
             impatientLoop = low;
-            if (low) GameAudio.Play(a => a.impatient, 0.5f);
+            if (low) GameAudio.Play(a => a.impatient, 0.4f);
             anim.SetActivity(low ? CharacterAnimator.Activity.Impatient : CharacterAnimator.Activity.None);
         }
         if (patience > 0f) return;
-        if (state == State.CheckIn) GiveUpCheckIn(); else LeaveAngry();
+        if (state == State.CheckIn) GiveUpCheckIn();
+        else if (state == State.Checkout) GiveUpCheckout();
+        else LeaveAngry();
+    }
+
+    void SetMood(float t)
+    {
+        mood.EnableInClassList("happy", t >= 0.55f);
+        mood.EnableInClassList("ok", t < 0.55f && t >= 0.25f);
+        mood.EnableInClassList("sad", t < 0.25f);
     }
 
     bool Arrived() => agent.enabled && !agent.pathPending && agent.remainingDistance <= agent.stoppingDistance + 0.1f;
 
+    /// <summary>Index in the bag of a copy that answers this request (best condition, not damaged), or -1.</summary>
+    int MatchIndex(PlayerCarry carry)
+    {
+        if (state != State.Waiting || request == null || carry == null) return -1;
+        bool reading = kind == Kind.Reader;
+        return carry.Find((b, c) => c != BookCondition.Damaged && request.Matches(b) && (reading || b.Sellable || kind == Kind.Pickup));
+    }
+
     public override void Interact(GameObject player)
     {
-        if (state == State.CheckIn) { CheckIn(); return; }
-        if (state == State.Reading) { Chat(); return; }
-        if (state != State.Waiting) return;
+        switch (state)
+        {
+            case State.CheckIn: CheckIn(); return;
+            case State.Checkout: StampOut(player); return;
+            case State.Reading: Chat(); return;
+            case State.Waiting: break;
+            default: return;
+        }
         if (kind == Kind.SignUp)
         {
             introduced = true;
@@ -231,12 +406,96 @@ public class Customer : ClickInteractable
             return;
         }
 
+        // Fast path: you're holding the right thing, hand it over.
         var carry = player.GetComponent<PlayerCarry>();
-        if (carry == null || carry.IsEmpty) { GiveClue(); return; }
+        int match = MatchIndex(carry);
+        if (match >= 0) { Give(carry, match); return; }
+        Converse(carry);
+    }
 
-        var book = carry.Carried;
-        bool reading = kind == Kind.Reader;
-        if (!reading && !book.Sellable && request.Matches(book))
+    void Give(PlayerCarry carry, int index)
+    {
+        var (book, condition) = carry.TakeAt(index);
+        if (kind == Kind.Reader) StartReading(book, condition);
+        else Sell(book, condition);
+    }
+
+    // ---------------- Conversation at the counter ----------------
+
+    void Converse(PlayerCarry carry)
+    {
+        var ui = DialogueUI.Instance;
+        if (ui == null || ui.IsOpen) return;
+
+        var d = ScriptableObject.CreateInstance<DialogueAsset>();
+        d.speaker = vip ? $"{FullName} (VIP)" : FirstName;
+        var start = new DialogueAsset.Line { id = "start", text = RequestText.Replace("<i>", "").Replace("</i>", "") };
+        d.lines.Add(start);
+
+        // Books in your hands you could offer.
+        if (carry != null)
+            for (int i = carry.Count - 1; i >= 0 && start.choices.Count < 2; i--)
+                start.choices.Add(new DialogueAsset.Choice { text = $"Here: \"{carry.Items[i].book.Title}\"", next = "give" + i });
+
+        bool pickup = kind == Kind.Pickup;
+        bool soldOut = !pickup && request.OutOfStock(GM.Books);
+        if (!pickup && clue == null) start.choices.Add(new DialogueAsset.Choice { text = "Could you give me a hint?", next = "hint" });
+        if (pickup)
+            start.choices.Add(new DialogueAsset.Choice { text = "Sorry, it isn't here yet.", next = "notyet" });
+        else
+        {
+            if (kind == Kind.Buyer && GM.day >= 2)
+                start.choices.Add(new DialogueAsset.Choice { text = "It's sold out. I'll order it for you.", next = "reserve" });
+            start.choices.Add(new DialogueAsset.Choice { text = "Sorry, we don't have that.", next = "nohave" });
+        }
+        start.choices.Add(new DialogueAsset.Choice { text = "Let me find it.", next = "end" });
+
+        string hintText = HintText();
+        d.lines.Add(new DialogueAsset.Line { id = "hint", text = hintText, next = "end" });
+        d.lines.Add(new DialogueAsset.Line { id = "reserve", next = "end",
+            text = soldOut ? "Oh, wonderful! I'll come back tomorrow to pick it up." : "Sold out? I'm sure I saw it on the shelf..." });
+        d.lines.Add(new DialogueAsset.Line { id = "nohave", next = "end",
+            text = soldOut ? "That's a shame. Thanks for checking!" : "Really? I'm sure you do... never mind." });
+        bool ordered = pickup && reservation != null && GM.OnOrder(request.Target) > 0;
+        d.lines.Add(new DialogueAsset.Line { id = "notyet", next = "end",
+            text = ordered ? "Still on its way? I'll pop back tomorrow, then." : "You never ordered it, did you? How disappointing." });
+        for (int i = 0; i < 3; i++) d.lines.Add(new DialogueAsset.Line { id = "give" + i, text = "Let me see...", next = "end" });
+
+        string outcome = null;
+        System.Action<string> seen = id => { if (id != "start") outcome = id; };
+        ui.LineShown += seen;
+        ui.Play(d, () =>
+        {
+            ui.LineShown -= seen;
+            Destroy(d);
+            if (state != State.Waiting) return;
+            switch (outcome)
+            {
+                case "hint": clue = hintText; Say(RequestText); break;
+                case "reserve":
+                    if (soldOut) ReserveAndLeave();
+                    else { GameAudio.Play(a => a.wrongBook); Penalise(0.15f); }
+                    break;
+                case "nohave":
+                    if (soldOut) { Say("Maybe next time!", 2.5f); Leave(); }
+                    else { GM.AddReputation(-1); Members.Satisfy(Membership, -0.5f); Say("Hmph. I'll try elsewhere.", 2.5f); Leave(); }
+                    break;
+                case "notyet":
+                    if (ordered) { reservation.day = GM.day + 1; Say("See you tomorrow!", 2.5f); Leave(); }
+                    else { GM.reservations.Remove(reservation); GM.Today.angry++; GM.AddReputation(-2); Members.Satisfy(Membership, -1f); GameAudio.Play(a => a.angryLeave); Say("I won't reserve here again.", 2.5f); Leave(); }
+                    break;
+                default:
+                    if (outcome != null && outcome.StartsWith("give") && int.TryParse(outcome.Substring(4), out int idx)) TryGive(carry, idx);
+                    break;
+            }
+        });
+    }
+
+    void TryGive(PlayerCarry carry, int index)
+    {
+        if (carry == null || index >= carry.Count) return;
+        var (book, condition) = carry.Items[index];
+        if (kind != Kind.Reader && kind != Kind.Pickup && !book.Sellable && request.Matches(book))
         {
             Say("Oh, that one's not for sale? Never mind then.", 2.5f);
             return;
@@ -248,17 +507,40 @@ public class Customer : ClickInteractable
             Penalise(wrongBookPenalty);
             return;
         }
-        if (carry.CarriedCondition == BookCondition.Damaged)
+        if (condition == BookCondition.Damaged)
         {
             Say("This copy is falling apart! Got a better one?", 2.5f);
-            Penalise(0.15f);
+            Penalise(0.1f);
             return;
         }
+        Give(carry, index);
+    }
 
-        var condition = carry.CarriedCondition;
-        carry.Drop();
-        if (reading) StartReading(book, condition);
-        else Sell(book, condition);
+    void ReserveAndLeave()
+    {
+        GM.Reserve(profileKey, FirstName, request.Target);
+        GM.Today.served++;
+        Members.Satisfy(Membership, 0.3f);
+        GameAudio.Play(a => a.cardIssued, 0.7f);
+        Say($"Reserved \"{request.Target.Title}\". Don't forget to order it!", 3f);
+        Leave();
+    }
+
+    /// <summary>A nudge in the right direction, never the answer.</summary>
+    string HintText()
+    {
+        var b = request.Target;
+        string noun = b.Format == BookFormat.Book ? "book" : b.FormatName.ToLower();
+        string who = b.Author ?? "";
+        return request.Hint switch
+        {
+            HintType.Author => $"I think it's a {b.Subject} {noun}.",
+            HintType.Subject => who.Length > 0 ? $"Maybe something by an author whose name starts with \"{who[0]}\"?" : $"It's a {noun}.",
+            HintType.Tag => $"I'm fairly sure it's a {b.Subject} {noun}.",
+            HintType.Format or HintType.FormatSubject => $"They're usually on the {ShelfInteractable.NameOf(b.ShelfLocation)}.",
+            HintType.Title => $"It's by {who}. Is it in the catalogue?",
+            _ => $"It's a {b.Subject} {noun}, if that helps.",
+        };
     }
 
     // ---------------- Chatting with readers ----------------
@@ -274,22 +556,20 @@ public class Customer : ClickInteractable
         if (ui == null || ui.IsOpen) return;
         chatted = true;
 
-        string me = Members.TryProfile(profileKey, out var p) ? p.name.Split(' ')[0] : "Reader";
         string shelf = ShelfInteractable.NameOf(heldBook.ShelfLocation);
-        var shelves = new System.Collections.Generic.List<string> { shelf };
-        foreach (var b in GameManager.Instance.Books)
+        var shelves = new List<string>();
+        foreach (var b in GM.Books)
         {
             string n = ShelfInteractable.NameOf(b.ShelfLocation);
-            if (!shelves.Contains(n) && !string.IsNullOrEmpty(n)) shelves.Add(n);
+            if (n != shelf && !shelves.Contains(n) && !string.IsNullOrEmpty(n)) shelves.Add(n);
         }
         // Right answer plus two others, shuffled.
-        var options = new System.Collections.Generic.List<string> { shelf };
-        shelves.RemoveAt(0);
+        var options = new List<string> { shelf };
         while (options.Count < 3 && shelves.Count > 0) { int i = Random.Range(0, shelves.Count); options.Add(shelves[i]); shelves.RemoveAt(i); }
         for (int i = options.Count - 1; i > 0; i--) { int j = Random.Range(0, i + 1); (options[i], options[j]) = (options[j], options[i]); }
 
         var d = ScriptableObject.CreateInstance<DialogueAsset>();
-        d.speaker = me;
+        d.speaker = vip ? $"{FullName} (VIP)" : FirstName;
         string opinion = heldBook.Format == BookFormat.Book
             ? Pick($"\"{heldBook.Title}\" is wonderful. I can't put it down!", $"I love {heldBook.Author}'s writing.", $"This is the best {heldBook.Subject} book I've read in ages.")
             : Pick($"This {heldBook.FormatName.ToLower()} is fascinating.", $"So much in \"{heldBook.Title}\"!", "I could read these all afternoon.");
@@ -335,15 +615,15 @@ public class Customer : ClickInteractable
             Penalise(0.2f);
             return wrong;
         }
-        var gm = GameManager.Instance;
         var member = Members.Add(profileKey, p, access);
-        int fee = 10, tip = Mathf.RoundToInt(6 * PatienceLeft);
+        int fee = vip ? 25 : 10, tip = Mathf.RoundToInt(6 * PatienceLeft);
         Members.Satisfy(member, PatienceLeft > 0.5f ? 0.5f : 0f, fee + tip);
-        gm.AddCoins(fee + tip);
-        gm.Today.income += fee + tip; gm.Today.tips += tip; gm.Today.served++; gm.Today.signups++;
-        gm.AddReputation(1);
+        GM.AddCoins(fee + tip);
+        GM.Today.income += fee + tip; GM.Today.tips += tip; GM.Today.served++; GM.Today.signups++;
+        GM.AddReputation(1);
         if (WaitingForCard == this) WaitingForCard = null;
         GameAudio.Play(a => a.cardIssued);
+        RefreshNameplate();
         Say($"My very own card! Thank you!  +{fee + tip}", 2.5f);
         Leave();
         return null;
@@ -356,13 +636,17 @@ public class Customer : ClickInteractable
         bool worn = condition == BookCondition.Worn;
         float speed = PatienceLeft;
         int price = Mathf.RoundToInt(book.BaseValue * (worn ? 0.8f : 1f));
-        int tip = worn ? 0 : Mathf.RoundToInt(book.BaseValue * 0.4f * speed * request.TipBonus * Members.TipFactor(Membership));
-        Members.Satisfy(Membership, speed > 0.5f ? 0.5f : 0.2f, price + tip);
-        var gm = GameManager.Instance;
-        gm.AddCoins(price + tip);
-        gm.Today.served++; gm.Today.booksSold++; gm.Today.income += price + tip; gm.Today.tips += tip;
-        gm.AddReputation(worn ? 0 : 1);
-        gm.NotifyBooksChanged();
+        // Reserved books: they were happy to wait, and grateful you remembered.
+        float tipShare = kind == Kind.Pickup ? 0.5f : 0.4f * request.TipBonus;
+        int tip = worn ? 0 : Mathf.RoundToInt(book.BaseValue * tipShare * Mathf.Max(speed, kind == Kind.Pickup ? 0.8f : 0f) * Members.TipFactor(Membership));
+        Members.Satisfy(Membership, speed > 0.5f || kind == Kind.Pickup ? 0.5f : 0.2f, price + tip);
+        GM.AddCoins(price + tip);
+        GM.Today.served++; GM.Today.booksSold++; GM.Today.income += price + tip; GM.Today.tips += tip;
+        GM.AddReputation(worn ? 0 : 1);
+        if (reservation != null) GM.reservations.Remove(reservation);
+        GM.NotifyBooksChanged();
+        var playerAnim = GameObject.FindWithTag("Player")?.GetComponent<CharacterAnimator>();
+        if (playerAnim) playerAnim.PlayStamp();
         GameAudio.Play(a => a.served);
         Say(tip > 0 ? $"Perfect, thank you!  +{price + tip}" : $"Thanks.  +{price}", 2.5f);
         Leave();
@@ -376,7 +660,7 @@ public class Customer : ClickInteractable
         heldCondition = condition;
         bool rareRoom = BookRequest.IsRare(book);
         CounterQueue.Instance.Leave(this);
-        bar.AddToClassList("hidden");
+        mood.AddToClassList("hidden");
         StopImpatient(true);
 
         if (!SeatPoint.TryReserve(this, rareRoom, out seat, out seatIndex))
@@ -398,7 +682,7 @@ public class Customer : ClickInteractable
         agent.enabled = false;
         transform.SetPositionAndRotation(seat.SeatPosition(seatIndex), seat.SeatRotation);
         if (anim) { anim.SetSpeed(0f); anim.SetActivity(CharacterAnimator.Activity.SitRead); }
-        readUntil = Time.time + Random.Range(readSeconds.x, readSeconds.y);
+        timer = Random.Range(readSeconds.x, readSeconds.y);
     }
 
     void StandUp()
@@ -411,27 +695,25 @@ public class Customer : ClickInteractable
         seat = null;
         agent.enabled = true;
         // The Rare Books attendant checks them in on the spot.
-        if (rareRoom && GameManager.Instance.Hired(GameManager.StaffRole.RareAttendant)) { maxPatience = patience = 1f; CheckIn(); return; }
+        if (rareRoom && GM.Hired(GameManager.StaffRole.RareAttendant)) { maxPatience = patience = 1f; CheckIn(); return; }
         JoinQueue();
     }
 
     // ---------------- Returning (readers and returners) ----------------
 
-    string CheckInLine => kind == Kind.Returner
+    string CheckInLine => heldBook == null ? "" : kind == Kind.Returner
         ? $"Returning \"{heldBook.Title}\", thanks!"
         : "All done! Here's the book back.";
 
     void BeginCheckIn()
     {
         state = State.CheckIn;
-        GameAudio.Play(a => a.customerArrives);
         StartPatience(45f);
         Say(CheckInLine);
     }
 
     void CheckIn()
     {
-        var gm = GameManager.Instance;
         int fee = 0, tip = 0;
         if (kind == Kind.Reader)
         {
@@ -439,25 +721,25 @@ public class Customer : ClickInteractable
             bool rare = BookRequest.IsRare(heldBook), archive = BookRequest.IsArchive(heldBook);
             float share = rare ? 0.1f : archive ? 0.15f : 0.4f;
             int minFee = rare ? 20 : archive ? 8 : 4;
-            fee = Mathf.RoundToInt(Mathf.Max(minFee, heldBook.BaseValue * share) * gm.ReadingFeeMultiplier);
+            fee = Mathf.RoundToInt(Mathf.Max(minFee, heldBook.BaseValue * share) * GM.ReadingFeeMultiplier);
             tip = Mathf.RoundToInt(fee * 0.6f * PatienceLeft * Members.TipFactor(Membership)) + chatBonus;
             Members.Satisfy(Membership, PatienceLeft > 0.5f ? 0.5f : 0.2f, fee + tip);
-            gm.Today.booksRead++;
-            gm.AddReputation(1);
+            GM.Today.booksRead++;
+            GM.AddReputation(1);
         }
         else
         {
-            gm.Today.returns++;
+            GM.Today.returns++;
             // Some returns are overdue: a small late fee.
             if (Random.value < 0.35f) fee = Random.Range(2, 6);
         }
         if (fee + tip > 0)
         {
-            gm.AddCoins(fee + tip);
-            gm.Today.income += fee + tip;
-            gm.Today.tips += tip;
+            GM.AddCoins(fee + tip);
+            GM.Today.income += fee + tip;
+            GM.Today.tips += tip;
         }
-        gm.Today.served++;
+        GM.Today.served++;
         ReturnHeldCopy(kind == Kind.Reader);
         GameAudio.Play(a => a.served);
         Say(fee > 0 ? $"Thank you!  +{fee + tip}" : "Thanks, see you!", 2.5f);
@@ -469,8 +751,17 @@ public class Customer : ClickInteractable
         // They leave the book on the counter anyway, but they're not happy about the wait.
         ReturnHeldCopy(false);
         Members.Satisfy(Membership, -0.5f);
-        GameManager.Instance.AddReputation(-1);
+        GM.AddReputation(-1);
         Say("I'll just leave it here then...", 2.5f);
+        Leave();
+    }
+
+    void GiveUpCheckout()
+    {
+        ReturnHeldCopy(false);
+        Members.Satisfy(Membership, -0.5f);
+        GM.AddReputation(-1);
+        Say("I'll leave it here. Maybe next time.", 2.5f);
         Leave();
     }
 
@@ -481,7 +772,7 @@ public class Customer : ClickInteractable
         var condition = wasRead ? RollWear(heldCondition) : heldCondition;
         if (ReturnBin.Instance != null) ReturnBin.Instance.Add(heldBook, condition);
         else heldBook.AddCopy(condition);
-        GameManager.Instance.NotifyBooksChanged();
+        GM.NotifyBooksChanged();
         heldBook = null;
     }
 
@@ -494,22 +785,6 @@ public class Customer : ClickInteractable
     }
 
     // ---------------- Reactions ----------------
-
-    /// <summary>"Ask" with empty hands: an extra clue that stays under their request.</summary>
-    void GiveClue()
-    {
-        var b = request.Target;
-        clue ??= request.Hint switch
-        {
-            HintType.Author => $"I think it's a {b.Subject} book.",
-            HintType.Subject => $"Something by {b.Author} would be lovely.",
-            HintType.Tag => b.Format == BookFormat.Book ? $"Maybe something on {b.Subject}?" : $"Check the {ShelfInteractable.NameOf(b.ShelfLocation)}?",
-            HintType.Format => $"They're on the {ShelfInteractable.NameOf(b.ShelfLocation)}, right?",
-            HintType.FormatSubject => $"Something like \"{b.Title}\" would do.",
-            _ => $"It's a {b.Subject} {(b.Format == BookFormat.Book ? "book" : b.FormatName.ToLower())}, by {b.Author}... I think.",
-        };
-        Say(RequestText);
-    }
 
     void Penalise(float share)
     {
@@ -529,10 +804,9 @@ public class Customer : ClickInteractable
 
     void LeaveAngry()
     {
-        var gm = GameManager.Instance;
-        gm.Today.angry++;
+        GM.Today.angry++;
         Members.Satisfy(Membership, -1f);
-        gm.AddReputation(-2);
+        GM.AddReputation(-2);
         GameAudio.Play(a => a.angryLeave);
         Say("Hmph! Forget it.", 2.5f);
         Leave();
@@ -541,42 +815,66 @@ public class Customer : ClickInteractable
     void Leave()
     {
         if (WaitingForCard == this) WaitingForCard = null;
+        // A browser leaving before paying puts the book back.
+        if (heldBook != null && (state == State.Browsing || state == State.ToShelf || state == State.Queueing && kind == Kind.Browser))
+        {
+            heldBook.AddCopy(heldCondition);
+            heldBook = null;
+            GM.NotifyBooksChanged();
+        }
         var m = Membership;
         if (m != null && state != State.Leaving) m.visits++;
         state = State.Leaving;
         StopImpatient(true);
         CounterQueue.Instance.Leave(this);
-        bar.AddToClassList("hidden");
+        mood.AddToClassList("hidden");
         if (!agent.enabled) agent.enabled = true;
         agent.SetDestination(CounterQueue.Instance.exit.position);
     }
 
-    static Vector3 NearestOnNavMesh(Vector3 p) =>
-        NavMesh.SamplePosition(p, out var hit, 1.5f, NavMesh.AllAreas) ? hit.position : p;
+    static Vector3 NearestOnNavMesh(Vector3 p, float radius = 1.5f) =>
+        NavMesh.SamplePosition(p, out var hit, radius, NavMesh.AllAreas) ? hit.position : p;
 
     /// <summary>Show a line overhead. seconds = 0 keeps it until replaced.</summary>
     void Say(string text, float seconds = 0f)
     {
         speech.text = text;
         speech.RemoveFromClassList("hidden");
-        reactionUntil = seconds > 0f ? Time.time + seconds : 0f;
+        reactionLeft = seconds;
+    }
+
+    void RefreshNameplate()
+    {
+        var m = Membership;
+        nameplate.text = vip ? $"VIP  {FullName}" : m != null ? FirstName : "";
+        nameplate.EnableInClassList("vip", vip);
+        nameplate.EnableInClassList("hidden", string.IsNullOrEmpty(nameplate.text));
     }
 
     void BuildOverhead()
     {
         overhead = new VisualElement();
         overhead.AddToClassList("customer-tag");
+        nameplate = new Label();
+        nameplate.AddToClassList("customer-name");
         speech = new Label();
         speech.AddToClassList("customer-speech");
         speech.AddToClassList("hidden");
-        bar = new VisualElement();
-        bar.AddToClassList("patience-bar");
-        bar.AddToClassList("hidden");
-        fill = new VisualElement();
-        fill.AddToClassList("patience-fill");
-        bar.Add(fill);
+        if (vip) speech.AddToClassList("vip");
+
+        // Mood face instead of a countdown bar: happy, okay, sad.
+        mood = new VisualElement();
+        mood.AddToClassList("mood");
+        mood.AddToClassList("hidden");
+        var eyeL = new VisualElement(); eyeL.AddToClassList("mood-eye"); eyeL.AddToClassList("left");
+        var eyeR = new VisualElement(); eyeR.AddToClassList("mood-eye"); eyeR.AddToClassList("right");
+        mouth = new VisualElement(); mouth.AddToClassList("mood-mouth");
+        mood.Add(eyeL); mood.Add(eyeR); mood.Add(mouth);
+
+        overhead.Add(nameplate);
         overhead.Add(speech);
-        overhead.Add(bar);
+        overhead.Add(mood);
+        RefreshNameplate();
         // Head height of the 0.75-scale characters (TopAnchor could pick the blob shadow).
         follower = WorldPrompts.Instance?.Follow(overhead, () => transform.position + Vector3.up * 1.75f);
     }

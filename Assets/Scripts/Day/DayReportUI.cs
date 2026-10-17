@@ -161,7 +161,7 @@ public class DayReportUI : MonoBehaviour
         list.Add(row);
     }
 
-    int Price(BookData b) => Mathf.Max(3, Mathf.RoundToInt(b.BaseValue * shopPriceShare));
+    int Price(BookData b) => GameManager.OrderPrice(b, false);
 
     void BuildShop(GameManager gm)
     {
@@ -170,9 +170,9 @@ public class DayReportUI : MonoBehaviour
             if (BookRequest.IsRare(b)) continue; // rare books can't be bought
             var book = b;
             int price = Price(book);
-            AddRow(book.Title, $"{book.FormatName}  ·  {book.Subject}  ·  in stock {book.Quantity}  ·  {price} coins",
+            AddRow(book.Title, $"{book.FormatName}  ·  {book.Subject}  ·  in stock {book.GoodCopies + book.WornCopies}  ·  {price} coins · arrives tomorrow",
                    "Buy", gm.Coins >= price,
-                   () => { if (gm.TrySpend(price)) { book.AddCopy(BookCondition.Good); gm.NotifyBooksChanged(); } });
+                   () => gm.OrderBook(book, false)); // arrives in the morning
         }
     }
 

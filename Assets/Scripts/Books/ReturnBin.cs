@@ -56,7 +56,7 @@ public class ReturnBin : ClickInteractable
     {
         var carry = player.GetComponent<PlayerCarry>();
         if (pile.Count == 0) { Bubble("The return bin is empty."); return; }
-        if (carry == null || !carry.IsEmpty) { Bubble("Your hands are full."); return; }
+        if (carry == null || carry.IsFull) { Bubble("Your hands are full."); return; }
 
         var copy = pile[pile.Count - 1];
         pile.RemoveAt(pile.Count - 1);

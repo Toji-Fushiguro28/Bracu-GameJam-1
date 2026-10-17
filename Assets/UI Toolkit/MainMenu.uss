@@ -1,0 +1,95 @@
+/* Main menu: an open book over the library, which drifts by behind it. */
+.menu-root {
+    align-items: center;
+    justify-content: center;
+    transition-property: opacity;
+    transition-duration: 0.6s;
+}
+.menu-root.fading { opacity: 0; }
+
+.menu-vignette {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    background-color: rgba(24, 14, 10, 0.38);
+}
+
+.menu-book {
+    translate: 0 0;
+    scale: 1 1;
+    transition-property: translate, scale, opacity;
+    transition-duration: 0.6s;
+    transition-timing-function: ease-out-back;
+}
+.menu-book.intro { translate: 0 60px; scale: 0.92 0.92; opacity: 0; }
+
+/* ---------- Left page ---------- */
+.menu-left { align-items: center; justify-content: center; }
+.menu-stars { flex-direction: row; align-items: flex-end; margin-bottom: 6px; }
+.menu-star {
+    width: 22px; height: 22px; margin: 0 6px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconStar01a.png");
+}
+.menu-star.big { width: 32px; height: 32px; }
+.menu-title {
+    color: var(--ink);
+    font-size: 60px;
+    white-space: normal;
+    -unity-text-align: middle-center;
+    margin: 0 4px;
+}
+.menu-subtitle { color: var(--ink-soft); font-size: 24px; -unity-text-align: middle-center; margin-top: 2px; }
+.menu-divider {
+    width: 70%; height: 6px; margin: 22px 0 18px 0;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Line01a.png");
+    -unity-slice-left: 2; -unity-slice-right: 2;
+    -unity-slice-scale: 3px;
+}
+.menu-save { color: var(--ink); font-size: 23px; -unity-text-align: middle-center; white-space: normal; }
+.menu-tip { color: var(--ink-soft); font-size: 19px; -unity-text-align: middle-center; white-space: normal; margin-top: 14px; max-width: 320px; }
+.menu-footer { position: absolute; bottom: 28px; color: var(--ink-soft); font-size: 17px; opacity: 0.8; }
+
+/* ---------- Right page ---------- */
+.menu-right { justify-content: center; }
+.menu-panel { flex-grow: 1; justify-content: center; }
+.menu-button {
+    align-self: stretch;
+    margin: 7px 18px;
+    font-size: 30px;
+    padding: 8px 14px 12px 14px;
+    -unity-text-align: middle-center;
+    transition-property: scale, translate;
+    transition-duration: 0.12s;
+}
+.menu-button:hover { scale: 1.05 1.05; translate: 0 -2px; color: var(--accent); }
+.menu-button:active { scale: 0.97 0.97; }
+.menu-button.small-gap { margin-top: 14px; font-size: 26px; }
+.menu-text { color: var(--ink); font-size: 22px; white-space: normal; -unity-text-align: middle-center; margin: 6px 14px 18px 14px; }
+
+.menu-settings { margin: 4px 6px; }
+.menu-setting { flex-direction: row; align-items: center; margin: 8px 0; }
+.menu-setting-name { color: var(--ink); font-size: 22px; width: 104px; }
+.menu-setting-value { color: var(--ink); font-size: 21px; flex-grow: 1; -unity-text-align: middle-center; }
+.menu-setting .kit-button { font-size: 20px; padding: 0 10px 4px 10px; min-width: 34px; -unity-text-align: middle-center; }
+.menu-pips { flex-direction: row; flex-grow: 1; justify-content: center; }
+.menu-pip {
+    width: 15px; height: 18px; margin: 0 2px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Slot01a.png");
+    -unity-slice-left: 2; -unity-slice-right: 2; -unity-slice-top: 2; -unity-slice-bottom: 2;
+    -unity-slice-scale: 2px;
+}
+.menu-pip.on { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Fill01a.png"); }
+
+.menu-credits { flex-grow: 1; max-height: 380px; margin: 0 8px; }
+.credit-head { color: var(--accent); font-size: 22px; -unity-text-align: middle-center; margin-top: 10px; }
+.credit-line { color: var(--ink); font-size: 19px; -unity-text-align: middle-center; white-space: normal; }
+
+.menu-hint {
+    position: absolute; bottom: 24px;
+    color: rgb(250, 240, 220);
+    font-size: 20px;
+    -unity-text-outline-width: 1px;
+    -unity-text-outline-color: rgb(40, 30, 20);
+    opacity: 0.85;
+}
+.credit-name { color: var(--ink); font-size: 21px; -unity-text-align: middle-center; margin-top: 6px; }
+.credit-role { color: var(--ink-soft); font-size: 17px; -unity-text-align: middle-center; }

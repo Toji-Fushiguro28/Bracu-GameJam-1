@@ -1,20 +1,20 @@
 using UnityEngine;
 
 /// <summary>
-/// The Archive door: once the library has closed and the last visitor is gone,
-/// click it to end the day and open the Day Report.
+/// The front doors: once the library has closed and the last visitor is gone,
+/// click them to lock up for the night and open the Day Report.
 /// </summary>
 public class EndDayDoor : ClickInteractable
 {
     float confirmUntil;
 
-    protected override string DefaultVerb => "End the day";
+    protected override string DefaultVerb => "Lock up for the night";
     public override string Verb
     {
         get
         {
             var gm = GameManager.Instance;
-            return gm != null && gm.CurrentPhase == GameManager.Phase.Closed ? "End the day" : "Archive door";
+            return gm != null && gm.CurrentPhase == GameManager.Phase.Closed ? "Lock up for the night" : "Front doors";
         }
     }
 
@@ -24,7 +24,7 @@ public class EndDayDoor : ClickInteractable
         if (gm == null) return;
         if (gm.CurrentPhase != GameManager.Phase.Closed)
         {
-            Bubble(gm.CurrentPhase == GameManager.Phase.Open ? "The library's still open." : "Almost closing time...");
+            Bubble(gm.CurrentPhase == GameManager.Phase.Open ? $"The library's open until {gm.closeHour:0}:00." : "Almost closing time...");
             return;
         }
         if (FindObjectsByType<Customer>().Length > 0) { Bubble("Wait until the last visitor has left."); return; }

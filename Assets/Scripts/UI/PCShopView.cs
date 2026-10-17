@@ -7,10 +7,7 @@ using UnityEngine.UIElements;
 /// </summary>
 public static class PCShopView
 {
-    const float BookPriceShare = 0.6f;
     static int tab;
-
-    public static int BookPrice(BookData b) => Mathf.Max(3, Mathf.RoundToInt(b.BaseValue * BookPriceShare));
 
     public static void Wire(VisualElement root, Action back)
     {
@@ -39,20 +36,35 @@ public static class PCShopView
         var note = root.Q<Label>("shop-note");
         if (tab == 0)
         {
-            note.text = "New copies arrive in good condition, straight onto their shelf. Rare books can't be bought.";
+            note.text = $"Order: arrives tomorrow morning. Express (+50%): arrives in {GameManager.ExpressHours:0} hours. Deliveries go to the book cart.";
+            // Reservations first: these people are counting on you.
+            if (gm.reservations.Count > 0)
+            {
+                list.Add(Header("Reservations"));
+                foreach (var r in gm.reservations)
+                {
+                    var rb = gm.Books.Find(x => x.Title == r.title);
+                    bool coming = rb != null && (gm.OnOrder(rb) > 0 || BookRequest.InStock(rb) || (DeliveryCart.Instance != null && DeliveryCart.Instance.Has(rb)));
+                    var l = new Label($"{r.name}: \"{r.title}\" - {(coming ? "ready or on its way" : "NOT ORDERED YET")}");
+                    l.AddToClassList("shop-reserve");
+                    l.EnableInClassList("warn", !coming);
+                    list.Add(l);
+                }
+                list.Add(Header("Order books"));
+            }
             foreach (var b in gm.Books)
             {
                 if (BookRequest.IsRare(b)) continue;
                 var book = b;
-                int price = BookPrice(book);
-                Row(list, book.Title, $"{book.FormatName} · {book.Subject} · {ShelfInteractable.NameOf(book.ShelfLocation)} · in stock {book.Quantity}",
-                    null, $"Buy {price}", gm.Coins >= price, () =>
-                    {
-                        if (!gm.TrySpend(price)) return;
-                        book.AddCopy(BookCondition.Good);
-                        gm.NotifyBooksChanged();
-                        GameAudio.Play(a => a.buy);
-                    }, root);
+                int price = GameManager.OrderPrice(book, false), express = GameManager.OrderPrice(book, true);
+                int onOrder = gm.OnOrder(book);
+                string sub = $"{book.FormatName} · {book.Subject} · {ShelfInteractable.NameOf(book.ShelfLocation)} · in stock {book.GoodCopies + book.WornCopies}";
+                if (onOrder > 0) sub += $" · on order {onOrder}";
+                if (gm.reservations.Exists(r => r.title == book.Title)) sub += " · RESERVED";
+                Row(list, book.Title, sub, null, $"Order {price}", gm.Coins >= price,
+                    () => { if (gm.OrderBook(book, false)) GameAudio.Play(a => a.buy); }, root,
+                    gm.CurrentPhase == GameManager.Phase.Closed ? null : $"Express {express}", gm.Coins >= express,
+                    () => { if (gm.OrderBook(book, true)) GameAudio.Play(a => a.buy); });
             }
         }
         else if (tab == 1)
@@ -84,7 +96,15 @@ public static class PCShopView
         list.schedule.Execute(() => list.scrollOffset = new Vector2(0, scroll));
     }
 
-    static void Row(ScrollView list, string title, string sub, int? level, string button, bool enabled, Action onClick, VisualElement root)
+    static Label Header(string text)
+    {
+        var l = new Label(text);
+        l.AddToClassList("shop-header");
+        return l;
+    }
+
+    static void Row(ScrollView list, string title, string sub, int? level, string button, bool enabled, Action onClick, VisualElement root,
+                    string button2 = null, bool enabled2 = false, Action onClick2 = null)
     {
         var row = new VisualElement();
         row.AddToClassList("shop-row");
@@ -110,6 +130,14 @@ public static class PCShopView
         b.AddToClassList("pc-button");
         b.SetEnabled(enabled);
         row.Add(b);
+        if (button2 != null)
+        {
+            var b2 = new Button(() => { onClick2?.Invoke(); Refresh(root); }) { text = button2 };
+            b2.AddToClassList("pc-button");
+            b2.AddToClassList("second");
+            b2.SetEnabled(enabled2);
+            row.Add(b2);
+        }
         list.Add(row);
     }
 }

@@ -32,7 +32,7 @@ public static class GameSettings
 /// <summary>PC "Settings" screen: volume, music, day length, fullscreen, new game.</summary>
 public static class PCSettingsView
 {
-    static float confirmUntil;
+    static float confirmUntil, menuConfirmUntil;
 
     public static void Wire(VisualElement root, Action back)
     {
@@ -55,6 +55,16 @@ public static class PCSettingsView
         var full = Row(list, "Fullscreen");
         full.Add(Value(Screen.fullScreen ? "On" : "Off"));
         full.Add(Button("Toggle", () => { Screen.fullScreen = !Screen.fullScreen; root.schedule.Execute(() => Refresh(root)).ExecuteLater(200); }));
+
+        var menu = Row(list, "Main menu");
+        bool leaving = Time.unscaledTime < menuConfirmUntil;
+        menu.Add(Value(leaving ? "Today's progress isn't saved. Sure?" : "Back to the title screen."));
+        menu.Add(Button(leaving ? "Yes, leave" : "Go", () =>
+        {
+            if (Time.unscaledTime < menuConfirmUntil) { GameManager.Instance?.ReturnToMenu(); return; }
+            menuConfirmUntil = Time.unscaledTime + 4f;
+            Refresh(root);
+        }));
 
         var reset = Row(list, "New game");
         bool confirming = Time.unscaledTime < confirmUntil;

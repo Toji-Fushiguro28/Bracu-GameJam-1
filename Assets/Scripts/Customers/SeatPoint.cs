@@ -39,6 +39,7 @@ public class SeatPoint : MonoBehaviour
         foreach (var s in all)
         {
             if (s.rareBooksOnly != rareRoom) continue;
+            if (RoomGate.IsLockedAt(s.transform.position)) continue; // that room isn't open yet
             for (int i = 0; i < s.taken.Length; i++)
                 if (s.taken[i] == null) free.Add((s, i));
         }

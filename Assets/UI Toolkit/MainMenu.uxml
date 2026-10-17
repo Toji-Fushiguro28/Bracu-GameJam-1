@@ -1,0 +1,71 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="GameUI.uss" />
+    <Style src="MainMenu.uss" />
+    <ui:VisualElement name="menu" class="layer menu-root">
+        <ui:VisualElement class="menu-vignette" picking-mode="Ignore" />
+        <ui:VisualElement name="menu-book" class="book-spread menu-book">
+            <!-- Left page: title and the state of your library -->
+            <ui:VisualElement class="page page-left menu-left">
+                <ui:VisualElement class="menu-stars" picking-mode="Ignore">
+                    <ui:VisualElement class="menu-star" />
+                    <ui:VisualElement class="menu-star big" />
+                    <ui:VisualElement class="menu-star" />
+                </ui:VisualElement>
+                <ui:Label name="menu-title" class="menu-title font-title" text="The Whitmore Library" />
+                <ui:Label name="menu-subtitle" class="menu-subtitle" text="a cozy library tale" />
+                <ui:VisualElement class="menu-divider" />
+                <ui:Label name="menu-save" class="menu-save" />
+                <ui:Label name="menu-tip" class="menu-tip" />
+            </ui:VisualElement>
+            <!-- Right page: main buttons, or a sub-page (settings, credits, confirm) -->
+            <ui:VisualElement class="page page-right menu-right">
+                <ui:VisualElement name="menu-main" class="menu-panel">
+                    <ui:Button name="btn-continue" class="kit-button menu-button" text="Continue" />
+                    <ui:Button name="btn-new" class="kit-button menu-button" text="New Game" />
+                    <ui:Button name="btn-settings" class="kit-button menu-button" text="Settings" />
+                    <ui:Button name="btn-credits" class="kit-button menu-button" text="Credits" />
+                    <ui:Button name="btn-quit" class="kit-button menu-button" text="Quit" />
+                </ui:VisualElement>
+
+                <ui:VisualElement name="menu-confirm" class="menu-panel hidden">
+                    <ui:Label class="page-title font-title" text="Start over?" />
+                    <ui:Label name="confirm-text" class="menu-text" />
+                    <ui:Button name="btn-confirm-yes" class="kit-button menu-button" text="Yes, new library" />
+                    <ui:Button name="btn-confirm-no" class="kit-button menu-button" text="Keep my library" />
+                </ui:VisualElement>
+
+                <ui:VisualElement name="menu-settings" class="menu-panel hidden">
+                    <ui:Label class="page-title font-title" text="Settings" />
+                    <ui:VisualElement name="settings-rows" class="menu-settings" />
+                    <ui:Button name="btn-settings-back" class="kit-button menu-button small-gap" text="Back" />
+                </ui:VisualElement>
+
+                <ui:VisualElement name="menu-credits" class="menu-panel hidden">
+                    <ui:Label class="page-title font-title" text="Credits" />
+                    <ui:ScrollView class="menu-credits">
+                        <ui:Label class="credit-head" text="Team" />
+                        <ui:Label class="credit-name" text="Atikur Rahman Khan Emon" />
+                        <ui:Label class="credit-role" text="Art Direction &amp; 3D Art" />
+                        <ui:Label class="credit-name" text="Sayok Zaman" />
+                        <ui:Label class="credit-role" text="Lead Programmer &amp; Mechanics Design" />
+                        <ui:Label class="credit-name" text="Mashiyat Ahmed Safin" />
+                        <ui:Label class="credit-role" text="Gameplay Designer" />
+                        <ui:Label class="credit-name" text="Adreed Saadad Hasan" />
+                        <ui:Label class="credit-role" text="Additional Programming" />
+                        <ui:Label class="credit-head" text="UI" />
+                        <ui:Label class="credit-line" text="TravelBook Lite UI kit" />
+                        <ui:Label class="credit-line" text="Jersey 10 &amp; Jersey 15 fonts (Sarah Cadigan-Fried, SIL OFL)" />
+                        <ui:Label class="credit-head" text="Sound" />
+                        <ui:Label class="credit-line" text="Sound effects by Yusuf SFX, Dragon Studio and the freesound community" />
+                        <ui:Label class="credit-head" text="Engine" />
+                        <ui:Label class="credit-line" text="Made with Unity" />
+                        <ui:Label class="credit-head" text="Made for" />
+                        <ui:Label class="credit-line" text="BracU Game Jam 2026" />
+                    </ui:ScrollView>
+                    <ui:Button name="btn-credits-back" class="kit-button menu-button small-gap" text="Back" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:Label name="menu-hint" class="menu-hint" text="Click a button to begin" picking-mode="Ignore" />
+    </ui:VisualElement>
+</ui:UXML>

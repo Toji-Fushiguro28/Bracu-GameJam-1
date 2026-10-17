@@ -16,7 +16,7 @@ public class Housekeeping : MonoBehaviour
     public float cleanerInterval = 10f;
     public float repairerInterval = 6f;
 
-    float nextClean, nextRepair;
+    float cleanTimer, repairTimer;
 
     void Awake() => Instance = this;
     void OnDestroy() { if (Instance == this) Instance = null; }
@@ -42,7 +42,7 @@ public class Housekeeping : MonoBehaviour
         int n = Random.Range(openBooksAtClosing.x, openBooksAtClosing.y + 1);
         for (int i = 0; i < n; i++)
         {
-            var spots = MessSpot.Placed.FindAll(m => m.kind == MessSpot.Kind.Book && !m.IsDirty);
+            var spots = MessSpot.Placed.FindAll(m => m.kind == MessSpot.Kind.Book && !m.IsDirty && !RoomGate.IsLockedAt(m.transform.position));
             if (spots.Count == 0) break;
             var spot = spots[Random.Range(0, spots.Count)];
             var pool = gm.Books.FindAll(b => b.Sellable && b.Format == BookFormat.Book && b.BestCopy != null);
@@ -59,16 +59,18 @@ public class Housekeeping : MonoBehaviour
         var gm = GameManager.Instance;
         if (gm == null) return;
 
-        if (gm.Hired(GameManager.StaffRole.Cleaner) && Time.time >= nextClean && MessSpot.All.Count > 0)
+        cleanTimer -= GameManager.Dt;
+        repairTimer -= GameManager.Dt;
+        if (gm.Hired(GameManager.StaffRole.Cleaner) && cleanTimer <= 0f && MessSpot.All.Count > 0)
         {
-            nextClean = Time.time + cleanerInterval;
+            cleanTimer = cleanerInterval;
             MessSpot.All[0].Clean(false);
         }
 
         var desk = RepairDesk.Instance;
-        if (gm.Hired(GameManager.StaffRole.Repairer) && desk != null && Time.time >= nextRepair)
+        if (gm.Hired(GameManager.StaffRole.Repairer) && desk != null && repairTimer <= 0f)
         {
-            nextRepair = Time.time + repairerInterval;
+            repairTimer = repairerInterval;
             var bin = ReturnBin.Instance;
             if (bin != null && bin.TakeNeedingRepair(out var book, out var cond)) desk.DropOff(book, cond);
             if (desk.Working.Count == 0 && desk.Waiting.Count > 0) desk.StartRepair(desk.Waiting[0], 0.5f);
