@@ -787,8 +787,20 @@ public class Customer : ClickInteractable
         }
         else
         Say($"My very own card! Thank you!  +{fee + tip}", 2.5f);
-        Leave();
+        if (wish == null && Random.value < 0.6f) StayAsMember();
+        else Leave();
         return null;
+    }
+
+    /// <summary>A fresh member tries out their card: browse the shelves, or ask for something to read.</summary>
+    void StayAsMember()
+    {
+        CounterQueue.Instance.Leave(this);
+        request = null; clue = null; heard = false; usedHint = false; introduced = false;
+        kind = Random.value < 0.5f ? Kind.Browser : Kind.Reader;
+        if (kind == Kind.Browser && GoBrowse()) return;
+        if (kind == Kind.Browser) kind = Kind.Buyer;
+        JoinQueue();
     }
 
     /// <summary>A book a new member wants the library to get in: preferably one it hasn't got.</summary>

@@ -46,6 +46,14 @@ public class StaffTalk : ClickInteractable
         new[] { "In my day we had card catalogues. Now you have a computer. Marvellous, really.", "Want me to show you?", "Do you miss the cards?", "Perhaps on a slow afternoon. Don't let me press anything.", "A little. They smelled better." },
     };
 
+    // Busy replies once you've had a chat; a new chat is ready a few hours later.
+    static readonly string[] SamBusy = { "Can't stop, boss, these floors won't mop themselves.", "Later, alright? There's a spill with my name on it.", "Back to work for me. Ask me again after tea." };
+    static readonly string[] OmarBusy = { "Sorry, the glue's setting. Can't look away.", "Mid-stitch! Talk later?", "I've got a pile of books glaring at me. Later." };
+    static readonly string[] ArthurBusy = { "Forgive me, a scholar is waiting.", "Duty calls, I'm afraid. Another time.", "The Rare Books won't watch themselves, my dear." };
+    const float TalkCooldownHours = 3.5f;
+    int talkDay = -1;
+    float talkHour;
+
     int lastLine = -1;
     NavMeshAgent agent;
 
@@ -66,14 +74,24 @@ public class StaffTalk : ClickInteractable
     {
         var ui = DialogueUI.Instance;
         if (ui == null || ui.IsOpen) return;
+        var gm = GameManager.Instance;
+        var d = ScriptableObject.CreateInstance<DialogueAsset>();
+        d.speaker = Name;
+        if (gm != null && talkDay == gm.day && gm.Hour - talkHour < TalkCooldownHours)
+        {
+            var busy = role == GameManager.StaffRole.Cleaner ? SamBusy : role == GameManager.StaffRole.Repairer ? OmarBusy : ArthurBusy;
+            d.lines.Add(new DialogueAsset.Line { id = "busy", text = busy[Random.Range(0, busy.Length)], next = "end" });
+            ui.Play(d, () => Destroy(d));
+            return;
+        }
+        if (gm != null) { talkDay = gm.day; talkHour = gm.Hour; }
+
         var lines = Lines;
         int pick = Random.Range(0, lines.Length);
         if (pick == lastLine) pick = (pick + 1) % lines.Length;
         lastLine = pick;
         var t = lines[pick];
 
-        var d = ScriptableObject.CreateInstance<DialogueAsset>();
-        d.speaker = Name;
         var start = new DialogueAsset.Line { id = "start", text = t[0] };
         start.choices.Add(new DialogueAsset.Choice { text = t[1], next = "a" });
         start.choices.Add(new DialogueAsset.Choice { text = t[2], next = "b" });

@@ -279,3 +279,8 @@ Small, contained edits. Please check them when merging:
   - PC → **Audit Log** (`PCAuditView`) has a button for each day so far, with today selected. Newest entries are at the top.
   - Day Report → **Log** tab shows today's entries.
   - Both use `RequestLog.BuildRow`, styled by `.log-*` classes in `PC.uss` and `GameUI.uss`.
+
+## Clock, staff chat, new members
+- The clock only stops for talking, cutscenes and menus (`PlayerLock.FreezesTime`). While you use the PC, a shelf or the repair desk, time keeps running and visitors' patience keeps draining.
+- Staff give one real chat, then a "busy" line for 3.5 game hours (`StaffTalk.TalkCooldownHours`).
+- New members without a book wish stay 60% of the time (`Customer.StayAsMember`): they browse, or queue again to read or buy.

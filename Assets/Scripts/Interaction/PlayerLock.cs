@@ -13,6 +13,16 @@ public static class PlayerLock
 
     public static bool IsLocked => owners.Count > 0;
 
+    /// <summary>True when the game clock should stop: talking, cutscenes, menus. Browsing the PC, shelves or repair desk lets time run.</summary>
+    public static bool FreezesTime
+    {
+        get
+        {
+            foreach (var o in owners) if (!(o is ShelfUI || o is RepairUI || o is PCOverlayTrigger)) return true;
+            return false;
+        }
+    }
+
     /// <summary>Frame the last lock was released; the click that closed a UI must not also interact.</summary>
     public static int UnlockedFrame { get; private set; } = -1;
 

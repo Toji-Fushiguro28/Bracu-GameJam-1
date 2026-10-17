@@ -154,7 +154,7 @@ public class GameManager : MonoBehaviour
     public bool RareOpen => day >= RareDay;
 
     /// <summary>The clock (and patience, reading, repairs...) stands still while a menu or chat is open.</summary>
-    public bool Paused => PlayerLock.IsLocked;
+    public bool Paused => PlayerLock.FreezesTime;
     /// <summary>Game-time delta: 0 while paused.</summary>
     public static float Dt => Instance != null && Instance.Paused ? 0f : Time.deltaTime;
 
