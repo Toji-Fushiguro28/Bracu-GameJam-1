@@ -9,6 +9,7 @@ public class HUD : MonoBehaviour
 {
     static HUD instance;
     VisualElement fade;
+    Label pin;
     bool upgradeBannerShown;
 
     /// <summary>Fades to black, runs <paramref name="atBlack"/>, then fades back in.</summary>
@@ -45,6 +46,12 @@ public class HUD : MonoBehaviour
         fade = new VisualElement { name = "screen-fade", pickingMode = PickingMode.Ignore };
         fade.AddToClassList("screen-fade");
         root.Add(fade); // last child: drawn over everything on this panel
+
+        // Pinned notice under the HUD on a room's opening day (stays until noon).
+        pin = new Label { name = "hud-pin", pickingMode = PickingMode.Ignore };
+        pin.AddToClassList("hud-pin");
+        pin.AddToClassList("hidden");
+        root.Q("hud")?.Add(pin);
 
         // Phase banner and the little "+12" next to the coins.
         banner = new Label { name = "hud-banner", pickingMode = PickingMode.Ignore };
@@ -166,6 +173,15 @@ public class HUD : MonoBehaviour
     {
         UpdateStamina();
         var gm = GameManager.Instance;
+        if (gm != null && pin != null)
+        {
+            string text = gm.Hour < 12f && gm.day == GameManager.ArchiveDay ? "★ The Archive is open today! Readers will ask for its old books."
+                        : gm.Hour < 12f && gm.day == GameManager.RareDay ? "★ Rare Books is open today! A VIP scholar is coming."
+                        : null;
+            bool show = text != null && !MainMenuUI.Active && (RoomReveal.Instance == null || !PlayerLock.IsLocked);
+            pin.EnableInClassList("hidden", !show);
+            if (show && pin.text != text) pin.text = text;
+        }
         if (bannerUntil > 0f && Time.time > bannerUntil) { bannerUntil = 0f; banner.AddToClassList("hidden"); }
         if (gm != null && !lunchShown && gm.Hour >= 12f && gm.Hour < 13f)
         {

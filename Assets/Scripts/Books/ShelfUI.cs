@@ -100,11 +100,15 @@ public class ShelfUI : MonoBehaviour
             // Main Take grabs the best copy; extra buttons let you pick a worn/damaged one on purpose.
             // Only greyed out when there are no copies; full hands are handled in Take().
             var best = book.BestCopy;
-            row.Add(TakeButton("Take", best.HasValue, () => { if (book.BestCopy.HasValue) Take(book, book.BestCopy.Value); }));
+            // Buttons stacked in one column so the title keeps its width.
+            var buttons = new VisualElement();
+            buttons.AddToClassList("take-col");
+            buttons.Add(TakeButton("Take", best.HasValue, () => { if (book.BestCopy.HasValue) Take(book, book.BestCopy.Value); }));
             if (book.GoodCopies > 0 && book.WornCopies > 0)
-                row.Add(TakeButton("Worn", true, () => Take(book, BookCondition.Worn)));
+                buttons.Add(TakeButton("Worn", true, () => Take(book, BookCondition.Worn)));
             if (book.DamagedCopies > 0 && (book.GoodCopies > 0 || book.WornCopies > 0))
-                row.Add(TakeButton("Damaged", true, () => Take(book, BookCondition.Damaged)));
+                buttons.Add(TakeButton("Damaged", true, () => Take(book, BookCondition.Damaged)));
+            row.Add(buttons);
             list.Add(row);
         }
 

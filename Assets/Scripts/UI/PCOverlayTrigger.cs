@@ -322,7 +322,7 @@ public class PCOverlayTrigger : MonoBehaviour
         if (title != null)
             title.text = b.Title;
         if (sub != null)
-            sub.text = (b.Format == BookFormat.Book ? "" : b.FormatName + "  ·  ") + b.Author + "  ·  " + b.Subject;
+            sub.text = (b.Format == BookFormat.Book ? "" : b.FormatName + "  ·  ") + b.Author + "  ·  " + b.Subject + "  ·  " + ShelfInteractable.NameOf(b.ShelfLocation);
         if (meta != null)
         {
             string m = "x" + b.Quantity + "  ·  " + ShelfInteractable.NameOf(b.ShelfLocation);

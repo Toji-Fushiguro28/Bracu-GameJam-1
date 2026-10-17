@@ -122,9 +122,9 @@ What changed in `MainGame.unity` and `Assets/Scripts`, and where. Nothing here c
   - the lights come up and the rope swings aside, with the *fascinated* sound and a banner
   - the camera glides back
 
-  The clock is paused while it plays. The sign then bobs *NOW OPEN!* all day.
+  The clock is paused while it plays. The sign then bobs *NOW OPEN!* all day. A notice also stays pinned at the top of the screen until noon (`HUD` → `hud-pin`).
 - **At least one VIP** comes each day once Rare Books is open.
-- **Fades:** the screen fades between the day's end, the report and the next morning (`HUD.FadeThen`).
+- **Fades:** the screen fades to black at lock-up. The Day Report sits on solid black, and the next morning fades in (`HUD.FadeThen`).
 - **Shops:** both the PC Shop and the end-of-day shop have search and Subject/Type filters (`BookFilterBar`). The catalogue filters reset every time you open the PC.
 - **Small talk:** students only get the exam/CGPA/advising topics (`Customer.StudentTopics`).
 - **Reader chats:**
