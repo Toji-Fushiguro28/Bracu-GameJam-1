@@ -9,10 +9,10 @@ public class Housekeeping : MonoBehaviour
 {
     public static Housekeeping Instance { get; private set; }
 
-    [Range(0f, 1f)] public float cupChance = 0.6f;
+    [Range(0f, 1f)] public float cupChance = 0.8f;
     [Tooltip("How far from the seat a placed cup can be to count as theirs.")]
     public float cupRange = 4f;
-    public Vector2Int openBooksAtClosing = new Vector2Int(1, 3);
+    public Vector2Int openBooksAtClosing = new Vector2Int(2, 4);
     public float cleanerInterval = 10f;
     public float repairerInterval = 6f;
 
@@ -59,21 +59,6 @@ public class Housekeeping : MonoBehaviour
         var gm = GameManager.Instance;
         if (gm == null) return;
 
-        cleanTimer -= GameManager.Dt;
-        repairTimer -= GameManager.Dt;
-        if (gm.Hired(GameManager.StaffRole.Cleaner) && cleanTimer <= 0f && MessSpot.All.Count > 0)
-        {
-            cleanTimer = cleanerInterval;
-            MessSpot.All[0].Clean(false);
-        }
-
-        var desk = RepairDesk.Instance;
-        if (gm.Hired(GameManager.StaffRole.Repairer) && desk != null && repairTimer <= 0f)
-        {
-            repairTimer = repairerInterval;
-            var bin = ReturnBin.Instance;
-            if (bin != null && bin.TakeNeedingRepair(out var book, out var cond)) desk.DropOff(book, cond);
-            if (desk.Working.Count == 0 && desk.Waiting.Count > 0) desk.StartRepair(desk.Waiting[0], 0.5f);
-        }
+        // Hired staff now walk around and do this themselves (see StaffWorker).
     }
 }

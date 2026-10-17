@@ -14,6 +14,7 @@ What changed in `MainGame.unity` and `Assets/Scripts`, and where. Nothing here c
   - **Continue** (only when a save exists; shows Day, coins and members).
   - **New Game** (asks for confirmation if a save exists; wipes it and reloads straight into Day 1).
   - **Start** (when there's no save).
+  - **How to Play** (8 short pages: controls and stamina, counter, finding books, sold out, cards and readers, repairs and rooms, staff, end of day).
   - **Settings** (volume, music, day length, fullscreen; same values as the PC Settings screen).
   - **Credits**.
   - **Quit** (hidden on WebGL).
@@ -23,6 +24,24 @@ What changed in `MainGame.unity` and `Assets/Scripts`, and where. Nothing here c
 - The title and subtitle are fields on `MainMenuUI` (`gameTitle`, `subtitle`). Team credits are in `MainMenu.uxml` (Credits page).
 - **Build Settings:** `MainGame.unity` is now first; `SampleScene` is unchecked.
 
+## 0b. Play modes
+
+- Picked when starting a new game. **Standard is the intended way to play**: it's marked *★ Recommended*, it's selected by default, and How to Play says so.
+
+| | Cozy | **Standard** | Busy |
+|---|---|---|---|
+| Patience | x1.5, visitors never storm out | x1 | x0.7 |
+| Visitors | x0.75 | x1 | x1.3, +1 at once |
+| Sold-out requests (Day 2+) | 10% | 20-25% | 35% |
+| Hints | first hint is free | ask once | none |
+| Starting coins | 100 | 50 | 30 |
+| Order prices | -20% | x1 | +20% |
+| Wrong-book penalty | x0.5 | x1 | x1.5 |
+
+- Code: `GameManager.Difficulty`; all the numbers come from `Mode(...)` in `GameManager`.
+- The mode is saved, shown in the menu and the Day Report title, and can be changed in **Settings** (PC or menu).
+- **Return bin glow:** `ReturnBinGlow` on `SM_ReturnBin` (material `M_BinGlow`) gives the bin a pulsing gold outline whenever it has books in it.
+
 ## 1. How a day plays now
 
 1. **Morning.** A banner shows the day, room openings and any reservation pickups. Last night's book orders are waiting in the **Delivery cart**..
@@ -30,10 +49,10 @@ What changed in `MainGame.unity` and `Assets/Scripts`, and where. Nothing here c
 
    | Visitor | Share | What the player does |
    |---|---|---|
-   | Browser | 35% | Picks a book off a shelf themselves. 60% sit and read it (then **Check in**, reading fee; you can **Chat**); 40% take it home (**Stamp out** at the counter). Tune with `Customer.readHereChance` |
+   | Browser | 40% | Picks a book off a shelf themselves. 75% sit and read it (then **Check in**, reading fee; you can **Chat**); 25% take it home (**Stamp out** at the counter). Tune with `Customer.readHereChance` |
    | Reader | 30% | Find the book, they read on a seat, you can **Chat**, then **Check in** for a reading fee |
    | Buyer | rest | Find the book from the hint; if it's sold out, **reserve** it and order it |
-   | Returner | 10% | **Check in** (sometimes a late fee) |
+   | Returner | 8% | **Check in** (sometimes a late fee) |
    | Sign-up | 15% of non-members | Talk to them, then fill the card in on **PC → Members** |
    | VIP scholar | 8%, Day 3+ | Professors with a gold name plate; need a **Rare** card, then read in Rare Books |
    | Pickup | first thing in the morning | Comes for yesterday's reservation |
@@ -83,6 +102,14 @@ What changed in `MainGame.unity` and `Assets/Scripts`, and where. Nothing here c
 - **`Members.cs`**: profiles (name, date of birth, access level) for the 12 visitors, and membership satisfaction, which scales tips and patience.
 - **`SeatPoint.cs`**: skips seats inside locked rooms.
 
+- **Counter requests:** a visitor waiting at the counter only shows a small orange **?** bubble until you talk to them. After the conversation, their request (plus any hint) stays above their head as a reminder. This is `Customer.heard`.
+- **Hints cost a third of the tip:** the choice reads *"Could you give me a hint? (smaller tip)"* (`Customer.usedHint`). Cozy's free hint has no cost.
+- **Reader chats:**
+  - The first chat with a seated reader is the "where would I find more like this?" shelf question, which earns a tip bonus.
+  - The second chat is one bit of small talk (two replies). Topics come from a shared pool of 35 in `Customer.Topics` (12 general + all 23 notice-board jokes), so different readers say different things, with no repeats until all are used. After that the reader just says "Shh... I'm at a good part!"-type lines.
+- **Reading time:** 50–90 s (`Customer.readSeconds`).
+- **Dean Whitmore** visits as a regular customer (profile *Edgar Whitmore*, Archive card). The fixed scene copies of the Dean and Maya under `NPCs` are switched off so they don't appear twice.
+
 ### Books and ordering
 - **`PlayerCarry.cs`** is now a **bag**.
   - It holds `GameManager.BagCapacity` books (1 + the Book bag upgrade).
@@ -120,8 +147,13 @@ What changed in `MainGame.unity` and `Assets/Scripts`, and where. Nothing here c
 ### Core (`Assets/Scripts/Core/`)
 - **`DayNightCycle.cs`** (new): blends a night volume (`VP_Night`) in from 16:00 to full at closing, and fades the window light shafts. `VP_Cozy` stays the daytime grade.
 - **`GameAudio.cs`** (new): one place for gameplay sounds, assigned in the Inspector. It covers coins, customers, wrong book, tidy, cards, closing, the report, new day, unlock, panel open and close, and PC open and close. It also adds click sounds to the game UI and the PC.
-- **Upgrades (8):** Repair tools, Restoration kit, Comfy queue, Running shoes, Cozy lamps, Reading nooks, Town flyers, **Book bag** (new).
-- **Staff:** Repairer, Cleaner, Rare Books attendant.
+- **Upgrades (9):** Repair tools, Restoration kit, Comfy queue, Running shoes, Cozy lamps, Reading nooks, Town flyers, **Book bag**, **Stamina**. Listed as rows on the PC Shop, each with a TravelBook kit icon (`.upg-N` in `PC.uss`).
+- **Stamina** (`PlayerMover`): running drains a meter (3 s base, +1.5 s per Stamina level). Empty means a cooldown until it refills. A small energy bar floats over the librarian while running or recovering (`HUD`).
+- **Staff are real characters** (`StaffManager` on GameManager + `StaffWorker`). Hiring order: **Cleaner** (Day 1), **Archivist** (Day 2), **Rare Books attendant** (Day 3).
+  - **Cleaner: Janitor Sam.** Hidden until hired. Roams the hall, walks to each cup or open book and tidies it; open books go back to their shelf.
+  - **Archivist: Omar.** Types at `SM_Chair_Wood_Archive staff` (typing sound). Fetches **one** worn or damaged copy at a time from the return bin, repairs it at the repair desk (he pays the repair cost), then goes back to typing.
+  - **Rare Books attendant: Arthur.** Reads at `SM_Chair_Wood_Rare Staff`. VIP scholars with a Rare card skip the counter: he hands them a rare book and checks them in, and the fee still comes to you.
+  - Both staff chairs have `SeatPoint.staffOnly`, so visitors never take them. Staff characters don't also turn up as customers while hired.
 
 ### UI
 - **`HUD.cs`**:

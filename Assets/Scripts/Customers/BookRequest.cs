@@ -91,7 +91,7 @@ public class BookRequest
         int day = gm != null ? gm.day : 3;
 
         // Sometimes a buyer wants a title that's sold out: check the catalogue, then order and reserve it.
-        if (!forReading && Random.value < OutOfStockChance(day))
+        if (!forReading && Random.value < (gm != null ? gm.OutOfStockChance : OutOfStockChance(day)))
         {
             var missing = items.Where(b => b.Sellable && !InStock(b)).ToList();
             if (missing.Count > 0)

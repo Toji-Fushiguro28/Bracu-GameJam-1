@@ -22,9 +22,28 @@
                 <ui:VisualElement name="menu-main" class="menu-panel">
                     <ui:Button name="btn-continue" class="kit-button menu-button" text="Continue" />
                     <ui:Button name="btn-new" class="kit-button menu-button" text="New Game" />
+                    <ui:Button name="btn-howto" class="kit-button menu-button" text="How to Play" />
                     <ui:Button name="btn-settings" class="kit-button menu-button" text="Settings" />
                     <ui:Button name="btn-credits" class="kit-button menu-button" text="Credits" />
                     <ui:Button name="btn-quit" class="kit-button menu-button" text="Quit" />
+                </ui:VisualElement>
+
+                <ui:VisualElement name="menu-mode" class="menu-panel hidden">
+                    <ui:Label class="page-title font-title" text="Choose your pace" />
+                    <ui:Button name="mode-1" class="kit-button mode-card recommended">
+                        <ui:Label class="mode-badge" text="★ Recommended" />
+                        <ui:Label class="mode-name" text="Standard" />
+                        <ui:Label class="mode-info" text="The way this game is meant to be played." />
+                    </ui:Button>
+                    <ui:Button name="mode-0" class="kit-button mode-card">
+                        <ui:Label class="mode-name" text="Cozy" />
+                        <ui:Label class="mode-info" text="Relaxed: patient visitors, free hints, more coins." />
+                    </ui:Button>
+                    <ui:Button name="mode-2" class="kit-button mode-card">
+                        <ui:Label class="mode-name" text="Busy" />
+                        <ui:Label class="mode-info" text="Challenge: more visitors, short tempers, no hints." />
+                    </ui:Button>
+                    <ui:Button name="btn-mode-back" class="kit-button menu-button small-gap" text="Back" />
                 </ui:VisualElement>
 
                 <ui:VisualElement name="menu-confirm" class="menu-panel hidden">
@@ -32,6 +51,17 @@
                     <ui:Label name="confirm-text" class="menu-text" />
                     <ui:Button name="btn-confirm-yes" class="kit-button menu-button" text="Yes, new library" />
                     <ui:Button name="btn-confirm-no" class="kit-button menu-button" text="Keep my library" />
+                </ui:VisualElement>
+
+                <ui:VisualElement name="menu-howto" class="menu-panel hidden">
+                    <ui:Label name="howto-title" class="page-title font-title" text="How to Play" />
+                    <ui:Label name="howto-text" class="howto-text" />
+                    <ui:VisualElement class="howto-nav">
+                        <ui:Button name="btn-howto-prev" class="kit-button howto-arrow" text="&lt;" />
+                        <ui:Label name="howto-page" class="howto-page" />
+                        <ui:Button name="btn-howto-next" class="kit-button howto-arrow" text="&gt;" />
+                    </ui:VisualElement>
+                    <ui:Button name="btn-howto-back" class="kit-button menu-button small-gap" text="Back" />
                 </ui:VisualElement>
 
                 <ui:VisualElement name="menu-settings" class="menu-panel hidden">

@@ -17,9 +17,9 @@ public class CustomerSpawner : MonoBehaviour
     public int maxCustomers = 4;
 
     [Header("Visitor mix (the rest are buyers)")]
-    [Range(0f, 1f)] public float browserChance = 0.35f;
+    [Range(0f, 1f)] public float browserChance = 0.40f;
     [Range(0f, 1f)] public float readerChance = 0.30f;
-    [Range(0f, 1f)] public float returnerChance = 0.10f;
+    [Range(0f, 1f)] public float returnerChance = 0.08f;
     [Tooltip("Chance a visitor without a library card comes to sign up.")]
     [Range(0f, 1f)] public float signUpChance = 0.15f;
     [Tooltip("Chance (from day 3) a professor visits as a VIP scholar.")]
@@ -62,7 +62,7 @@ public class CustomerSpawner : MonoBehaviour
         // Reputation and flyers bring more visitors; lunch is quiet.
         float busy = (1f + Mathf.Min(gm.Reputation, 60) / 40f) * gm.VisitorMultiplier * Mathf.Max(0.2f, busyness.Evaluate(gm.Hour));
         spawnTimer = Random.Range(interval.x, interval.y) / busy;
-        int cap = maxCustomers + Mathf.Min(3, gm.Reputation / 15);
+        int cap = maxCustomers + gm.ModeExtraVisitors + Mathf.Min(3, gm.Reputation / 15);
         if (FindObjectsByType<Customer>().Length >= cap) { spawnTimer = 3f; return; }
         Spawn(queue, gm);
     }
@@ -122,7 +122,7 @@ public class CustomerSpawner : MonoBehaviour
         go.SetActive(true);
     }
 
-    /// <summary>Professors only come as VIPs; everyone else is a regular visitor.</summary>
+    /// <summary>Professors only come as VIPs; everyone else (the Dean too) is a regular visitor.</summary>
     GameObject Pick(bool vip)
     {
         var pool = new List<int>();
@@ -130,7 +130,8 @@ public class CustomerSpawner : MonoBehaviour
         {
             var p = customerPrefabs[i];
             if (p == null) continue;
-            bool professor = p.name.Contains("Professor") || p.name.Contains("Dean");
+            if (StaffManager.Instance != null && StaffManager.Instance.IsStaffCharacter(p.name)) continue; // working here today
+            bool professor = p.name.Contains("Professor");
             if (professor == vip) pool.Add(i);
         }
         if (pool.Count == 0) return null;

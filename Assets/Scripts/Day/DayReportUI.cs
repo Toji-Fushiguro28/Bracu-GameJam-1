@@ -110,7 +110,7 @@ public class DayReportUI : MonoBehaviour
     {
         var gm = GameManager.Instance;
         var d = gm.Today;
-        root.Q<Label>("report-title").text = $"Day {gm.day} Report";
+        root.Q<Label>("report-title").text = $"Day {gm.day} Report  ·  {GameManager.DifficultyNames[(int)gm.difficulty]}";
         stats.text =
             $"Visitors served      {d.served}\n" +
             $"Left unhappy         {d.angry}\n" +
@@ -178,12 +178,12 @@ public class DayReportUI : MonoBehaviour
 
     void BuildStaff(GameManager gm)
     {
-        for (int i = 0; i < GameManager.StaffNames.Length; i++)
+        foreach (var role in GameManager.StaffOrder)
         {
-            var role = (GameManager.StaffRole)i;
-            bool hired = gm.Hired(role);
+            int i = (int)role;
+            bool hired = gm.Hired(role), open = gm.StaffUnlocked(role);
             AddRow(GameManager.StaffNames[i], $"{GameManager.StaffInfo[i]}  Wage {GameManager.StaffWage[i]} / day.",
-                   hired ? "Let go" : "Hire", true, () => gm.ToggleStaff(role));
+                   hired ? "Let go" : open ? "Hire" : $"Day {GameManager.StaffUnlockDay[i]}", hired || open, () => gm.ToggleStaff(role));
         }
     }
 

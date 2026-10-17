@@ -38,6 +38,7 @@ public static class Members
         { "PF_NPC_Student_Nadia", P("Nadia Karim", "03 Oct 2001", AccessLevel.Archive, "I'll need the Archive for my journals.") },
         { "PF_NPC_Student_Ravi", P("Ravi Sen", "17 Apr 2004", AccessLevel.Basic, "Basic card, please - I'm new here.") },
         { "PF_NPC_Visitor_Arthur", P("Arthur Pembrey", "09 Nov 1971", AccessLevel.Basic, "Just visiting town. The main hall will do nicely.") },
+        { "PF_NPC_Dean_Whitmore", P("Edgar Whitmore", "12 Apr 1955", AccessLevel.Archive, "I'm the Dean, but rules are rules. The Archive is my favourite room.") },
         { "PF_NPC_Writer_Finn", P("Finn Calloway", "25 Aug 1990", AccessLevel.Archive, "I'm writing a novel - the Archive has the old papers I need.") },
     };
 

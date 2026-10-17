@@ -91,5 +91,30 @@
     -unity-text-outline-color: rgb(40, 30, 20);
     opacity: 0.85;
 }
+.howto-text { color: var(--ink); font-size: 20px; white-space: normal; margin: 4px 10px; flex-grow: 1; min-height: 300px; }
+.howto-nav { flex-direction: row; align-items: center; justify-content: center; }
+.howto-arrow { font-size: 26px; padding: 0 14px 6px 14px; margin: 0 10px; }
+.howto-page { color: var(--ink-soft); font-size: 20px; min-width: 60px; -unity-text-align: middle-center; }
 .credit-name { color: var(--ink); font-size: 21px; -unity-text-align: middle-center; margin-top: 6px; }
 .credit-role { color: var(--ink-soft); font-size: 17px; -unity-text-align: middle-center; }
+
+/* ---------- Mode picker ---------- */
+.mode-card {
+    align-self: stretch;
+    margin: 6px 16px;
+    padding: 8px 14px 12px 14px;
+    align-items: center;
+    transition-property: scale, translate;
+    transition-duration: 0.12s;
+}
+.mode-card:hover { scale: 1.04 1.04; translate: 0 -2px; }
+.mode-card:active { scale: 0.97 0.97; }
+.mode-card.recommended {
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_FrameSelect01a.png");
+    padding-top: 6px;
+    margin-bottom: 12px;
+}
+.mode-badge { color: var(--accent); font-size: 18px; -unity-text-align: middle-center; }
+.mode-name { color: var(--ink); font-size: 30px; -unity-text-align: middle-center; }
+.mode-card.recommended .mode-name { font-size: 34px; color: var(--accent); }
+.mode-info { color: var(--ink-soft); font-size: 17px; white-space: normal; -unity-text-align: middle-center; }

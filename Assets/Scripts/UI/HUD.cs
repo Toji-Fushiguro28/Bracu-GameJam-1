@@ -12,6 +12,8 @@ public class HUD : MonoBehaviour
     PlayerCarry carry;
     string lastClock;
     Label banner, coinDelta;
+    VisualElement stamina, staminaFill;
+    PlayerMover mover;
     float bannerUntil, deltaUntil;
 
     void OnEnable()
@@ -85,6 +87,8 @@ public class HUD : MonoBehaviour
         }
         var player = GameObject.FindWithTag("Player");
         carry = player ? player.GetComponent<PlayerCarry>() : null;
+        mover = player ? player.GetComponent<PlayerMover>() : null;
+        BuildStaminaMeter(player);
         if (carry != null) carry.Changed += ShowCarry;
         ShowCarry(carry != null ? carry.Carried : null);
     }
@@ -105,8 +109,36 @@ public class HUD : MonoBehaviour
         carryLabel.text = text;
     }
 
+    /// <summary>Little energy bar over the librarian's head, shown while running or catching breath.</summary>
+    void BuildStaminaMeter(GameObject player)
+    {
+        if (player == null || WorldPrompts.Instance == null) return;
+        stamina = new VisualElement { pickingMode = PickingMode.Ignore };
+        stamina.AddToClassList("stamina");
+        var icon = new VisualElement { pickingMode = PickingMode.Ignore };
+        icon.AddToClassList("stamina-icon");
+        var bar = new VisualElement { pickingMode = PickingMode.Ignore };
+        bar.AddToClassList("stamina-bar");
+        staminaFill = new VisualElement { pickingMode = PickingMode.Ignore };
+        staminaFill.AddToClassList("stamina-fill");
+        bar.Add(staminaFill);
+        stamina.Add(icon);
+        stamina.Add(bar);
+        WorldPrompts.Instance.Follow(stamina, () => player.transform.position + Vector3.up * 1.55f);
+    }
+
+    void UpdateStamina()
+    {
+        if (stamina == null || mover == null) return;
+        float s = mover.Stamina01;
+        stamina.EnableInClassList("shown", s < 0.999f || mover.Running);
+        stamina.EnableInClassList("tired", mover.Exhausted);
+        staminaFill.style.width = Length.Percent(s * 100f);
+    }
+
     void Update()
     {
+        UpdateStamina();
         var gm = GameManager.Instance;
         if (bannerUntil > 0f && Time.time > bannerUntil) { bannerUntil = 0f; banner.AddToClassList("hidden"); }
         if (gm != null && !lunchShown && gm.Hour >= 12f && gm.Hour < 13f)

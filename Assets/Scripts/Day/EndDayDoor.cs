@@ -24,7 +24,7 @@ public class EndDayDoor : ClickInteractable
         if (gm == null) return;
         if (gm.CurrentPhase != GameManager.Phase.Closed)
         {
-            Bubble(gm.CurrentPhase == GameManager.Phase.Open ? $"The library's open until {gm.closeHour:0}:00." : "Almost closing time...");
+            Bubble(gm.CurrentPhase == GameManager.Phase.Open ? $"The library's open until {(gm.closeHour > 12f ? gm.closeHour - 12f : gm.closeHour):0}:00 PM." : "Almost closing time...");
             return;
         }
         if (FindObjectsByType<Customer>().Length > 0) { Bubble("Wait until the last visitor has left."); return; }

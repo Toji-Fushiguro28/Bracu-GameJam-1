@@ -38,6 +38,8 @@ public class ReturnBin : ClickInteractable
         get { foreach (var c in pile) yield return (c.book, c.condition); }
     }
 
+    public bool HasNeedingRepair => pile.Exists(c => c.condition != BookCondition.Good);
+
     /// <summary>Repairer staff: takes the newest worn/damaged copy out of the bin.</summary>
     public bool TakeNeedingRepair(out BookData book, out BookCondition condition)
     {

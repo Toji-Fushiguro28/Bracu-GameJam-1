@@ -13,6 +13,8 @@ public class SeatPoint : MonoBehaviour
     public float approachDistance = 0.65f;
     [Tooltip("Only VIP readers (Dean, professors) may sit here, e.g. in Rare Books.")]
     public bool rareBooksOnly;
+    [Tooltip("Reserved for library staff: visitors never sit here.")]
+    public bool staffOnly;
 
     static readonly List<SeatPoint> all = new List<SeatPoint>();
     Customer[] taken;
@@ -38,7 +40,7 @@ public class SeatPoint : MonoBehaviour
         var free = new List<(SeatPoint, int)>();
         foreach (var s in all)
         {
-            if (s.rareBooksOnly != rareRoom) continue;
+            if (s.staffOnly || s.rareBooksOnly != rareRoom) continue;
             if (RoomGate.IsLockedAt(s.transform.position)) continue; // that room isn't open yet
             for (int i = 0; i < s.taken.Length; i++)
                 if (s.taken[i] == null) free.Add((s, i));

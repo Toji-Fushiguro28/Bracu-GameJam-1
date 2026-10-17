@@ -29,11 +29,11 @@ public class Customer : ClickInteractable
     public float walkSpeed = 1.6f;
     [Tooltip("Share of patience lost for a wrong book.")]
     public float wrongBookPenalty = 0.2f;
-    public Vector2 readSeconds = new Vector2(25f, 45f);
+    public Vector2 readSeconds = new Vector2(50f, 90f);
     [Tooltip("Everyone waits this much longer than the base request time: cozy, not frantic.")]
     public float patienceScale = 1.6f;
     [Tooltip("Browsers who sit and read their pick here (the rest take it home).")]
-    [Range(0f, 1f)] public float readHereChance = 0.6f;
+    [Range(0f, 1f)] public float readHereChance = 0.75f;
 
     NavMeshAgent agent;
     CharacterAnimator anim;
@@ -72,7 +72,7 @@ public class Customer : ClickInteractable
             {
                 case State.CheckIn: return "Check in";
                 case State.Checkout: return "Stamp out";
-                case State.Reading: return chatted ? "Reading..." : "Chat";
+                case State.Reading: return "Chat";
             }
             if (kind == Kind.SignUp) return introduced ? "Card on the PC" : "Talk";
             var carry = GameObject.FindWithTag("Player")?.GetComponent<PlayerCarry>();
@@ -137,6 +137,7 @@ public class Customer : ClickInteractable
             if (request != null && request.Target == null) { kind = Kind.Buyer; request = null; reservation = null; }
         }
         if (kind == Kind.Browser && GoBrowse()) return;
+        if (vip && kind == Kind.Reader && AttendantServes()) return;
         if (kind == Kind.Browser) kind = Kind.Buyer; // nothing on the shelves: ask instead
         JoinQueue();
     }
@@ -211,9 +212,14 @@ public class Customer : ClickInteractable
         }
     }
 
+    /// <summary>Until you talk to them, a waiting visitor only shows a small "?" bubble.</summary>
+    bool heard;
+    string WaitingText => heard ? RequestText : AskMark;
+    const string AskMark = "?";
+
     void ShowIdleLine()
     {
-        speech.text = state == State.Waiting ? RequestText
+        speech.text = state == State.Waiting ? WaitingText
                     : state == State.CheckIn ? CheckInLine
                     : state == State.Checkout ? CheckoutLine : "";
         speech.EnableInClassList("hidden", string.IsNullOrEmpty(speech.text));
@@ -223,6 +229,27 @@ public class Customer : ClickInteractable
     {
         var d = p - transform.position; d.y = 0f;
         if (d.sqrMagnitude > 0.01f) transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(d), 360f * Time.deltaTime);
+    }
+
+    // ---------------- VIP with the Rare Books attendant ----------------
+
+    /// <summary>With an attendant on duty, a VIP scholar skips the counter: Arthur hands them a rare book.</summary>
+    bool AttendantServes()
+    {
+        if (!GM.RareOpen || StaffManager.Instance == null || !StaffManager.Instance.Working(GameManager.StaffRole.RareAttendant)) return false;
+        var rare = GM.Books.FindAll(b => BookRequest.IsRare(b) && BookRequest.InStock(b));
+        if (rare.Count == 0) return false;
+        var book = rare[Random.Range(0, rare.Count)];
+        var cond = book.GoodCopies > 0 ? BookCondition.Good : BookCondition.Worn;
+        if (!SeatPoint.TryReserve(this, true, out seat, out seatIndex)) return false;
+        if (!book.TakeCopy(cond)) { seat.Release(this); seat = null; return false; }
+        heldBook = book;
+        heldCondition = cond;
+        GM.NotifyBooksChanged();
+        Say("Good day! The attendant has my book ready.", 3f);
+        state = State.ToSeat;
+        agent.SetDestination(NearestOnNavMesh(seat.ApproachPosition(seatIndex)));
+        return true;
     }
 
     // ---------------- Browsing (self-service) ----------------
@@ -332,7 +359,7 @@ public class Customer : ClickInteractable
         {
             StartPatience(70f);
             state = State.Waiting;
-            Say(RequestText);
+            Say(WaitingText);
             return;
         }
         if (kind != Kind.Pickup)
@@ -340,7 +367,8 @@ public class Customer : ClickInteractable
         if (request == null) { Say("Oh... nothing I want today."); Leave(); return; }
         StartPatience(kind == Kind.Pickup ? 70f : request.Patience);
         state = State.Waiting;
-        Say(RequestText);
+        if (GM.FreeFirstHint && kind != Kind.Pickup) clue = HintText(); // Cozy: the hint comes for free
+        Say(WaitingText);
     }
 
     void StartPatience(float seconds)
@@ -366,6 +394,7 @@ public class Customer : ClickInteractable
             anim.SetActivity(low ? CharacterAnimator.Activity.Impatient : CharacterAnimator.Activity.None);
         }
         if (patience > 0f) return;
+        if (GM.NoStormingOut) { patience = 0f; return; } // Cozy: they wait, just not happily
         if (state == State.CheckIn) GiveUpCheckIn();
         else if (state == State.Checkout) GiveUpCheckout();
         else LeaveAngry();
@@ -401,6 +430,7 @@ public class Customer : ClickInteractable
         if (kind == Kind.SignUp)
         {
             introduced = true;
+            heard = true;
             WaitingForCard = this;
             Say(RequestText);
             return;
@@ -426,6 +456,7 @@ public class Customer : ClickInteractable
     {
         var ui = DialogueUI.Instance;
         if (ui == null || ui.IsOpen) return;
+        heard = true;
 
         var d = ScriptableObject.CreateInstance<DialogueAsset>();
         d.speaker = vip ? $"{FullName} (VIP)" : FirstName;
@@ -439,7 +470,7 @@ public class Customer : ClickInteractable
 
         bool pickup = kind == Kind.Pickup;
         bool soldOut = !pickup && request.OutOfStock(GM.Books);
-        if (!pickup && clue == null) start.choices.Add(new DialogueAsset.Choice { text = "Could you give me a hint?", next = "hint" });
+        if (!pickup && clue == null && !GM.NoHints) start.choices.Add(new DialogueAsset.Choice { text = "Could you give me a hint? (smaller tip)", next = "hint" });
         if (pickup)
             start.choices.Add(new DialogueAsset.Choice { text = "Sorry, it isn't here yet.", next = "notyet" });
         else
@@ -469,9 +500,10 @@ public class Customer : ClickInteractable
             ui.LineShown -= seen;
             Destroy(d);
             if (state != State.Waiting) return;
+            Say(RequestText); // pinned overhead now that you've heard it
             switch (outcome)
             {
-                case "hint": clue = hintText; Say(RequestText); break;
+                case "hint": clue = hintText; usedHint = true; Say(RequestText); break;
                 case "reserve":
                     if (soldOut) ReserveAndLeave();
                     else { GameAudio.Play(a => a.wrongBook); Penalise(0.15f); }
@@ -526,6 +558,10 @@ public class Customer : ClickInteractable
         Leave();
     }
 
+    /// <summary>Asking for a hint costs a third of the tip (Cozy's free hint doesn't count).</summary>
+    bool usedHint;
+    float HintTipFactor => usedHint ? 0.67f : 1f;
+
     /// <summary>A nudge in the right direction, never the answer.</summary>
     string HintText()
     {
@@ -552,7 +588,14 @@ public class Customer : ClickInteractable
     void Chat()
     {
         var ui = DialogueUI.Instance;
-        if (chatted || heldBook == null) { Say(Pick("Shh... I'm at a good part!", "Mm-hm, still reading.", "Just a few more pages!"), 2f); return; }
+        if (heldBook == null) return;
+        if (chatted && smallTalked)
+        {
+            // They've said their piece: back to the book.
+            Say(Pick("Shh... I'm at a good part!", "Mm-hm, still reading.", "Just a few more pages!", "Can't talk, plot twist!", "Five more minutes..."), 2f);
+            return;
+        }
+        if (chatted) { SmallTalk(); return; }
         if (ui == null || ui.IsOpen) return;
         chatted = true;
 
@@ -597,6 +640,78 @@ public class Customer : ClickInteractable
 
     static string Pick(params string[] lines) => lines[Random.Range(0, lines.Length)];
 
+    // ---------------- Small talk (every chat after the first is different) ----------------
+
+    // {0} = book title, {1} = author, {2} = subject. Each topic: their line, two replies, their answers.
+    static readonly string[][] Topics =
+    {
+        new[] { "Did you know \"{0}\" was nearly never published?", "Really? Tell me more!", "Lucky for us it was.", "So the story goes! I love a book with a past.", "Lucky indeed. I'd be lost without it." },
+        new[] { "This chair is so comfy I might never leave.", "Stay as long as you like.", "We do close at six...", "You're too kind. Just one more chapter, then.", "Ha! I'll be out before the bell, promise." },
+        new[] { "I always read {1} with a cup of tea.", "The tea's on the house today.", "Careful with the pages!", "Oh, you spoil me!", "Don't worry, I'm a very tidy reader." },
+        new[] { "It's so quiet in here. I can finally think.", "That's what libraries are for.", "Enjoy it before the rush!", "Exactly. No phones, no noise. Bliss.", "Ha, I'll savour every minute." },
+        new[] { "Is it true the library has a ghost?", "He's our Senior Librarian now.", "Only on Tuesdays.", "Ha! Then I'd better behave.", "Good thing it's not Tuesday... is it?" },
+        new[] { "I'm learning so much about {2} today.", "Ask me if you need more.", "Knowledge is the best souvenir.", "I might! You know this place so well.", "I like that. I'll take some home." },
+        new[] { "My exams are next week. Wish me luck!", "You'll do great!", "Did you study yesterday too?", "Thank you, that really helps.", "...Let's not talk about yesterday." },
+        new[] { "I found a pressed flower in here. Someone left it years ago.", "Keep it safe inside the book.", "A little gift from the past.", "I will. It feels like it belongs here.", "Isn't it lovely? Books remember people." },
+        new[] { "Do you ever get time to read yourself?", "Every quiet moment!", "Not today, it's busy!", "Lucky you. You must have read them all.", "Then I'll be quick and free up a seat!" },
+        new[] { "The light from the windows is perfect for reading.", "Best seat in the house.", "Wait until the evening lamps.", "I'll come back to this exact spot.", "Ooh, I'll stay to see that." },
+        new[] { "I read this once as a child. It's even better now.", "Some books grow up with you.", "What changed?", "They really do, don't they?", "Me, I suppose. The book stayed the same." },
+        new[] { "Just checking: you won't lock me in at closing time?", "We'll ring the bell first.", "Only if you're very quiet.", "Phew! Good to know.", "Ha! I'll keep one eye on the clock." },
+
+        // From the notice board: library notices
+        new[] { "The notice says the guy wearing a hat was near the restricted section again. Who is he?", "Nobody knows. Nobody asks.", "Probably just a very keen reader.", "...I'm going to keep my eyes on my book.", "A keen reader in a hat. Sure. Sure." },
+        new[] { "I swear this book just stared back at me.", "No it didn't.", "Turn the page slowly...", "Right. It didn't. Okay. Moving on.", "Don't say that! Now I'm scared to." },
+        new[] { "Is it true the library ghost got promoted to Senior Librarian?", "Well deserved. Never misses a shift.", "Shh, they might hear you.", "Ha! More reliable than most staff, I bet.", "...Sorry, Senior Librarian." },
+        new[] { "Someone keeps moving the chairs. Was it you?", "We know what you did.", "I plead the fifth.", "W-what? I only moved mine a little!", "Very suspicious. Very suspicious indeed." },
+        new[] { "Does sleeping in the library count as studying?", "Probably not.", "Only if the book is on your face.", "Hmm. I'll call it 'resting my eyes', then.", "Perfect, that's my whole plan." },
+        new[] { "Someone left 17 books on one table yesterday!", "We're getting them help.", "Was it you?", "Seventeen! That's a whole personality.", "Only twelve! The rest weren't mine." },
+        new[] { "The group study table next door is SO loud.", "It's not a shouting contest.", "Want me to have a word?", "Thank you! Somebody had to say it.", "Yes please. Gently. They look scary." },
+        new[] { "The notice board says my assignment is due tomorrow. How did it know?", "That's your sign.", "Libraries know everything.", "Ugh. Fine. Back to work.", "That's honestly terrifying." },
+        new[] { "Someone keeps making eye contact with me across the shelves...", "The library is not a dating app.", "Maybe say hello?", "Right. Eyes on the book. Eyes on the book.", "In a library? I'd die of embarrassment!" },
+        new[] { "Did you hear whispering from the basement just now?", "Please ignore it.", "That's just the old pipes.", "Ignoring it. Very loudly ignoring it.", "...Pipes don't whisper my name." },
+        new[] { "The forecast says a 90% chance of academic suffering today.", "Bring an umbrella.", "The other 10% is tea.", "Ha! Too late, I'm already soaked.", "I'll take that 10%, thank you." },
+
+        // From the notice board: BRAC University notices
+        new[] { "Advising season has begun. I'm nervous.", "May the odds be ever in your favour.", "You'll find a good slot!", "Thanks... I'll need all the luck.", "From your mouth to the portal's ears." },
+        new[] { "My friend said this trimester will be easy. Haven't seen them since.", "They've been reported missing.", "Check the Archive.", "Rest in peace, brave soul.", "Ha! They're probably still in there." },
+        new[] { "I just told my advisor 'just one more course'.", "You're wanted dead or alive now.", "Bold move.", "Oh no. What have I done?", "Bold, or foolish. We'll find out." },
+        new[] { "Is it okay to calculate my CGPA in here?", "Please don't, the calculators are scared.", "Only if you whisper the numbers.", "Fine, I'll spare the poor calculators.", "Three point... no. I can't say it." },
+        new[] { "My group project has one active member. Me.", "Investigations are ongoing.", "You deserve a medal.", "Glad someone's on the case.", "I'll accept it as extra credit." },
+        new[] { "Someone reserved this study space and vanished for three hours.", "The seat is yours now.", "Maybe they're in the Archive.", "Finders keepers!", "Lost among the old newspapers, probably." },
+        new[] { "I'm writing my essay and... Turnitin has entered the chat.", "Cite your sources!", "Write it in your own words.", "Already did! Mostly. Probably.", "Easier said than done, but okay!" },
+        new[] { "All the good course sections are full again.", "Have a wonderful day!", "There's always next trimester.", "Very funny. Very, very funny.", "That's what I said last trimester..." },
+        new[] { "I'll start my studying tonight. For real this time.", "The most popular academic fiction.", "I believe in you.", "Okay, okay, I'll start now.", "Thank you. You're the only one." },
+        new[] { "The exam was fair, they said.", "Your preparation was a creative choice.", "Fair is a strong word.", "...I prepared creatively, yes.", "Thank you! Finally, someone gets it." },
+        new[] { "Did you hear about the toilet incident?", "Problem-solving skills, please.", "Let's not talk about it.", "A true engineering failure.", "Agreed. Back to my book." },
+        new[] { "Is that Bagha the cat sneaking around again?", "Bagha has been banned. Again.", "Bagha is welcome here.", "Ha! Banned and still here. Legend.", "Good. Every library needs a cat." },
+    };
+
+    // Shared by every visitor: each reader brings up one topic, and topics don't repeat until all are used.
+    static readonly List<int> topicsLeft = new List<int>();
+    bool smallTalked;
+
+    void SmallTalk()
+    {
+        var ui = DialogueUI.Instance;
+        if (ui == null || ui.IsOpen) return;
+        smallTalked = true;
+        if (topicsLeft.Count == 0) for (int i = 0; i < Topics.Length; i++) topicsLeft.Add(i);
+        int pick = topicsLeft[Random.Range(0, topicsLeft.Count)];
+        topicsLeft.Remove(pick);
+        var t = Topics[pick];
+        string F(string s) => string.Format(s, heldBook.Title, heldBook.Author, heldBook.Subject);
+
+        var d = ScriptableObject.CreateInstance<DialogueAsset>();
+        d.speaker = vip ? $"{FullName} (VIP)" : FirstName;
+        var start = new DialogueAsset.Line { id = "start", text = F(t[0]) };
+        start.choices.Add(new DialogueAsset.Choice { text = F(t[1]), next = "a" });
+        start.choices.Add(new DialogueAsset.Choice { text = F(t[2]), next = "b" });
+        d.lines.Add(start);
+        d.lines.Add(new DialogueAsset.Line { id = "a", text = F(t[3]), next = "end" });
+        d.lines.Add(new DialogueAsset.Line { id = "b", text = F(t[4]), next = "end" });
+        ui.Play(d, () => { Destroy(d); Members.Satisfy(Membership, 0.05f); });
+    }
+
     // ---------------- Library card ----------------
 
     /// <summary>Called by the PC Members form. Returns what was wrong, or null if the card is right.</summary>
@@ -638,7 +753,7 @@ public class Customer : ClickInteractable
         int price = Mathf.RoundToInt(book.BaseValue * (worn ? 0.8f : 1f));
         // Reserved books: they were happy to wait, and grateful you remembered.
         float tipShare = kind == Kind.Pickup ? 0.5f : 0.4f * request.TipBonus;
-        int tip = worn ? 0 : Mathf.RoundToInt(book.BaseValue * tipShare * Mathf.Max(speed, kind == Kind.Pickup ? 0.8f : 0f) * Members.TipFactor(Membership));
+        int tip = worn ? 0 : Mathf.RoundToInt(book.BaseValue * tipShare * Mathf.Max(speed, kind == Kind.Pickup ? 0.8f : 0f) * Members.TipFactor(Membership) * HintTipFactor);
         Members.Satisfy(Membership, speed > 0.5f || kind == Kind.Pickup ? 0.5f : 0.2f, price + tip);
         GM.AddCoins(price + tip);
         GM.Today.served++; GM.Today.booksSold++; GM.Today.income += price + tip; GM.Today.tips += tip;
@@ -695,7 +810,7 @@ public class Customer : ClickInteractable
         seat = null;
         agent.enabled = true;
         // The Rare Books attendant checks them in on the spot.
-        if (rareRoom && GM.Hired(GameManager.StaffRole.RareAttendant)) { maxPatience = patience = 1f; CheckIn(); return; }
+        if (rareRoom && StaffManager.Instance != null && StaffManager.Instance.Working(GameManager.StaffRole.RareAttendant)) { maxPatience = patience = 1f; CheckIn(); return; }
         JoinQueue();
     }
 
@@ -722,7 +837,7 @@ public class Customer : ClickInteractable
             float share = rare ? 0.1f : archive ? 0.15f : 0.4f;
             int minFee = rare ? 20 : archive ? 8 : 4;
             fee = Mathf.RoundToInt(Mathf.Max(minFee, heldBook.BaseValue * share) * GM.ReadingFeeMultiplier);
-            tip = Mathf.RoundToInt(fee * 0.6f * PatienceLeft * Members.TipFactor(Membership)) + chatBonus;
+            tip = Mathf.RoundToInt(fee * 0.6f * PatienceLeft * Members.TipFactor(Membership) * HintTipFactor) + chatBonus;
             Members.Satisfy(Membership, PatienceLeft > 0.5f ? 0.5f : 0.2f, fee + tip);
             GM.Today.booksRead++;
             GM.AddReputation(1);
@@ -788,10 +903,10 @@ public class Customer : ClickInteractable
 
     void Penalise(float share)
     {
-        patience -= maxPatience * share;
+        patience -= maxPatience * share * GM.ModeWrongPenalty;
         if (anim) anim.SetActivity(CharacterAnimator.Activity.Impatient);
         Invoke(nameof(EndPenaltyAnim), 1.5f);
-        if (patience <= 0f) LeaveAngry();
+        if (patience <= 0f) { if (GM.NoStormingOut) patience = 0f; else LeaveAngry(); }
     }
 
     void EndPenaltyAnim() => StopImpatient(false);
@@ -838,6 +953,7 @@ public class Customer : ClickInteractable
     /// <summary>Show a line overhead. seconds = 0 keeps it until replaced.</summary>
     void Say(string text, float seconds = 0f)
     {
+        speech.EnableInClassList("ask", text == AskMark);
         speech.text = text;
         speech.RemoveFromClassList("hidden");
         reactionLeft = seconds;

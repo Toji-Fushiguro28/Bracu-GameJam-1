@@ -52,6 +52,15 @@ public static class PCSettingsView
         day.Add(Button("<", () => { GameSettings.DayLength--; Refresh(root); }));
         day.Add(Button(">", () => { GameSettings.DayLength++; Refresh(root); }));
 
+        var gm = GameManager.Instance;
+        if (gm != null)
+        {
+            var mode = Row(list, "Mode");
+            mode.Add(Value(gm.difficulty == GameManager.Difficulty.Standard ? "Standard (recommended)" : GameManager.DifficultyNames[(int)gm.difficulty]));
+            mode.Add(Button("<", () => { gm.SetDifficulty((GameManager.Difficulty)(((int)gm.difficulty + 2) % 3)); Refresh(root); }));
+            mode.Add(Button(">", () => { gm.SetDifficulty((GameManager.Difficulty)(((int)gm.difficulty + 1) % 3)); Refresh(root); }));
+        }
+
         var full = Row(list, "Fullscreen");
         full.Add(Value(Screen.fullScreen ? "On" : "Off"));
         full.Add(Button("Toggle", () => { Screen.fullScreen = !Screen.fullScreen; root.schedule.Execute(() => Refresh(root)).ExecuteLater(200); }));

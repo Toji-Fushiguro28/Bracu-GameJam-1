@@ -51,16 +51,20 @@ public class GameManager : MonoBehaviour
     // ---------------- Progress: staff, upgrades, unlocks ----------------
 
     public enum StaffRole { Repairer, Cleaner, RareAttendant }
-    public enum UpgradeKind { RepairTools, RestorationKit, ComfyQueue, RunningShoes, CozyLamps, ReadingNooks, TownFlyers, BookBag }
-    public static readonly string[] StaffNames = { "Repairer", "Cleaner", "Rare Books attendant" };
+    public enum UpgradeKind { RepairTools, RestorationKit, ComfyQueue, RunningShoes, CozyLamps, ReadingNooks, TownFlyers, BookBag, Stamina }
+    public static readonly string[] StaffNames = { "Archivist", "Cleaner", "Rare Books attendant" };
     public static readonly string[] StaffInfo =
     {
-        "Picks up damaged copies from the returns and repairs them.",
-        "Tidies cups and stray books while you work.",
-        "Checks in Rare Books readers for you.",
+        "Omar works at his desk in the Archive. He takes worn and damaged books from the returns and repairs them one by one.",
+        "Sam roams the library tidying cups and open books, putting copies back on their shelves.",
+        "Arthur looks after VIP scholars in Rare Books: he fetches their rare book and checks them in, so you don't have to.",
     };
+    /// <summary>Hiring order: Cleaner from day 1, Archivist when the Archive opens, attendant with Rare Books.</summary>
+    public static readonly int[] StaffUnlockDay = { ArchiveDay, 1, RareDay };
+    public static readonly StaffRole[] StaffOrder = { StaffRole.Cleaner, StaffRole.Repairer, StaffRole.RareAttendant };
+    public bool StaffUnlocked(StaffRole r) => day >= StaffUnlockDay[(int)r];
     public static readonly int[] StaffWage = { 15, 10, 12 };
-    public static readonly string[] UpgradeNames = { "Repair tools", "Restoration kit", "Comfy queue", "Running shoes", "Cozy lamps", "Reading nooks", "Town flyers", "Book bag" };
+    public static readonly string[] UpgradeNames = { "Repair tools", "Restoration kit", "Comfy queue", "Running shoes", "Cozy lamps", "Reading nooks", "Town flyers", "Book bag", "Stamina" };
     public static readonly string[] UpgradeInfo =
     {
         "Repairs take less time.",
@@ -71,19 +75,54 @@ public class GameManager : MonoBehaviour
         "Comfier seats: +15% reading fees.",
         "Posters around town bring more visitors.",
         "Carry one more book at a time.",
+        "Run longer and catch your breath faster.",
     };
     public const int MaxUpgrade = 3;
     public static int UpgradeCost(int level) => 40 + level * 40;
 
     [NonSerialized] public List<Member> members = new List<Member>();
     [NonSerialized] public bool[] staff = new bool[3];
-    [NonSerialized] public int[] upgrades = new int[8];
+    [NonSerialized] public int[] upgrades = new int[9];
     public bool Hired(StaffRole r) => staff[(int)r];
     public int Upgrade(UpgradeKind u) => upgrades[(int)u];
-    public float PatienceMultiplier => 1f + 0.15f * Upgrade(UpgradeKind.ComfyQueue);
+    // ---------------- Play mode (Cozy / Standard / Busy) ----------------
+
+    public enum Difficulty { Cozy, Standard, Busy }
+    public static readonly string[] DifficultyNames = { "Cozy", "Standard", "Busy" };
+    public static readonly string[] DifficultyInfo =
+    {
+        "Patient visitors who never storm off, clearer hints, cheaper books and more coins to start.",
+        "The library as it's meant to be run: a steady day, fair hints and a few surprises.",
+        "More visitors, shorter tempers, vaguer requests and pricier orders. For a real challenge.",
+    };
+    public static readonly int[] DifficultyStartCoins = { 100, 50, 30 };
+    /// <summary>Set by the title screen just before a new game starts.</summary>
+    public static Difficulty? PendingDifficulty;
+
+    [NonSerialized] public Difficulty difficulty = Difficulty.Standard;
+    float Mode(float cozy, float standard, float busy) => difficulty == Difficulty.Cozy ? cozy : difficulty == Difficulty.Busy ? busy : standard;
+    public float ModePrices => Mode(0.8f, 1f, 1.2f);
+    public float ModeWrongPenalty => Mode(0.5f, 1f, 1.5f);
+    public int ModeExtraVisitors => difficulty == Difficulty.Busy ? 1 : 0;
+    /// <summary>Cozy: visitors wait sadly instead of storming off.</summary>
+    public bool NoStormingOut => difficulty == Difficulty.Cozy;
+    public bool FreeFirstHint => difficulty == Difficulty.Cozy;
+    public bool NoHints => difficulty == Difficulty.Busy;
+    public float OutOfStockChance => day < 2 ? 0f : Mode(0.1f, day == 2 ? 0.2f : 0.25f, 0.35f);
+    public void SetDifficulty(Difficulty d) => difficulty = d;
+
+    /// <summary>A fresh library (no save) in the chosen mode.</summary>
+    public void StartFresh(Difficulty d)
+    {
+        difficulty = d;
+        Coins = DifficultyStartCoins[(int)d];
+        CoinsChanged?.Invoke(Coins, 0);
+    }
+
+    public float PatienceMultiplier => (1f + 0.15f * Upgrade(UpgradeKind.ComfyQueue)) * Mode(1.5f, 1f, 0.7f);
     public float TipMultiplier => 1f + 0.1f * Upgrade(UpgradeKind.CozyLamps);
     public float ReadingFeeMultiplier => 1f + 0.15f * Upgrade(UpgradeKind.ReadingNooks);
-    public float VisitorMultiplier => 1f + 0.25f * Upgrade(UpgradeKind.TownFlyers);
+    public float VisitorMultiplier => (1f + 0.25f * Upgrade(UpgradeKind.TownFlyers)) * Mode(0.75f, 1f, 1.3f);
     public int BagCapacity => 1 + Upgrade(UpgradeKind.BookBag);
     public int DailyWages { get { int w = 0; for (int i = 0; i < staff.Length; i++) if (staff[i]) w += StaffWage[i]; return w; } }
 
@@ -108,7 +147,8 @@ public class GameManager : MonoBehaviour
     public event Action<int> Delivered; // copies that just arrived
 
     public const float ExpressHours = 2f;
-    public static int OrderPrice(BookData b, bool express) => Mathf.Max(3, Mathf.RoundToInt(b.BaseValue * 0.6f * (express ? 1.5f : 1f)));
+    public static int OrderPrice(BookData b, bool express) =>
+        Mathf.Max(3, Mathf.RoundToInt(b.BaseValue * 0.6f * (express ? 1.5f : 1f) * (Instance != null ? Instance.ModePrices : 1f)));
     public int OnOrder(BookData b) { int n = 0; foreach (var o in orders) if (o.book == b) n++; return n; }
 
     /// <summary>Standard orders arrive next morning; express ones a couple of hours later today.</summary>
@@ -144,7 +184,12 @@ public class GameManager : MonoBehaviour
         reservations.Add(new Reservation { key = key, name = name, title = b.Title, day = day + 1, ordered = OnOrder(b) > 0 });
     }
 
-    public void ToggleStaff(StaffRole r) { staff[(int)r] = !staff[(int)r]; ApplyUpgrades(); }
+    public void ToggleStaff(StaffRole r)
+    {
+        if (!staff[(int)r] && !StaffUnlocked(r)) return;
+        staff[(int)r] = !staff[(int)r];
+        ApplyUpgrades();
+    }
 
     public bool BuyUpgrade(UpgradeKind u)
     {
@@ -214,11 +259,11 @@ public class GameManager : MonoBehaviour
     public bool loadSave = true;
 
     [Serializable] class BookSave { public string title; public int good, worn, damaged; }
-    [Serializable] class SaveData { public int day, coins, reputation; public bool[] staff; public int[] upgrades; public List<BookSave> books = new List<BookSave>(); public List<Member> members = new List<Member>(); public List<Reservation> reservations = new List<Reservation>(); }
+    [Serializable] class SaveData { public int day, coins, reputation, difficulty = 1; public bool[] staff; public int[] upgrades; public List<BookSave> books = new List<BookSave>(); public List<Member> members = new List<Member>(); public List<Reservation> reservations = new List<Reservation>(); }
 
     public void Save()
     {
-        var data = new SaveData { day = day, coins = Coins, reputation = Reputation, staff = staff, upgrades = upgrades, members = members, reservations = reservations };
+        var data = new SaveData { day = day, difficulty = (int)difficulty, coins = Coins, reputation = Reputation, staff = staff, upgrades = upgrades, members = members, reservations = reservations };
         foreach (var b in Books) data.books.Add(new BookSave { title = b.Title, good = b.GoodCopies, worn = b.WornCopies, damaged = b.DamagedCopies });
         // Copies out of the shelves (returns, repair table, hands) still belong to the library.
         void Count(BookData b, BookCondition c)
@@ -247,6 +292,7 @@ public class GameManager : MonoBehaviour
         var data = JsonUtility.FromJson<SaveData>(PlayerPrefs.GetString(SaveKey));
         if (data == null) return;
         day = data.day; Coins = data.coins; Reputation = data.reputation;
+        difficulty = (Difficulty)Mathf.Clamp(data.difficulty, 0, 2);
         if (data.staff != null && data.staff.Length == 3) staff = data.staff;
         if (data.upgrades != null) Array.Copy(data.upgrades, upgrades, Mathf.Min(data.upgrades.Length, upgrades.Length));
         if (data.members != null) members = data.members;
@@ -289,6 +335,9 @@ public class GameManager : MonoBehaviour
         Hour = openHour;
         CurrentPhase = Phase.Open;
         Load();
+        // A new game picked on the title screen: its mode and starting coins.
+        if (PendingDifficulty.HasValue && !HasSave) { difficulty = PendingDifficulty.Value; Coins = DifficultyStartCoins[(int)difficulty]; }
+        PendingDifficulty = null;
         ReputationAtStart = Reputation;
     }
 
@@ -335,7 +384,9 @@ public class GameManager : MonoBehaviour
         get
         {
             int h = Mathf.FloorToInt(Hour), m = Mathf.FloorToInt((Hour - h) * 60f / 10f) * 10;
-            return $"{h:00}:{m:00}";
+            // 12-hour clock: 9:00 AM ... 6:00 PM
+            int h12 = h % 12 == 0 ? 12 : h % 12;
+            return $"{h12}:{m:00} {(h < 12 ? "AM" : "PM")}";
         }
     }
 

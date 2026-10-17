@@ -208,3 +208,28 @@
 .shop-header { color: rgb(235, 200, 120); font-size: 24px; padding: 8px 12px 4px 12px; }
 .shop-reserve { color: var(--mint); font-size: 20px; padding: 2px 12px; white-space: normal; }
 .shop-reserve.warn { color: rgb(240, 120, 100); }
+
+/* ---------- Upgrade row icons ---------- */
+.upgrade-icon {
+    width: 40px; height: 40px; margin-right: 14px; flex-shrink: 0;
+    border-top-left-radius: 8px; border-top-right-radius: 8px;
+    border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;
+    background-color: rgba(99, 210, 181, 0.18);
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+/* Upgrade icons (TravelBook kit) */
+.upg-0 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconGear01a.png"); }
+.upg-1 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconStar01a.png"); }
+.upg-2 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconHeart01a.png"); }
+.upg-3 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconArrow01a.png"); }
+.upg-4 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconStar01c.png"); }
+.upg-5 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconHome01a.png"); }
+.upg-6 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconPlay01a.png"); }
+.upg-7 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_BookCover01a.png"); }
+.upg-8 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconEnergy01a.png"); }
+
+/* Shop rows: wrap long descriptions so they never run under the button. */
+.shop-row-text { flex-basis: 0; }
+.shop-row #book-title, .shop-row #book-sub { white-space: normal; }
+.shop-row .pc-button { flex-shrink: 0; }

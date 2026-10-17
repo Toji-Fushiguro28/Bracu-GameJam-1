@@ -78,19 +78,20 @@ public static class PCShopView
                 int cost = GameManager.UpgradeCost(lvl);
                 Row(list, GameManager.UpgradeNames[i], GameManager.UpgradeInfo[i], lvl,
                     maxed ? "Max" : $"Buy {cost}", !maxed && gm.Coins >= cost,
-                    () => { if (gm.BuyUpgrade(kind)) GameAudio.Play(a => a.buy); }, root);
+                    () => { if (gm.BuyUpgrade(kind)) GameAudio.Play(a => a.buy); }, root, icon: i);
             }
         }
         else
         {
             note.text = gm.DailyWages > 0 ? $"Wages are paid each morning: {gm.DailyWages} coins a day." : "Staff are paid each morning. If you can't pay, they quit.";
-            for (int i = 0; i < GameManager.StaffNames.Length; i++)
+            foreach (var role in GameManager.StaffOrder)
             {
-                var role = (GameManager.StaffRole)i;
-                bool hired = gm.Hired(role);
+                int i = (int)role;
+                bool hired = gm.Hired(role), open = gm.StaffUnlocked(role);
                 Row(list, GameManager.StaffNames[i] + (hired ? "  (hired)" : ""),
                     $"{GameManager.StaffInfo[i]}  Wage {GameManager.StaffWage[i]} a day.", null,
-                    hired ? "Let go" : "Hire", true, () => gm.ToggleStaff(role), root);
+                    hired ? "Let go" : open ? "Hire" : $"Day {GameManager.StaffUnlockDay[i]}", hired || open,
+                    () => gm.ToggleStaff(role), root);
             }
         }
         list.schedule.Execute(() => list.scrollOffset = new Vector2(0, scroll));
@@ -104,10 +105,17 @@ public static class PCShopView
     }
 
     static void Row(ScrollView list, string title, string sub, int? level, string button, bool enabled, Action onClick, VisualElement root,
-                    string button2 = null, bool enabled2 = false, Action onClick2 = null)
+                    string button2 = null, bool enabled2 = false, Action onClick2 = null, int icon = -1)
     {
         var row = new VisualElement();
         row.AddToClassList("shop-row");
+        if (icon >= 0)
+        {
+            var ic = new VisualElement();
+            ic.AddToClassList("upgrade-icon");
+            ic.AddToClassList("upg-" + icon); // kit icon set in PC.uss
+            row.Add(ic);
+        }
         var text = new VisualElement();
         text.AddToClassList("shop-row-text");
         text.Add(new Label(title) { name = "book-title" });
