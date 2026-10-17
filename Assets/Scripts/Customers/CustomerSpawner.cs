@@ -60,6 +60,9 @@ public class CustomerSpawner : MonoBehaviour
         var queue = CounterQueue.Instance;
         if (gm == null || queue == null || gm.CurrentPhase != GameManager.Phase.Open) return;
         if (gm.Hour < gm.openHour + 1f / 6f) return; // staff arrive at nine, visitors from ten past
+        // "I need it today": they come back at the time they said.
+        foreach (var r in gm.reservations)
+            if (r.urgent && r.day == gm.day && !r.queued && gm.Hour >= r.dueHour) { r.queued = true; pickups.Enqueue(r); spawnTimer = 0f; }
         spawnTimer -= GameManager.Dt;
         if (spawnTimer > 0f) return;
 

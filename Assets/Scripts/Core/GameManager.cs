@@ -139,6 +139,15 @@ public class GameManager : MonoBehaviour
     public int BagCapacity => 1 + Upgrade(UpgradeKind.BookBag);
     public int DailyWages { get { int w = 0; for (int i = 0; i < staff.Length; i++) if (staff[i]) w += StaffWage[i]; return w; } }
 
+    // Which work day each staff member's wage is already paid for, and whether they were hired today
+    // (so letting them go before they've done a day's work gives the money back).
+    [NonSerialized] public int[] wagePaidFor = { -1, -1, -1 };
+    [NonSerialized] bool[] hiredToday = new bool[3];
+    /// <summary>The work day a hire made right now would cover: today while open, tomorrow after closing.</summary>
+    int HireWorkDay => CurrentPhase == Phase.Open ? day : day + 1;
+    /// <summary>Wages still to pay tomorrow morning (prepaid hires don't count).</summary>
+    public int WagesDueTomorrow { get { int w = 0; for (int i = 0; i < staff.Length; i++) if (staff[i] && wagePaidFor[i] < day + 1) w += StaffWage[i]; return w; } }
+
     public const int ArchiveDay = 2, RareDay = 3;
     /// <summary>The Archive opens on day 2, Rare Books on day 3 (the rope gates come down).</summary>
     public bool ArchiveOpen => day >= ArchiveDay;
@@ -152,7 +161,26 @@ public class GameManager : MonoBehaviour
     // ---------------- Orders, deliveries, reservations ----------------
 
     [Serializable]
-    public class Reservation { public string key, name, title; public int day; public bool ordered; }
+    public class Reservation
+    {
+        public string key, name, title;
+        public int day;
+        public bool ordered;
+        /// <summary>A member asked the library to get this book in.</summary>
+        public bool requested;
+        /// <summary>Wanted today: they come back at dueHour, so it needs express delivery.</summary>
+        public bool urgent;
+        public float dueHour;
+        [NonSerialized] public bool queued;
+    }
+
+    /// <summary>"2:30 PM" style time for an in-game hour.</summary>
+    public static string FormatHour(float hour)
+    {
+        int h = Mathf.FloorToInt(hour), m = Mathf.FloorToInt((hour - h) * 60f / 10f) * 10;
+        int h12 = h % 12 == 0 ? 12 : h % 12;
+        return $"{h12}:{m:00} {(h < 12 ? "AM" : "PM")}";
+    }
     class Order { public BookData book; public float arriveHour; public int arriveDay; }
 
     [NonSerialized] public List<Reservation> reservations = new List<Reservation>();
@@ -191,18 +219,36 @@ public class GameManager : MonoBehaviour
 
     public Reservation ReservationFor(string key) => reservations.Find(r => r.key == key);
 
-    public void Reserve(string key, string name, BookData b)
+    public void Reserve(string key, string name, BookData b, bool urgent = false, bool requested = false)
     {
         reservations.RemoveAll(r => r.key == key);
-        reservations.Add(new Reservation { key = key, name = name, title = b.Title, day = day + 1, ordered = OnOrder(b) > 0 });
+        reservations.Add(new Reservation
+        {
+            key = key, name = name, title = b.Title, ordered = OnOrder(b) > 0, requested = requested, urgent = urgent,
+            day = urgent ? day : day + 1, dueHour = urgent ? Hour + 2.5f : openHour,
+        });
     }
 
     public void ToggleStaff(StaffRole r)
     {
         if (!staff[(int)r] && !StaffUnlocked(r)) return;
-        // Hiring pays today's wage up front, so you can't hire with an empty purse.
-        if (!staff[(int)r] && !TrySpend(StaffWage[(int)r])) return;
-        staff[(int)r] = !staff[(int)r];
+        int i = (int)r;
+        if (!staff[i])
+        {
+            // Hiring pays the first work day up front (today, or tomorrow if the library has closed).
+            if (!TrySpend(StaffWage[i])) return;
+            wagePaidFor[i] = HireWorkDay;
+            hiredToday[i] = true;
+            staff[i] = true;
+        }
+        else
+        {
+            // Let go before they've worked a day: you get that wage back.
+            if (hiredToday[i] && wagePaidFor[i] >= day) AddCoins(StaffWage[i]);
+            wagePaidFor[i] = -1;
+            hiredToday[i] = false;
+            staff[i] = false;
+        }
         ApplyUpgrades();
     }
 
@@ -237,12 +283,19 @@ public class GameManager : MonoBehaviour
     public void StartNextDay()
     {
         day++;
-        int wages = DailyWages;
+        // Morning wages, skipping anyone already paid for today (hired last night).
+        int wages = 0;
+        for (int i = 0; i < staff.Length; i++) if (staff[i] && wagePaidFor[i] < day) wages += StaffWage[i];
         if (wages > 0)
         {
-            if (Coins >= wages) AddCoins(-wages);
-            else { for (int i = 0; i < staff.Length; i++) staff[i] = false; } // can't pay: they quit
+            if (Coins >= wages)
+            {
+                AddCoins(-wages);
+                for (int i = 0; i < staff.Length; i++) if (staff[i]) wagePaidFor[i] = day;
+            }
+            else { for (int i = 0; i < staff.Length; i++) if (wagePaidFor[i] < day) staff[i] = false; } // can't pay: they quit
         }
+        for (int i = 0; i < hiredToday.Length; i++) hiredToday[i] = false; // from now on they've put in a day
         Today = new DayStats();
         ReputationAtStart = Reputation;
         Hour = openHour;

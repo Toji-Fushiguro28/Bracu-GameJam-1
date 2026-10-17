@@ -6,6 +6,7 @@
                 <ui:Button name="back-button" text="&lt; Back" class="pc-button" />
                 <ui:Label text="CATALOGUE" class="pc-title font-title" />
             </ui:VisualElement>
+            <ui:Label name="pc-requests" class="pc-requests" />
             <ui:VisualElement class="pc-columns">
                 <ui:VisualElement class="pc-left">
                     <ui:VisualElement name="search-wrap" class="pc-search">

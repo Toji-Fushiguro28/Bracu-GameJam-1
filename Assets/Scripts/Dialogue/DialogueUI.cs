@@ -103,6 +103,13 @@ public class DialogueUI : MonoBehaviour
             while (shownChars < target)
             {
                 char c = fullText[shownChars++];
+                // Rich-text tags (e.g. a highlighted hint) appear whole, never half-typed.
+                if (c == '<')
+                {
+                    int close = fullText.IndexOf('>', shownChars);
+                    if (close >= 0) shownChars = close + 1;
+                    continue;
+                }
                 if (!char.IsWhiteSpace(c) && shownChars % Mathf.Max(1, blipEvery) == 0) Blip();
             }
             lineLabel.text = fullText.Substring(0, shownChars);

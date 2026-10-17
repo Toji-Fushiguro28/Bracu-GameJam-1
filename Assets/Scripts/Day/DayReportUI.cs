@@ -60,7 +60,8 @@ public class DayReportUI : MonoBehaviour
             tabs[i]?.RegisterCallback<ClickEvent>(_ => { tab = t; RefreshPlan(); });
         }
         nextDay?.RegisterCallback<ClickEvent>(_ => StartNextDay());
-        doc.Q<Button>("report-close")?.RegisterCallback<ClickEvent>(_ => Close());
+        // No way back into the library after locking up: the only way on is the next day.
+        doc.Q<Button>("report-close")?.AddToClassList("hidden");
         root?.AddToClassList("hidden");
     }
 
@@ -139,7 +140,7 @@ public class DayReportUI : MonoBehaviour
         Row("Things tidied", d.cleaned.ToString());
         Row("New members", d.signups.ToString());
         Row("Tips", d.tips.ToString());
-        if (gm.DailyWages > 0) Row("Staff wages (tomorrow)", $"-{gm.DailyWages}");
+        if (gm.WagesDueTomorrow > 0) Row("Staff wages (tomorrow)", $"-{gm.WagesDueTomorrow}");
         Row("Income", d.income.ToString(), true);
         int s = Stars(d);
         stars.text = new string('*', s) + new string('-', 5 - s);

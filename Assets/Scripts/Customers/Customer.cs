@@ -97,9 +97,11 @@ public class Customer : ClickInteractable
         get
         {
             if (kind == Kind.SignUp) return SignUpText;
-            if (kind == Kind.Pickup && reservation != null) return $"Hello again! I reserved \"{reservation.title}\" yesterday.";
+            if (kind == Kind.Pickup && reservation != null) return reservation.urgent
+                ? $"I'm back for \"{reservation.title}\"! Did it arrive?"
+                : $"Hello again! I'm here for \"{reservation.title}\".";
             if (request == null) return "";
-            return clue == null ? request.Line : $"{request.Line}\n<i>{clue}</i>";
+            return clue == null ? request.Line : $"{request.Line}\n<color=#D67840>Hint: {clue}</color>";
         }
     }
 
@@ -460,7 +462,7 @@ public class Customer : ClickInteractable
 
         var d = ScriptableObject.CreateInstance<DialogueAsset>();
         d.speaker = vip ? $"{FullName} (VIP)" : FirstName;
-        var start = new DialogueAsset.Line { id = "start", text = RequestText.Replace("<i>", "").Replace("</i>", "") };
+        var start = new DialogueAsset.Line { id = "start", text = RequestText };
         d.lines.Add(start);
 
         // Books in your hands you could offer.
@@ -482,9 +484,13 @@ public class Customer : ClickInteractable
         start.choices.Add(new DialogueAsset.Choice { text = "Let me find it.", next = "end" });
 
         string hintText = HintText();
-        d.lines.Add(new DialogueAsset.Line { id = "hint", text = hintText, next = "end" });
+        d.lines.Add(new DialogueAsset.Line { id = "hint", text = $"<color=#D67840>{hintText}</color>", next = "end" });
+        // Some need it today (express), others are happy to wait until tomorrow.
+        wantsToday = soldOut && Random.value < 0.4f && GM.Hour + 2.5f < GM.closingHour;
         d.lines.Add(new DialogueAsset.Line { id = "reserve", next = "end",
-            text = soldOut ? "Oh, wonderful! I'll come back tomorrow to pick it up." : "Sold out? I'm sure I saw it on the shelf..." });
+            text = !soldOut ? "Sold out? I'm sure I saw it on the shelf..."
+                 : wantsToday ? $"Oh, but I need it today! Could it be here by <color=#D67840>{GameManager.FormatHour(GM.Hour + 2.5f)}</color>? I'll come back then."
+                 : "Oh, wonderful! Tomorrow is fine, I'll pick it up then." });
         d.lines.Add(new DialogueAsset.Line { id = "nohave", next = "end",
             text = soldOut ? "That's a shame. Thanks for checking!" : "Really? I'm sure you do... never mind." });
         bool ordered = pickup && reservation != null && GM.OnOrder(request.Target) > 0;
@@ -513,7 +519,7 @@ public class Customer : ClickInteractable
                     else { GM.AddReputation(-1); Members.Satisfy(Membership, -0.5f); Say("Hmph. I'll try elsewhere.", 2.5f); Leave(); }
                     break;
                 case "notyet":
-                    if (ordered) { reservation.day = GM.day + 1; Say("See you tomorrow!", 2.5f); Leave(); }
+                    if (ordered) { Say(reservation.urgent ? "Not yet? Fine, tomorrow then." : "See you tomorrow!", 2.5f); reservation.day = GM.day + 1; reservation.urgent = false; reservation.queued = false; Leave(); }
                     else { GM.reservations.Remove(reservation); GM.Today.angry++; GM.AddReputation(-2); Members.Satisfy(Membership, -1f); GameAudio.Play(a => a.angryLeave); Say("I won't reserve here again.", 2.5f); Leave(); }
                     break;
                 default:
@@ -548,14 +554,30 @@ public class Customer : ClickInteractable
         Give(carry, index);
     }
 
+    bool wantsToday;
+
     void ReserveAndLeave()
     {
-        GM.Reserve(profileKey, FirstName, request.Target);
+        GM.Reserve(profileKey, FirstName, request.Target, wantsToday);
         GM.Today.served++;
         Members.Satisfy(Membership, 0.3f);
         GameAudio.Play(a => a.cardIssued, 0.7f);
-        Say($"Reserved \"{request.Target.Title}\". Don't forget to order it!", 3f);
+        Say(wantsToday ? $"Back at {GameManager.FormatHour(GM.Hour + 2.5f)}! Order it express, please."
+                       : $"Reserved \"{request.Target.Title}\". See you tomorrow!", 3f);
         Leave();
+    }
+
+    /// <summary>For the PC: what this visitor asked for (and the hint), once you've talked to them.</summary>
+    public string PCNote
+    {
+        get
+        {
+            if (!heard || state != State.Waiting) return null;
+            if (kind == Kind.SignUp) return $"{FirstName}: wants a library card";
+            if (kind == Kind.Pickup && reservation != null) return $"{FirstName}: collecting \"{reservation.title}\"";
+            if (request == null) return null;
+            return clue == null ? $"{FirstName}: {request.Line}" : $"{FirstName}: {request.Line}  <color=#EBC878>Hint: {clue}</color>";
+        }
     }
 
     /// <summary>Asking for a hint costs a third of the tip (Cozy's free hint doesn't count).</summary>
@@ -747,9 +769,25 @@ public class Customer : ClickInteractable
         if (WaitingForCard == this) WaitingForCard = null;
         GameAudio.Play(a => a.cardIssued);
         RefreshNameplate();
+        // Most new members have a book in mind straight away.
+        var wish = Random.value < 0.6f ? PickWish() : null;
+        if (wish != null)
+        {
+            GM.Reserve(profileKey, FirstName, wish, false, true);
+            Say($"My very own card! Could you order \"{wish.Title}\" for me? I'll pick it up tomorrow.  +{fee + tip}", 3.5f);
+        }
+        else
         Say($"My very own card! Thank you!  +{fee + tip}", 2.5f);
         Leave();
         return null;
+    }
+
+    /// <summary>A book a new member wants the library to get in: preferably one it hasn't got.</summary>
+    BookData PickWish()
+    {
+        var pool = GM.Books.FindAll(b => b.Sellable && !BookRequest.IsRare(b) && BookRequest.Available(b) && !BookRequest.InStock(b));
+        if (pool.Count == 0) pool = GM.Books.FindAll(b => b.Sellable && !BookRequest.IsRare(b) && BookRequest.Available(b));
+        return pool.Count > 0 ? pool[Random.Range(0, pool.Count)] : null;
     }
 
     // ---------------- Buying ----------------

@@ -230,6 +230,21 @@ public class PCOverlayTrigger : MonoBehaviour
         }
 
         WireFilters(root);
+        // What the visitors you've talked to want, so you can search while you think.
+        var notes = new System.Text.StringBuilder();
+        foreach (var c in FindObjectsByType<Customer>())
+        {
+            var n = c.PCNote;
+            if (n == null) continue;
+            if (notes.Length > 0) notes.Append('\n');
+            notes.Append(n);
+        }
+        var reqLabel = root.Q<Label>("pc-requests");
+        if (reqLabel != null)
+        {
+            reqLabel.text = notes.Length > 0 ? notes.ToString() : "";
+            reqLabel.EnableInClassList("hidden", notes.Length == 0);
+        }
         ApplySearchFilter();
         UpdateSearchPlaceholder();
         ShowDetails(null);

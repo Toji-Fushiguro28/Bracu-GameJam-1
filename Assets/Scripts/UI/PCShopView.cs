@@ -52,7 +52,8 @@ public static class PCShopView
                 {
                     var rb = gm.Books.Find(x => x.Title == r.title);
                     bool coming = rb != null && (gm.OnOrder(rb) > 0 || BookRequest.InStock(rb) || (DeliveryCart.Instance != null && DeliveryCart.Instance.Has(rb)));
-                    var l = new Label($"{r.name}: \"{r.title}\" - {(coming ? "ready or on its way" : "NOT ORDERED YET")}");
+                    string when = r.urgent ? $"needs it TODAY by {GameManager.FormatHour(r.dueHour)} (express!)" : "tomorrow";
+                    var l = new Label($"{r.name}: \"{r.title}\" ({when}) - {(coming ? "ready or on its way" : "NOT ORDERED YET")}");
                     l.AddToClassList("shop-reserve");
                     l.EnableInClassList("warn", !coming);
                     list.Add(l);
@@ -68,11 +69,12 @@ public static class PCShopView
                 int onOrder = gm.OnOrder(book);
                 string sub = $"{book.FormatName} · {book.Subject} · {ShelfInteractable.NameOf(book.ShelfLocation)} · in stock {book.GoodCopies + book.WornCopies}";
                 if (onOrder > 0) sub += $" · on order {onOrder}";
-                if (gm.reservations.Exists(r => r.title == book.Title)) sub += " · RESERVED";
+                var req = gm.reservations.Find(r => r.title == book.Title);
                 Row(list, book.Title, sub, null, $"Order {price}", gm.Coins >= price,
                     () => { if (gm.OrderBook(book, false)) GameAudio.Play(a => a.buy); }, root,
                     gm.CurrentPhase == GameManager.Phase.Closed ? null : $"Express {express}", gm.Coins >= express,
-                    () => { if (gm.OrderBook(book, true)) GameAudio.Play(a => a.buy); });
+                    () => { if (gm.OrderBook(book, true)) GameAudio.Play(a => a.buy); },
+                    badge: req == null ? null : req.urgent ? "Requested · TODAY" : "Requested");
             }
         }
         else if (tab == 1)
@@ -114,7 +116,7 @@ public static class PCShopView
     }
 
     static void Row(ScrollView list, string title, string sub, int? level, string button, bool enabled, Action onClick, VisualElement root,
-                    string button2 = null, bool enabled2 = false, Action onClick2 = null, int icon = -1)
+                    string button2 = null, bool enabled2 = false, Action onClick2 = null, int icon = -1, string badge = null)
     {
         var row = new VisualElement();
         row.AddToClassList("shop-row");
@@ -127,7 +129,18 @@ public static class PCShopView
         }
         var text = new VisualElement();
         text.AddToClassList("shop-row-text");
-        text.Add(new Label(title) { name = "book-title" });
+        if (badge != null)
+        {
+            // Title with a gold "Requested" box beside it.
+            var titleRow = new VisualElement();
+            titleRow.AddToClassList("title-row");
+            titleRow.Add(new Label(title) { name = "book-title" });
+            var b0 = new Label(badge);
+            b0.AddToClassList("req-badge");
+            titleRow.Add(b0);
+            text.Add(titleRow);
+        }
+        else text.Add(new Label(title) { name = "book-title" });
         text.Add(new Label(sub) { name = "book-sub" });
         if (level.HasValue)
         {

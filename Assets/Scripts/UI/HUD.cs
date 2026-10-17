@@ -175,8 +175,8 @@ public class HUD : MonoBehaviour
         var gm = GameManager.Instance;
         if (gm != null && pin != null)
         {
-            string text = gm.Hour < 12f && gm.day == GameManager.ArchiveDay ? "★ The Archive is open today! Readers will ask for its old books."
-                        : gm.Hour < 12f && gm.day == GameManager.RareDay ? "★ Rare Books is open today! A VIP scholar is coming."
+            string text = gm.Hour < 10f && gm.day == GameManager.ArchiveDay ? "★ The Archive is open today! Readers will ask for its old books."
+                        : gm.Hour < 10f && gm.day == GameManager.RareDay ? "★ Rare Books is open today! A VIP scholar is coming."
                         : null;
             bool show = text != null && !MainMenuUI.Active && (RoomReveal.Instance == null || !PlayerLock.IsLocked);
             pin.EnableInClassList("hidden", !show);

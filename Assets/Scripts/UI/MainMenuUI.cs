@@ -45,7 +45,7 @@ public class MainMenuUI : MonoBehaviour
         ("Welcome!", "You run the library: lend books, help readers and keep the place tidy.\n\nMove: WASD\nRun: Shift (uses stamina; when it runs out, catch your breath)\nInteract: Left click\nMenu: Esc\n\nThe clock stops whenever a menu or chat is open, so take your time.\n\nStandard mode is the way the game is meant to be played."),
         ("The counter", "Visitors queue at the counter. Click them to talk.\n\nThe face over their head shows their mood: keep them smiling for bigger tips. Stuck? Ask for a hint, but it shrinks their tip.\n\nBrowsers pick a book themselves: just click to stamp it out, or check it in after they've read it."),
         ("Finding books", "Use the computer: Books searches titles and authors. Filter by subject and type, and read the abstracts for vague requests.\n\nClick a shelf to take a copy, then click the visitor to hand it over. Upgrade your Book bag to carry more.\n\nNot sure where a book goes? Look it up on the computer: it shows every book's shelf."),
-        ("Sold out?", "If nobody has the book, tell them it's sold out. They'll reserve it.\n\nOrder it on the computer (Shop): normal arrives tomorrow, express in 2 hours. Collect it from the book cart and hand it over when they come back."),
+        ("Sold out?", "If nobody has the book, tell them it's sold out. They'll reserve it.\n\nOrder it on the computer (Shop): normal arrives tomorrow, express in 2 hours. Collect it from the book cart and hand it over when they come back.\n\nSome need it today: they say when they'll be back, so order express! Others are happy with tomorrow.\n\nNew members may ask you to order a book. It gets a gold Requested tag in the Shop.\n\nThe hint is shown in gold, and the computer lists what each visitor you've talked to wants."),
         ("Cards & readers", "Visitors who want a library card tell you their name, birthday and which rooms they need. Fill it in on the computer (Members).\n\nChat with seated readers: point them to the right shelf for a tip."),
         ("Repairs & rooms", "Worn or damaged copies go to the repair desk: glue, press and fit a new cover for a perfect restoration. When it's done, the desk glows: click it to pick the book up and put it back on its shelf.\n\nThe Archive opens on Day 2 and Rare Books on Day 3. VIP scholars need a Rare card."),
         ("Staff", "Hire help on the computer (Shop > Staff). Wages are paid each morning.\n\nSam the cleaner (Day 1) tidies cups and open books.\nOmar the archivist (Day 2) repairs worn books from the returns one at a time, then shelves them.\nArthur (Day 3) looks after VIP scholars in Rare Books.\n\nSay hello now and then: click them for a chat."),
@@ -212,7 +212,7 @@ public class MainMenuUI : MonoBehaviour
     static readonly string[] HowToKeywords =
     {
         "Left click", "Left Shift", "Shift", "WASD", "Esc", "Standard mode", "front ropes", "Day Report", "book cart",
-        "repair desk", "Rare Books", "Rare card", "VIP scholars", "Archive", "computer", "sold out", "reserve", "hint",
+        "repair desk", "Rare Books", "Rare card", "VIP scholars", "Archive", "computer", "sold out", "reserve", "hint", "express", "today", "Requested",
         "tips", "tip", "stamina", "Shop", "Members", "Books", "Staff", "Sam", "Omar", "Arthur", "Day 1", "Day 2", "Day 3", "6 pm",
     };
     int lastHowtoPage;

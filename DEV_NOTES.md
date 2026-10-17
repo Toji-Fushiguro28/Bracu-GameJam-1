@@ -112,7 +112,10 @@ What changed in `MainGame.unity` and `Assets/Scripts`, and where. Nothing here c
 - **Name tags** only show for VIPs. Members' names appear in the conversation.
 - **Staff shifts:** staff walk in through the front door at 9:00 and visitors start at 9:10. At the closing bell they say goodbye and leave (`StaffManager.SendHome` / `BringIn`).
 - **Staff jobs:** the archivist also shelves good copies from the returns. Staff tidying earns the tidy reward.
-- **Hiring:** pays the first day's wage up front, so you can't hire with an empty purse.
+- **Hiring:** pays the first work day up front (today while open, tomorrow if hired at night), so you can't hire with an empty purse.
+  - Letting someone go before they've worked a day refunds it.
+  - Morning wages skip anyone already paid for that day (`GameManager.wagePaidFor`).
+- **Day Report:** has no close button. After locking up, the only way on is the next day.
 - **Repairs:** always move a copy up one step (Worn → Good; Damaged → Good or Worn).
 - **Reminders:**
   - The computer glows gold, the Shop tile says *★ Upgrade ready!*, and a banner appears once a day while an upgrade is affordable. All three stop once you open Upgrades.
@@ -122,7 +125,7 @@ What changed in `MainGame.unity` and `Assets/Scripts`, and where. Nothing here c
   - the lights come up and the rope swings aside, with the *fascinated* sound and a banner
   - the camera glides back
 
-  The clock is paused while it plays. The sign then bobs *NOW OPEN!* all day. A notice also stays pinned at the top of the screen until noon (`HUD` → `hud-pin`).
+  The clock is paused while it plays. The sign then bobs *NOW OPEN!* all day. A notice also stays pinned at the top of the screen until 10 AM (the sign switches off at 10 too) (`HUD` → `hud-pin`).
 - **At least one VIP** comes each day once Rare Books is open.
 - **Fades:** the screen fades to black at lock-up. The Day Report sits on solid black, and the next morning fades in (`HUD.FadeThen`).
 - **Shops:** both the PC Shop and the end-of-day shop have search and Subject/Type filters (`BookFilterBar`). The catalogue filters reset every time you open the PC.
@@ -236,3 +239,9 @@ Small, contained edits. Please check them when merging:
   - `CustomerSpawner`: visitor mix and the `busyness` curve.
   - `BookRequest.OutOfStockChance`: sold-out frequency.
   - `Customer.patienceScale`: how long visitors wait.
+
+## Hints, requests, express wishes
+- Hints are gold (`<color=#D67840>`) in the speech bubble and the dialogue. The typewriter skips over the rich-text tags.
+- The PC catalogue has a gold box at the top listing waiting visitors you've already talked to and what they want (`Customer.PCNote`).
+- New members: 60% ask the library to get a book in (`Customer.PickWish`). This creates a `requested` reservation, and the shop marks the book with a gold "Requested" badge.
+- Sold-out reservations: 40% need the book today. They return at Hour + 2.5 (`Reservation.urgent` / `dueHour`), so it has to be ordered with Express (2 h). If it hasn't arrived, they come back tomorrow. The rest pick up next morning.
