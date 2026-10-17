@@ -1,0 +1,19 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="../UI Toolkit/PC.uss" />
+    <ui:VisualElement name="container">
+        <ui:VisualElement name="shop-window" class="pc-window">
+            <ui:VisualElement class="pc-header">
+                <ui:Button name="back-button" text="&lt; Back" class="pc-button" />
+                <ui:Label text="SHOP" class="pc-title font-title" />
+                <ui:Label name="shop-coins" class="pc-coins" />
+            </ui:VisualElement>
+            <ui:VisualElement class="pc-tabs">
+                <ui:Button name="tab-books" text="Books" class="pc-button pc-tab" />
+                <ui:Button name="tab-upgrades" text="Upgrades" class="pc-button pc-tab" />
+                <ui:Button name="tab-staff" text="Staff" class="pc-button pc-tab" />
+            </ui:VisualElement>
+            <ui:ScrollView name="shop-list" class="pc-scroll" />
+            <ui:Label name="shop-note" class="pc-footer" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

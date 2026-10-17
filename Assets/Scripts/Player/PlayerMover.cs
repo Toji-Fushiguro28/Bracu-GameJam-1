@@ -14,12 +14,30 @@ public class PlayerMover : MonoBehaviour
     public float acceleration = 12f;
     public float gravity = -20f;
 
+    [Header("Stamina (running)")]
+    [Tooltip("Seconds of running on a full meter (the Stamina upgrade adds more).")]
+    public float staminaSeconds = 3f;
+    [Tooltip("Meter refilled per second once you stop running.")]
+    public float staminaRecovery = 0.5f;
+    [Tooltip("Wait after running before the meter starts to refill.")]
+    public float recoveryDelay = 0.6f;
+
     CharacterController controller;
     CharacterAnimator anim;
     Transform cam;
     InputAction moveAction, sprintAction;
     Vector3 velocity;
     float verticalSpeed;
+    float stamina = 1f, recoverIn;
+    bool exhausted;
+
+    /// <summary>0..1 meter. Running drains it; empty means a cooldown until it's full again.</summary>
+    public float Stamina01 => stamina;
+    public bool Exhausted => exhausted;
+    public bool Running { get; private set; }
+
+    float MaxSeconds => staminaSeconds + (GameManager.Instance != null ? 1.5f * GameManager.Instance.Upgrade(GameManager.UpgradeKind.Stamina) : 0f);
+    float Recovery => staminaRecovery * (1f + (GameManager.Instance != null ? 0.25f * GameManager.Instance.Upgrade(GameManager.UpgradeKind.Stamina) : 0f));
 
     /// <summary>Current horizontal speed in m/s (used by footsteps).</summary>
     public float Speed => new Vector3(velocity.x, 0, velocity.z).magnitude;
@@ -36,10 +54,27 @@ public class PlayerMover : MonoBehaviour
 
     void OnEnable() { moveAction?.Enable(); sprintAction?.Enable(); }
 
+    void UpdateStamina(bool sprinting)
+    {
+        if (sprinting)
+        {
+            stamina -= Time.deltaTime / Mathf.Max(0.5f, MaxSeconds);
+            recoverIn = recoveryDelay;
+            if (stamina <= 0f) { stamina = 0f; exhausted = true; } // out of breath: cooldown until full
+            return;
+        }
+        recoverIn -= Time.deltaTime;
+        if (recoverIn > 0f) return;
+        stamina = Mathf.Min(1f, stamina + Recovery * Time.deltaTime);
+        if (exhausted && stamina >= 1f) exhausted = false;
+    }
+
     void Update()
     {
         Vector2 input = moveAction != null ? moveAction.ReadValue<Vector2>() : Vector2.zero;
-        bool sprint = sprintAction != null && sprintAction.IsPressed();
+        bool sprint = sprintAction != null && sprintAction.IsPressed() && !exhausted && input.sqrMagnitude > 0.01f;
+        UpdateStamina(sprint);
+        Running = sprint;
 
         // Camera-relative on the ground plane, so "up" moves away from the camera.
         Vector3 fwd = cam ? Vector3.ProjectOnPlane(cam.forward, Vector3.up).normalized : Vector3.forward;

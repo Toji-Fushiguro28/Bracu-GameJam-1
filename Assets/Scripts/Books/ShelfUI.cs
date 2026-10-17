@@ -64,6 +64,7 @@ public class ShelfUI : MonoBehaviour
         carry = playerCarry;
         PlayerLock.Lock(this);
         root.RemoveFromClassList("hidden");
+        GameAudio.Play(a => a.panelOpen, 0.6f);
         note.text = "";
         Refresh();
     }
@@ -72,6 +73,7 @@ public class ShelfUI : MonoBehaviour
     {
         if (!IsOpen) return;
         shelf = null;
+        GameAudio.Play(a => a.panelClose, 0.6f);
         root.AddToClassList("hidden");
         PlayerLock.Unlock(this);
     }
@@ -107,14 +109,21 @@ public class ShelfUI : MonoBehaviour
         }
 
         var held = carry.Carried;
+        int belongs = 0;
+        foreach (var (b, _) in carry.Items) if (shelf.Belongs(b)) belongs++;
         if (held != null && string.IsNullOrEmpty(note.text))
-            note.text = shelf.Belongs(held)
-                ? $"Holding \"{held.Title}\" - Take swaps it back onto this shelf."
-                : $"Hands full: \"{held.Title}\" goes in {ShelfInteractable.NameOf(held.ShelfLocation)}.";
+            note.text = belongs > 0 ? (belongs == 1 ? "One of your books goes on this shelf." : $"{belongs} of your books go on this shelf.")
+                : carry.IsFull ? $"Hands full: \"{held.Title}\" goes in {ShelfInteractable.NameOf(held.ShelfLocation)}."
+                : "";
         handInfo.EnableInClassList("empty", held == null);
         handTitle.text = held != null ? held.Title : "Hands empty";
-        handSub.text = held != null ? $"{held.Author}\n{held.Subject}  ·  {carry.CarriedCondition} copy" : "Take a book from the left page.";
-        putBack.SetEnabled(held != null);
+        string more = "";
+        for (int i = carry.Count - 2; i >= 0; i--) more += $"\n+ {carry.Items[i].book.Title}";
+        handSub.text = held != null
+            ? $"{held.Author}  ·  {carry.CarriedCondition} copy{more}\n({carry.Count}/{carry.Capacity} in your bag)"
+            : carry.Capacity > 1 ? $"Take books from the left page. You can carry {carry.Capacity}." : "Take a book from the left page.";
+        putBack.text = belongs > 1 ? $"Put back ({belongs})" : "Put back";
+        putBack.SetEnabled(belongs > 0);
     }
 
     VisualElement Row(string main, string sub)
@@ -141,18 +150,18 @@ public class ShelfUI : MonoBehaviour
     void Take(BookData book, BookCondition condition)
     {
         if (book.Count(condition) <= 0) return;
-        if (!carry.IsEmpty)
+        if (carry.IsFull)
         {
-            var held = carry.Carried;
-            if (!shelf.Belongs(held))
+            // Full bag: swap one of this shelf's books back in, if there is one.
+            int i = carry.Find((b, c) => shelf.Belongs(b));
+            if (i < 0)
             {
-                note.text = $"Your hands are full. Put \"{held.Title}\" back in {ShelfInteractable.NameOf(held.ShelfLocation)} first.";
+                var held = carry.Carried;
+                note.text = $"Your hands are full. \"{held.Title}\" goes in {ShelfInteractable.NameOf(held.ShelfLocation)}.";
                 return;
             }
-            // Same shelf: swap the held copy back in, then take the new one.
-            var heldCondition = carry.CarriedCondition;
-            carry.Drop();
-            held.AddCopy(heldCondition);
+            var (back, backCondition) = carry.TakeAt(i);
+            back.AddCopy(backCondition);
             if (book.Count(condition) <= 0) { Refresh(); return; }
         }
         if (!carry.PickUp(book, condition)) return;
@@ -165,16 +174,21 @@ public class ShelfUI : MonoBehaviour
 
     void PutBack()
     {
-        var held = carry.Carried;
-        if (held == null) return;
-        if (!shelf.Belongs(held))
+        if (carry.IsEmpty) return;
+        // Shelve every book in your hands that lives here.
+        int i, shelved = 0;
+        while ((i = carry.Find((b, c) => shelf.Belongs(b))) >= 0)
         {
+            var (book, condition) = carry.TakeAt(i);
+            book.AddCopy(condition);
+            shelved++;
+        }
+        if (shelved == 0)
+        {
+            var held = carry.Carried;
             note.text = $"That belongs in {ShelfInteractable.NameOf(held.ShelfLocation)}.";
             return;
         }
-        var condition = carry.CarriedCondition;
-        carry.Drop();
-        held.AddCopy(condition);
         Play(putSound);
         note.text = "";
         GameManager.Instance?.NotifyBooksChanged();

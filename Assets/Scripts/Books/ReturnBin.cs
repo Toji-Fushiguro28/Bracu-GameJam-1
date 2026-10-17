@@ -32,11 +32,33 @@ public class ReturnBin : ClickInteractable
         if (book != null) pile.Add(new Copy { book = book, condition = condition });
     }
 
+    /// <summary>Every copy in the bin (for saving).</summary>
+    public IEnumerable<(BookData book, BookCondition condition)> Copies
+    {
+        get { foreach (var c in pile) yield return (c.book, c.condition); }
+    }
+
+    public bool HasNeedingRepair => pile.Exists(c => c.condition != BookCondition.Good);
+
+    /// <summary>Repairer staff: takes the newest worn/damaged copy out of the bin.</summary>
+    public bool TakeNeedingRepair(out BookData book, out BookCondition condition)
+    {
+        for (int i = pile.Count - 1; i >= 0; i--)
+        {
+            if (pile[i].condition == BookCondition.Good) continue;
+            book = pile[i].book; condition = pile[i].condition;
+            pile.RemoveAt(i);
+            return true;
+        }
+        book = null; condition = BookCondition.Good;
+        return false;
+    }
+
     public override void Interact(GameObject player)
     {
         var carry = player.GetComponent<PlayerCarry>();
         if (pile.Count == 0) { Bubble("The return bin is empty."); return; }
-        if (carry == null || !carry.IsEmpty) { Bubble("Your hands are full."); return; }
+        if (carry == null || carry.IsFull) { Bubble("Your hands are full."); return; }
 
         var copy = pile[pile.Count - 1];
         pile.RemoveAt(pile.Count - 1);

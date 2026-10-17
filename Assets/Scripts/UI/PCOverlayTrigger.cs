@@ -141,14 +141,15 @@ public class PCOverlayTrigger : MonoBehaviour
             return;
         }
         container.RegisterCallback<ClickEvent>(OnBackdropClick);
+        GameAudio.HookClicks(container); // the tree is rebuilt on every swap, so re-hook each time
     }
 
     void WireMenuView()
     {
         RehookBackdrop();
-        RegisterMenuButton("members-button", "Members");
-        RegisterMenuButton("upgrades-button", "Upgrades");
-        RegisterMenuButton("settings-button", "Settings");
+        overlayDoc.rootVisualElement.Q<Button>("members-button")?.RegisterCallback<ClickEvent>(_ => { if (JustOpened) return; ShowMembers(); });
+        overlayDoc.rootVisualElement.Q<Button>("upgrades-button")?.RegisterCallback<ClickEvent>(_ => { if (JustOpened) return; ShowView("PCShopTemplate", PCShopView.Wire); });
+        overlayDoc.rootVisualElement.Q<Button>("settings-button")?.RegisterCallback<ClickEvent>(_ => { if (JustOpened) return; ShowView("PCSettingsTemplate", PCSettingsView.Wire); });
 
         var books = overlayDoc.rootVisualElement.Q<Button>("books-button");
         if (books == null)
@@ -170,6 +171,18 @@ public class PCOverlayTrigger : MonoBehaviour
         RehookBackdrop();
         WireBooksView();
         Debug.Log("[PCUI] Books opened");
+    }
+
+    void ShowMembers() => ShowView("PCMembersTemplate", PCMembersView.Wire);
+
+    /// <summary>Swaps the screen to a Resources template and lets its view wire itself up.</summary>
+    void ShowView(string templateName, System.Action<VisualElement, System.Action> wire)
+    {
+        var template = Resources.Load<VisualTreeAsset>(templateName);
+        if (template == null || overlayDoc == null) return;
+        overlayDoc.visualTreeAsset = template;
+        RehookBackdrop();
+        wire(overlayDoc.rootVisualElement, ShowMenu);
     }
 
     void ShowMenu()
@@ -208,8 +221,8 @@ public class PCOverlayTrigger : MonoBehaviour
             booksList.selectionChanged += sel => ShowDetails(sel.OfType<BookData>().FirstOrDefault());
         }
 
-        filteredBooks = new List<BookData>(allBooks);
-        RefreshBooksList();
+        WireFilters(root);
+        ApplySearchFilter();
         UpdateSearchPlaceholder();
         ShowDetails(null);
     }
@@ -248,24 +261,37 @@ public class PCOverlayTrigger : MonoBehaviour
         Set("detail-abstract", b.Abstract);
     }
 
+    // Search only knows titles and authors; subject and type are filters. Abstracts and tags
+    // are read in the details pane, so vague requests take a little detective work.
+    static readonly string[] SubjectFilters = { "All", "Science", "History", "Philosophy", "Math" };
+    static int subjectFilter, typeFilter;
+
     void ApplySearchFilter()
     {
         string query = searchField != null ? searchField.value : "";
-        if (string.IsNullOrWhiteSpace(query))
-        {
-            filteredBooks = new List<BookData>(allBooks);
-        }
-        else
-        {
-            string needle = query.Trim().ToLowerInvariant();
-            filteredBooks = allBooks.Where(b =>
-                (b.Title ?? "").ToLowerInvariant().Contains(needle) ||
-                (b.Author ?? "").ToLowerInvariant().Contains(needle) ||
-                (b.Subject ?? "").ToLowerInvariant().Contains(needle) ||
-                (b.Tag ?? "").ToLowerInvariant().Contains(needle) ||
-                b.FormatName.ToLowerInvariant().Contains(needle)).ToList();
-        }
+        string needle = (query ?? "").Trim().ToLowerInvariant();
+        string subject = SubjectFilters[subjectFilter];
+        filteredBooks = allBooks.Where(b =>
+            (needle.Length == 0 || (b.Title ?? "").ToLowerInvariant().Contains(needle) || (b.Author ?? "").ToLowerInvariant().Contains(needle)) &&
+            (subjectFilter == 0 || b.Subject == subject) &&
+            (typeFilter == 0 || (int)b.Format == typeFilter - 1)).ToList();
         RefreshBooksList();
+    }
+
+    void WireFilters(VisualElement root)
+    {
+        var subjectButton = root.Q<Button>("filter-subject");
+        var typeButton = root.Q<Button>("filter-type");
+        var types = System.Enum.GetValues(typeof(BookFormat)).Cast<BookFormat>().ToArray();
+        string TypeName(int i) => i == 0 ? "All" : new BookData { Format = types[i - 1] }.FormatName;
+        void UpdateLabels()
+        {
+            if (subjectButton != null) subjectButton.text = "Subject: " + SubjectFilters[subjectFilter];
+            if (typeButton != null) typeButton.text = "Type: " + TypeName(typeFilter);
+        }
+        subjectButton?.RegisterCallback<ClickEvent>(_ => { subjectFilter = (subjectFilter + 1) % SubjectFilters.Length; UpdateLabels(); ApplySearchFilter(); });
+        typeButton?.RegisterCallback<ClickEvent>(_ => { typeFilter = (typeFilter + 1) % (types.Length + 1); UpdateLabels(); ApplySearchFilter(); });
+        UpdateLabels();
     }
 
     void RefreshBooksList()
@@ -350,6 +376,7 @@ public class PCOverlayTrigger : MonoBehaviour
         PlayerLock.Lock(this);
         openedAt = Time.unscaledTime;
         overlayObject.SetActive(true);
+        GameAudio.Play(a => a.pcOpen, 0.7f);
 
         // Fresh tree after every activation — reset to menu and (re)wire it.
         if (menuTemplate != null)
@@ -376,6 +403,7 @@ public class PCOverlayTrigger : MonoBehaviour
         if (!isOpen)
             return;
         isOpen = false;
+        GameAudio.Play(a => a.pcClose, 0.7f);
         PlayerLock.Unlock(this);
         if (overlayObject != null)
             overlayObject.SetActive(false);

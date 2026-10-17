@@ -286,3 +286,158 @@
 }
 .patience-fill.mid { background-color: rgb(240, 190, 70); }
 .patience-fill.low { background-color: rgb(225, 85, 65); }
+
+/* ---------- Repair desk ---------- */
+.repair-total { color: var(--ink-soft); font-size: 20px; -unity-text-align: middle-center; margin-top: 8px; }
+.repair-status, .repair-game { flex-grow: 1; }
+.repair-work { flex-grow: 1; }
+.work-item { margin-bottom: 12px; }
+.work-bar { width: 100%; margin-top: 4px; }
+.repair-result { color: var(--ink); font-size: 24px; white-space: normal; -unity-text-align: middle-center; }
+.repair-result.perfect { color: rgb(196, 110, 40); }
+.rg-hint { color: var(--ink-soft); font-size: 21px; white-space: normal; -unity-text-align: middle-center; margin-bottom: 26px; }
+.rg-track {
+    height: 44px;
+    margin: 0 6px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Bar01a.png");
+    -unity-slice-left: 2; -unity-slice-right: 2; -unity-slice-top: 1; -unity-slice-bottom: 1;
+    -unity-slice-scale: 6px;
+}
+.rg-zone { position: absolute; top: 6px; bottom: 6px; background-color: rgba(120, 200, 100, 0.75); }
+.rg-fill { position: absolute; left: 0; top: 12px; bottom: 12px; width: 0; background-color: rgb(240, 225, 170); }
+.rg-marker {
+    position: absolute;
+    top: -8px; bottom: -8px;
+    width: 10px;
+    margin-left: -5px;
+    background-color: rgb(196, 110, 40);
+    border-width: 2px;
+    border-color: rgb(74, 48, 38);
+}
+.rg-feedback { color: rgb(196, 110, 40); font-size: 34px; -unity-text-align: middle-center; min-height: 52px; margin-top: 18px; }
+.rg-action { font-size: 30px; padding: 10px 14px 14px 14px; }
+.rg-skip { align-self: center; margin-top: 10px; }
+
+/* ---------- Day report ---------- */
+.report-stars { color: rgb(196, 110, 40); font-size: 44px; -unity-text-align: middle-center; letter-spacing: 6px; }
+.report-stats { color: var(--ink); font-size: 22px; white-space: pre; margin: 8px 12px; flex-grow: 1; }
+.report-rep { color: var(--ink-soft); font-size: 21px; white-space: normal; -unity-text-align: middle-center; }
+.plan-tabs { flex-direction: row; justify-content: center; margin-bottom: 4px; }
+.plan-tab { margin: 0 4px; font-size: 22px; }
+.plan-tab.selected { color: rgb(196, 110, 40); scale: 1.08 1.08; }
+
+/* ---------- HUD polish ---------- */
+.hud-banner {
+    position: absolute;
+    top: 40px;
+    align-self: center;
+    padding: 10px 28px 14px 28px;
+    color: var(--ink);
+    font-size: 30px;
+    -unity-text-align: middle-center;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Popup01a.png");
+    -unity-slice-left: 4; -unity-slice-right: 4; -unity-slice-top: 4; -unity-slice-bottom: 4;
+    -unity-slice-scale: 4px;
+}
+.hud-coin-delta { position: absolute; top: -30px; right: 0; color: rgb(120, 200, 100); font-size: 26px; -unity-text-outline-width: 1px; -unity-text-outline-color: rgb(40, 30, 20); }
+.hud-coin-delta.negative { color: rgb(240, 120, 100); }
+
+/* ---------- Customer name plate, VIP, mood face ---------- */
+.customer-name {
+    color: rgb(250, 240, 220);
+    font-size: 18px;
+    -unity-text-outline-width: 1px;
+    -unity-text-outline-color: rgb(40, 30, 20);
+    margin-bottom: 2px;
+}
+.customer-name.vip {
+    color: rgb(74, 48, 38);
+    background-color: rgb(240, 196, 80);
+    border-width: 2px;
+    border-color: rgb(150, 100, 30);
+    border-top-left-radius: 8px; border-top-right-radius: 8px;
+    border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;
+    padding: 0 10px 3px 10px;
+    -unity-text-outline-width: 0;
+    font-size: 19px;
+}
+.customer-speech.vip { border-width: 3px; border-color: rgb(220, 170, 60); }
+
+.mood {
+    width: 30px; height: 30px;
+    border-width: 2px;
+    border-color: rgb(74, 48, 38);
+    border-top-left-radius: 15px; border-top-right-radius: 15px;
+    border-bottom-left-radius: 15px; border-bottom-right-radius: 15px;
+    background-color: rgb(250, 214, 96);
+}
+.mood.ok { background-color: rgb(240, 186, 92); }
+.mood.sad { background-color: rgb(232, 128, 96); }
+.mood-eye {
+    position: absolute; top: 8px;
+    width: 4px; height: 5px;
+    background-color: rgb(74, 48, 38);
+    border-top-left-radius: 2px; border-top-right-radius: 2px;
+    border-bottom-left-radius: 2px; border-bottom-right-radius: 2px;
+}
+.mood-eye.left { left: 7px; }
+.mood-eye.right { right: 7px; }
+.mood-mouth {
+    position: absolute; left: 7px; width: 12px;
+    border-color: rgb(74, 48, 38);
+}
+/* smile */
+.mood.happy .mood-mouth { top: 13px; height: 6px; border-bottom-width: 2px; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; }
+/* flat */
+.mood.ok .mood-mouth { top: 17px; height: 0; border-top-width: 2px; }
+/* frown */
+.mood.sad .mood-mouth { top: 16px; height: 6px; border-top-width: 2px; border-top-left-radius: 6px; border-top-right-radius: 6px; }
+
+/* ---------- Stamina meter over the player ---------- */
+.stamina {
+    position: absolute;
+    flex-direction: row; align-items: center;
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 0.25s;
+}
+.stamina.shown { opacity: 1; }
+.stamina-icon {
+    width: 18px; height: 18px; margin-right: 3px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconEnergy01a.png");
+}
+.stamina-bar {
+    width: 64px; height: 12px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Bar01a.png");
+    -unity-slice-left: 2; -unity-slice-right: 2; -unity-slice-top: 1; -unity-slice-bottom: 1;
+    -unity-slice-scale: 3px;
+    padding: 2px 3px;
+}
+.stamina-fill { height: 100%; background-color: rgb(250, 214, 96); }
+.stamina.tired .stamina-fill { background-color: rgb(232, 112, 90); }
+.stamina.tired .stamina-icon { -unity-background-image-tint-color: rgb(232, 112, 90); }
+
+/* Waiting visitor you haven't talked to yet: just a small "?" bubble. */
+.customer-speech.ask { font-size: 28px; padding: 2px 14px 8px 14px; -unity-text-align: middle-center; color: var(--accent); }
+
+/* ---------- Pixel-art mood face (replaces the drawn one) ---------- */
+.mood {
+    width: 26px; height: 26px;
+    border-width: 0;
+    border-top-left-radius: 0; border-top-right-radius: 0;
+    border-bottom-left-radius: 0; border-bottom-right-radius: 0;
+    background-color: rgba(0, 0, 0, 0);
+    background-image: url("project://database/Assets/Art/UI/Mood/T_Mood_Happy.png");
+    -unity-background-scale-mode: stretch-to-fill;
+}
+.mood.ok { background-color: rgba(0, 0, 0, 0); background-image: url("project://database/Assets/Art/UI/Mood/T_Mood_Okay.png"); }
+.mood.sad { background-color: rgba(0, 0, 0, 0); background-image: url("project://database/Assets/Art/UI/Mood/T_Mood_Sad.png"); }
+.mood-eye, .mood-mouth { display: none; }
+
+/* Coin change pop: green when you earn, red when you spend (id selector beats .hud-coins Label). */
+#hud-coin-delta {
+    color: rgb(110, 215, 95);
+    -unity-text-outline-width: 1.5px;
+    -unity-text-outline-color: rgb(40, 30, 20);
+}
+#hud-coin-delta.negative { color: rgb(235, 85, 70); }

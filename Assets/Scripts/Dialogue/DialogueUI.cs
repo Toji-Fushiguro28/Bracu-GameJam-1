@@ -62,6 +62,9 @@ public class DialogueUI : MonoBehaviour
     }
 
     /// <summary>Start a conversation. <paramref name="finished"/> runs when it closes.</summary>
+    /// <summary>Id of every line as it appears (lets callers react to the branch the player took).</summary>
+    public event Action<string> LineShown;
+
     public void Play(DialogueAsset dialogue, Action finished = null)
     {
         if (dialogue == null || dialogue.lines.Count == 0 || root == null) return;
@@ -78,6 +81,7 @@ public class DialogueUI : MonoBehaviour
         if (i < 0 || i >= current.lines.Count) { Close(); return; }
         index = i;
         var line = current.lines[i];
+        if (!string.IsNullOrEmpty(line.id)) LineShown?.Invoke(line.id);
         speakerLabel.text = string.IsNullOrEmpty(line.speaker) ? current.speaker : line.speaker;
         fullText = line.text ?? "";
         typed = 0f;

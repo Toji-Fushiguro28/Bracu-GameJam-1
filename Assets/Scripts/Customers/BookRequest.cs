@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public enum HintType { Author, Subject, Tag, Abstract, Format, FormatSubject }
+public enum HintType { Author, Subject, Tag, Abstract, Format, FormatSubject, Title }
 
 /// <summary>
 /// What a customer asks for. Stores a rule, not a book: any item matching the rule counts
@@ -24,6 +24,7 @@ public class BookRequest
         HintType.Format => 50f,
         HintType.FormatSubject => 60f,
         HintType.Tag => 70f,
+        HintType.Title => 55f,
         _ => 90f,
     };
 
@@ -35,6 +36,7 @@ public class BookRequest
         HintType.Subject => 1.1f,
         HintType.FormatSubject => 1.1f,
         HintType.Tag => 1.25f,
+        HintType.Title => 1f,
         _ => 1.5f,
     };
 
@@ -48,6 +50,7 @@ public class BookRequest
             case HintType.Tag: return item.HasTag(Value);
             case HintType.Format: return item.Format == Format;
             case HintType.FormatSubject: return item.Format == Format && item.Subject == Value;
+            case HintType.Title: return item == Target;
             default: return item == Target;
         }
     }
@@ -74,10 +77,35 @@ public class BookRequest
     /// Buyers only get sellable items. Readers may also ask for Archive items;
     /// VIP readers (Dean, professors) usually ask for Rare Books.
     /// </summary>
+    public static bool InStock(BookData b) => b.GoodCopies + b.WornCopies > 0;
+
+    /// <summary>True if no copy on the shelves would satisfy this request right now.</summary>
+    public bool OutOfStock(IList<BookData> items) => !items.Any(b => Matches(b) && InStock(b) && (b.Sellable || IsArchive(b) || IsRare(b)));
+
+    /// <summary>Chance a buyer asks for something the library doesn't have, by day.</summary>
+    public static float OutOfStockChance(int day) => day < 2 ? 0f : day == 2 ? 0.2f : 0.25f;
+
     public static BookRequest Create(IList<BookData> items, bool forReading = false, bool vip = false)
     {
-        bool InStock(BookData b) => b.GoodCopies + b.WornCopies > 0;
-        var candidates = items.Where(b => InStock(b) && (b.Sellable || (forReading && (IsArchive(b) || (vip && IsRare(b)))))).ToList();
+        var gm = GameManager.Instance;
+        int day = gm != null ? gm.day : 3;
+
+        // Sometimes a buyer wants a title that's sold out: check the catalogue, then order and reserve it.
+        if (!forReading && Random.value < (gm != null ? gm.OutOfStockChance : OutOfStockChance(day)))
+        {
+            var missing = items.Where(b => b.Sellable && !InStock(b)).ToList();
+            if (missing.Count > 0)
+            {
+                var want = missing[Random.Range(0, missing.Count)];
+                var oos = new BookRequest { Target = want, Format = want.Format };
+                return Random.value < 0.6f
+                    ? Set(oos, HintType.Title, null, Pick($"Do you have \"{want.Title}\"?", $"I'm looking for \"{want.Title}\"."))
+                    : About(oos);
+            }
+        }
+
+        bool archive = gm == null || gm.ArchiveOpen, rareOpen = gm == null || gm.RareOpen;
+        var candidates = items.Where(b => InStock(b) && (b.Sellable || (forReading && ((archive && IsArchive(b)) || (vip && rareOpen && IsRare(b)))))).ToList();
         if (vip && forReading && Random.value < 0.7f)
         {
             var rare = candidates.Where(IsRare).ToList();
@@ -89,11 +117,12 @@ public class BookRequest
         var tags = (item.Tag ?? "").Split(',').Select(t => t.Trim()).Where(TagLines.ContainsKey).ToList();
         float r = Random.value;
 
+        bool simple = day < 2; // first day: plain hints only
         // Periodicals and papers
         if (item.Format != BookFormat.Book)
         {
-            if (r < 0.3f && tags.Count > 0) return Tag(req, tags);
-            if (r < 0.55f) return About(req);
+            if (!simple && r < 0.3f && tags.Count > 0) return Tag(req, tags);
+            if (!simple && r < 0.55f) return About(req);
             switch (item.Format)
             {
                 case BookFormat.Newspaper:
@@ -108,6 +137,9 @@ public class BookRequest
         }
 
         // Books
+        if (simple) return r < 0.5f
+            ? Set(req, HintType.Author, item.Author, $"Do you have anything by {item.Author}?")
+            : Set(req, HintType.Subject, item.Subject, $"I need a good {item.Subject} book.");
         if (r < 0.3f) return Set(req, HintType.Author, item.Author, $"Do you have anything by {item.Author}?");
         if (r < 0.55f) return Set(req, HintType.Subject, item.Subject, $"I need a good {item.Subject} book.");
         if (r < 0.8f && tags.Count > 0) return Tag(req, tags);
