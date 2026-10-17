@@ -15,7 +15,7 @@ What changed in `MainGame.unity` and `Assets/Scripts`, and where. Nothing here c
   - **New Game** (asks for confirmation if a save exists; wipes it and reloads straight into Day 1).
   - **Start** (when there's no save).
   - **How to Play** (8 short pages: controls and stamina, counter, finding books, sold out, cards and readers, repairs and rooms, staff, end of day).
-  - **Settings** (volume, music, day length, fullscreen; same values as the PC Settings screen).
+  - **Settings** (volume, music, fullscreen; same values as the PC Settings screen).
   - **Credits**.
   - **Quit** (hidden on WebGL).
 - Pressing play fades the book out and Cinemachine blends down to the follow camera. A glockenspiel sweep plays, and buttons pop softly on hover.
@@ -230,7 +230,7 @@ Small, contained edits. Please check them when merging:
 
 ## 5. Testing tips
 - **Fresh start:** right-click the `GameManager` component → **Delete Save** (or untick `loadSave`). The save loads automatically on Play.
-- **Shorter days:** change `realMinutesPerDay` on GameManager, or Settings → Day length on the PC.
+- **Day length:** fixed at 4 real minutes (`realMinutesPerDay` on GameManager). Players can't change it.
 - **Room unlocks:** start a new game and play through Day 1 → 2 → 3.
 - **Tuning:**
   - `CustomerSpawner`: visitor mix and the `busyness` curve.

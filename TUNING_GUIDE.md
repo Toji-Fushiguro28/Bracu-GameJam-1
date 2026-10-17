@@ -15,7 +15,7 @@ Script paths are under `Assets/Scripts/`. After editing code, let Unity recompil
 
 | I want to change... | Where |
 |---|---|
-| How long a day lasts (real minutes) | Inspector → `GameManager` → **Real Minutes Per Day**. Players can also pick Short/Normal/Long (4/6/9 min) in Settings → `UI/PCSettingsView.cs` → `GameSettings.DayMinutes` |
+| How long a day lasts (real minutes) | Inspector → `GameManager` → **Real Minutes Per Day** (4). Players can't change it |
 | Opening, closing-bell and closing hours | Inspector → `GameManager` → **Open Hour** (9), **Closing Hour** (17.5, the bell), **Close Hour** (18) |
 | The clock format (12-hour) | `Core/GameManager.cs` → `ClockText` |
 | Which day the Archive / Rare Books open | `Core/GameManager.cs` → `ArchiveDay = 2`, `RareDay = 3`. This also moves the gate signs' text, staff unlocks and banners |

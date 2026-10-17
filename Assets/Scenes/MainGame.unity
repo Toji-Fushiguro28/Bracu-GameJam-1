@@ -40420,7 +40420,7 @@ MonoBehaviour:
   openHour: 9
   closingHour: 17.5
   closeHour: 18
-  realMinutesPerDay: 6
+  realMinutesPerDay: 4
   closingBell: {fileID: 8300000, guid: ba96316a9f453e747b55ec6288842105, type: 3}
   loadSave: 1
 --- !u!4 &1670038177

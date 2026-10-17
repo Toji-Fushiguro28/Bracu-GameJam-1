@@ -307,10 +307,6 @@ public class MainMenuUI : MonoBehaviour
         settingsRows.Clear();
         Volume("Volume", GameSettings.Master, v => GameSettings.Master = v);
         Volume("Music", GameSettings.Music, v => GameSettings.Music = v);
-        var day = Row("Day");
-        day.Add(Button("<", () => { GameSettings.DayLength--; BuildSettings(); }));
-        day.Add(Value(GameSettings.DayLengthNames[GameSettings.DayLength]));
-        day.Add(Button(">", () => { GameSettings.DayLength++; BuildSettings(); }));
         var gm = GameManager.Instance;
         if (gm != null && (hasSave || started))
         {

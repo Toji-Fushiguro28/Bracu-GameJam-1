@@ -23,7 +23,7 @@ public class GameManager : MonoBehaviour
     public float closingHour = 17.5f;
     public float closeHour = 18f;
     [Tooltip("Real minutes a full day (open to close) takes.")]
-    public float realMinutesPerDay = 6f;
+    public float realMinutesPerDay = 4f;
     public AudioClip closingBell;
 
     /// <summary>Running totals for the day report.</summary>
