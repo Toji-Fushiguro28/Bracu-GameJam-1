@@ -75,7 +75,7 @@
                     <ui:ScrollView class="menu-credits">
                         <ui:Label class="credit-head" text="Team" />
                         <ui:Label class="credit-name" text="Atikur Rahman Khan Emon" />
-                        <ui:Label class="credit-role" text="Art Direction &amp; 3D Art" />
+                        <ui:Label class="credit-role" text="Game Design &amp; 3D Art" />
                         <ui:Label class="credit-name" text="Sayok Zaman" />
                         <ui:Label class="credit-role" text="Lead Programmer &amp; Mechanics Design" />
                         <ui:Label class="credit-name" text="Mashiyat Ahmed Safin" />
