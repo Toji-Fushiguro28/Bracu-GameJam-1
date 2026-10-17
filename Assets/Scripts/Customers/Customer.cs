@@ -310,7 +310,7 @@ public class Customer : ClickInteractable
         JoinQueue();
     }
 
-    string CheckoutLine => heldBook == null ? "" : $"I'd like to take \"{heldBook.Title}\", please.";
+    string CheckoutLine => heldBook == null ? "" : $"I found \"{heldBook.Title}\" myself! Can you check it out?";
 
     void StampOut(GameObject player)
     {
@@ -688,6 +688,8 @@ public class Customer : ClickInteractable
 
     // Shared by every visitor: each reader brings up one topic, and topics don't repeat until all are used.
     static readonly List<int> topicsLeft = new List<int>();
+    // Exams, assignments, advising, CGPA...: only students bring these up (not professors, VIPs or the Dean).
+    static readonly HashSet<int> StudentTopics = new HashSet<int> { 6, 16, 18, 19, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32 };
     bool smallTalked;
 
     void SmallTalk()
@@ -695,8 +697,14 @@ public class Customer : ClickInteractable
         var ui = DialogueUI.Instance;
         if (ui == null || ui.IsOpen) return;
         smallTalked = true;
-        if (topicsLeft.Count == 0) for (int i = 0; i < Topics.Length; i++) topicsLeft.Add(i);
-        int pick = topicsLeft[Random.Range(0, topicsLeft.Count)];
+        bool student = profileKey != null && profileKey.Contains("Student");
+        var options = topicsLeft.FindAll(i => student || !StudentTopics.Contains(i));
+        if (options.Count == 0)
+        {
+            for (int i = 0; i < Topics.Length; i++) if (!topicsLeft.Contains(i)) topicsLeft.Add(i);
+            options = topicsLeft.FindAll(i => student || !StudentTopics.Contains(i));
+        }
+        int pick = options[Random.Range(0, options.Count)];
         topicsLeft.Remove(pick);
         var t = Topics[pick];
         string F(string s) => string.Format(s, heldBook.Title, heldBook.Author, heldBook.Subject);

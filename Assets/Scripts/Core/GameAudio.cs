@@ -28,6 +28,7 @@ public class GameAudio : MonoBehaviour
     public AudioClip dayReport;
     public AudioClip newDay;
     public AudioClip unlock;
+    public AudioClip delivery;
     [Header("UI")]
     public AudioClip uiClick;
     public AudioClip panelOpen;

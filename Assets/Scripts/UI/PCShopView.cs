@@ -8,10 +8,15 @@ using UnityEngine.UIElements;
 public static class PCShopView
 {
     static int tab;
+    static BookFilterBar filter;
 
     public static void Wire(VisualElement root, Action back)
     {
         root.Q<Button>("back-button")?.RegisterCallback<ClickEvent>(_ => back());
+        // Same search and filters as the catalogue, above the list (Books tab only).
+        var shopList = root.Q<ScrollView>("shop-list");
+        filter = new BookFilterBar(() => Refresh(root), true);
+        shopList.parent.Insert(shopList.parent.IndexOf(shopList), filter.Root);
         string[] names = { "tab-books", "tab-upgrades", "tab-staff" };
         for (int i = 0; i < names.Length; i++)
         {
@@ -32,6 +37,8 @@ public static class PCShopView
 
         var list = root.Q<ScrollView>("shop-list");
         float scroll = list.scrollOffset.y;
+        filter?.Root.EnableInClassList("hidden", tab != 0);
+        if (tab == 1) gm.upgradesSeenDay = gm.day; // the reminder glow can rest for today
         list.Clear();
         var note = root.Q<Label>("shop-note");
         if (tab == 0)
@@ -55,6 +62,7 @@ public static class PCShopView
             foreach (var b in gm.Books)
             {
                 if (BookRequest.IsRare(b) || !BookRequest.Available(b)) continue; // locked rooms can't be stocked yet
+                if (filter != null && !filter.Matches(b)) continue;
                 var book = b;
                 int price = GameManager.OrderPrice(book, false), express = GameManager.OrderPrice(book, true);
                 int onOrder = gm.OnOrder(book);
@@ -90,7 +98,8 @@ public static class PCShopView
                 bool hired = gm.Hired(role), open = gm.StaffUnlocked(role);
                 Row(list, GameManager.StaffNames[i] + (hired ? "  (hired)" : ""),
                     $"{GameManager.StaffInfo[i]}  Wage {GameManager.StaffWage[i]} a day.", null,
-                    hired ? "Let go" : open ? "Hire" : $"Day {GameManager.StaffUnlockDay[i]}", hired || open,
+                    hired ? "Let go" : open ? $"Hire {GameManager.StaffWage[i]}" : $"Day {GameManager.StaffUnlockDay[i]}",
+                    hired || (open && gm.Coins >= GameManager.StaffWage[i]),
                     () => gm.ToggleStaff(role), root);
             }
         }

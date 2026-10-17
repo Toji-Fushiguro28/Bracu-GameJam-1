@@ -74,7 +74,7 @@
             <ui:VisualElement class="page page-left">
                 <ui:Label name="report-title" class="page-title" text="Day Report" />
                 <ui:Label name="report-stars" class="report-stars" />
-                <ui:Label name="report-stats" class="report-stats" />
+                <ui:VisualElement name="report-rows" class="report-rows" />
                 <ui:Label name="report-rep" class="report-rep" />
             </ui:VisualElement>
             <ui:VisualElement class="page page-right">

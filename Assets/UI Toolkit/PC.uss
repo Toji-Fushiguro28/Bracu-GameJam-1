@@ -233,3 +233,16 @@
 .shop-row-text { flex-basis: 0; }
 .shop-row #book-title, .shop-row #book-sub { white-space: normal; }
 .shop-row .pc-button { flex-shrink: 0; }
+
+/* Shop search bar (same look as the catalogue) */
+.pc-filter-bar { margin-bottom: 6px; }
+.pc-filter-bar .filter-search { margin: 0 0 8px 0; }
+.pc-filter-bar .filter-search .unity-base-text-field__input {
+    background-color: rgba(0, 0, 0, 0.25);
+    border-width: 2px; border-color: var(--mint-dim);
+    border-top-left-radius: 6px; border-top-right-radius: 6px;
+    border-bottom-left-radius: 6px; border-bottom-right-radius: 6px;
+    color: var(--mint); font-size: 22px; padding: 4px 10px;
+}
+.pc-filter-bar .hidden, .pc-filter-bar.hidden { display: none; }
+.pc-tile.upgrade-ready { border-color: rgb(235, 200, 120); color: rgb(235, 200, 120); }

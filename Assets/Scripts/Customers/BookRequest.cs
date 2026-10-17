@@ -61,7 +61,7 @@ public class BookRequest
         { "Best Seller", "What's your best seller right now?" },
         { "New Arrival", "Anything new come in lately?" },
         { "Classic", "I'd love a real classic." },
-        { "Textbook", "I need a textbook for class." },
+        { "Textbook", "I need a proper textbook." },
         { "English Literature", "Something from English literature, please." },
         { "Reference", "I need a good reference book." },
         { "Daily", "Today's paper, please." },
@@ -136,9 +136,13 @@ public class BookRequest
             switch (item.Format)
             {
                 case BookFormat.Newspaper:
-                    return Set(req, HintType.Format, null, Pick("Can I see today's newspaper?", "Got a newspaper I could read?"));
+                    return Set(req, HintType.Format, null, forReading
+                        ? Pick("Could I read today's paper here?", "Got a newspaper I could sit with?")
+                        : Pick("Can I buy today's newspaper?", "I'll take a newspaper, please."));
                 case BookFormat.Magazine:
-                    return Set(req, HintType.Format, null, Pick("Got any magazines to flip through?", "I'd love a magazine for the bus."));
+                    return Set(req, HintType.Format, null, forReading
+                        ? Pick("Got a magazine I could flip through here?", "I'd love a magazine to read for a bit.")
+                        : Pick("I'd love a magazine for the bus.", "Can I buy a magazine?"));
                 case BookFormat.Journal:
                     return Set(req, HintType.FormatSubject, item.Subject, $"I need a {item.Subject} journal.");
                 default:

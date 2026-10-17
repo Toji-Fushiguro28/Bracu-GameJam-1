@@ -23,7 +23,7 @@ public class GameManager : MonoBehaviour
     public float closingHour = 17.5f;
     public float closeHour = 18f;
     [Tooltip("Real minutes a full day (open to close) takes.")]
-    public float realMinutesPerDay = 6f;
+    public float realMinutesPerDay = 4f;
     public AudioClip closingBell;
 
     /// <summary>Running totals for the day report.</summary>
@@ -111,6 +111,19 @@ public class GameManager : MonoBehaviour
     public float OutOfStockChance => day < 2 ? 0f : Mode(0.1f, day == 2 ? 0.2f : 0.25f, 0.35f);
     public void SetDifficulty(Difficulty d) => difficulty = d;
 
+    /// <summary>True when at least one upgrade is affordable right now.</summary>
+    public bool UpgradeReady
+    {
+        get
+        {
+            for (int i = 0; i < upgrades.Length; i++)
+                if (upgrades[i] < MaxUpgrade && Coins >= UpgradeCost(upgrades[i])) return true;
+            return false;
+        }
+    }
+    /// <summary>Day the player last looked at the Upgrades tab (stops the reminder glow for that day).</summary>
+    [NonSerialized] public int upgradesSeenDay = -1;
+
     /// <summary>A fresh library (no save) in the chosen mode.</summary>
     public void StartFresh(Difficulty d)
     {
@@ -187,6 +200,8 @@ public class GameManager : MonoBehaviour
     public void ToggleStaff(StaffRole r)
     {
         if (!staff[(int)r] && !StaffUnlocked(r)) return;
+        // Hiring pays today's wage up front, so you can't hire with an empty purse.
+        if (!staff[(int)r] && !TrySpend(StaffWage[(int)r])) return;
         staff[(int)r] = !staff[(int)r];
         ApplyUpgrades();
     }

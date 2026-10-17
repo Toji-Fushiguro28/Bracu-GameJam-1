@@ -33,6 +33,50 @@ public class StaffManager : MonoBehaviour
     {
         if (cleaner != null) cleaner.SetActive(false);
         Sync();
+        var gm = GameManager.Instance;
+        if (gm != null)
+        {
+            gm.PhaseChanged += p => { if (p == GameManager.Phase.Closing) SendHome(); };
+            gm.DayStarted += BringIn;
+        }
+    }
+
+    static readonly string[][] Goodbyes =
+    {
+        new[] { "Saving the catalogue... and done. Goodnight!", "Same time tomorrow. Don't let anyone touch my glue.", "That's the bell. The books can look after themselves now." },
+        new[] { "That's the bell. Me and my mop are clocking out.", "Floors are done. Mostly. Night, boss!", "Home time. My knees have been waiting all day." },
+        new[] { "Time for my tea. Goodnight, all.", "I'll say goodnight to the old books on my way out.", "Another lovely day. Off I toddle." },
+    };
+
+    /// <summary>The closing bell: each staff member says goodbye and walks out the front door.</summary>
+    void SendHome()
+    {
+        var door = CounterQueue.Instance != null ? CounterQueue.Instance.exit.position : arrivePoint;
+        for (int i = 0; i < workers.Length; i++)
+        {
+            var w = workers[i];
+            if (w == null || !w.gameObject.activeSelf) continue;
+            var talk = w.GetComponent<StaffTalk>();
+            var lines = Goodbyes[i];
+            if (talk != null) WorldPrompts.Instance?.ShowBubble(talk, lines[Random.Range(0, lines.Length)], 3.5f);
+            w.GoHome(door);
+        }
+    }
+
+    /// <summary>Nine o'clock: staff walk in through the front door (visitors start at ten past).</summary>
+    void BringIn()
+    {
+        Vector3 pos = NavMesh.SamplePosition(arrivePoint, out var hit, 2f, NavMesh.AllAreas) ? hit.position : arrivePoint;
+        foreach (var w in workers)
+        {
+            if (w == null) continue;
+            var agent = w.GetComponent<NavMeshAgent>();
+            if (agent != null) agent.enabled = false;
+            w.transform.position = pos;
+            w.gameObject.SetActive(true);
+            if (agent != null) agent.enabled = true;
+            w.StartShift();
+        }
     }
 
     /// <summary>True if this character prefab is busy working here today (so they don't visit as a customer).</summary>
@@ -63,7 +107,8 @@ public class StaffManager : MonoBehaviour
         {
             var role = (GameManager.StaffRole)i;
             bool want = gm.Hired(role) && gm.StaffUnlocked(role);
-            if (want && workers[i] == null) workers[i] = Spawn(role);
+            // New hires start work while the library is open; after the bell they come in tomorrow.
+            if (want && workers[i] == null && gm.CurrentPhase == GameManager.Phase.Open) workers[i] = Spawn(role);
             else if (!want && workers[i] != null) Dismiss(i);
         }
     }

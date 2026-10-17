@@ -15,7 +15,7 @@ Script paths are under `Assets/Scripts/`. After editing code, let Unity recompil
 
 | I want to change... | Where |
 |---|---|
-| How long a day lasts (real minutes) | Inspector → `GameManager` → **Real Minutes Per Day**. Players can also pick Short/Normal/Long (4/6/9 min) in Settings → `UI/PCSettingsView.cs` → `GameSettings.DayMinutes` |
+| How long a day lasts (real minutes) | Inspector → `GameManager` → **Real Minutes Per Day** (4). Players can't change it |
 | Opening, closing-bell and closing hours | Inspector → `GameManager` → **Open Hour** (9), **Closing Hour** (17.5, the bell), **Close Hour** (18) |
 | The clock format (12-hour) | `Core/GameManager.cs` → `ClockText` |
 | Which day the Archive / Rare Books open | `Core/GameManager.cs` → `ArchiveDay = 2`, `RareDay = 3`. This also moves the gate signs' text, staff unlocks and banners |
@@ -104,6 +104,7 @@ All of it is in `Core/GameManager.cs`, in the *Play mode* section:
 | Carry capacity / how held books line up | `Core/GameManager.cs` → `BagCapacity`; `Books/PlayerCarry.cs` → `sideStep` |
 | Rope gates (closed and open positions) | `RoomLocks/Gate_*` objects → `RoomGate` → **Open Position / Open Yaw**; gate text in `Day/RoomGate.cs` → `Interact()` |
 | Darkness of locked rooms | `Assets/Art/Materials/M_RoomDarkness.mat` → **Tint**; per room: `RoomLocks/Darkness_*` → `RoomDarkness` → **Strength** |
+| Opening-day reveal (camera target, distance, timing, sound) | Inspector → `GameManager` → `RoomReveal` → **Archive Focus**, **Rare Focus**, **Closeness**, **Look Seconds**, **Reveal Sound** |
 | Front-door rope at night | `RoomGate` with room *FrontDoor* (`Gate_Front_A/B`) |
 | Deliveries (cart) | `Books/DeliveryCart.cs`; arrival logic `GameManager.cs` → `DeliverDue()` |
 | Return-bin glow | `SM_ReturnBin` → `ReturnBinGlow` → **Color**, **Width**, **Pulse Seconds** |

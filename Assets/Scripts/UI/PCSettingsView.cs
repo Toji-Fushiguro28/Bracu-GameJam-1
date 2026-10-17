@@ -6,12 +6,9 @@ using UnityEngine.UIElements;
 public static class GameSettings
 {
     public const int Steps = 10;
-    public static readonly string[] DayLengthNames = { "Short", "Normal", "Long" };
-    static readonly float[] DayMinutes = { 4f, 6f, 9f };
 
     public static int Master { get => PlayerPrefs.GetInt("set_master", 8); set { PlayerPrefs.SetInt("set_master", Mathf.Clamp(value, 0, Steps)); Apply(); } }
     public static int Music { get => PlayerPrefs.GetInt("set_music", 7); set { PlayerPrefs.SetInt("set_music", Mathf.Clamp(value, 0, Steps)); Apply(); } }
-    public static int DayLength { get => PlayerPrefs.GetInt("set_day", 1); set { PlayerPrefs.SetInt("set_day", (value + 3) % 3); Apply(); } }
 
     static float musicBase = -1f;
 
@@ -25,7 +22,6 @@ public static class GameSettings
             if (musicBase < 0f) musicBase = bgm.volume;
             bgm.volume = musicBase * Music / Steps;
         }
-        if (GameManager.Instance != null) GameManager.Instance.realMinutesPerDay = DayMinutes[Mathf.Clamp(DayLength, 0, 2)];
     }
 }
 
@@ -47,10 +43,6 @@ public static class PCSettingsView
         Volume(list, root, "Volume", GameSettings.Master, v => GameSettings.Master = v);
         Volume(list, root, "Music", GameSettings.Music, v => GameSettings.Music = v);
 
-        var day = Row(list, "Day length");
-        day.Add(Value($"{GameSettings.DayLengthNames[GameSettings.DayLength]}"));
-        day.Add(Button("<", () => { GameSettings.DayLength--; Refresh(root); }));
-        day.Add(Button(">", () => { GameSettings.DayLength++; Refresh(root); }));
 
         var gm = GameManager.Instance;
         if (gm != null)

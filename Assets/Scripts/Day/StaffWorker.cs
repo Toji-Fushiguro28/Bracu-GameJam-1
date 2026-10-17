@@ -11,7 +11,7 @@ using UnityEngine.AI;
 [RequireComponent(typeof(NavMeshAgent))]
 public class StaffWorker : MonoBehaviour
 {
-    enum State { ToChair, AtChair, ToBin, ToDesk, Repairing, Wander, Idle, ToMess, Cleaning, ToCollect, ToShelf }
+    enum State { ToChair, AtChair, ToBin, ToDesk, Repairing, Wander, Idle, ToMess, Cleaning, ToCollect, ToShelf, ToBinShelve, GoingHome, OffDuty }
 
     public GameManager.StaffRole role;
     public SeatPoint chair;
@@ -65,12 +65,14 @@ public class StaffWorker : MonoBehaviour
             case State.Repairing: UpdateRepair(); break;
             case State.ToCollect: if (Arrived()) CollectFinished(); break;
             case State.ToShelf: if (Arrived()) ShelveCarried(); break;
+            case State.ToBinShelve: if (Arrived()) TakeReturnToShelve(); break;
+            case State.GoingHome: if (Arrived()) { state = State.OffDuty; gameObject.SetActive(false); } break;
             case State.Wander: if (Arrived() || timer <= 0f) { state = State.Idle; timer = Random.Range(2f, 5f); } if (MessWaiting()) GoClean(); break;
             case State.Idle: if (MessWaiting()) GoClean(); else if (timer <= 0f) Wander(); break;
             case State.ToMess: UpdateToMess(); break;
             case State.Cleaning:
                 if (timer > 0f) break;
-                if (target != null && target.IsDirty) { target.Clean(false); GameAudio.Play(a => a.tidy, 0.4f); }
+                if (target != null && target.IsDirty) { target.CleanByStaff(); GameAudio.Play(a => a.tidy, 0.4f); }
                 target = null;
                 if (MessWaiting()) GoClean(); else Wander();
                 break;
@@ -142,7 +144,9 @@ public class StaffWorker : MonoBehaviour
             Walk(desk.transform.position, State.ToDesk);
             return;
         }
-        if (bin.HasNeedingRepair) Walk(bin.transform.position, State.ToBin);
+        if (bin.HasNeedingRepair) { Walk(bin.transform.position, State.ToBin); return; }
+        // Nothing to fix: put good returns back where they belong.
+        if (bin.HasGood) Walk(bin.transform.position, State.ToBinShelve);
     }
 
     void TakeFromBin()
@@ -181,17 +185,46 @@ public class StaffWorker : MonoBehaviour
         if (desk == null || job == null || !desk.Working.Contains(job)) { job = null; CollectFinished(); }
     }
 
+    void TakeReturnToShelve()
+    {
+        var bin = ReturnBin.Instance;
+        if (bin == null || !bin.TakeGood(out carried, out carriedCondition)) { GoToChair(); return; }
+        if (anim) { anim.PlayReachShelf(); anim.SetCarrying(true); }
+        GoToShelfFor(carried);
+    }
+
+    void GoToShelfFor(BookData book)
+    {
+        shelf = null;
+        foreach (var s in FindObjectsByType<ShelfInteractable>())
+            if (s.Belongs(book) && !RoomGate.IsLockedAt(s.transform.position)) { shelf = s; break; }
+        if (shelf == null) { ShelveCarried(); return; }
+        Walk(shelf.transform.position, State.ToShelf);
+    }
+
+    // ---------------- Clocking in and out ----------------
+
+    /// <summary>At the closing bell: say goodbye and walk out the front door.</summary>
+    public void GoHome(Vector3 door)
+    {
+        if (carried != null) { ReturnBin.Instance?.Add(carried, carriedCondition); carried = null; if (anim) anim.SetCarrying(false); }
+        job = null; target = null;
+        Walk(door, State.GoingHome);
+    }
+
+    /// <summary>A new morning: in through the door at nine, then off to work.</summary>
+    public void StartShift()
+    {
+        if (role == GameManager.StaffRole.Cleaner) Wander(); else GoToChair();
+    }
+
     /// <summary>Picks the repaired copy up off the table and takes it to its shelf.</summary>
     void CollectFinished()
     {
         var desk = RepairDesk.Instance;
         if (desk == null || !desk.TakeDone(out carried, out carriedCondition)) { GoToChair(); return; }
         if (anim) { anim.PlayReachShelf(); anim.SetCarrying(true); }
-        shelf = null;
-        foreach (var s in FindObjectsByType<ShelfInteractable>())
-            if (s.Belongs(carried) && !RoomGate.IsLockedAt(s.transform.position)) { shelf = s; break; }
-        if (shelf == null) { ShelveCarried(); return; } // no shelf to walk to: just put it away
-        Walk(shelf.transform.position, State.ToShelf);
+        GoToShelfFor(carried);
     }
 
     void ShelveCarried()

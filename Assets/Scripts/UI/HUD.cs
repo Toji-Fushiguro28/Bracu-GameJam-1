@@ -7,6 +7,23 @@ using UnityEngine.UIElements;
 [RequireComponent(typeof(UIDocument))]
 public class HUD : MonoBehaviour
 {
+    static HUD instance;
+    VisualElement fade;
+    bool upgradeBannerShown;
+
+    /// <summary>Fades to black, runs <paramref name="atBlack"/>, then fades back in.</summary>
+    public static void FadeThen(System.Action atBlack)
+    {
+        if (instance == null || instance.fade == null) { atBlack?.Invoke(); return; }
+        var f = instance.fade;
+        f.pickingMode = PickingMode.Position; // no clicks while dark
+        f.AddToClassList("on");
+        f.schedule.Execute(() =>
+        {
+            atBlack?.Invoke();
+            f.schedule.Execute(() => { f.RemoveFromClassList("on"); f.pickingMode = PickingMode.Ignore; }).ExecuteLater(150);
+        }).ExecuteLater(600);
+    }
     Label dayLabel, clockLabel, coinLabel, carryLabel;
     VisualElement carrySlot;
     PlayerCarry carry;
@@ -24,6 +41,10 @@ public class HUD : MonoBehaviour
         coinLabel = root.Q<Label>("hud-coins");
         carryLabel = root.Q<Label>("hud-carry");
         carrySlot = root.Q("hud-carry-slot");
+        instance = this;
+        fade = new VisualElement { name = "screen-fade", pickingMode = PickingMode.Ignore };
+        fade.AddToClassList("screen-fade");
+        root.Add(fade); // last child: drawn over everything on this panel
 
         // Phase banner and the little "+12" next to the coins.
         banner = new Label { name = "hud-banner", pickingMode = PickingMode.Ignore };
@@ -80,7 +101,12 @@ public class HUD : MonoBehaviour
             gm.CoinsChanged += OnCoins;
             gm.PhaseChanged += OnPhase;
             gm.DayStarted += () => ShowBanner(MorningText(gm), 6f);
-            gm.Delivered += n => ShowBanner(n == 1 ? "A delivery arrived at the book cart." : $"{n} books arrived at the book cart.");
+            gm.Delivered += n =>
+            {
+                GameAudio.Play(a => a.delivery);
+                ShowBanner(n == 1 ? "Delivery! A book is waiting at the book cart." : $"Delivery! {n} books are waiting at the book cart.", 6f);
+            };
+            gm.DayStarted += () => upgradeBannerShown = false;
             ShowBanner(MorningText(gm), 6f);
             coinLabel.text = gm.Coins.ToString();
             dayLabel.text = "Day " + gm.day;
@@ -144,9 +170,15 @@ public class HUD : MonoBehaviour
         if (gm != null && !lunchShown && gm.Hour >= 12f && gm.Hour < 13f)
         {
             lunchShown = true;
-            ShowBanner("Lunch lull - a good time to tidy, repair and order books.", 5f);
+            ShowBanner("Lunch time - a good time to tidy, repair and order books.", 5f);
         }
         if (gm != null && gm.Hour < 12f) lunchShown = false;
+        // Got enough coins for an upgrade? Say so once a day (the computer glows too).
+        if (gm != null && !upgradeBannerShown && gm.UpgradeReady && gm.upgradesSeenDay != gm.day && bannerUntil <= 0f && !MainMenuUI.Active)
+        {
+            upgradeBannerShown = true;
+            ShowBanner("You can afford an upgrade! Check the Shop on the computer.", 5f);
+        }
         if (deltaUntil > 0f && Time.time > deltaUntil) { deltaUntil = 0f; coinDelta.AddToClassList("hidden"); }
         if (gm == null || clockLabel == null) return;
         string clock = gm.CurrentPhase == GameManager.Phase.Closed ? "Closed - tidy up, then lock the front doors" : gm.Paused ? gm.ClockText + "  (paused)" : gm.ClockText;
