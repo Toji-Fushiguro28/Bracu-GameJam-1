@@ -113,7 +113,7 @@ public class ShelfUI : MonoBehaviour
         foreach (var (b, _) in carry.Items) if (shelf.Belongs(b)) belongs++;
         if (held != null && string.IsNullOrEmpty(note.text))
             note.text = belongs > 0 ? (belongs == 1 ? "One of your books goes on this shelf." : $"{belongs} of your books go on this shelf.")
-                : carry.IsFull ? $"Hands full: \"{held.Title}\" goes in {ShelfInteractable.NameOf(held.ShelfLocation)}."
+                : carry.IsFull ? $"Hands full: \"{held.Title}\" doesn't go on this shelf. Check the computer."
                 : "";
         handInfo.EnableInClassList("empty", held == null);
         handTitle.text = held != null ? held.Title : "Hands empty";
@@ -157,7 +157,7 @@ public class ShelfUI : MonoBehaviour
             if (i < 0)
             {
                 var held = carry.Carried;
-                note.text = $"Your hands are full. \"{held.Title}\" goes in {ShelfInteractable.NameOf(held.ShelfLocation)}.";
+                note.text = $"Your hands are full, and \"{held.Title}\" doesn't go here.";
                 return;
             }
             var (back, backCondition) = carry.TakeAt(i);
@@ -186,7 +186,7 @@ public class ShelfUI : MonoBehaviour
         if (shelved == 0)
         {
             var held = carry.Carried;
-            note.text = $"That belongs in {ShelfInteractable.NameOf(held.ShelfLocation)}.";
+            note.text = "That doesn't go on this shelf. Look it up on the computer.";
             return;
         }
         Play(putSound);

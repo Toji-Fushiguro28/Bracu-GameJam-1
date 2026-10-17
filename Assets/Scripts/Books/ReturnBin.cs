@@ -64,7 +64,7 @@ public class ReturnBin : ClickInteractable
         pile.RemoveAt(pile.Count - 1);
         carry.PickUp(copy.book, copy.condition);
         string note = copy.condition == BookCondition.Good ? "" : $" ({copy.condition.ToString().ToLower()})";
-        Bubble($"\"{copy.book.Title}\"{note} - goes in {ShelfInteractable.NameOf(copy.book.ShelfLocation)}.");
+        Bubble($"Took \"{copy.book.Title}\"{note} from the returns.");
     }
 
     void Bubble(string text)

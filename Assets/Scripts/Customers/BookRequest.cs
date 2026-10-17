@@ -79,6 +79,16 @@ public class BookRequest
     /// </summary>
     public static bool InStock(BookData b) => b.GoodCopies + b.WornCopies > 0;
 
+    /// <summary>False for Archive items before the Archive opens, and Rare items before Rare Books opens.</summary>
+    public static bool Available(BookData b)
+    {
+        var gm = GameManager.Instance;
+        if (gm == null) return true;
+        if (IsArchive(b) && !gm.ArchiveOpen) return false;
+        if (IsRare(b) && !gm.RareOpen) return false;
+        return true;
+    }
+
     /// <summary>True if no copy on the shelves would satisfy this request right now.</summary>
     public bool OutOfStock(IList<BookData> items) => !items.Any(b => Matches(b) && InStock(b) && (b.Sellable || IsArchive(b) || IsRare(b)));
 
@@ -93,7 +103,7 @@ public class BookRequest
         // Sometimes a buyer wants a title that's sold out: check the catalogue, then order and reserve it.
         if (!forReading && Random.value < (gm != null ? gm.OutOfStockChance : OutOfStockChance(day)))
         {
-            var missing = items.Where(b => b.Sellable && !InStock(b)).ToList();
+            var missing = items.Where(b => b.Sellable && !InStock(b) && Available(b)).ToList();
             if (missing.Count > 0)
             {
                 var want = missing[Random.Range(0, missing.Count)];
@@ -105,7 +115,7 @@ public class BookRequest
         }
 
         bool archive = gm == null || gm.ArchiveOpen, rareOpen = gm == null || gm.RareOpen;
-        var candidates = items.Where(b => InStock(b) && (b.Sellable || (forReading && ((archive && IsArchive(b)) || (vip && rareOpen && IsRare(b)))))).ToList();
+        var candidates = items.Where(b => InStock(b) && Available(b) && (b.Sellable || (forReading && ((archive && IsArchive(b)) || (vip && rareOpen && IsRare(b)))))).ToList();
         if (vip && forReading && Random.value < 0.7f)
         {
             var rare = candidates.Where(IsRare).ToList();

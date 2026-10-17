@@ -78,7 +78,7 @@
 
                 <ui:VisualElement name="menu-credits" class="menu-panel hidden">
                     <ui:Label class="page-title font-title" text="Credits" />
-                    <ui:ScrollView class="menu-credits">
+                    <ui:ScrollView class="menu-credits shelf-list">
                         <ui:Label class="credit-head" text="Team" />
                         <ui:Label class="credit-name" text="Atikur Rahman Khan Emon" />
                         <ui:Label class="credit-role" text="Game Design &amp; 3D Art" />

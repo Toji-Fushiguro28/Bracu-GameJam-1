@@ -121,7 +121,7 @@ public class Customer : ClickInteractable
         if (kind == Kind.Returner)
         {
             // A copy they borrowed some days ago, in whatever state they kept it.
-            var lendable = GM.Books.FindAll(b => b.Format == BookFormat.Book && b.Sellable);
+            var lendable = GM.Books.FindAll(b => b.Format == BookFormat.Book && b.Sellable && BookRequest.Available(b));
             if (lendable.Count > 0)
             {
                 heldBook = lendable[Random.Range(0, lendable.Count)];
@@ -573,7 +573,7 @@ public class Customer : ClickInteractable
             HintType.Author => $"I think it's a {b.Subject} {noun}.",
             HintType.Subject => who.Length > 0 ? $"Maybe something by an author whose name starts with \"{who[0]}\"?" : $"It's a {noun}.",
             HintType.Tag => $"I'm fairly sure it's a {b.Subject} {noun}.",
-            HintType.Format or HintType.FormatSubject => $"They're usually on the {ShelfInteractable.NameOf(b.ShelfLocation)}.",
+            HintType.Format or HintType.FormatSubject => $"It's one of the {b.FormatName.ToLower()}s. Maybe the catalogue knows where.",
             HintType.Title => $"It's by {who}. Is it in the catalogue?",
             _ => $"It's a {b.Subject} {noun}, if that helps.",
         };

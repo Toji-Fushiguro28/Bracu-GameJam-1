@@ -50,7 +50,7 @@ public class DeliveryCart : ClickInteractable
         carry.PickUp(book, BookCondition.Good);
         var res = gm != null ? gm.reservations.Find(r => r.title == book.Title) : null;
         Bubble(res != null ? $"\"{book.Title}\" - reserved for {res.name}."
-                           : $"\"{book.Title}\" goes in {ShelfInteractable.NameOf(book.ShelfLocation)}.");
+                           : $"Took \"{book.Title}\" from the cart.");
     }
 
     void Bubble(string text) => WorldPrompts.Instance?.ShowBubble(this, text, 3f);

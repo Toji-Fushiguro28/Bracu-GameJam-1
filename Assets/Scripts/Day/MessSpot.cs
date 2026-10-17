@@ -62,7 +62,7 @@ public class MessSpot : ClickInteractable
                 return;
             }
             carry.PickUp(book, condition);
-            WorldPrompts.Instance?.ShowBubble(this, $"\"{book.Title}\" goes in {ShelfInteractable.NameOf(book.ShelfLocation)}.", 3f);
+            WorldPrompts.Instance?.ShowBubble(this, $"Picked up \"{book.Title}\".", 2.5f);
             book = null;
         }
         Clean(true);
