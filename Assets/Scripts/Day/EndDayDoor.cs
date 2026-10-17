@@ -39,7 +39,7 @@ public class EndDayDoor : ClickInteractable
             Bubble($"Still {what}. Click again to leave anyway.");
             return;
         }
-        if (DayReportUI.Instance != null) DayReportUI.Instance.Open();
+        if (DayReportUI.Instance != null) HUD.FadeThen(() => DayReportUI.Instance.Open());
     }
 
     void Bubble(string text) => WorldPrompts.Instance?.ShowBubble(this, text, 3f);

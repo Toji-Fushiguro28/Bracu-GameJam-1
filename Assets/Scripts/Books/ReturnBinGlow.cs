@@ -16,6 +16,8 @@ public class ReturnBinGlow : MonoBehaviour
     static readonly int ColorId = Shader.PropertyToID("_OutlineColor");
     ReturnBin bin;
     RepairDesk desk;
+    DeliveryCart cart;
+    PCOverlayTrigger computer;
     Renderer glow;
     MaterialPropertyBlock block;
 
@@ -23,6 +25,8 @@ public class ReturnBinGlow : MonoBehaviour
     {
         bin = GetComponent<ReturnBin>();
         desk = GetComponent<RepairDesk>(); // also works on the repair desk: glows while repaired books wait
+        cart = GetComponent<DeliveryCart>(); // ...and the delivery cart while deliveries wait
+        computer = GetComponent<PCOverlayTrigger>(); // ...and the computer while an upgrade is affordable
         var mf = GetComponent<MeshFilter>();
         if (mf == null || mf.sharedMesh == null || glowMaterial == null) { enabled = false; return; }
         // A copy of the bin's mesh drawn with the outline shader, slightly larger.
@@ -41,7 +45,11 @@ public class ReturnBinGlow : MonoBehaviour
 
     void Update()
     {
-        bool on = bin != null ? bin.Count > 0 : desk != null && desk.Done.Count > 0;
+        var gm = GameManager.Instance;
+        bool on = bin != null ? bin.Count > 0
+                : desk != null ? desk.Done.Count > 0
+                : cart != null ? cart.Count > 0
+                : computer != null && gm != null && gm.UpgradeReady && gm.upgradesSeenDay != gm.day;
         if (glow.enabled != on) glow.enabled = on;
         if (!on) return;
         float t = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * Mathf.PI * 2f / Mathf.Max(0.1f, pulseSeconds));

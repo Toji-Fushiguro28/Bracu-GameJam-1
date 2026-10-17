@@ -155,8 +155,9 @@ public class RepairDesk : ClickInteractable
 
         Working.RemoveAt(0);
         bool perfect = UnityEngine.Random.value < Chance(job);
-        // Perfect: like new. Normal: usable but worn (sells for less). It waits on the table to be shelved.
-        Done.Add((job.book, perfect ? BookCondition.Good : BookCondition.Worn));
+        // Always at least one step better: Worn -> Good; Damaged -> Good (perfect) or Worn (normal).
+        var fixedTo = perfect || job.condition == BookCondition.Worn ? BookCondition.Good : BookCondition.Worn;
+        Done.Add((job.book, fixedTo));
         var gm = GameManager.Instance;
         if (gm != null)
         {
@@ -164,7 +165,7 @@ public class RepairDesk : ClickInteractable
             gm.NotifyBooksChanged();
         }
         if (doneSound != null) AudioSource.PlayClipAtPoint(doneSound, transform.position, 0.8f);
-        Bubble(perfect ? $"\"{job.book.Title}\" - Perfect Restoration! It's ready on the table." : $"\"{job.book.Title}\" repaired. It's ready on the table.");
+        Bubble(fixedTo == BookCondition.Good ? $"\"{job.book.Title}\" is good as new! It's ready on the table." : $"\"{job.book.Title}\" is patched up (worn). It's ready on the table.");
         Finished?.Invoke(job, perfect);
         Changed?.Invoke();
     }

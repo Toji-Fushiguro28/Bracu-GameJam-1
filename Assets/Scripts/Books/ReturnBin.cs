@@ -39,6 +39,21 @@ public class ReturnBin : ClickInteractable
     }
 
     public bool HasNeedingRepair => pile.Exists(c => c.condition != BookCondition.Good);
+    public bool HasGood => pile.Exists(c => c.condition == BookCondition.Good);
+
+    /// <summary>Archivist: takes a good copy out of the returns to shelve it.</summary>
+    public bool TakeGood(out BookData book, out BookCondition condition)
+    {
+        for (int i = pile.Count - 1; i >= 0; i--)
+        {
+            if (pile[i].condition != BookCondition.Good) continue;
+            book = pile[i].book; condition = pile[i].condition;
+            pile.RemoveAt(i);
+            return true;
+        }
+        book = null; condition = BookCondition.Good;
+        return false;
+    }
 
     /// <summary>Repairer staff: takes the newest worn/damaged copy out of the bin.</summary>
     public bool TakeNeedingRepair(out BookData book, out BookCondition condition)

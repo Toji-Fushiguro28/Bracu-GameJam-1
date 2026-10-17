@@ -6937,7 +6937,7 @@ Transform:
   m_GameObject: {fileID: 360388545}
   serializedVersion: 2
   m_LocalRotation: {x: -0.2546322, y: 0.29631096, z: -0.082288325, w: -0.9168375}
-  m_LocalPosition: {x: 33.990818, y: 16.138319, z: -14.097371}
+  m_LocalPosition: {x: 33.991154, y: 16.138319, z: -14.097127}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -8678,6 +8678,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2606335249169569320, guid: b53aa30a6e67a8141b6172a2b13a15fd, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1991810705}
+    - targetCorrespondingSourceObject: {fileID: 2606335249169569320, guid: b53aa30a6e67a8141b6172a2b13a15fd, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1991810711}
   m_SourcePrefab: {fileID: 100100000, guid: b53aa30a6e67a8141b6172a2b13a15fd, type: 3}
 --- !u!4 &452411435 stripped
 Transform:
@@ -15499,10 +15502,7 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 4855279091241238665, guid: df9551088ae455943b9f08e7c8e6252f, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1148959412}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: df9551088ae455943b9f08e7c8e6252f, type: 3}
 --- !u!4 &840319956 stripped
 Transform:
@@ -15992,11 +15992,6 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!1 &860800934 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 4855279091241238665, guid: df9551088ae455943b9f08e7c8e6252f, type: 3}
-  m_PrefabInstance: {fileID: 1597160647}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &863796247
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -20233,7 +20228,7 @@ Transform:
   m_GameObject: {fileID: 961739749}
   serializedVersion: 2
   m_LocalRotation: {x: -0.2546322, y: 0.29631096, z: -0.082288325, w: -0.9168375}
-  m_LocalPosition: {x: 33.990818, y: 16.138319, z: -14.097371}
+  m_LocalPosition: {x: 33.991154, y: 16.138319, z: -14.097127}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -23774,33 +23769,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6637809301670304367, guid: 9c984a5f692987d49ab61e44ce1e3336, type: 3}
   m_PrefabInstance: {fileID: 1144046214}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1148959408 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 4855279091241238665, guid: df9551088ae455943b9f08e7c8e6252f, type: 3}
-  m_PrefabInstance: {fileID: 840319955}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1148959412
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1148959408}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9616640fab82d984a8b50a161a997982, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InspectInteractable
-  range: 3.5
-  verb: 
-  lines:
-  - Golden light pours in. Dust dances in the beam.
-  inOrder: 1
-  onceOnly: 0
-  bubbleSeconds: 2.8
-  onInspected:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!1001 &1151428503
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -33469,6 +33437,7 @@ GameObject:
   - component: {fileID: 1458886556}
   - component: {fileID: 1458886555}
   - component: {fileID: 1458886554}
+  - component: {fileID: 1458886559}
   m_Layer: 0
   m_Name: DeliveryCart
   m_TagString: Untagged
@@ -33603,6 +33572,22 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1458886552}
   m_Mesh: {fileID: -664253701319165674, guid: 3ac7a720aac76904d9aaebc4cd7c0e7f, type: 3}
+--- !u!114 &1458886559
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1458886552}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6046caaca9ec23844800b7fbe3f461ee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ReturnBinGlow
+  glowMaterial: {fileID: 2100000, guid: 781872d9a35ed4643b0b6e1a057e675f, type: 2}
+  color: {r: 0.45, g: 0.75, b: 1, a: 1}
+  width: {x: 0.03, y: 0.065}
+  pulseSeconds: 1.4
 --- !u!1001 &1462004306
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -34406,10 +34391,7 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 4855279091241238665, guid: df9551088ae455943b9f08e7c8e6252f, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1718049156}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: df9551088ae455943b9f08e7c8e6252f, type: 3}
 --- !u!4 &1502404914 stripped
 Transform:
@@ -38796,38 +38778,13 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 4855279091241238665, guid: df9551088ae455943b9f08e7c8e6252f, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1597160652}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: df9551088ae455943b9f08e7c8e6252f, type: 3}
 --- !u!4 &1597160648 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5200173467091114547, guid: df9551088ae455943b9f08e7c8e6252f, type: 3}
   m_PrefabInstance: {fileID: 1597160647}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1597160652
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 860800934}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9616640fab82d984a8b50a161a997982, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InspectInteractable
-  range: 3.5
-  verb: 
-  lines:
-  - Golden light pours in. Dust dances in the beam.
-  inOrder: 1
-  onceOnly: 0
-  bubbleSeconds: 2.8
-  onInspected:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!1 &1597560135 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7686746595393840433, guid: 96411fb296e6cec438fa61decb7b36a8, type: 3}
@@ -40438,6 +40395,7 @@ GameObject:
   - component: {fileID: 1670038178}
   - component: {fileID: 1670038179}
   - component: {fileID: 1670038180}
+  - component: {fileID: 1670038181}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -40523,6 +40481,7 @@ MonoBehaviour:
   dayReport: {fileID: 8300000, guid: 5791b1db2c10b4f428214a7193f2efcc, type: 3}
   newDay: {fileID: 8300000, guid: ce181ad83cbc1534cbf0f06ba8561538, type: 3}
   unlock: {fileID: 8300000, guid: 3592bfe5a2977b94398c7696ced0474a, type: 3}
+  delivery: {fileID: 8300000, guid: 5c4961c0bc1b21242a79728a76977b0e, type: 3}
   uiClick: {fileID: 8300000, guid: aa2396911d0ed5d43b702f77bb5fb00e, type: 3}
   panelOpen: {fileID: 8300000, guid: b9ab410bd9803644caae0e98f00563e7, type: 3}
   panelClose: {fileID: 8300000, guid: 59d7681bcc0089e4bacd07b8c8a361f4, type: 3}
@@ -40549,6 +40508,23 @@ MonoBehaviour:
   rareChair: {fileID: 1799341479}
   arrivePoint: {x: 20, y: 0, z: 1.6}
   typingClip: {fileID: 8300000, guid: 023db57c226014249a71c26109f4c914, type: 3}
+--- !u!114 &1670038181
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1670038175}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 35709b6618979ba46ad9d7a570077e33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RoomReveal
+  archiveFocus: {x: 5, y: 1, z: 8}
+  rareFocus: {x: 32, y: 0.5, z: 8.5}
+  closeness: 0.9
+  revealSound: {fileID: 8300000, guid: 2d4bf8d278923f74297b87f1023a1c04, type: 3}
+  lookSeconds: 2.5
 --- !u!1 &1673627508 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7686746595393840433, guid: 96411fb296e6cec438fa61decb7b36a8, type: 3}
@@ -41847,33 +41823,6 @@ MonoBehaviour:
   m_IgnoreFromBuild: 0
   m_ApplyToChildren: 1
   m_AffectedAgents: ffffffffi
---- !u!1 &1718049152 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 4855279091241238665, guid: df9551088ae455943b9f08e7c8e6252f, type: 3}
-  m_PrefabInstance: {fileID: 1502404913}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1718049156
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1718049152}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9616640fab82d984a8b50a161a997982, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InspectInteractable
-  range: 3.5
-  verb: 
-  lines:
-  - Golden light pours in. Dust dances in the beam.
-  inOrder: 1
-  onceOnly: 0
-  bubbleSeconds: 2.8
-  onInspected:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!1001 &1728936673
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -52816,6 +52765,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 71aaafa67d88dcf4e8f69330b50d0791, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PCOverlayTrigger
+--- !u!114 &1991810711
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1991810700}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6046caaca9ec23844800b7fbe3f461ee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ReturnBinGlow
+  glowMaterial: {fileID: 2100000, guid: 781872d9a35ed4643b0b6e1a057e675f, type: 2}
+  color: {r: 1, g: 0.85, b: 0.35, a: 1}
+  width: {x: 0.015, y: 0.035}
+  pulseSeconds: 1.4
 --- !u!1001 &1992586214
 PrefabInstance:
   m_ObjectHideFlags: 0

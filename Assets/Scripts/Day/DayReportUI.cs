@@ -15,7 +15,9 @@ public class DayReportUI : MonoBehaviour
     public AudioClip buySound;
 
     VisualElement root, list;
-    Label stats, stars, repLabel, coinsLabel;
+    Label stars, repLabel, coinsLabel;
+    VisualElement rows;
+    BookFilterBar filter;
     Button nextDay;
     Button[] tabs;
     int tab;
@@ -43,7 +45,10 @@ public class DayReportUI : MonoBehaviour
         var doc = GetComponent<UIDocument>().rootVisualElement;
         root = doc.Q("report");
         list = doc.Q("plan-list");
-        stats = doc.Q<Label>("report-stats");
+        rows = doc.Q("report-rows");
+        // Search + filters above the shop list (Shop tab only).
+        filter = new BookFilterBar(RefreshPlan, false);
+        list.parent.Insert(list.parent.IndexOf(list), filter.Root);
         stars = doc.Q<Label>("report-stars");
         repLabel = doc.Q<Label>("report-rep");
         coinsLabel = doc.Q<Label>("plan-coins");
@@ -87,7 +92,9 @@ public class DayReportUI : MonoBehaviour
         PlayerLock.Unlock(this);
     }
 
-    void StartNextDay()
+    void StartNextDay() => HUD.FadeThen(DoStartNextDay);
+
+    void DoStartNextDay()
     {
         var gm = GameManager.Instance;
         bool archiveBefore = gm.ArchiveOpen, rareBefore = gm.RareOpen;
@@ -111,18 +118,29 @@ public class DayReportUI : MonoBehaviour
         var gm = GameManager.Instance;
         var d = gm.Today;
         root.Q<Label>("report-title").text = $"Day {gm.day} Report  ·  {GameManager.DifficultyNames[(int)gm.difficulty]}";
-        stats.text =
-            $"Visitors served      {d.served}\n" +
-            $"Left unhappy         {d.angry}\n" +
-            $"Books sold           {d.booksSold}\n" +
-            $"Books read           {d.booksRead}\n" +
-            $"Returns checked in   {d.returns}\n" +
-            $"Repairs              {d.repairsPerfect} perfect, {d.repairsNormal} normal\n" +
-            $"Things tidied        {d.cleaned}\n" +
-            $"New members          {d.signups}\n" +
-            $"Tips                 {d.tips}\n" +
-            $"Income               {d.income}\n" +
-            (gm.DailyWages > 0 ? $"Staff wages (morning) -{gm.DailyWages}\n" : "");
+        // One tidy row per stat: label on the left, number on the right.
+        rows.Clear();
+        void Row(string label, string value, bool bold = false)
+        {
+            var r = new VisualElement();
+            r.AddToClassList("report-row");
+            if (bold) r.AddToClassList("total");
+            var l = new Label(label); l.AddToClassList("report-key");
+            var v = new Label(value); v.AddToClassList("report-val");
+            r.Add(l); r.Add(v);
+            rows.Add(r);
+        }
+        Row("Visitors served", d.served.ToString());
+        Row("Left unhappy", d.angry.ToString());
+        Row("Books sold", d.booksSold.ToString());
+        Row("Books read", d.booksRead.ToString());
+        Row("Returns checked in", d.returns.ToString());
+        Row("Repairs", $"{d.repairsPerfect + d.repairsNormal}");
+        Row("Things tidied", d.cleaned.ToString());
+        Row("New members", d.signups.ToString());
+        Row("Tips", d.tips.ToString());
+        if (gm.DailyWages > 0) Row("Staff wages (tomorrow)", $"-{gm.DailyWages}");
+        Row("Income", d.income.ToString(), true);
         int s = Stars(d);
         stars.text = new string('*', s) + new string('-', 5 - s);
         int delta = gm.Reputation - gm.ReputationAtStart;
@@ -140,6 +158,7 @@ public class DayReportUI : MonoBehaviour
         for (int i = 0; i < tabs.Length; i++) tabs[i]?.EnableInClassList("selected", i == tab);
         coinsLabel.text = $"Coins: {gm.Coins}";
         list.Clear();
+        filter?.Root.EnableInClassList("hidden", tab != 0);
         if (tab == 0) BuildShop(gm);
         else if (tab == 1) BuildStaff(gm);
         else BuildUpgrades(gm);
@@ -168,6 +187,7 @@ public class DayReportUI : MonoBehaviour
         foreach (var b in gm.Books)
         {
             if (BookRequest.IsRare(b) || !BookRequest.Available(b)) continue; // rare / locked-room books can't be bought
+            if (filter != null && !filter.Matches(b)) continue;
             var book = b;
             int price = Price(book);
             AddRow(book.Title, $"{book.FormatName}  ·  {book.Subject}  ·  in stock {book.GoodCopies + book.WornCopies}  ·  {price} coins · arrives tomorrow",
@@ -183,7 +203,8 @@ public class DayReportUI : MonoBehaviour
             int i = (int)role;
             bool hired = gm.Hired(role), open = gm.StaffUnlocked(role);
             AddRow(GameManager.StaffNames[i], $"{GameManager.StaffInfo[i]}  Wage {GameManager.StaffWage[i]} / day.",
-                   hired ? "Let go" : open ? "Hire" : $"Day {GameManager.StaffUnlockDay[i]}", hired || open, () => gm.ToggleStaff(role));
+                   hired ? "Let go" : open ? $"Hire {GameManager.StaffWage[i]}" : $"Day {GameManager.StaffUnlockDay[i]}",
+                   hired || (open && gm.Coins >= GameManager.StaffWage[i]), () => gm.ToggleStaff(role));
         }
     }
 

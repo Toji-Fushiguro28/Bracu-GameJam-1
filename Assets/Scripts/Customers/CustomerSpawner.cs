@@ -42,8 +42,11 @@ public class CustomerSpawner : MonoBehaviour
     }
 
     /// <summary>Everyone due to collect a reservation today comes in early.</summary>
+    bool vipToday;
+
     void QueuePickups()
     {
+        vipToday = false;
         pickups.Clear();
         spawnTimer = firstDelay;
         var gm = GameManager.Instance;
@@ -56,6 +59,7 @@ public class CustomerSpawner : MonoBehaviour
         var gm = GameManager.Instance;
         var queue = CounterQueue.Instance;
         if (gm == null || queue == null || gm.CurrentPhase != GameManager.Phase.Open) return;
+        if (gm.Hour < gm.openHour + 1f / 6f) return; // staff arrive at nine, visitors from ten past
         spawnTimer -= GameManager.Dt;
         if (spawnTimer > 0f) return;
 
@@ -83,7 +87,8 @@ public class CustomerSpawner : MonoBehaviour
         if (prefab == null)
         {
             pickup = null;
-            vip = gm.RareOpen && Random.value < vipChance;
+            // Once Rare Books is open, a VIP scholar comes every day (by late morning at the latest).
+            vip = gm.RareOpen && (Random.value < vipChance || (!vipToday && gm.Hour >= 10.5f));
             prefab = Pick(vip);
             if (prefab == null) return;
         }
@@ -119,6 +124,7 @@ public class CustomerSpawner : MonoBehaviour
                 : r < browserChance + readerChance + returnerChance ? Customer.Kind.Returner
                 : Customer.Kind.Buyer;
         }
+        if (vip) vipToday = true;
         go.SetActive(true);
     }
 

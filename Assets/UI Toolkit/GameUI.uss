@@ -445,3 +445,34 @@
 /* Shelf note wraps inside the page instead of running off it. */
 .shelf-note { white-space: normal; max-width: 100%; margin: 0 10px; }
 .ready-head { color: var(--accent); margin-top: 14px; }
+
+/* ---------- Day report rows ---------- */
+.report-rows { margin: 6px 14px; flex-grow: 1; }
+.report-row { flex-direction: row; justify-content: space-between; padding: 2px 4px; border-bottom-width: 1px; border-bottom-color: rgba(128, 92, 70, 0.25); }
+.report-key { color: var(--ink-soft); font-size: 20px; }
+.report-val { color: var(--ink); font-size: 20px; -unity-text-align: middle-right; }
+.report-row.total .report-key, .report-row.total .report-val { color: var(--accent); font-size: 23px; }
+
+/* ---------- Book-page search bar (end-of-day shop) ---------- */
+.page-filter-bar { margin: 0 6px 6px 6px; }
+.page-filter-bar.hidden { display: none; }
+.page-filter-bar .filter-search { margin: 0 0 6px 0; }
+.page-filter-bar .filter-search .unity-base-text-field__input {
+    background-color: rgba(255, 255, 255, 0.35);
+    border-width: 2px; border-color: var(--ink-soft);
+    border-top-left-radius: 4px; border-top-right-radius: 4px;
+    border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;
+    color: var(--ink); font-size: 19px; padding: 2px 8px;
+}
+.page-filters { flex-direction: row; justify-content: center; }
+.page-filter { font-size: 17px; padding: 2px 10px 6px 10px; margin: 0 4px; }
+
+/* ---------- Screen fade between days ---------- */
+.screen-fade {
+    position: absolute; left: 0; top: 0; right: 0; bottom: 0;
+    background-color: rgb(12, 8, 6);
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 0.55s;
+}
+.screen-fade.on { opacity: 1; }

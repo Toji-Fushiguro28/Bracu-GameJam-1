@@ -148,6 +148,14 @@ public class PCOverlayTrigger : MonoBehaviour
     {
         RehookBackdrop();
         overlayDoc.rootVisualElement.Q<Button>("members-button")?.RegisterCallback<ClickEvent>(_ => { if (JustOpened) return; ShowMembers(); });
+        var shopTile = overlayDoc.rootVisualElement.Q<Button>("upgrades-button");
+        var gmNow = GameManager.Instance;
+        if (shopTile != null)
+        {
+            bool ready = gmNow != null && gmNow.UpgradeReady;
+            shopTile.text = ready ? "Shop\n<size=60%>★ Upgrade ready!</size>" : "Shop";
+            shopTile.EnableInClassList("upgrade-ready", ready);
+        }
         overlayDoc.rootVisualElement.Q<Button>("upgrades-button")?.RegisterCallback<ClickEvent>(_ => { if (JustOpened) return; ShowView("PCShopTemplate", PCShopView.Wire); });
         overlayDoc.rootVisualElement.Q<Button>("settings-button")?.RegisterCallback<ClickEvent>(_ => { if (JustOpened) return; ShowView("PCSettingsTemplate", PCSettingsView.Wire); });
 
@@ -373,6 +381,7 @@ public class PCOverlayTrigger : MonoBehaviour
         if (isOpen || overlayObject == null)
             return;
         isOpen = true;
+        subjectFilter = typeFilter = 0; // the catalogue opens on All books every time
         PlayerLock.Lock(this);
         openedAt = Time.unscaledTime;
         overlayObject.SetActive(true);

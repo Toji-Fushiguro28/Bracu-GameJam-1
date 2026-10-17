@@ -36,7 +36,7 @@ public class RoomDarkness : MonoBehaviour
 
     void Update()
     {
-        float target = RoomGate.IsOpen(room) ? 0f : strength;
+        float target = RoomGate.IsOpen(room) && !RoomReveal.IsHeld(room) ? 0f : strength;
         if (Mathf.Approximately(current, target)) return;
         current = current < 0f ? target : Mathf.MoveTowards(current, target, Time.deltaTime / Mathf.Max(0.01f, fadeSeconds));
         mr.enabled = current > 0.001f;

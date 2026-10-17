@@ -110,6 +110,23 @@ What changed in `MainGame.unity` and `Assets/Scripts`, and where. Nothing here c
   - Repairs keep progressing while the repair screen is open.
 - **Staff chat:** click Sam, Omar or Arthur (`StaffTalk`, 8 lines each, two replies each). They stop and face you while you talk.
 - **Name tags** only show for VIPs. Members' names appear in the conversation.
+- **Staff shifts:** staff walk in through the front door at 9:00 and visitors start at 9:10. At the closing bell they say goodbye and leave (`StaffManager.SendHome` / `BringIn`).
+- **Staff jobs:** the archivist also shelves good copies from the returns. Staff tidying earns the tidy reward.
+- **Hiring:** pays the first day's wage up front, so you can't hire with an empty purse.
+- **Repairs:** always move a copy up one step (Worn → Good; Damaged → Good or Worn).
+- **Reminders:**
+  - The computer glows gold, the Shop tile says *★ Upgrade ready!*, and a banner appears once a day while an upgrade is affordable. All three stop once you open Upgrades.
+  - The delivery cart glows blue, with a sound and a banner, when deliveries arrive.
+- **Opening days:** a short reveal plays (`RoomReveal` on GameManager):
+  - the camera glides to the still-dark room
+  - the lights come up and the rope swings aside, with the *fascinated* sound and a banner
+  - the camera glides back
+
+  The clock is paused while it plays. The sign then bobs *NOW OPEN!* all day.
+- **At least one VIP** comes each day once Rare Books is open.
+- **Fades:** the screen fades between the day's end, the report and the next morning (`HUD.FadeThen`).
+- **Shops:** both the PC Shop and the end-of-day shop have search and Subject/Type filters (`BookFilterBar`). The catalogue filters reset every time you open the PC.
+- **Small talk:** students only get the exam/CGPA/advising topics (`Customer.StudentTopics`).
 - **Reader chats:**
   - The first chat with a seated reader is the "where would I find more like this?" shelf question, which earns a tip bonus.
   - The second chat is one bit of small talk (two replies). Topics come from a shared pool of 35 in `Customer.Topics` (12 general + all 23 notice-board jokes), so different readers say different things, with no repeats until all are used. After that the reader just says "Shh... I'm at a good part!"-type lines.

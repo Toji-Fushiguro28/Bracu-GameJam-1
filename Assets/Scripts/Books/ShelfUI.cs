@@ -102,9 +102,9 @@ public class ShelfUI : MonoBehaviour
             var best = book.BestCopy;
             row.Add(TakeButton("Take", best.HasValue, () => { if (book.BestCopy.HasValue) Take(book, book.BestCopy.Value); }));
             if (book.GoodCopies > 0 && book.WornCopies > 0)
-                row.Add(TakeButton("worn", true, () => Take(book, BookCondition.Worn), "small"));
+                row.Add(TakeButton("Worn", true, () => Take(book, BookCondition.Worn)));
             if (book.DamagedCopies > 0 && (book.GoodCopies > 0 || book.WornCopies > 0))
-                row.Add(TakeButton("dmg", true, () => Take(book, BookCondition.Damaged), "small"));
+                row.Add(TakeButton("Damaged", true, () => Take(book, BookCondition.Damaged)));
             list.Add(row);
         }
 

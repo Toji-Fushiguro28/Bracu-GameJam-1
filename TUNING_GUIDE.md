@@ -104,6 +104,7 @@ All of it is in `Core/GameManager.cs`, in the *Play mode* section:
 | Carry capacity / how held books line up | `Core/GameManager.cs` → `BagCapacity`; `Books/PlayerCarry.cs` → `sideStep` |
 | Rope gates (closed and open positions) | `RoomLocks/Gate_*` objects → `RoomGate` → **Open Position / Open Yaw**; gate text in `Day/RoomGate.cs` → `Interact()` |
 | Darkness of locked rooms | `Assets/Art/Materials/M_RoomDarkness.mat` → **Tint**; per room: `RoomLocks/Darkness_*` → `RoomDarkness` → **Strength** |
+| Opening-day reveal (camera target, distance, timing, sound) | Inspector → `GameManager` → `RoomReveal` → **Archive Focus**, **Rare Focus**, **Closeness**, **Look Seconds**, **Reveal Sound** |
 | Front-door rope at night | `RoomGate` with room *FrontDoor* (`Gate_Front_A/B`) |
 | Deliveries (cart) | `Books/DeliveryCart.cs`; arrival logic `GameManager.cs` → `DeliverDue()` |
 | Return-bin glow | `SM_ReturnBin` → `ReturnBinGlow` → **Color**, **Width**, **Pulse Seconds** |

@@ -68,8 +68,28 @@ public class RoomGate : ClickInteractable
         WorldPrompts.Instance?.ShowBubble(this, text, 3f);
     }
 
+    Vector3 signHome;
+    bool signHomeSet;
+
+    /// <summary>"Opens Day N" while closed; "NOW OPEN!" (bobbing) on its opening day; hidden after.</summary>
+    void UpdateSign()
+    {
+        if (sign == null || room == Room.FrontDoor) return;
+        var gm = GameManager.Instance;
+        bool openingDay = Open && gm != null && gm.day == OpenDay(room);
+        bool show = !Open || openingDay;
+        if (sign.activeSelf != show) sign.SetActive(show);
+        if (!show) return;
+        if (!signHomeSet) { signHome = sign.transform.position; signHomeSet = true; }
+        var tm = sign.GetComponent<TextMesh>();
+        string label = room == Room.Archive ? "ARCHIVE" : "RARE BOOKS";
+        if (tm != null) tm.text = openingDay ? $"{label}\nNOW OPEN!" : $"{label}\nopens Day {OpenDay(room)}";
+        sign.transform.position = signHome + (openingDay ? Vector3.up * (0.12f * Mathf.Sin(Time.time * 3f)) : Vector3.zero);
+    }
+
     void Update()
     {
+        UpdateSign();
         if (room == Room.FrontDoor)
         {
             // The front ropes don't move: they're invisible while open and appear in place at night.
@@ -82,13 +102,14 @@ public class RoomGate : ClickInteractable
             }
             return;
         }
-        float target = Open ? 1f : 0f;
+        // Visually stays shut while the opening-day reveal is on its way.
+        float target = Open && !RoomReveal.IsHeld(room) ? 1f : 0f;
         if (Mathf.Approximately(openAmount, target)) return;
         // First frame snaps; later changes (a new day) swing.
         openAmount = openAmount < 0f ? target : Mathf.MoveTowards(openAmount, target, Time.deltaTime / Mathf.Max(0.01f, swingSeconds));
         float t = Mathf.SmoothStep(0f, 1f, openAmount);
         transform.SetPositionAndRotation(Vector3.Lerp(closedPosition, openPosition, t),
             Quaternion.Slerp(closedRotation, Quaternion.Euler(0f, openYaw, 0f), t));
-        if (sign != null) sign.SetActive(openAmount < 0.5f);
+        UpdateSign();
     }
 }
