@@ -54,7 +54,7 @@ public static class PCShopView
             }
             foreach (var b in gm.Books)
             {
-                if (BookRequest.IsRare(b)) continue;
+                if (BookRequest.IsRare(b) || !BookRequest.Available(b)) continue; // locked rooms can't be stocked yet
                 var book = b;
                 int price = GameManager.OrderPrice(book, false), express = GameManager.OrderPrice(book, true);
                 int onOrder = gm.OnOrder(book);

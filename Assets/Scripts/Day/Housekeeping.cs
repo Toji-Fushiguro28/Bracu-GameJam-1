@@ -45,7 +45,7 @@ public class Housekeeping : MonoBehaviour
             var spots = MessSpot.Placed.FindAll(m => m.kind == MessSpot.Kind.Book && !m.IsDirty && !RoomGate.IsLockedAt(m.transform.position));
             if (spots.Count == 0) break;
             var spot = spots[Random.Range(0, spots.Count)];
-            var pool = gm.Books.FindAll(b => b.Sellable && b.Format == BookFormat.Book && b.BestCopy != null);
+            var pool = gm.Books.FindAll(b => b.Sellable && b.Format == BookFormat.Book && b.BestCopy != null && BookRequest.Available(b));
             if (pool.Count == 0) { spot.MakeMess(); continue; }
             var book = pool[Random.Range(0, pool.Count)];
             var cond = book.BestCopy.Value;

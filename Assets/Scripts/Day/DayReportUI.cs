@@ -167,7 +167,7 @@ public class DayReportUI : MonoBehaviour
     {
         foreach (var b in gm.Books)
         {
-            if (BookRequest.IsRare(b)) continue; // rare books can't be bought
+            if (BookRequest.IsRare(b) || !BookRequest.Available(b)) continue; // rare / locked-room books can't be bought
             var book = b;
             int price = Price(book);
             AddRow(book.Title, $"{book.FormatName}  ·  {book.Subject}  ·  in stock {book.GoodCopies + book.WornCopies}  ·  {price} coins · arrives tomorrow",
