@@ -54,8 +54,14 @@
                 </ui:VisualElement>
 
                 <ui:VisualElement name="menu-howto" class="menu-panel hidden">
-                    <ui:Label name="howto-title" class="page-title font-title" text="How to Play" />
-                    <ui:Label name="howto-text" class="howto-text" />
+                    <ui:VisualElement name="howto-body" class="howto-body">
+                        <ui:VisualElement class="howto-head">
+                            <ui:VisualElement name="howto-icon" class="howto-icon" />
+                            <ui:Label name="howto-title" class="howto-title font-title" text="How to Play" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="howto-rule" />
+                        <ui:Label name="howto-text" class="howto-text" />
+                    </ui:VisualElement>
                     <ui:VisualElement class="howto-nav">
                         <ui:Button name="btn-howto-prev" class="kit-button howto-arrow" text="&lt;" />
                         <ui:Label name="howto-page" class="howto-page" />

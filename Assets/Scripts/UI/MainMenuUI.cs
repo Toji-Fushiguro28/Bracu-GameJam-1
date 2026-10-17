@@ -208,14 +208,42 @@ public class MainMenuUI : MonoBehaviour
         if (panel == modePanel) doc().Q<Button>("mode-1")?.Focus(); // Standard is the default
     }
 
+    // Words picked out in the accent colour on the How to Play pages (longest first).
+    static readonly string[] HowToKeywords =
+    {
+        "Left click", "Left Shift", "Shift", "WASD", "Esc", "Standard mode", "front ropes", "Day Report", "book cart",
+        "repair desk", "Rare Books", "Rare card", "VIP scholars", "Archive", "computer", "sold out", "reserve", "hint",
+        "tips", "tip", "stamina", "Shop", "Members", "Books", "Staff", "Sam", "Omar", "Arthur", "Day 1", "Day 2", "Day 3", "6 pm",
+    };
+    int lastHowtoPage;
+
+    static string Highlight(string text)
+    {
+        var pattern = "\\b(" + string.Join("|", System.Array.ConvertAll(HowToKeywords, System.Text.RegularExpressions.Regex.Escape)) + ")\\b";
+        return System.Text.RegularExpressions.Regex.Replace(text, pattern, "<color=#D67840>$1</color>");
+    }
+
     void ShowHowTo()
     {
         var doc = GetComponent<UIDocument>().rootVisualElement;
         doc.Q<Label>("howto-title").text = HowTo[howtoPage].title;
-        doc.Q<Label>("howto-text").text = HowTo[howtoPage].text;
+        doc.Q<Label>("howto-text").text = Highlight(HowTo[howtoPage].text);
         doc.Q<Label>("howto-page").text = $"{howtoPage + 1} / {HowTo.Length}";
         doc.Q<Button>("btn-howto-prev").SetEnabled(howtoPage > 0);
         doc.Q<Button>("btn-howto-next").SetEnabled(howtoPage < HowTo.Length - 1);
+
+        // Page icon, with a little pop.
+        var icon = doc.Q("howto-icon");
+        for (int i = 0; i < HowTo.Length; i++) icon.EnableInClassList("p" + i, i == howtoPage);
+        icon.AddToClassList("pop");
+        icon.schedule.Execute(() => icon.RemoveFromClassList("pop")).ExecuteLater(160);
+
+        // Page turn: slide in from the side you're flipping towards.
+        var body = doc.Q("howto-body");
+        string turn = howtoPage >= lastHowtoPage ? "turn" : "turn-back";
+        body.AddToClassList(turn);
+        body.schedule.Execute(() => { body.RemoveFromClassList("turn"); body.RemoveFromClassList("turn-back"); }).ExecuteLater(20);
+        lastHowtoPage = howtoPage;
     }
 
     void Play() => BeginPlay(true);
