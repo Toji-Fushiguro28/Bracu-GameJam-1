@@ -11,6 +11,7 @@
                 <ui:Button name="members-button" text="Members" class="pc-tile" />
                 <ui:Button name="upgrades-button" text="Shop" class="pc-tile" />
                 <ui:Button name="settings-button" text="Settings" class="pc-tile" />
+                <ui:Button name="audit-button" text="Audit Log" class="pc-tile wide" />
             </ui:VisualElement>
             <ui:Label text="click outside the screen or press Esc to log off" class="pc-footer" />
         </ui:VisualElement>

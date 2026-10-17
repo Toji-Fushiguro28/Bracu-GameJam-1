@@ -14,7 +14,7 @@ What changed in `MainGame.unity` and `Assets/Scripts`, and where. Nothing here c
   - **Continue** (only when a save exists; shows Day, coins and members).
   - **New Game** (asks for confirmation if a save exists; wipes it and reloads straight into Day 1).
   - **Start** (when there's no save).
-  - **How to Play** (8 short pages: controls and stamina, counter, finding books, sold out, cards and readers, repairs and rooms, staff, end of day).
+  - **How to Play** (9 short pages: controls and stamina, counter, finding books, your notebook, sold out and reservations, cards and readers, repairs and rooms, staff, end of day and the audit log).
   - **Settings** (volume, music, fullscreen; same values as the PC Settings screen).
   - **Credits**.
   - **Quit** (hidden on WebGL).
@@ -186,7 +186,14 @@ What changed in `MainGame.unity` and `Assets/Scripts`, and where. Nothing here c
   - Banners: morning info, closing, lunch lull, deliveries.
   - "(paused)" on the clock.
   - The carried list shows bag contents.
-- **`PCShopView.cs`, `PCSettingsView.cs`, `PCMembersView.cs`**: PC screens, using templates in `Assets/Resources/`.
+- **`PCShopView.cs`, `PCSettingsView.cs`, `PCMembersView.cs`, `PCAuditView.cs`**: PC screens, using templates in `Assets/Resources/`.
+- **New library card form (`PCMembersView`):**
+  - You **type the name** (30 characters max). Only letters, single spaces, hyphens and apostrophes get into the box.
+  - On Issue the name is normalized to how cards save names: lower case, then a capital at the start of each word ("edmund THORNE" becomes "Edmund Thorne").
+  - The **birthday** comes from a Day / Month / Year picker (years 1930–2010). Days that don't exist in the chosen month are greyed out, and a day that stops existing is cleared. The result is written like the profiles, for example "04 Feb 1958".
+  - Access is still three buttons.
+  - Issue only unlocks with a valid name (2+ letters), a full date and an access level. A wrong name or date is still rejected by the visitor (`ReceiveCard`).
+- **Notebook & Audit Log**: see the section at the end.
 - **`PC.uss` / `GameUI.uss`**: styles for the catalogue filters, shop rows, mood face, VIP plate and banners.
 
 ---
@@ -199,8 +206,8 @@ Small, contained edits. Please check them when merging:
   - The Members, Shop and Settings buttons open the new screens (`ShowView`).
   - Click sounds are re-hooked after every view swap (`RehookBackdrop`).
   - **Catalogue search now matches title and author only.** Subject and Type are filter buttons (`WireFilters`). This is deliberate, so players have to read abstracts to solve vague requests.
-- **`PCBooksTemplate.uxml`**: added the filter button row.
-- **`PCOverlayTemplate.uxml`**: the "Upgrades" tile now reads **"Shop"** (the element name is still `upgrades-button`).
+- **`PCBooksTemplate.uxml`**: added the filter button row. The gold `pc-requests` box was removed (the notebook replaces it), and the details pane has an **Add to note** button (`detail-select`).
+- **`PCOverlayTemplate.uxml`**: the "Upgrades" tile now reads **"Shop"** (the element name is still `upgrades-button`). A wide **Audit Log** tile (`audit-button`) was added, and tiles are now 30% high so three rows fit.
 
 ---
 
@@ -242,6 +249,33 @@ Small, contained edits. Please check them when merging:
 
 ## Hints, requests, express wishes
 - Hints are gold (`<color=#D67840>`) in the speech bubble and the dialogue. The typewriter skips over the rich-text tags.
-- The PC catalogue has a gold box at the top listing waiting visitors you've already talked to and what they want (`Customer.PCNote`).
+- What waiting visitors want is in the notebook on the right of the screen (it replaced the PC's gold box and `Customer.PCNote`).
 - New members: 60% ask the library to get a book in (`Customer.PickWish`). This creates a `requested` reservation, and the shop marks the book with a gold "Requested" badge.
 - Sold-out reservations: 40% need the book today. They return at Hour + 2.5 (`Reservation.urgent` / `dueHour`), so it has to be ordered with Express (2 h). If it hasn't arrived, they come back tomorrow. The rest pick up next morning.
+
+## Notebook & Audit Log
+- **`RequestLog`** (`Core/RequestLog.cs`, static) holds every entry: day, time, who, kind (Book / Pickup / Card), the request line, the hint, guesses (wrong ones struck through), notes and the outcome.
+  - `Open` is what the notebook shows. `All` is the whole log; it is saved in `GameManager.SaveData.log` and reset on each scene load.
+- **When entries change** (hooks in `Customer.cs`):
+  - Begin: the first time you talk to a visitor (`LogRequest`; for library cards, what they tell you: name, birthday, line), or when you hand over a book without talking first.
+  - Hint: added when asked for, or straight away for Cozy's free hint.
+  - Wrong book handed over (`TryGive`): `Rejected` strikes the guess, or adds a struck "Handed:" line.
+  - Library cards: every card submitted from the PC is a line (`ReceiveCard` → `CardAttempt`). Wrong ones show the visitor's reason. A new member's wish is a note.
+  - Finish: sold, reading, reserved, sent away, left angry, never ordered, card issued, closing time. `Leave()` closes anything left as "Left". A finished entry leaves the notebook.
+- **`NotebookHUD`** (`UI/NotebookHUD.cs`, `Resources/Notebook.uxml`, `UI Toolkit/Notebook.uss`):
+  - Created at runtime by `HUD.Start` on a copy of PS_Game with **sort order 25**, so it stays above the PC (20) and its dark backdrop, and under the main menu (30). It must be a **root** GameObject: a UIDocument under another UIDocument joins that one's panel and ignores its own sort order.
+  - Sits on the right edge, vertically centred. The tab button collapses it, and the state is remembered in PlayerPrefs `NotebookCollapsed`.
+  - Each entry has a Clear button, which removes it from the notebook but not from the log.
+  - Hidden on the title screen and behind the Day Report.
+  - `NotebookHUD.PointerOver` stops clicks on it reaching the world (`InteractionController`) or skipping dialogue (`DialogueUI`).
+- **Reservations panel** (bottom right, in the same `Notebook.uxml`):
+  - Lists `GameManager.reservations`: who, which book, when, and whether it's ordered. The status uses the same rules as the PC Shop, which is unchanged.
+  - Starts collapsed every session.
+  - `GameManager.Reserved` fires on each new reservation. The first one in a session opens the panel by itself. Later ones make the tab gold and pulsing (`.notebook-tab.new`) until you open it.
+- **PC catalogue: Add to note** writes `Noted: "Title" (Shelf)`.
+  - With a book request open, it goes on the newest request. A new pick replaces an untested one; after a wrong one it adds a new line. It's only a note: any matching book still works.
+  - With no request open, it goes on a **To Shelve** page, for books from the return bin, tables and so on. Putting a book back on its shelf (`ShelfUI.PutBack` → `RequestLog.Shelved`) ticks it off. The page isn't part of the audit log.
+- **Audit Log:**
+  - PC → **Audit Log** (`PCAuditView`) has a button for each day so far, with today selected. Newest entries are at the top.
+  - Day Report → **Log** tab shows today's entries.
+  - Both use `RequestLog.BuildRow`, styled by `.log-*` classes in `PC.uss` and `GameUI.uss`.

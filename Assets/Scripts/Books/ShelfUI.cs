@@ -185,6 +185,7 @@ public class ShelfUI : MonoBehaviour
         {
             var (book, condition) = carry.TakeAt(i);
             book.AddCopy(condition);
+            RequestLog.Shelved(book);
             shelved++;
         }
         if (shelved == 0)

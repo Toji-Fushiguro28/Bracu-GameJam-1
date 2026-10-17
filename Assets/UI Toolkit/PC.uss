@@ -61,12 +61,13 @@
 }
 .pc-tile {
     width: 48.6%;
-    height: 46%;
+    height: 30%;
     margin-bottom: 20px;
     font-size: 40px;
     -unity-text-align: middle-center;
     background-color: var(--mint-faint);
 }
+.pc-tile.wide { width: 100%; }
 .pc-footer { color: var(--mint-dim); font-size: 20px; margin-top: 12px; -unity-text-align: middle-center; }
 
 /* ---------- Books: list on the left, details on the right (like the shelf) ---------- */
@@ -247,21 +248,6 @@
 .pc-filter-bar .hidden, .pc-filter-bar.hidden { display: none; }
 .pc-tile.upgrade-ready { border-color: rgb(235, 200, 120); color: rgb(235, 200, 120); }
 
-/* Waiting visitors' requests, pinned above the catalogue */
-.pc-requests {
-    color: var(--mint);
-    font-size: 20px;
-    white-space: normal;
-    padding: 6px 12px 8px 12px;
-    margin-bottom: 10px;
-    border-width: 2px;
-    border-color: rgb(235, 200, 120);
-    border-top-left-radius: 6px; border-top-right-radius: 6px;
-    border-bottom-left-radius: 6px; border-bottom-right-radius: 6px;
-    background-color: rgba(235, 200, 120, 0.08);
-}
-.pc-requests.hidden { display: none; }
-
 /* Gold "Requested" box next to a shop title */
 .title-row { flex-direction: row; align-items: center; flex-wrap: wrap; }
 .req-badge {
@@ -273,3 +259,63 @@
     border-top-left-radius: 4px; border-top-right-radius: 4px;
     border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;
 }
+
+/* "Select as guess" under the book details */
+.detail-select { align-self: center; margin: 14px 0 0 0; font-size: 24px; }
+.detail-select:disabled { opacity: 0.35; }
+.detail-select-note { color: rgb(235, 200, 120); font-size: 19px; white-space: normal; -unity-text-align: middle-center; margin-top: 6px; }
+
+/* ---------- Audit log ---------- */
+.audit-days { flex-direction: row; flex-wrap: wrap; margin-bottom: 12px; }
+.audit-day { font-size: 22px; margin: 0 10px 8px 0; padding: 2px 12px 5px 12px; }
+.audit-day.selected { background-color: var(--mint); color: var(--screen); }
+.audit-empty { color: var(--mint-dim); font-size: 24px; white-space: normal; -unity-text-align: middle-center; margin-top: 40px; }
+.log-row { padding: 8px 12px 10px 12px; border-bottom-width: 1px; border-bottom-color: var(--mint-faint); }
+.log-head { color: rgb(235, 200, 120); font-size: 20px; }
+.log-line { color: var(--mint); font-size: 21px; white-space: normal; }
+.log-outcome { color: var(--mint-dim); font-size: 20px; white-space: normal; margin-top: 2px; }
+
+/* ---------- New card: typed name + birthday picker ---------- */
+.card-name-wrap { margin: 2px 0 6px 0; }
+#card-name { margin: 0; }
+#card-name .unity-base-text-field__input {
+    min-height: 40px;
+    padding: 4px 12px 6px 12px;
+    border-width: 2px;
+    border-color: var(--mint);
+    border-top-left-radius: 6px; border-top-right-radius: 6px;
+    border-bottom-left-radius: 6px; border-bottom-right-radius: 6px;
+    background-color: rgba(0, 0, 0, 0.25);
+    color: var(--mint);
+    font-size: 22px;
+    --unity-cursor-color: rgb(99, 210, 181);
+}
+#card-name-placeholder { position: absolute; left: 16px; top: 8px; color: var(--mint-dim); font-size: 21px; }
+.date-picker { flex-direction: row; height: 124px; flex-shrink: 0; margin: 4px 0 6px 0; }
+.date-col { margin-right: 8px; }
+.date-col.day { width: 25%; }
+.date-col.month { width: 30%; }
+.date-col.year { flex-grow: 1; margin-right: 0; }
+.date-head { color: var(--mint-dim); font-size: 18px; -unity-text-align: middle-center; }
+.date-list {
+    flex-grow: 1;
+    border-width: 1px;
+    border-color: var(--mint-dim);
+    border-top-left-radius: 6px; border-top-right-radius: 6px;
+    border-bottom-left-radius: 6px; border-bottom-right-radius: 6px;
+    background-color: rgba(0, 0, 0, 0.2);
+}
+.date-list .unity-scroll-view__content-container { padding-right: 4px; }
+.date-item { margin: 2px 2px 0 4px; padding: 0 4px 3px 4px; font-size: 20px; border-width: 0; -unity-text-align: middle-center; }
+.date-item.picked { background-color: var(--mint); color: var(--screen); }
+.date-item:disabled { opacity: 0.2; }
+.card-preview { color: rgb(235, 200, 120); font-size: 18px; white-space: normal; min-height: 22px; flex-shrink: 0; margin-bottom: 4px; }
+.date-list .unity-scroller--vertical { width: 12px; margin-left: 2px; }
+.date-list .unity-base-slider__dragger { width: 12px; }
+.date-list .unity-base-slider__tracker { left: 3px; right: 3px; }
+/* The card form scrolls when it doesn't fit, instead of squashing its rows. */
+.card-scroll { flex-grow: 1; margin-top: 6px; }
+.card-scroll .unity-scroll-view__content-container > * { flex-shrink: 0; }
+.card-scroll .detail-key { font-size: 18px; }
+.card-scroll .card-options { margin: 2px 0 4px 0; }
+.card-feedback { color: rgb(240, 120, 100); font-size: 19px; white-space: normal; margin-top: 6px; -unity-text-align: middle-center; }

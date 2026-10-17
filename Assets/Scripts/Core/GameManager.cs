@@ -186,6 +186,7 @@ public class GameManager : MonoBehaviour
     [NonSerialized] public List<Reservation> reservations = new List<Reservation>();
     readonly List<Order> orders = new List<Order>();
     public event Action<int> Delivered; // copies that just arrived
+    public event Action Reserved; // a visitor just reserved a book (the HUD's reservations list lights up)
 
     public const float ExpressHours = 2f;
     public static int OrderPrice(BookData b, bool express) =>
@@ -227,6 +228,7 @@ public class GameManager : MonoBehaviour
             key = key, name = name, title = b.Title, ordered = OnOrder(b) > 0, requested = requested, urgent = urgent,
             day = urgent ? day : day + 1, dueHour = urgent ? Hour + 2.5f : openHour,
         });
+        Reserved?.Invoke();
     }
 
     public void ToggleStaff(StaffRole r)
@@ -327,11 +329,11 @@ public class GameManager : MonoBehaviour
     public bool loadSave = true;
 
     [Serializable] class BookSave { public string title; public int good, worn, damaged; }
-    [Serializable] class SaveData { public int day, coins, reputation, difficulty = 1; public bool[] staff; public int[] upgrades; public List<BookSave> books = new List<BookSave>(); public List<Member> members = new List<Member>(); public List<Reservation> reservations = new List<Reservation>(); }
+    [Serializable] class SaveData { public int day, coins, reputation, difficulty = 1; public bool[] staff; public int[] upgrades; public List<BookSave> books = new List<BookSave>(); public List<Member> members = new List<Member>(); public List<Reservation> reservations = new List<Reservation>(); public List<RequestLog.Entry> log = new List<RequestLog.Entry>(); }
 
     public void Save()
     {
-        var data = new SaveData { day = day, difficulty = (int)difficulty, coins = Coins, reputation = Reputation, staff = staff, upgrades = upgrades, members = members, reservations = reservations };
+        var data = new SaveData { day = day, difficulty = (int)difficulty, coins = Coins, reputation = Reputation, staff = staff, upgrades = upgrades, members = members, reservations = reservations, log = RequestLog.All };
         foreach (var b in Books) data.books.Add(new BookSave { title = b.Title, good = b.GoodCopies, worn = b.WornCopies, damaged = b.DamagedCopies });
         // Copies out of the shelves (returns, repair table, hands) still belong to the library.
         void Count(BookData b, BookCondition c)
@@ -366,6 +368,7 @@ public class GameManager : MonoBehaviour
         if (data.upgrades != null) Array.Copy(data.upgrades, upgrades, Mathf.Min(data.upgrades.Length, upgrades.Length));
         if (data.members != null) members = data.members;
         if (data.reservations != null) reservations = data.reservations;
+        RequestLog.Reset(data.log);
         foreach (var s in data.books)
         {
             var b = Books.Find(x => x.Title == s.title);
@@ -403,6 +406,7 @@ public class GameManager : MonoBehaviour
         Coins = startingCoins;
         Hour = openHour;
         CurrentPhase = Phase.Open;
+        RequestLog.Reset(); // the save (if any) brings back past days
         Load();
         // A new game picked on the title screen: its mode and starting coins.
         if (PendingDifficulty.HasValue && !HasSave) { difficulty = PendingDifficulty.Value; Coins = DifficultyStartCoins[(int)difficulty]; }

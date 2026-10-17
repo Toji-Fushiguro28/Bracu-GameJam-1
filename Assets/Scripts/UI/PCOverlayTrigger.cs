@@ -158,6 +158,7 @@ public class PCOverlayTrigger : MonoBehaviour
         }
         overlayDoc.rootVisualElement.Q<Button>("upgrades-button")?.RegisterCallback<ClickEvent>(_ => { if (JustOpened) return; ShowView("PCShopTemplate", PCShopView.Wire); });
         overlayDoc.rootVisualElement.Q<Button>("settings-button")?.RegisterCallback<ClickEvent>(_ => { if (JustOpened) return; ShowView("PCSettingsTemplate", PCSettingsView.Wire); });
+        overlayDoc.rootVisualElement.Q<Button>("audit-button")?.RegisterCallback<ClickEvent>(_ => { if (JustOpened) return; ShowView("PCAuditTemplate", PCAuditView.Wire); });
 
         var books = overlayDoc.rootVisualElement.Q<Button>("books-button");
         if (books == null)
@@ -230,29 +231,37 @@ public class PCOverlayTrigger : MonoBehaviour
         }
 
         WireFilters(root);
-        // What the visitors you've talked to want, so you can search while you think.
-        var notes = new System.Text.StringBuilder();
-        foreach (var c in FindObjectsByType<Customer>())
+        // "Add to note": the picked book (and its shelf) goes in the notebook.
+        root.Q<Button>("detail-select")?.RegisterCallback<ClickEvent>(_ =>
         {
-            var n = c.PCNote;
-            if (n == null) continue;
-            if (notes.Length > 0) notes.Append('\n');
-            notes.Append(n);
-        }
-        var reqLabel = root.Q<Label>("pc-requests");
-        if (reqLabel != null)
-        {
-            reqLabel.text = notes.Length > 0 ? notes.ToString() : "";
-            reqLabel.EnableInClassList("hidden", notes.Length == 0);
-        }
+            RequestLog.AddToNote(selectedBook);
+            UpdateSelectButton();
+        });
         ApplySearchFilter();
         UpdateSearchPlaceholder();
         ShowDetails(null);
     }
 
+    BookData selectedBook;
+
+    /// <summary>"Add to note" goes under the open book request, or on the "To Shelve" page.</summary>
+    void UpdateSelectButton()
+    {
+        var root = overlayDoc.rootVisualElement;
+        var button = root.Q<Button>("detail-select");
+        var note = root.Q<Label>("detail-select-note");
+        bool noted = RequestLog.IsNoted(selectedBook);
+        button?.SetEnabled(selectedBook != null && !noted);
+        if (note != null)
+            note.text = noted ? "In your notebook."
+                      : RequestLog.Current != null ? "Notes it under the book request."
+                      : "Notes it on your To Shelve page.";
+    }
+
     /// <summary>Right-hand pane: where the selected book lives and its state.</summary>
     void ShowDetails(BookData b)
     {
+        selectedBook = b;
         var root = overlayDoc.rootVisualElement;
         var empty = root.Q("detail-empty");
         var body = root.Q("detail-body");
@@ -282,6 +291,7 @@ public class PCOverlayTrigger : MonoBehaviour
         Set("detail-condition", b.Quantity > 0 ? b.ConditionSummary : "-", b.DamagedCopies > 0 ? "bad" : b.WornCopies > 0 ? "warn" : null);
         Set("detail-sale", b.Sellable ? "can be sold" : "read in library only", b.Sellable ? null : "warn");
         Set("detail-abstract", b.Abstract);
+        UpdateSelectButton();
     }
 
     // Search only knows titles and authors; subject and type are filters. Abstracts and tags

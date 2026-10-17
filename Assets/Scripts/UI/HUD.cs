@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 
 /// <summary>
-/// Top bar (day, clock, coins) and the carried-book slot. Lives on the GameUI object.
+/// Top bar (day, clock, coins) and the carried-book slot. Lives on the GameUI object and adds the notebook.
 /// </summary>
 [RequireComponent(typeof(UIDocument))]
 public class HUD : MonoBehaviour
@@ -122,6 +122,7 @@ public class HUD : MonoBehaviour
         carry = player ? player.GetComponent<PlayerCarry>() : null;
         mover = player ? player.GetComponent<PlayerMover>() : null;
         BuildStaminaMeter(player);
+        NotebookHUD.Create(GetComponent<UIDocument>());
         if (carry != null) carry.Changed += ShowCarry;
         ShowCarry(carry != null ? carry.Carried : null);
     }

@@ -1,0 +1,65 @@
+/* Notebook on the right edge of the screen: same paper popup as the dialogue box. */
+.notebook-layer {
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+}
+.notebook {
+    flex-direction: row;
+    align-items: flex-start;
+    max-height: 62%;
+    transition-property: translate;
+    transition-duration: 0.2s;
+    transition-timing-function: ease-out;
+}
+/* Collapsed: the page slides off the right edge, only the tab stays. */
+.notebook.collapsed { translate: 376px 0; }
+
+.notebook-tab {
+    margin-top: 28px;
+    margin-right: -6px;
+    font-size: 22px;
+}
+.notebook-page {
+    width: 360px;
+    margin-right: 16px;
+    flex-shrink: 1;
+    padding: 24px 22px 20px 24px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Popup01a.png");
+    -unity-slice-left: 4; -unity-slice-right: 4; -unity-slice-top: 4; -unity-slice-bottom: 4;
+    -unity-slice-scale: 6px;
+}
+.notebook-title { color: var(--ink); font-size: 30px; margin-bottom: 6px; -unity-text-align: middle-center; }
+.notebook-list { flex-grow: 0; flex-shrink: 1; }
+
+.nb-entry {
+    padding: 6px 0 8px 0;
+    border-bottom-width: 2px;
+    border-bottom-color: rgba(128, 92, 70, 0.35);
+}
+.nb-line { color: var(--ink); font-size: 20px; white-space: normal; }
+.nb-hint { color: var(--accent); font-size: 19px; white-space: normal; }
+.nb-guess { color: var(--ink-soft); font-size: 19px; white-space: normal; }
+.nb-clear { align-self: flex-end; margin-top: 4px; }
+.nb-empty { color: var(--ink-soft); font-size: 19px; white-space: normal; -unity-text-align: middle-center; margin: 10px 0; }
+.nb-warn { color: rgb(170, 60, 40); font-size: 19px; white-space: normal; }
+
+/* Reservations: same look, pinned bottom right, starts collapsed. */
+.reservations {
+    position: absolute;
+    right: 0;
+    bottom: 16px;
+    max-height: 22%;
+}
+.reservations .notebook-tab { margin-top: 14px; }
+.reservations .notebook-page { padding-top: 16px; }
+.reservations .notebook-title { font-size: 26px; margin-bottom: 2px; }
+/* New reservation: gold tab that pulses until you open the list. */
+.notebook-tab.new {
+    color: rgb(255, 245, 230);
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_FrameSelect01a.png");
+    -unity-background-image-tint-color: rgb(235, 200, 120);
+    transition-property: scale;
+    transition-duration: 0.4s;
+}
+.notebook-tab.new.pulse { scale: 1.15 1.15; }

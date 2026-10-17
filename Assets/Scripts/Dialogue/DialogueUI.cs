@@ -116,7 +116,7 @@ public class DialogueUI : MonoBehaviour
             if (!Typing) OnLineTyped();
         }
 
-        if (clickAction == null || !clickAction.WasPressedThisFrame() || Time.frameCount == lastInputFrame) return;
+        if (clickAction == null || !clickAction.WasPressedThisFrame() || Time.frameCount == lastInputFrame || NotebookHUD.PointerOver) return;
         lastInputFrame = Time.frameCount;
 
         if (Typing)

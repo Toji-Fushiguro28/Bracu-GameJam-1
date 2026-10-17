@@ -13,16 +13,20 @@
                 <ui:VisualElement name="card-form" class="pc-right">
                     <ui:Label text="NEW LIBRARY CARD" class="detail-title" />
                     <ui:Label name="card-empty" text="Nobody is waiting for a card. Talk to a visitor who asks for one first." class="detail-empty" />
-                    <ui:VisualElement name="card-body">
+                    <ui:ScrollView name="card-body" class="pc-scroll card-scroll">
                         <ui:Label text="Name" class="detail-key" />
-                        <ui:VisualElement name="card-name" class="card-options" />
+                        <ui:VisualElement class="card-name-wrap">
+                            <ui:TextField name="card-name" max-length="30" />
+                            <ui:Label name="card-name-placeholder" text="type the name they told you" picking-mode="Ignore" />
+                        </ui:VisualElement>
                         <ui:Label text="Date of birth" class="detail-key" />
-                        <ui:VisualElement name="card-dob" class="card-options" />
+                        <ui:VisualElement name="card-dob" class="date-picker" />
+                        <ui:Label name="card-preview" class="card-preview" />
                         <ui:Label text="Access" class="detail-key" />
                         <ui:VisualElement name="card-access" class="card-options" />
                         <ui:Button name="card-issue" text="Issue card" class="pc-button card-issue" />
-                        <ui:Label name="card-feedback" class="detail-abstract" />
-                    </ui:VisualElement>
+                        <ui:Label name="card-feedback" class="card-feedback" />
+                    </ui:ScrollView>
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>

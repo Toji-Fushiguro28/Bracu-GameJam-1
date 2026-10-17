@@ -59,27 +59,6 @@ public static class Members
         return m;
     }
 
-    /// <summary>Three options for a card field: the right one and two from other visitors, shuffled.</summary>
-    public static string[] Options(string key, bool dob)
-    {
-        var right = Profiles[key];
-        var pool = new List<string>();
-        foreach (var kv in Profiles) if (kv.Key != key) pool.Add(dob ? kv.Value.dob : kv.Value.name);
-        var options = new List<string> { dob ? right.dob : right.name };
-        while (options.Count < 3 && pool.Count > 0)
-        {
-            int i = UnityEngine.Random.Range(0, pool.Count);
-            options.Add(pool[i]);
-            pool.RemoveAt(i);
-        }
-        for (int i = options.Count - 1; i > 0; i--)
-        {
-            int j = UnityEngine.Random.Range(0, i + 1);
-            (options[i], options[j]) = (options[j], options[i]);
-        }
-        return options.ToArray();
-    }
-
     /// <summary>Tip multiplier: strangers tip a little, happy members a lot.</summary>
     public static float TipFactor(Member m) =>
         (m == null ? 0.6f : 0.6f + 0.16f * m.satisfaction) * (GameManager.Instance != null ? GameManager.Instance.TipMultiplier : 1f);

@@ -498,3 +498,10 @@
 
 /* Leave room for the pinned notice above it. */
 .hud-banner { top: 62px; }
+
+/* ---------- Audit log rows (Day Report "Log" tab) ---------- */
+.log-row { padding: 6px 0 8px 0; border-bottom-width: 2px; border-bottom-color: rgba(128, 92, 70, 0.35); }
+.log-head { color: var(--accent); font-size: 18px; }
+.log-line { color: var(--ink); font-size: 19px; white-space: normal; }
+.log-outcome { color: var(--ink-soft); font-size: 17px; white-space: normal; margin-top: 2px; }
+.log-empty { color: var(--ink-soft); font-size: 20px; white-space: normal; -unity-text-align: middle-center; margin-top: 30px; }

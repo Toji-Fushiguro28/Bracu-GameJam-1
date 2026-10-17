@@ -3,7 +3,7 @@ using UnityEngine.UIElements;
 
 /// <summary>
 /// End of day (open book). Left page: the Day Report. Right page: evening planning with
-/// Shop (buy copies), Staff (hire / let go) and Upgrades tabs. "Open Day N" starts the next day.
+/// Shop (buy copies), Staff (hire / let go), Upgrades and Log (today's requests) tabs. "Open Day N" starts the next day.
 /// </summary>
 [RequireComponent(typeof(UIDocument))]
 public class DayReportUI : MonoBehaviour
@@ -53,7 +53,7 @@ public class DayReportUI : MonoBehaviour
         repLabel = doc.Q<Label>("report-rep");
         coinsLabel = doc.Q<Label>("plan-coins");
         nextDay = doc.Q<Button>("report-next");
-        tabs = new[] { doc.Q<Button>("tab-shop"), doc.Q<Button>("tab-staff"), doc.Q<Button>("tab-upgrades") };
+        tabs = new[] { doc.Q<Button>("tab-shop"), doc.Q<Button>("tab-staff"), doc.Q<Button>("tab-upgrades"), doc.Q<Button>("tab-log") };
         for (int i = 0; i < tabs.Length; i++)
         {
             int t = i;
@@ -162,7 +162,8 @@ public class DayReportUI : MonoBehaviour
         filter?.Root.EnableInClassList("hidden", tab != 0);
         if (tab == 0) BuildShop(gm);
         else if (tab == 1) BuildStaff(gm);
-        else BuildUpgrades(gm);
+        else if (tab == 2) BuildUpgrades(gm);
+        else BuildLog(gm);
     }
 
     void AddRow(string title, string sub, string button, bool enabled, System.Action onClick)
@@ -207,6 +208,18 @@ public class DayReportUI : MonoBehaviour
                    hired ? "Let go" : open ? $"Hire {GameManager.StaffWage[i]}" : $"Day {GameManager.StaffUnlockDay[i]}",
                    hired || (open && gm.Coins >= GameManager.StaffWage[i]), () => gm.ToggleStaff(role));
         }
+    }
+
+    /// <summary>Today's audit log, newest first (the PC keeps earlier days).</summary>
+    void BuildLog(GameManager gm)
+    {
+        var all = RequestLog.All;
+        for (int i = all.Count - 1; i >= 0; i--)
+            if (all[i].day == gm.day) list.Add(RequestLog.BuildRow(all[i]));
+        if (list.childCount > 0) return;
+        var empty = new Label("Nothing logged today.");
+        empty.AddToClassList("log-empty");
+        list.Add(empty);
     }
 
     void BuildUpgrades(GameManager gm)

@@ -82,6 +82,7 @@
                     <ui:Button name="tab-shop" class="kit-button plan-tab" text="Shop" />
                     <ui:Button name="tab-staff" class="kit-button plan-tab" text="Staff" />
                     <ui:Button name="tab-upgrades" class="kit-button plan-tab" text="Upgrades" />
+                    <ui:Button name="tab-log" class="kit-button plan-tab" text="Log" />
                 </ui:VisualElement>
                 <ui:Label name="plan-coins" class="repair-total" />
                 <ui:ScrollView name="plan-list" class="shelf-list" />

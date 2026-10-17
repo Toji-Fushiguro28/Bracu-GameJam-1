@@ -170,6 +170,7 @@ public class Customer : ClickInteractable
             case State.Waiting:
                 if (kind == Kind.Browser || kind == Kind.Reader && heldBook != null) return; // let them finish up
                 Say("Oh, closing time already? Tomorrow, then.", 2.5f);
+                RequestLog.Finish(this, "Sent home at closing");
                 Leave();
                 return;
         }
@@ -432,6 +433,7 @@ public class Customer : ClickInteractable
         if (kind == Kind.SignUp)
         {
             introduced = true;
+            RequestLog.Begin(this, RequestLog.Kind.Card, FullName, SignUpText); // what they tell you: name, birthday, wishes
             heard = true;
             WaitingForCard = this;
             Say(RequestText);
@@ -447,6 +449,7 @@ public class Customer : ClickInteractable
 
     void Give(PlayerCarry carry, int index)
     {
+        LogRequest(); // handed over before you even talked: still goes in the log
         var (book, condition) = carry.TakeAt(index);
         if (kind == Kind.Reader) StartReading(book, condition);
         else Sell(book, condition);
@@ -459,6 +462,7 @@ public class Customer : ClickInteractable
         var ui = DialogueUI.Instance;
         if (ui == null || ui.IsOpen) return;
         heard = true;
+        LogRequest();
 
         var d = ScriptableObject.CreateInstance<DialogueAsset>();
         d.speaker = vip ? $"{FullName} (VIP)" : FirstName;
@@ -509,16 +513,18 @@ public class Customer : ClickInteractable
             Say(RequestText); // pinned overhead now that you've heard it
             switch (outcome)
             {
-                case "hint": clue = hintText; usedHint = true; Say(RequestText); break;
+                case "hint": clue = hintText; usedHint = true; RequestLog.SetHint(this, clue, true); Say(RequestText); break;
                 case "reserve":
                     if (soldOut) ReserveAndLeave();
-                    else { GameAudio.Play(a => a.wrongBook); Penalise(0.15f); }
+                    else { RequestLog.Note(this, "Said it was sold out (it wasn't)"); GameAudio.Play(a => a.wrongBook); Penalise(0.15f); }
                     break;
                 case "nohave":
+                    RequestLog.Finish(this, soldOut ? "Sold out, sent away" : "Told we didn't have it (we did)");
                     if (soldOut) { Say("Maybe next time!", 2.5f); Leave(); }
                     else { GM.AddReputation(-1); Members.Satisfy(Membership, -0.5f); Say("Hmph. I'll try elsewhere.", 2.5f); Leave(); }
                     break;
                 case "notyet":
+                    RequestLog.Finish(this, ordered ? "Not here yet, back tomorrow" : "Never ordered");
                     if (ordered) { Say(reservation.urgent ? "Not yet? Fine, tomorrow then." : "See you tomorrow!", 2.5f); reservation.day = GM.day + 1; reservation.urgent = false; reservation.queued = false; Leave(); }
                     else { GM.reservations.Remove(reservation); GM.Today.angry++; GM.AddReputation(-2); Members.Satisfy(Membership, -1f); GameAudio.Play(a => a.angryLeave); Say("I won't reserve here again.", 2.5f); Leave(); }
                     break;
@@ -535,11 +541,13 @@ public class Customer : ClickInteractable
         var (book, condition) = carry.Items[index];
         if (kind != Kind.Reader && kind != Kind.Pickup && !book.Sellable && request.Matches(book))
         {
+            RequestLog.Note(this, $"Handed \"{book.Title}\": not for sale");
             Say("Oh, that one's not for sale? Never mind then.", 2.5f);
             return;
         }
         if (!request.Matches(book))
         {
+            RequestLog.Rejected(this, book);
             Say("Hmm, that's not what I asked for.", 2.5f);
             GameAudio.Play(a => a.wrongBook);
             Penalise(wrongBookPenalty);
@@ -547,6 +555,7 @@ public class Customer : ClickInteractable
         }
         if (condition == BookCondition.Damaged)
         {
+            RequestLog.Note(this, $"Handed a damaged copy of \"{book.Title}\"");
             Say("This copy is falling apart! Got a better one?", 2.5f);
             Penalise(0.1f);
             return;
@@ -562,22 +571,18 @@ public class Customer : ClickInteractable
         GM.Today.served++;
         Members.Satisfy(Membership, 0.3f);
         GameAudio.Play(a => a.cardIssued, 0.7f);
+        RequestLog.Finish(this, wantsToday ? $"Reserved, express by {GameManager.FormatHour(GM.Hour + 2.5f)}" : "Reserved for tomorrow");
         Say(wantsToday ? $"Back at {GameManager.FormatHour(GM.Hour + 2.5f)}! Order it express, please."
                        : $"Reserved \"{request.Target.Title}\". See you tomorrow!", 3f);
         Leave();
     }
 
-    /// <summary>For the PC: what this visitor asked for (and the hint), once you've talked to them.</summary>
-    public string PCNote
+    /// <summary>Into the notebook the first time you hear what they want.</summary>
+    void LogRequest()
     {
-        get
-        {
-            if (!heard || state != State.Waiting) return null;
-            if (kind == Kind.SignUp) return $"{FirstName}: wants a library card";
-            if (kind == Kind.Pickup && reservation != null) return $"{FirstName}: collecting \"{reservation.title}\"";
-            if (request == null) return null;
-            return clue == null ? $"{FirstName}: {request.Line}" : $"{FirstName}: {request.Line}  <color=#EBC878>Hint: {clue}</color>";
-        }
+        if (request == null || RequestLog.Has(this)) return;
+        bool pickup = kind == Kind.Pickup;
+        RequestLog.Begin(this, pickup ? RequestLog.Kind.Pickup : RequestLog.Kind.Book, FirstName, pickup ? RequestText : request.Line, clue, usedHint);
     }
 
     /// <summary>Asking for a hint costs a third of the tip (Cozy's free hint doesn't count).</summary>
@@ -755,11 +760,13 @@ public class Customer : ClickInteractable
                      : null;
         if (wrong != null)
         {
+            RequestLog.CardAttempt(this, $"Card: {name}, born {dob}, {access} access", wrong);
             Say(wrong, 2.5f);
             GameAudio.Play(a => a.cardWrong);
             Penalise(0.2f);
             return wrong;
         }
+        RequestLog.CardAttempt(this, $"Card: {name}, born {dob}, {access} access", null);
         var member = Members.Add(profileKey, p, access);
         int fee = vip ? 25 : 10, tip = Mathf.RoundToInt(6 * PatienceLeft);
         Members.Satisfy(member, PatienceLeft > 0.5f ? 0.5f : 0f, fee + tip);
@@ -771,6 +778,8 @@ public class Customer : ClickInteractable
         RefreshNameplate();
         // Most new members have a book in mind straight away.
         var wish = Random.value < 0.6f ? PickWish() : null;
+        if (wish != null) RequestLog.Note(this, $"Wish: \"{wish.Title}\" reserved");
+        RequestLog.Finish(this, $"Card issued ({access} access)  +{fee + tip}");
         if (wish != null)
         {
             GM.Reserve(profileKey, FirstName, wish, false, true);
@@ -809,6 +818,7 @@ public class Customer : ClickInteractable
         var playerAnim = GameObject.FindWithTag("Player")?.GetComponent<CharacterAnimator>();
         if (playerAnim) playerAnim.PlayStamp();
         GameAudio.Play(a => a.served);
+        RequestLog.Finish(this, (kind == Kind.Pickup ? "Collected" : $"Sold \"{book.Title}\"") + $"  +{price + tip}");
         Say(tip > 0 ? $"Perfect, thank you!  +{price + tip}" : $"Thanks.  +{price}", 2.5f);
         Leave();
     }
@@ -827,11 +837,13 @@ public class Customer : ClickInteractable
         if (!SeatPoint.TryReserve(this, rareRoom, out seat, out seatIndex))
         {
             // Nowhere to sit: they hand it straight back.
+            RequestLog.Finish(this, "No free seat");
             Say("Oh, every seat's taken. Maybe another day.", 2.5f);
             ReturnHeldCopy(false);
             Leave();
             return;
         }
+        RequestLog.Finish(this, $"Reading \"{book.Title}\" here");
         Say(rareRoom ? "Wonderful. I'll read it in the Rare Books room." : "Lovely, I'll find a seat.", 2.5f);
         state = State.ToSeat;
         agent.SetDestination(NearestOnNavMesh(seat.ApproachPosition(seatIndex)));
@@ -972,11 +984,13 @@ public class Customer : ClickInteractable
         GM.AddReputation(-2);
         GameAudio.Play(a => a.angryLeave);
         Say("Hmph! Forget it.", 2.5f);
+        RequestLog.Finish(this, "Left angry");
         Leave();
     }
 
     void Leave()
     {
+        RequestLog.Finish(this, "Left"); // anything not already closed above
         if (WaitingForCard == this) WaitingForCard = null;
         // A browser leaving before paying puts the book back.
         if (heldBook != null && (state == State.Browsing || state == State.ToShelf || state == State.Queueing && kind == Kind.Browser))
