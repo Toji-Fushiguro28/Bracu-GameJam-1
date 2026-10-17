@@ -4,7 +4,6 @@ using UnityEngine;
 /// A soft pulsing gold outline around the return bin while it has books in it,
 /// so returns that need shelving (or repairing) are easy to spot.
 /// </summary>
-[RequireComponent(typeof(ReturnBin))]
 public class ReturnBinGlow : MonoBehaviour
 {
     [Tooltip("Outline-style material (inverted hull) for the glow.")]
@@ -16,12 +15,14 @@ public class ReturnBinGlow : MonoBehaviour
     static readonly int WidthId = Shader.PropertyToID("_OutlineWidth");
     static readonly int ColorId = Shader.PropertyToID("_OutlineColor");
     ReturnBin bin;
+    RepairDesk desk;
     Renderer glow;
     MaterialPropertyBlock block;
 
     void Start()
     {
         bin = GetComponent<ReturnBin>();
+        desk = GetComponent<RepairDesk>(); // also works on the repair desk: glows while repaired books wait
         var mf = GetComponent<MeshFilter>();
         if (mf == null || mf.sharedMesh == null || glowMaterial == null) { enabled = false; return; }
         // A copy of the bin's mesh drawn with the outline shader, slightly larger.
@@ -40,7 +41,7 @@ public class ReturnBinGlow : MonoBehaviour
 
     void Update()
     {
-        bool on = bin.Count > 0;
+        bool on = bin != null ? bin.Count > 0 : desk != null && desk.Done.Count > 0;
         if (glow.enabled != on) glow.enabled = on;
         if (!on) return;
         float t = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * Mathf.PI * 2f / Mathf.Max(0.1f, pulseSeconds));

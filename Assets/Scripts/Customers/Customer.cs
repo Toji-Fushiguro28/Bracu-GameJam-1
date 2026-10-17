@@ -856,6 +856,8 @@ public class Customer : ClickInteractable
         }
         GM.Today.served++;
         ReturnHeldCopy(kind == Kind.Reader);
+        var stamper = GameObject.FindWithTag("Player")?.GetComponent<CharacterAnimator>();
+        if (stamper) stamper.PlayStamp(); // check-ins get stamped too
         GameAudio.Play(a => a.served);
         Say(fee > 0 ? $"Thank you!  +{fee + tip}" : "Thanks, see you!", 2.5f);
         Leave();
@@ -962,7 +964,7 @@ public class Customer : ClickInteractable
     void RefreshNameplate()
     {
         var m = Membership;
-        nameplate.text = vip ? $"VIP  {FullName}" : m != null ? FirstName : "";
+        nameplate.text = vip ? $"VIP  {FullName}" : "";
         nameplate.EnableInClassList("vip", vip);
         nameplate.EnableInClassList("hidden", string.IsNullOrEmpty(nameplate.text));
     }

@@ -96,6 +96,17 @@ public class StaffManager : MonoBehaviour
         w.role = role;
         w.chair = role == GameManager.StaffRole.Repairer ? archiveChair : role == GameManager.StaffRole.RareAttendant ? rareChair : null;
         w.typingClip = typingClip;
+        // Something to click on, and a chat when you do.
+        if (go.GetComponent<Collider>() == null)
+        {
+            var cap = go.AddComponent<CapsuleCollider>();
+            cap.center = new Vector3(0, 0.95f, 0);
+            cap.height = 1.9f;
+            cap.radius = 0.3f;
+        }
+        var talk = go.GetComponent<StaffTalk>();
+        if (talk == null) talk = go.AddComponent<StaffTalk>();
+        talk.role = role;
         go.SetActive(true);
         return w;
     }
@@ -105,7 +116,7 @@ public class StaffManager : MonoBehaviour
         var w = workers[i];
         workers[i] = null;
         if (w == null) return;
-        if (w.gameObject == cleaner) { Destroy(w); cleaner.SetActive(false); }
+        if (w.gameObject == cleaner) { Destroy(w); Destroy(cleaner.GetComponent<StaffTalk>()); cleaner.SetActive(false); }
         else Destroy(w.gameObject);
     }
 }

@@ -277,6 +277,7 @@ public class GameManager : MonoBehaviour
         {
             foreach (var j in RepairDesk.Instance.Waiting) Count(j.book, j.condition);
             foreach (var j in RepairDesk.Instance.Working) Count(j.book, j.condition);
+            foreach (var (b, c) in RepairDesk.Instance.Done) Count(b, c);
         }
         var carry = GameObject.FindWithTag("Player")?.GetComponent<PlayerCarry>();
         if (carry != null) foreach (var (b, c) in carry.Items) Count(b, c);

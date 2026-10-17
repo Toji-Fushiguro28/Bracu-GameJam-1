@@ -11,7 +11,7 @@ using UnityEngine.AI;
 [RequireComponent(typeof(NavMeshAgent))]
 public class StaffWorker : MonoBehaviour
 {
-    enum State { ToChair, AtChair, ToBin, ToDesk, Repairing, Wander, Idle, ToMess, Cleaning }
+    enum State { ToChair, AtChair, ToBin, ToDesk, Repairing, Wander, Idle, ToMess, Cleaning, ToCollect, ToShelf }
 
     public GameManager.StaffRole role;
     public SeatPoint chair;
@@ -27,6 +27,7 @@ public class StaffWorker : MonoBehaviour
     BookCondition carriedCondition;
     RepairDesk.Job job;
     MessSpot target;
+    ShelfInteractable shelf;
 
     void Awake()
     {
@@ -62,6 +63,8 @@ public class StaffWorker : MonoBehaviour
             case State.ToBin: if (Arrived()) TakeFromBin(); break;
             case State.ToDesk: if (Arrived()) StartRepair(); break;
             case State.Repairing: UpdateRepair(); break;
+            case State.ToCollect: if (Arrived()) CollectFinished(); break;
+            case State.ToShelf: if (Arrived()) ShelveCarried(); break;
             case State.Wander: if (Arrived() || timer <= 0f) { state = State.Idle; timer = Random.Range(2f, 5f); } if (MessWaiting()) GoClean(); break;
             case State.Idle: if (MessWaiting()) GoClean(); else if (timer <= 0f) Wander(); break;
             case State.ToMess: UpdateToMess(); break;
@@ -128,7 +131,10 @@ public class StaffWorker : MonoBehaviour
         if (role != GameManager.StaffRole.Repairer) return;
         var bin = ReturnBin.Instance;
         var desk = RepairDesk.Instance;
-        if (bin == null || desk == null || desk.Working.Count > 0) return; // the table is busy
+        if (bin == null || desk == null) return;
+        // Finished repairs first: they go back on their shelves.
+        if (desk.Done.Count > 0) { Walk(desk.transform.position, State.ToCollect); return; }
+        if (desk.Working.Count > 0) return; // the table is busy
         if (desk.Waiting.Count > 0 && GameManager.Instance.Coins >= desk.Cost(desk.Waiting[0]))
         {
             // Something was dropped off at the desk: go and repair that.
@@ -172,7 +178,32 @@ public class StaffWorker : MonoBehaviour
     void UpdateRepair()
     {
         var desk = RepairDesk.Instance;
-        if (desk == null || job == null || !desk.Working.Contains(job)) { job = null; GoToChair(); }
+        if (desk == null || job == null || !desk.Working.Contains(job)) { job = null; CollectFinished(); }
+    }
+
+    /// <summary>Picks the repaired copy up off the table and takes it to its shelf.</summary>
+    void CollectFinished()
+    {
+        var desk = RepairDesk.Instance;
+        if (desk == null || !desk.TakeDone(out carried, out carriedCondition)) { GoToChair(); return; }
+        if (anim) { anim.PlayReachShelf(); anim.SetCarrying(true); }
+        shelf = null;
+        foreach (var s in FindObjectsByType<ShelfInteractable>())
+            if (s.Belongs(carried) && !RoomGate.IsLockedAt(s.transform.position)) { shelf = s; break; }
+        if (shelf == null) { ShelveCarried(); return; } // no shelf to walk to: just put it away
+        Walk(shelf.transform.position, State.ToShelf);
+    }
+
+    void ShelveCarried()
+    {
+        if (anim) { anim.SetCarrying(false); anim.PlayReachShelf(); }
+        if (carried != null)
+        {
+            carried.AddCopy(carriedCondition);
+            carried = null;
+            GameManager.Instance?.NotifyBooksChanged();
+        }
+        GoToChair();
     }
 
     void FaceTowards(Vector3 p)
