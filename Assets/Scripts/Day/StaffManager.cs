@@ -41,7 +41,7 @@ public class StaffManager : MonoBehaviour
         var gm = GameManager.Instance;
         if (gm != null)
         {
-            gm.PhaseChanged += p => { if (p == GameManager.Phase.Closing) SendHome(); };
+            gm.PhaseChanged += p => { if (p == GameManager.Phase.Closed) SendHome(); }; // work till 6, then report
             gm.DayStarted += BringIn;
         }
     }

@@ -11,7 +11,7 @@ using UnityEngine.AI;
 [RequireComponent(typeof(NavMeshAgent))]
 public class StaffWorker : MonoBehaviour
 {
-    enum State { ToChair, AtChair, ToBin, ToDesk, Repairing, Wander, Idle, ToMess, Cleaning, ToCollect, ToShelf, ToBinShelve, GoingHome, OffDuty, ToReport, Reporting }
+    enum State { ToChair, AtChair, ToBin, ToDesk, Repairing, Wander, Idle, ToMess, Cleaning, ToCollect, ToShelf, ToBinShelve, GoingHome, OffDuty, ToReport, Reporting, ToFetch }
 
     public GameManager.StaffRole role;
     public SeatPoint chair;
@@ -34,22 +34,29 @@ public class StaffWorker : MonoBehaviour
     /// <summary>Coins their work brought in today, handed over with the report.</summary>
     public int earnedToday;
     [Tooltip("Coins the library earns for each book the archivist repairs / puts back on a shelf.")]
-    public int perRepair = 4, perShelved = 1;
+    public int perRepair = 5, perShelved = 2;
     /// <summary>Stuck on a problem (see StaffHelp): no work until the librarian helps.</summary>
     public bool OnHold { get; private set; }
     /// <summary>Closing time: standing by to tell the librarian about the day.</summary>
     public bool WaitingToReport => state == State.Reporting || state == State.ToReport;
 
     /// <summary>Stops (or restarts) them where they are.</summary>
+    /// <summary>Stuck on a problem: they put down what they're doing and can't do their job until it's sorted.
+    /// The cleaner roams without tidying; the archivist and the attendant sit at their desk without working.</summary>
     public void SetHold(bool hold)
     {
         OnHold = hold;
-        if (agent.enabled) agent.isStopped = hold;
-        if (hold && typing != null && typing.isPlaying) typing.Stop();
-        else if (!hold && state == State.AtChair && role == GameManager.StaffRole.Repairer && typing != null && typing.clip != null) typing.Play();
-        // Standing staff fidget while they wait; seated ones stay put.
-        if (anim && agent.enabled) anim.SetActivity(hold ? CharacterAnimator.Activity.Impatient : CharacterAnimator.Activity.None);
+        if (!hold) return;
+        if (carried != null) { ReturnBin.Instance?.Add(carried, carriedCondition); carried = null; if (anim) anim.SetCarrying(false); }
+        job = null; target = null;
+        if (state == State.Reporting || state == State.ToReport || state == State.GoingHome) return;
+        if (role == GameManager.StaffRole.Cleaner) Wander(); else GoToChair();
     }
+
+    /// <summary>Patched up for free: works, but slower for the rest of the day.</summary>
+    public bool Slow;
+    float SlowFactor => Slow ? 0.6f : 1f;
+    public bool CanWork => !OnHold && state != State.Reporting && state != State.ToReport && state != State.GoingHome;
 
     /// <summary>Caught on the way to the gate: stop here and turn to face the librarian for the report.</summary>
     public void StopToTalk(Vector3 lookAt)
@@ -97,12 +104,13 @@ public class StaffWorker : MonoBehaviour
     {
         if (agent.enabled && anim) anim.SetSpeed(Mathf.Clamp01(agent.velocity.magnitude / walkSpeed) * 0.5f);
         if (state == State.ToReport && Arrived()) { agent.ResetPath(); state = State.Reporting; }
-        if (OnHold || state == State.Reporting || state == State.ToReport) return;
+        if (state == State.Reporting || state == State.ToReport) return;
         timer -= GameManager.Dt;
         switch (state)
         {
             case State.ToChair: if (Arrived()) SitDown(); break;
-            case State.AtChair: if (timer <= 0f) { timer = 1.5f; LookForWork(); } break;
+            case State.AtChair: if (timer <= 0f) { timer = 1.5f / SlowFactor; LookForWork(); } break;
+            case State.ToFetch: if (Arrived()) TakeFromShelf(); break;
             case State.ToBin: if (Arrived()) TakeFromBin(); break;
             case State.ToDesk: if (Arrived()) StartRepair(); break;
             case State.Repairing: UpdateRepair(); break;
@@ -111,7 +119,7 @@ public class StaffWorker : MonoBehaviour
             case State.ToBinShelve: if (Arrived()) TakeReturnToShelve(); break;
             case State.GoingHome: if (Arrived()) { state = State.OffDuty; gameObject.SetActive(false); } break;
             case State.Wander: if (Arrived() || timer <= 0f) { state = State.Idle; timer = Random.Range(2f, 5f); } if (MessWaiting()) GoClean(); break;
-            case State.Idle: if (MessWaiting()) GoClean(); else if (timer <= 0f) Wander(); break;
+            case State.Idle: if (MessWaiting()) GoClean(); else if (CleanerShelves()) { } else if (timer <= 0f) Wander(); break;
             case State.ToMess: UpdateToMess(); break;
             case State.Cleaning:
                 if (timer > 0f) break;
@@ -174,23 +182,61 @@ public class StaffWorker : MonoBehaviour
 
     void LookForWork()
     {
-        if (role != GameManager.StaffRole.Repairer) return;
+        if (role != GameManager.StaffRole.Repairer || !CanWork) return;
         var bin = ReturnBin.Instance;
         var desk = RepairDesk.Instance;
         if (bin == null || desk == null) return;
         // Finished repairs first: they go back on their shelves.
         if (desk.Done.Count > 0) { Walk(desk.transform.position, State.ToCollect); return; }
         if (desk.Working.Count > 0) return; // the table is busy
-        if (desk.Waiting.Count > 0 && GameManager.Instance.Coins >= desk.Cost(desk.Waiting[0]))
+        if (desk.Waiting.Count > 0)
         {
-            // Something was dropped off at the desk: go and repair that.
-            job = desk.Waiting[0];
-            Walk(desk.transform.position, State.ToDesk);
-            return;
+            if (GameManager.Instance.Coins >= desk.Cost(desk.Waiting[0]))
+            {
+                // Something was dropped off at the desk: go and repair that.
+                job = desk.Waiting[0];
+                Walk(desk.transform.position, State.ToDesk);
+            }
+            else TellBroke(desk.Cost(desk.Waiting[0]));
+            return; // don't pile up more until that one's paid for
         }
         if (bin.HasNeedingRepair) { Walk(bin.transform.position, State.ToBin); return; }
+        // Worn or damaged copies still on the shelves: fetch one to mend.
+        foreach (var s in FindObjectsByType<ShelfInteractable>())
+        {
+            if (RoomGate.IsLockedAt(s.transform.position)) continue;
+            foreach (var b in s.Books)
+                if (b.DamagedCopies > 0 || b.WornCopies > 0) { shelf = s; Walk(s.transform.position, State.ToFetch); return; }
+        }
         // Nothing to fix: put good returns back where they belong.
         if (bin.HasGood) Walk(bin.transform.position, State.ToBinShelve);
+    }
+
+    void TakeFromShelf()
+    {
+        carried = null;
+        if (shelf != null)
+            foreach (var b in shelf.Books)
+            {
+                var cond = b.DamagedCopies > 0 ? BookCondition.Damaged : BookCondition.Worn;
+                if ((b.DamagedCopies > 0 || b.WornCopies > 0) && b.TakeCopy(cond)) { carried = b; carriedCondition = cond; break; }
+            }
+        if (carried == null) { GoToChair(); return; }
+        GameManager.Instance?.NotifyBooksChanged();
+        if (anim) { anim.PlayReachShelf(); anim.SetCarrying(true); }
+        Walk(RepairDesk.Instance.transform.position, State.ToDesk);
+    }
+
+    float brokeToldAt = -999f;
+
+    /// <summary>Can't pay for a repair: say so (now and then), so the player knows why nothing's being mended.</summary>
+    void TellBroke(int cost)
+    {
+        if (Time.time - brokeToldAt < 45f) return;
+        brokeToldAt = Time.time;
+        var talk = GetComponent<StaffTalk>();
+        if (talk != null) WorldPrompts.Instance?.ShowBubble(talk, $"I need {cost} coins in the till to mend the next book.", 4f);
+        FindAnyObjectByType<HUD>()?.ShowBanner($"{GameManager.StaffPerson[(int)role]} can't afford the next repair ({cost} coins).", 4f);
     }
 
     void TakeFromBin()
@@ -211,6 +257,7 @@ public class StaffWorker : MonoBehaviour
             job = desk.Waiting[desk.Waiting.Count - 1];
             carried = null;
         }
+        if (job != null && GameManager.Instance != null && GameManager.Instance.Coins < desk.Cost(job)) TellBroke(desk.Cost(job));
         if (job == null || !desk.StartRepair(job, 0.5f))
         {
             // Can't afford it: leave it on the desk for the librarian and go back to work.
@@ -260,6 +307,7 @@ public class StaffWorker : MonoBehaviour
     public void StartShift()
     {
         repairedToday = shelvedToday = cleanedToday = servedToday = earnedToday = 0;
+        Slow = false;
         OnHold = false;
         if (agent.enabled) agent.isStopped = false;
         if (role == GameManager.StaffRole.Cleaner) Wander(); else GoToChair();
@@ -271,7 +319,7 @@ public class StaffWorker : MonoBehaviour
         var desk = RepairDesk.Instance;
         if (desk == null || !desk.TakeDone(out carried, out carriedCondition)) { GoToChair(); return; }
         repairedToday++;
-        earnedToday += perRepair;
+        earnedToday += perRepair + Mathf.RoundToInt(carried.BaseValue * 0.4f); // a mended book is worth a fair bit
         if (anim) { anim.PlayReachShelf(); anim.SetCarrying(true); }
         GoToShelfFor(carried);
     }
@@ -284,7 +332,7 @@ public class StaffWorker : MonoBehaviour
             carried.AddCopy(carriedCondition);
             carried = null;
             shelvedToday++;
-            if (role == GameManager.StaffRole.Repairer) earnedToday += perShelved;
+            earnedToday += perShelved;
             GameManager.Instance?.NotifyBooksChanged();
         }
         GoToChair();
@@ -298,8 +346,17 @@ public class StaffWorker : MonoBehaviour
 
     // ---------------- Cleaner: roam and tidy ----------------
 
+    /// <summary>Cleaner with nothing to tidy: puts good returned copies back on their shelves.</summary>
+    bool CleanerShelves()
+    {
+        if (role != GameManager.StaffRole.Cleaner || !CanWork || ReturnBin.Instance == null || !ReturnBin.Instance.HasGood) return false;
+        Walk(ReturnBin.Instance.transform.position, State.ToBinShelve);
+        return true;
+    }
+
     bool MessWaiting()
     {
+        if (!CanWork) return false;
         foreach (var m in MessSpot.All) if (!RoomGate.IsLockedAt(m.transform.position)) return true;
         return false;
     }
@@ -329,7 +386,7 @@ public class StaffWorker : MonoBehaviour
             FaceTowards(target.transform.position);
             if (anim) anim.PlayReachShelf();
             state = State.Cleaning;
-            timer = 1.6f / (GameManager.Instance != null ? GameManager.Instance.StaffWorkFactor(role) : 1f);
+            timer = 1.6f / ((GameManager.Instance != null ? GameManager.Instance.StaffWorkFactor(role) : 1f) * SlowFactor);
         }
     }
 

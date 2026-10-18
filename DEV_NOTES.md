@@ -402,3 +402,20 @@ Small, contained edits. Please check them when merging:
 - **Saying "Sorry, we can't get that"** removes any reservation for that visitor.
 - **New members' wishes are no longer auto-reserved:** the member asks you at the desk (same "When do you need it?" flow), and you decide.
 - **Shops:** not-yet-owned titles are in the normal, searchable book list ("New to the library"), not only under Reservations.
+
+## Staff and VIP polish
+- **Interview:** Hire costs the last price you settled on: the agreed price, or the lowest one they mentioned (`FinalPrice`).
+- **Staff problems:**
+  - While a problem is open, the person can't do their job (`StaffWorker.CanWork`). The cleaner roams without tidying; the archivist and attendant sit at their desks. They remind you every 30 s.
+  - The paid fix gets them working at full speed. The free fix gets them working, but slower for the rest of the day (`Slow`).
+- **Archivist:** also fetches worn and damaged copies from the shelves. If the till can't pay for a repair, they say so (bubble and banner).
+- **Staff pay:**
+  - Archivist: 5 + 40% of the book's value per repair, 2 per book shelved.
+  - Cleaner: 5 per cup, 6 per book, 2 per returned copy shelved. The cleaner now also shelves good returns.
+- **Staff hours:** they work until the library closes at 6, then report.
+- **Rare Books attendant:** costs 450, and the upgrade costs 450.
+- **VIPs:** cards cost 80 and reading fees are doubled. VIPs stay after getting a card and go to read.
+- **Dialogue:** half-typed rich text is auto-closed, so coloured hints type in instead of popping in.
+- **Notebook and Reserved lists:** they scroll instead of running off the screen.
+- **Click guard** (`Interaction/ClickGuard.cs`): for 0.25 s after a panel opens (`PlayerLock.Lock`), after choices appear, or after the interview hire and end pages show, button presses are swallowed, so one click can't also press a button that just appeared under the cursor. It's attached to the game UI, the PC overlay and the interview UI.
+- **Interview:** pay is discussed automatically after the questions ("Before you go, let's talk about pay."); it's no longer in the question menu.

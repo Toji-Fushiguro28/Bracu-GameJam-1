@@ -184,25 +184,20 @@ public class StaffInterview : MonoBehaviour
         yield return Say(c.name, c.hello);
 
         var asked = new HashSet<Q>();
-        while (questionsLeft > 0 || !c.payTalked)
+        while (questionsLeft > 0)
         {
             Q? chosen = null;
-            bool done = false, pay = false;
-            var d = Line(Me, questionsLeft > 0 ? $"<color=#D67840>Questions left: {questionsLeft}</color>  What should I ask?" : "Anything else?");
-            if (questionsLeft > 0)
-                foreach (Q q in System.Enum.GetValues(typeof(Q)))
-                    if (!asked.Contains(q)) d.lines[0].choices.Add(new DialogueAsset.Choice { text = QuestionText(q), next = q.ToString() });
-            // Talking about pay doesn't use up a question.
-            if (!c.payTalked) d.lines[0].choices.Add(new DialogueAsset.Choice { text = "Let's talk about pay.", next = "pay" });
+            bool done = false;
+            var d = Line(Me, $"<color=#D67840>Questions left: {questionsLeft}</color>  What should I ask?");
+            foreach (Q q in System.Enum.GetValues(typeof(Q)))
+                if (!asked.Contains(q)) d.lines[0].choices.Add(new DialogueAsset.Choice { text = QuestionText(q), next = q.ToString() });
             d.lines[0].choices.Add(new DialogueAsset.Choice { text = "That's all, thank you.", next = "done" });
             foreach (Q q in System.Enum.GetValues(typeof(Q))) d.lines.Add(new DialogueAsset.Line { id = q.ToString(), text = QuestionText(q), next = "end" });
-            d.lines.Add(new DialogueAsset.Line { id = "pay", text = "Let's talk about pay.", next = "end" });
-            d.lines.Add(new DialogueAsset.Line { id = "done", text = "I think I've heard enough. Thank you for coming in.", next = "end" });
-            System.Action<string> seen = id => { if (id == "done") done = true; else if (id == "pay") pay = true; else if (System.Enum.TryParse(id, out Q q)) chosen = q; };
+            d.lines.Add(new DialogueAsset.Line { id = "done", text = "I think I've heard enough.", next = "end" });
+            System.Action<string> seen = id => { if (id == "done") done = true; else if (System.Enum.TryParse(id, out Q q)) chosen = q; };
             ui.LineShown += seen;
             yield return PlayDialogue(d);
             ui.LineShown -= seen;
-            if (pay) { yield return PayTalk(c); continue; }
             if (done || chosen == null) break;
 
             asked.Add(chosen.Value);
@@ -212,6 +207,9 @@ public class StaffInterview : MonoBehaviour
             yield return Say(Me, $"<color=#D67840>{Thought(c, chosen.Value)}</color>");
         }
 
+        // After the questions: what would they cost?
+        yield return Say(Me, "Before you go, let's talk about pay.");
+        yield return PayTalk(c);
         yield return Say(c.name, Pick("Thank you for your time!", "Lovely to meet you. I hope to hear from you.", "Thanks! Fingers crossed."));
         resume.AddToClassList("hidden");
         if (anim) anim.SetActivity(CharacterAnimator.Activity.None);
@@ -238,8 +236,9 @@ public class StaffInterview : MonoBehaviour
             text.Add(new Label(Notes(c)) { name = "pick-notes" });
             row.Add(text);
             var cc = c;
-            var b = new Button(() => { hired = cc; Play(clickSound); }) { text = Coins >= c.wage ? $"Hire ({c.wage})" : $"Need {c.wage}" };
-            b.SetEnabled(Coins >= c.wage);
+            int price = FinalPrice(c);
+            var b = new Button(() => { hired = cc; Play(clickSound); }) { text = Coins >= price ? $"Hire ({price})" : $"Need {price}" };
+            b.SetEnabled(Coins >= price);
             b.AddToClassList("kit-button");
             row.Add(b);
             list.Add(row);
@@ -249,9 +248,11 @@ public class StaffInterview : MonoBehaviour
         none.AddToClassList("kit-button");
         none.AddToClassList("wide");
         list.Add(none);
+        ClickGuard.Block(); // the click that closed the last line mustn't press Hire
         pick.RemoveFromClassList("hidden");
         while (hired == null && !nobody) yield return null;
         pick.AddToClassList("hidden");
+        if (hired != null) { hired.wage = FinalPrice(hired); hired.agreed = true; }
         if (nobody)
         {
             bool broke = true;
@@ -297,7 +298,7 @@ public class StaffInterview : MonoBehaviour
         if (dean) dean.SetActivity(CharacterAnimator.Activity.SitIdle);
         yield return new WaitForSeconds(1f);
 
-        yield return Say(Dean, $"Ah, {Me}, you came! Sit, sit. Edgar Whitmore. I've looked after this library for forty-one years.");
+        yield return Say(Dean, $"Ah, {Me}, you came! Sit, sit. I'm Dean Whitmore, and I've looked after this library for forty-one years.");
         yield return Ask("So tell me, why the Whitmore Library?",
             ("I love books. All of them.", "Ha! So do I. Even the boring ones. Especially the boring ones."),
             ("Honestly? I need the job.", "Honest! Good. Honesty matters more than a degree in this place."),
@@ -359,6 +360,7 @@ public class StaffInterview : MonoBehaviour
         bool go = false;
         var cont = ending.Q<Button>("ending-continue");
         if (cont != null) cont.clicked += () => { go = true; Play(clickSound); };
+        ClickGuard.Block();
         ending.RemoveFromClassList("hidden");
         while (!go) yield return null;
         ending.AddToClassList("hidden");
@@ -528,6 +530,9 @@ public class StaffInterview : MonoBehaviour
     // ---------------- Talking about pay ----------------
 
     static int Round5(float v) => Mathf.Max(5, Mathf.RoundToInt(v / 5f) * 5);
+
+    /// <summary>What hiring them costs: the agreed price, or the lowest price they told you, or what they asked.</summary>
+    static int FinalPrice(Candidate c) => c.agreed ? c.wage : c.knowFloor ? c.floor : c.wage;
 
     /// <summary>They name their price; you offer. Too low, and they politely say the lowest they can go
     /// (different for everyone). Agree and that's what you'll pay if you hire them.</summary>

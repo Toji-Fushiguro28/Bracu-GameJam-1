@@ -135,6 +135,7 @@ public class PCOverlayTrigger : MonoBehaviour
         if (overlayDoc == null || overlayDoc.rootVisualElement == null)
             return;
         container = overlayDoc.rootVisualElement.Q(ContainerElementName);
+        ClickGuard.Attach(overlayDoc.rootVisualElement);
         if (container == null)
         {
             Debug.LogError("[PCUI] '" + ContainerElementName + "' element missing after view swap.", this);

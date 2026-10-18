@@ -58,7 +58,7 @@ public class StaffHelp : MonoBehaviour
     StaffWorker worker;
     StaffTalk talk;
     WorldPrompts.Follower pointer;
-    float timer, holdUntil = -1f;
+    float timer, remind;
 
     void Awake()
     {
@@ -81,8 +81,14 @@ public class StaffHelp : MonoBehaviour
         var gm = GameManager.Instance;
         if (gm == null || worker == null) return;
         // A free fix: back to work after a short while.
-        if (holdUntil > 0f) { holdUntil -= GameManager.Dt; if (holdUntil <= 0f) { holdUntil = -1f; worker.SetHold(false); } return; }
-        if (Open != null || Reporting || gm.CurrentPhase != GameManager.Phase.Open) return;
+        // Still stuck: remind you now and then.
+        if (Open != null)
+        {
+            remind -= GameManager.Dt;
+            if (remind <= 0f && !Reporting && talk != null && WorldPrompts.Instance != null) { WorldPrompts.Instance.ShowBubble(talk, Open.line, 3.5f); remind = 30f; }
+            return;
+        }
+        if (Reporting || gm.CurrentPhase != GameManager.Phase.Open) return;
         timer -= GameManager.Dt;
         if (timer <= 0f) Raise();
     }
@@ -108,7 +114,7 @@ public class StaffHelp : MonoBehaviour
         var start = new DialogueAsset.Line { id = "start", text = Open.line };
         bool afford = gm != null && gm.Coins >= Open.cost;
         start.choices.Add(new DialogueAsset.Choice { text = afford ? $"{Open.paid} ({Open.cost} coins)" : $"{Open.paid} (need {Open.cost})", next = afford ? "paid" : "start" });
-        start.choices.Add(new DialogueAsset.Choice { text = Open.free, next = "free" });
+        start.choices.Add(new DialogueAsset.Choice { text = $"{Open.free} (free, but slower today)", next = "free" });
         d.lines.Add(start);
         d.lines.Add(new DialogueAsset.Line { id = "paid", text = Open.paidReply, next = "end" });
         d.lines.Add(new DialogueAsset.Line { id = "free", text = Open.freeReply, next = "end" });
@@ -125,8 +131,8 @@ public class StaffHelp : MonoBehaviour
         helpedToday++;
         HidePointer();
         GameAudio.Play(a => a.served, 0.5f);
-        if (how == "paid") worker.SetHold(false);
-        else holdUntil = 8f; // the free fix takes them a moment
+        worker.SetHold(false);
+        if (how == "free") worker.Slow = true; // makeshift fix: they work, but slower for the rest of the day
         ResetTimer();
     }
 
@@ -136,7 +142,6 @@ public class StaffHelp : MonoBehaviour
     public void WaitToReport()
     {
         if (Open != null) { Open = null; worker.SetHold(false); }
-        holdUntil = -1f;
         Reporting = true;
         ShowPointer("Report");
     }
@@ -146,7 +151,7 @@ public class StaffHelp : MonoBehaviour
     /// <summary>A new day: fresh counters, no pointer.</summary>
     public void NewDay()
     {
-        Open = null; Reporting = false; holdUntil = -1f; helpedToday = 0;
+        Open = null; Reporting = false; helpedToday = 0;
         HidePointer();
         ResetTimer();
     }

@@ -79,11 +79,11 @@ public class GameManager : MonoBehaviour
     public static readonly int[] StaffUnlockDay = { ArchiveDay, 1, RareDay };
     /// <summary>Staff rows on the PC and in the day report (the cleaner is normally hired in the opening interview).</summary>
     public static readonly StaffRole[] StaffOrder = { StaffRole.Cleaner, StaffRole.Repairer, StaffRole.RareAttendant };
-    /// <summary>Usual hire price by role, paid once: Archive 250, Main hall 70, Rare Books 650. Applicants ask
+    /// <summary>Usual hire price by role, paid once: Archive 250, Main hall 70, Rare Books 450. Applicants ask
     /// around this and can be talked down a little in the interview.</summary>
-    public static readonly int[] StaffHireFee = { 250, 70, 650 };
+    public static readonly int[] StaffHireFee = { 250, 70, 450 };
     /// <summary>Upgrade prices by role and level. Each level makes them faster and need less help.</summary>
-    public static readonly int[][] StaffUpgradeCosts = { new[] { 150, 300 }, new[] { 35, 70 }, new[] { 650 } };
+    public static readonly int[][] StaffUpgradeCosts = { new[] { 150, 300 }, new[] { 35, 70 }, new[] { 450 } };
     public bool StaffUnlocked(StaffRole r) => day >= StaffUnlockDay[(int)r];
     /// <summary>Daily wages: none any more (staff are paid once, when hired). Kept so old saves and reports still work.</summary>
     public static readonly int[] StaffWage = { 0, 0, 0 };

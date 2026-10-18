@@ -73,7 +73,7 @@ public class MessSpot : ClickInteractable
     {
         if (!IsDirty) return 0;
         Clean(false);
-        return reward;
+        return kind == Kind.Book ? 6 : 5; // the cleaner earns well for each cup and book cleared
     }
 
     /// <summary>Tidies it away. A book still holding its copy puts it back on the shelf.</summary>

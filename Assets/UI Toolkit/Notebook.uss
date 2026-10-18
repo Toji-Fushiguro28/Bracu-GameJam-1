@@ -63,3 +63,7 @@
     transition-duration: 0.4s;
 }
 .notebook-tab.new.pulse { scale: 1.15 1.15; }
+
+/* Long lists scroll (with the kit scroll bar) instead of running off the screen. */
+.notebook-list { max-height: 400px; }
+.reservations .notebook-list { max-height: 160px; }

@@ -38,7 +38,9 @@ public static class PlayerLock
 
     public static void Lock(object owner)
     {
-        if (owners.Add(owner) && owners.Count == 1) Apply(true);
+        if (!owners.Add(owner)) return;
+        ClickGuard.Block(); // a panel just opened: the click that opened it doesn't press anything in it
+        if (owners.Count == 1) Apply(true);
     }
 
     public static void Unlock(object owner)

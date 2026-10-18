@@ -250,7 +250,8 @@ public class Customer : ClickInteractable
     {
         if (!GM.RareOpen || StaffManager.Instance == null || !StaffManager.Instance.Working(GameManager.StaffRole.RareAttendant)) return false;
         var attendant = StaffManager.Instance.Worker(GameManager.StaffRole.RareAttendant);
-        if (attendant == null || attendant.OnHold || attendant.WaitingToReport) return false; // busy with a problem
+        if (attendant == null || !attendant.CanWork) return false; // stuck on a problem, or off duty
+        if (attendant.Slow && Random.value < 0.5f) return false;     // makeshift fix: too slow to catch everyone
         var rare = GM.Books.FindAll(b => BookRequest.IsRare(b) && BookRequest.InStock(b));
         if (rare.Count == 0) return false;
         var book = rare[Random.Range(0, rare.Count)];
@@ -914,7 +915,7 @@ public class Customer : ClickInteractable
         }
         RequestLog.CardAttempt(this, $"Card: {name}, born {dob}, {access} access", null);
         var member = Members.Add(profileKey, p, access);
-        int fee = vip ? 25 : 10, tip = Mathf.RoundToInt(6 * PatienceLeft);
+        int fee = vip ? 80 : 10, tip = Mathf.RoundToInt((vip ? 20 : 6) * PatienceLeft); // VIP cards: their own room, attendant and all
         Members.Satisfy(member, PatienceLeft > 0.5f ? 0.5f : 0f, fee + tip);
         GM.AddCoins(fee + tip);
         GM.Today.income += fee + tip; GM.Today.tips += tip; GM.Today.served++; GM.Today.signups++;
@@ -923,8 +924,18 @@ public class Customer : ClickInteractable
         GameAudio.Play(a => a.cardIssued);
         RefreshNameplate();
         // Most new members have a book in mind straight away.
-        var wish = Random.value < 0.6f ? PickWish() : null;
+        var wish = !vip && Random.value < 0.6f ? PickWish() : null;
         RequestLog.Finish(this, $"Card issued ({access} access)  +{fee + tip}");
+        if (vip)
+        {
+            // A scholar with a fresh Rare card goes straight to reading.
+            Say($"Splendid. Now, to the Rare Books room!  +{fee + tip}", 3f);
+            CounterQueue.Instance.Leave(this);
+            request = null; clue = null; heard = false; usedHint = false; introduced = false;
+            kind = Kind.Reader;
+            if (!AttendantServes()) JoinQueue();
+            return null;
+        }
         if (wish != null)
         {
             // They ask you at the desk (same as anyone looking for a book): you decide whether to order it.
@@ -1034,7 +1045,7 @@ public class Customer : ClickInteractable
         agent.enabled = true;
         // The Rare Books attendant checks them in on the spot.
         var attendant = rareRoom && StaffManager.Instance != null ? StaffManager.Instance.Worker(GameManager.StaffRole.RareAttendant) : null;
-        if (attendant != null && attendant.gameObject.activeSelf && !attendant.OnHold && !attendant.WaitingToReport) { maxPatience = patience = 1f; CheckIn(attendant); return; }
+        if (attendant != null && attendant.gameObject.activeSelf && attendant.CanWork) { maxPatience = patience = 1f; CheckIn(attendant); return; }
         JoinQueue();
     }
 
@@ -1063,6 +1074,7 @@ public class Customer : ClickInteractable
             float share = rare ? 0.1f : archive ? 0.15f : 0.4f;
             int minFee = rare ? 20 : archive ? 8 : 4;
             fee = Mathf.RoundToInt(Mathf.Max(minFee, heldBook.BaseValue * share) * GM.ReadingFeeMultiplier);
+            if (vip) fee *= 2; // VIP scholars pay for the Rare Books room's service
             tip = Mathf.RoundToInt(fee * 0.6f * PatienceLeft * Members.TipFactor(Membership) * HintTipFactor) + chatBonus;
             Members.Satisfy(Membership, PatienceLeft > 0.5f ? 0.5f : 0.2f, fee + tip);
             GM.Today.booksRead++;
