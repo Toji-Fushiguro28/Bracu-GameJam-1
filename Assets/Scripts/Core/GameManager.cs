@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 /// <summary>
@@ -141,16 +142,27 @@ public class GameManager : MonoBehaviour
     public float OutOfStockChance => day < 2 ? 0f : Mode(0.1f, day == 2 ? 0.2f : 0.25f, 0.35f);
     public void SetDifficulty(Difficulty d) => difficulty = d;
 
-    /// <summary>True when at least one upgrade is affordable right now.</summary>
+    /// <summary>Day each upgrade can first be bought, in UpgradeKind order: it unlocks once the thing it helps
+    /// with matters (restoration after your first repairs, lamps and nooks with the Archive's readers, flyers once the rooms fill).</summary>
+    public static readonly int[] UpgradeUnlockDay = { 1, 2, 1, 1, 2, 2, 3, 1, 1 };
+    public bool UpgradeUnlocked(UpgradeKind u) => day >= UpgradeUnlockDay[(int)u];
+    /// <summary>Unlocked, not maxed and affordable.</summary>
+    public bool CanBuyUpgrade(UpgradeKind u) => UpgradeUnlocked(u) && upgrades[(int)u] < MaxUpgrade && Coins >= UpgradeCost(upgrades[(int)u]);
+
+    /// <summary>True when at least one upgrade can be bought right now.</summary>
     public bool UpgradeReady
     {
         get
         {
             for (int i = 0; i < upgrades.Length; i++)
-                if (upgrades[i] < MaxUpgrade && Coins >= UpgradeCost(upgrades[i])) return true;
+                if (CanBuyUpgrade((UpgradeKind)i)) return true;
             return false;
         }
     }
+
+    /// <summary>A staff row has something to do: an interview you can afford, or a hire's upgrade you can afford.</summary>
+    public bool StaffActionReady(StaffRole r) => StaffRow(r).enabled && !InterviewBooked(r);
+    public bool StaffReady => StaffOrder.Any(StaffActionReady);
     /// <summary>Day the player last looked at the Upgrades tab (stops the reminder glow for that day).</summary>
     [NonSerialized] public int upgradesSeenDay = -1;
 
@@ -321,7 +333,7 @@ public class GameManager : MonoBehaviour
     public bool BuyUpgrade(UpgradeKind u)
     {
         int lvl = upgrades[(int)u];
-        if (lvl >= MaxUpgrade || !TrySpend(UpgradeCost(lvl))) return false;
+        if (!UpgradeUnlocked(u) || lvl >= MaxUpgrade || !TrySpend(UpgradeCost(lvl))) return false;
         upgrades[(int)u]++;
         ApplyUpgrades();
         return true;
@@ -349,6 +361,7 @@ public class GameManager : MonoBehaviour
     public void StartNextDay()
     {
         day++;
+        PickPopularBooks();
         // Morning wages, skipping anyone already paid for today (hired last night).
         int wages = 0;
         for (int i = 0; i < staff.Length; i++) if (staff[i] && wagePaidFor[i] < day) wages += StaffWage[i];
@@ -479,8 +492,44 @@ public class GameManager : MonoBehaviour
         // A new game picked on the title screen: its mode and starting coins.
         if (PendingDifficulty.HasValue && !HasSave) { difficulty = PendingDifficulty.Value; Coins = DifficultyStartCoins[(int)difficulty]; }
         PendingDifficulty = null;
+        if (!HasSave) LeanStartingStock();
+        PickPopularBooks();
         ApplyInterviewHire();
         ReputationAtStart = Reputation;
+    }
+
+    /// <summary>Books everyone wants today: visitors ask for them far more often, and they glow on the
+    /// computer and the shelves. A new set each day (the same set if you reload that day).</summary>
+    public readonly HashSet<string> PopularToday = new HashSet<string>();
+    public const int PopularPerDay = 4;
+    public bool IsPopular(BookData b) => b != null && PopularToday.Contains(b.Title);
+
+    void PickPopularBooks()
+    {
+        PopularToday.Clear();
+        var pool = Books.Concat(NewTitles).Where(b => b.Sellable && !BookRequest.IsArchive(b) && !BookRequest.IsRare(b))
+                        .Select(b => b.Title).Distinct().OrderBy(t => t, StringComparer.Ordinal).ToList();
+        var rng = new System.Random(day * 7919 + 101);
+        while (PopularToday.Count < PopularPerDay && pool.Count > 0)
+        {
+            int i = rng.Next(pool.Count);
+            PopularToday.Add(pool[i]);
+            pool.RemoveAt(i);
+        }
+    }
+
+    /// <summary>A new library starts thin: one copy of each book for sale and none of the best sellers,
+    /// so you have to buy the books people actually want. Archive and Rare Books are as listed.</summary>
+    void LeanStartingStock()
+    {
+        foreach (var b in Books)
+        {
+            if (!b.Sellable || BookRequest.IsArchive(b) || BookRequest.IsRare(b)) continue;
+            bool bestSeller = (b.Tag ?? "").IndexOf("best", StringComparison.OrdinalIgnoreCase) >= 0;
+            b.GoodCopies = bestSeller ? 0 : Mathf.Min(b.GoodCopies + b.WornCopies, 1);
+            b.WornCopies = 0;
+            b.DamagedCopies = Mathf.Min(b.DamagedCopies, 1); // a little repair work still turns up
+        }
     }
 
     // ---------------- Who you hired in interviews ----------------

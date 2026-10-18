@@ -136,6 +136,7 @@ public class PCOverlayTrigger : MonoBehaviour
             return;
         container = overlayDoc.rootVisualElement.Q(ContainerElementName);
         ClickGuard.Attach(overlayDoc.rootVisualElement);
+        overlayDoc.rootVisualElement.Query(className: "req-icon").ForEach(RequestIcon.Attach); // the drawn book icon
         if (container == null)
         {
             Debug.LogError("[PCUI] '" + ContainerElementName + "' element missing after view swap.", this);
@@ -154,7 +155,20 @@ public class PCOverlayTrigger : MonoBehaviour
         if (shopTile != null)
         {
             bool ready = gmNow != null && gmNow.UpgradeReady;
-            shopTile.text = ready ? "Shop\n<size=60%>★ Upgrade ready!</size>" : "Shop";
+            var shopLabel = shopTile.Q<Label>("tile-label");
+            if (shopLabel != null) shopLabel.text = "Shop";
+            // "Upgrade ready!" sits under the tile's icon + name, so the coin stays beside "Shop".
+            var note = shopTile.Q<Label>("tile-note");
+            if (note == null)
+            {
+                note = new Label { name = "tile-note", pickingMode = PickingMode.Ignore };
+                note.AddToClassList("pc-tile-note");
+                shopTile.Add(note);
+            }
+            bool hire = gmNow != null && gmNow.StaffReady;
+            note.text = ready ? "★ Upgrade ready!" : "★ Staff to hire or upgrade!";
+            note.EnableInClassList("hidden", !ready && !hire);
+            PopularGlow.Ready(shopTile, ready || hire);
             shopTile.EnableInClassList("upgrade-ready", ready);
         }
         overlayDoc.rootVisualElement.Q<Button>("upgrades-button")?.RegisterCallback<ClickEvent>(_ => { if (JustOpened) return; ShowView("PCShopTemplate", PCShopView.Wire); });
@@ -224,9 +238,16 @@ public class PCOverlayTrigger : MonoBehaviour
         }
         if (booksList != null)
         {
-            booksList.makeItem = () => bookItemTemplate.CloneTree();
+            booksList.makeItem = () =>
+            {
+                var row = bookItemTemplate.CloneTree();
+                // Clicking a row always shows it, even if the list thinks it's already selected.
+                row.RegisterCallback<ClickEvent>(_ => { if (row.userData is BookData rb) ShowDetails(rb); });
+                PopularGlow.Pulse(row); // rows are reused, so the pulse runs on every row and only shows on popular ones
+                return row;
+            };
             booksList.bindItem = BindBookItem;
-            booksList.fixedItemHeight = 96;
+            booksList.fixedItemHeight = 100;
             booksList.selectionType = SelectionType.Single;
             booksList.selectionChanged += sel => ShowDetails(sel.OfType<BookData>().FirstOrDefault());
         }
@@ -254,9 +275,9 @@ public class PCOverlayTrigger : MonoBehaviour
         bool noted = RequestLog.IsNoted(selectedBook);
         button?.SetEnabled(selectedBook != null && !noted);
         if (note != null)
-            note.text = noted ? "In your notebook."
-                      : RequestLog.Current != null ? "Notes it under the book request."
-                      : "Notes it on your To Shelve page.";
+            note.text = noted ? "Already in your notebook."
+                      : RequestLog.Current != null ? "Adds it to the visitor's request in your notebook."
+                      : "Nobody's asking: adds it to your To Shelve list.";
     }
 
     /// <summary>Right-hand pane: where the selected book lives and its state.</summary>
@@ -288,6 +309,10 @@ public class PCOverlayTrigger : MonoBehaviour
         Set("detail-type", b.FormatName);
         Set("detail-subject", b.Subject);
         Set("detail-tags", string.IsNullOrEmpty(b.Tag) ? "-" : b.Tag);
+        bool popular = GameManager.Instance != null && GameManager.Instance.IsPopular(b);
+        var detailTitle = overlayDoc.rootVisualElement.Q<Label>("detail-title");
+        detailTitle?.EnableInClassList("popular-title", popular);
+        if (detailTitle != null && popular) detailTitle.text = b.Title + "  <color=#EBC878>(Popular today)</color>";
         Set("detail-tier", b.Rarity, b.Tier != BookTier.Normal ? "warn" : null);
         Set("detail-condition", b.Quantity > 0 ? b.ConditionSummary : "-", b.DamagedCopies > 0 ? "bad" : b.WornCopies > 0 ? "warn" : null);
         Set("detail-sale", b.Sellable ? "can be sold" : "read in library only", b.Sellable ? null : "warn");
@@ -298,7 +323,7 @@ public class PCOverlayTrigger : MonoBehaviour
     // Search only knows titles and authors; subject and type are filters. Abstracts and tags
     // are read in the details pane, so vague requests take a little detective work.
     static readonly string[] SubjectFilters = { "All", "Science", "History", "Philosophy", "Math" };
-    static int subjectFilter, typeFilter;
+    static int subjectFilter, typeFilter, showFilter;
 
     void ApplySearchFilter()
     {
@@ -308,7 +333,8 @@ public class PCOverlayTrigger : MonoBehaviour
         filteredBooks = allBooks.Where(b =>
             (needle.Length == 0 || (b.Title ?? "").ToLowerInvariant().Contains(needle) || (b.Author ?? "").ToLowerInvariant().Contains(needle) || (b.Tag ?? "").ToLowerInvariant().Contains(needle)) &&
             (subjectFilter == 0 || b.Subject == subject) &&
-            (typeFilter == 0 || (int)b.Format == typeFilter - 1)).ToList();
+            (typeFilter == 0 || (int)b.Format == typeFilter - 1) &&
+            BookFilterBar.ShowMatches(showFilter, b)).ToList();
         RefreshBooksList();
     }
 
@@ -318,13 +344,24 @@ public class PCOverlayTrigger : MonoBehaviour
         var typeButton = root.Q<Button>("filter-type");
         var types = System.Enum.GetValues(typeof(BookFormat)).Cast<BookFormat>().ToArray();
         string TypeName(int i) => i == 0 ? "All" : new BookData { Format = types[i - 1] }.FormatName;
+        var typeNames = Enumerable.Range(0, types.Length + 1).Select(TypeName).ToArray();
+        // "Show: Reserved" etc., next to the other two (same look).
+        Button showButton = null;
+        if (typeButton != null)
+        {
+            showButton = new Button { name = "filter-show" };
+            foreach (var c in typeButton.GetClasses()) showButton.AddToClassList(c);
+            typeButton.parent.Insert(typeButton.parent.IndexOf(typeButton) + 1, showButton);
+        }
         void UpdateLabels()
         {
             if (subjectButton != null) subjectButton.text = "Subject: " + SubjectFilters[subjectFilter];
             if (typeButton != null) typeButton.text = "Type: " + TypeName(typeFilter);
+            if (showButton != null) showButton.text = "Show: " + BookFilterBar.Shows[showFilter];
         }
-        subjectButton?.RegisterCallback<ClickEvent>(_ => { subjectFilter = (subjectFilter + 1) % SubjectFilters.Length; UpdateLabels(); ApplySearchFilter(); });
-        typeButton?.RegisterCallback<ClickEvent>(_ => { typeFilter = (typeFilter + 1) % (types.Length + 1); UpdateLabels(); ApplySearchFilter(); });
+        subjectButton?.RegisterCallback<ClickEvent>(_ => PickList.Open(subjectButton, SubjectFilters, subjectFilter, i => { subjectFilter = i; UpdateLabels(); ApplySearchFilter(); }, true));
+        typeButton?.RegisterCallback<ClickEvent>(_ => PickList.Open(typeButton, typeNames, typeFilter, i => { typeFilter = i; UpdateLabels(); ApplySearchFilter(); }, true));
+        showButton?.RegisterCallback<ClickEvent>(_ => PickList.Open(showButton, BookFilterBar.Shows, showFilter, i => { showFilter = i; UpdateLabels(); ApplySearchFilter(); }, true));
         UpdateLabels();
     }
 
@@ -332,8 +369,13 @@ public class PCOverlayTrigger : MonoBehaviour
     {
         if (booksList == null)
             return;
+        // A new search: drop the old row index (it pointed at a different book) but keep the selected
+        // book highlighted if it's still in the results.
+        booksList.SetSelectionWithoutNotify(System.Array.Empty<int>());
         booksList.itemsSource = filteredBooks;
         booksList.Rebuild();
+        int keep = selectedBook != null ? filteredBooks.IndexOf(selectedBook) : -1;
+        if (keep >= 0) booksList.SetSelectionWithoutNotify(new[] { keep });
     }
 
     /// <summary>Minimal row: title, author/subject, tag/qty/shelf/rarity (+ damaged flag).</summary>
@@ -342,6 +384,9 @@ public class PCOverlayTrigger : MonoBehaviour
         if (i < 0 || i >= filteredBooks.Count)
             return;
         BookData b = filteredBooks[i];
+        el.userData = b;
+        bool popular = GameManager.Instance != null && GameManager.Instance.IsPopular(b);
+        el.EnableInClassList("popular", popular);
         var title = el.Q<Label>("book-title");
         var sub = el.Q<Label>("book-sub");
         var meta = el.Q<Label>("book-meta");
@@ -351,7 +396,7 @@ public class PCOverlayTrigger : MonoBehaviour
             sub.text = (b.Format == BookFormat.Book ? "" : b.FormatName + "  ·  ") + b.Author + "  ·  " + b.Subject + "  ·  " + ShelfInteractable.NameOf(b.ShelfLocation);
         if (meta != null)
         {
-            string m = "x" + b.Quantity + "  ·  " + ShelfInteractable.NameOf(b.ShelfLocation);
+            string m = (popular ? "<color=#EBC878>Popular</color>  ·  " : "") + "x" + b.Quantity + "  ·  " + ShelfInteractable.NameOf(b.ShelfLocation);
             if (b.Tier != BookTier.Normal)
                 m += "  ·  " + b.Rarity;
             if (b.DamagedCopies > 0)
@@ -407,7 +452,7 @@ public class PCOverlayTrigger : MonoBehaviour
         if (isOpen || overlayObject == null)
             return;
         isOpen = true;
-        subjectFilter = typeFilter = 0; // the catalogue opens on All books every time
+        subjectFilter = typeFilter = showFilter = 0; // the catalogue opens on All books every time
         PlayerLock.Lock(this);
         openedAt = Time.unscaledTime;
         overlayObject.SetActive(true);

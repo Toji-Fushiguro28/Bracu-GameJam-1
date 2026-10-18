@@ -178,3 +178,10 @@
 .howto-icon.p8 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconPause01a.png"); }
 
 .howto-body .howto-text { min-height: 0; font-size: 19px; }
+/* Mode picker fits inside the page (title and Back stay off the book's edges) */
+.mode-card { margin: 3px 16px; padding: 4px 14px 8px 14px; }
+.mode-card.recommended { padding-top: 4px; margin-bottom: 6px; }
+.mode-card Label { margin: 0; padding: 0; }
+.mode-name { font-size: 26px; }
+.mode-card.recommended .mode-name { font-size: 30px; }
+.mode-info { font-size: 16px; }

@@ -96,7 +96,7 @@ public class ShelfUI : MonoBehaviour
             if (book.WornCopies > 0) sub += $"  ·  {book.WornCopies} worn";
             if (book.DamagedCopies > 0) sub += $"  ·  <color=#B8322A>{book.DamagedCopies} damaged</color>";
             if (book.Tier != BookTier.Normal) sub += "  ·  " + book.Tier;
-            var row = Row(book.Title, sub);
+            var row = Row(book.Title, sub, GameManager.Instance != null && GameManager.Instance.IsPopular(book));
             row.EnableInClassList("has-damage", book.DamagedCopies > 0);
 
             // Main Take grabs the best copy; extra buttons let you pick a worn/damaged one on purpose.
@@ -132,13 +132,13 @@ public class ShelfUI : MonoBehaviour
         putBack.SetEnabled(belongs > 0);
     }
 
-    VisualElement Row(string main, string sub)
+    VisualElement Row(string main, string sub, bool popular = false)
     {
         var row = new VisualElement();
         row.AddToClassList("shelf-row");
         var text = new VisualElement();
         text.AddToClassList("shelf-row-text");
-        text.Add(new Label(main) { name = "row-title" });
+        text.Add(PopularGlow.TitleRow(new Label(main) { name = "row-title" }, popular, row));
         if (!string.IsNullOrEmpty(sub)) text.Add(new Label(sub) { name = "row-sub" });
         row.Add(text);
         return row;

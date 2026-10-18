@@ -87,6 +87,8 @@ All of it is in `Core/GameManager.cs`, in the *Play mode* section:
 |---|---|
 | Upgrade names and descriptions | `Core/GameManager.cs` → `UpgradeNames`, `UpgradeInfo` |
 | Upgrade cost and max level | `Core/GameManager.cs` → `UpgradeCost()` (40 / 80 / 120), `MaxUpgrade` (3) |
+| Day each upgrade unlocks | `Core/GameManager.cs` → `UpgradeUnlockDay` (same order as `UpgradeKind`) |
+| Popular books per day | `Core/GameManager.cs` → `PopularPerDay` (4); how much more they are asked for: `Customers/BookRequest.cs` → `Weighted()` (6x) |
 | What each upgrade does | Search the upgrade name in `GameManager.cs`: `PatienceMultiplier`, `TipMultiplier`, `ReadingFeeMultiplier`, `VisitorMultiplier`, `BagCapacity`, `ApplyUpgrades()` (shoes, repair speed and chance). Stamina: `Player/PlayerMover.cs` → `MaxSeconds`, `Recovery` |
 | Upgrade icons | `Assets/UI Toolkit/PC.uss` → `.upg-0` … `.upg-8` |
 | Staff names, wages, unlock days, order | `Core/GameManager.cs` → `StaffNames`, `StaffInfo`, `StaffWage`, `StaffUnlockDay`, `StaffOrder` |

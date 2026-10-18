@@ -30,10 +30,10 @@ public class MainMenuUI : MonoBehaviour
 
     static readonly string[] Tips =
     {
-        "Tip: the PC catalogue only searches titles and authors. Read the abstracts!",
+        "Tip: the computer searches titles, authors and tags. Vague request? Read the abstracts!",
         "Tip: sold out? Reserve it, then order it from the PC Shop.",
         "Tip: chat with readers - point them to the right shelf for a bigger tip.",
-        "Tip: the clock stops while you're in a menu or a conversation.",
+        "Tip: popular books get asked for most. Keep them in stock!",
         "Tip: the Archive opens on Day 2 and Rare Books on Day 3.",
         "Tip: VIP scholars need a Rare Books card before they can read.",
     };
@@ -44,15 +44,15 @@ public class MainMenuUI : MonoBehaviour
 
     static readonly (string title, string text)[] HowTo =
     {
-        ("Welcome!", "You run the library: lend books, help readers and keep the place tidy.\n\nMove: WASD\nRun: Shift (uses stamina; when it runs out, catch your breath)\nInteract: Left click\nMenu: Esc\n\nThe clock stops whenever a menu or chat is open, so take your time.\n\nStandard mode is the way the game is meant to be played."),
-        ("The counter", "Visitors queue at the counter. Click them to talk.\n\nThe face over their head shows their mood: keep them smiling for bigger tips. Stuck? Ask for a hint, but it shrinks their tip.\n\nBrowsers pick a book themselves: just click to stamp it out, or check it in after they've read it."),
-        ("Finding books", "Use the computer: Books searches titles and authors. Filter by subject and type, and read the abstracts for vague requests.\n\nClick a shelf to take a copy, then click the visitor to hand it over. Upgrade your Book bag to carry more.\n\nNot sure where a book goes? Look it up on the computer: it shows every book's shelf."),
-        ("Your notebook", "Every request you hear goes in your notebook on the right: what they asked, the hint, and the books you've noted.\n\nOn the computer, pick a book and press Add to note: it's written down with its shelf. Hand over a wrong book and it gets struck through.\n\nNobody waiting? Add to note puts books from the returns or tables on a To Shelve list, ticked off when you shelve them.\n\nDone with a task? Its entry clears itself. Click the tab to fold the notebook away."),
-        ("Ordering books", "Some visitors look around for a book the library doesn't have, then ask you to order it. Others find a book sold out.\n\nAsk \"When do you need it?\". If it's ASAP they wait in the library, so order it express (2 hours). If it's tomorrow, a normal order is fine.\n\nOrder on the computer (Shop): requested books have a gold Requested tag, and new titles join your library when you order them. Collect deliveries from the book cart and hand them over.\n\nNew members may ask you to order a book too."),
-        ("Cards & readers", "Visitors who want a library card tell you their name, birthday and which rooms they need. On the computer (Members), type their name, pick the birthday and choose the access.\n\nChat with seated readers: point them to the right shelf for a tip."),
-        ("Repairs & rooms", "Worn or damaged copies go to the repair desk: glue, press and fit a new cover for a perfect restoration. When it's done, the desk glows: click it to pick the book up and put it back on its shelf.\n\nThe Archive opens on Day 2 and Rare Books on Day 3. VIP scholars need a Rare card."),
-        ("Staff", "Need help? Press Interview on the computer (Shop > Staff) or in the Day Report. Two applicants come in the next morning, after the Day Report and before the library opens.\n\nAsk each three questions, and talk about pay: offer a price, and if it's too low they'll tell you the lowest they can go. Prices: about 70 for a cleaner, 250 for the archivist, 650 for the Rare Books attendant, paid once.\n\nUpgrades: cleaner 35 then 70, archivist 150 then 300, attendant 650.\n\nWhen a pointer says Help!, go and sort out their problem. At closing they wait with a Report. Upgrade staff to make them faster and need less help."),
-        ("End of the day", "At 6 pm the library closes. Tidy cups and open books, shelve the returns, then click the front ropes to lock up.\n\nIn the Day Report you can order books, hire staff and buy upgrades. The game saves every morning.\n\nThe Audit Log on the computer (and the Log tab in the Day Report) lists every request, your notes and how it ended, day by day."),
+        ("Welcome!", "Run the library: find books, serve visitors, keep it tidy.\n\nMove: WASD    Run: Shift\nInteract: Left click    Menu: Esc\n\nThe clock stops while you're talking."),
+        ("The counter", "Click visitors at the counter to talk. The icon by their words shows what they want.\n\nHappy visitors tip more. A hint helps, but shrinks the tip."),
+        ("Finding books", "Look books up on the computer: search titles, authors or tags, and read the abstracts.\n\nTake a copy from its shelf and hand it over."),
+        ("Your notebook", "Every request goes in your notebook. On the computer, Add to note writes a book and its shelf down."),
+        ("Ordering books", "Sold out, or a book you don't have? Order it in the computer Shop and hand it over when it arrives.\n\nPopular books get asked for most, so keep them in stock."),
+        ("Cards & readers", "Library cards: type their name, pick their birthday and access on the computer (Members).\n\nChat with readers for tips."),
+        ("Repairs & rooms", "Damaged books go to the repair desk.\n\nThe Archive opens on Day 2, Rare Books on Day 3."),
+        ("Staff", "Hire help from the Shop or the Day Report. Interview them the next morning.\n\nWhen staff call for Help!, go and sort it out."),
+        ("End of the day", "At closing, tidy up, collect staff reports and click the front ropes.\n\nThe Day Report is where you order books and hire staff."),
     };
     Label saveLabel;
     Button continueButton, newButton;

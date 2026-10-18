@@ -7,11 +7,11 @@
                 <ui:Label text="front desk terminal" class="pc-subtitle" />
             </ui:VisualElement>
             <ui:VisualElement class="pc-grid">
-                <ui:Button name="books-button" text="Books" class="pc-tile" />
-                <ui:Button name="members-button" text="Members" class="pc-tile" />
-                <ui:Button name="upgrades-button" text="Shop" class="pc-tile" />
-                <ui:Button name="settings-button" text="Settings" class="pc-tile" />
-                <ui:Button name="audit-button" text="Audit Log" class="pc-tile wide" />
+                <ui:Button name="books-button" class="pc-tile"><ui:VisualElement class="req-icon pc-tile-icon req-read" picking-mode="Ignore" /><ui:Label name="tile-label" text="Books" class="pc-tile-label" picking-mode="Ignore" /></ui:Button>
+                <ui:Button name="members-button" class="pc-tile"><ui:VisualElement class="req-icon pc-tile-icon req-card" picking-mode="Ignore" /><ui:Label name="tile-label" text="Members" class="pc-tile-label" picking-mode="Ignore" /></ui:Button>
+                <ui:Button name="upgrades-button" class="pc-tile"><ui:VisualElement class="req-icon pc-tile-icon req-buy" picking-mode="Ignore" /><ui:Label name="tile-label" text="Shop" class="pc-tile-label" picking-mode="Ignore" /></ui:Button>
+                <ui:Button name="settings-button" class="pc-tile"><ui:VisualElement class="req-icon pc-tile-icon req-settings" picking-mode="Ignore" /><ui:Label name="tile-label" text="Settings" class="pc-tile-label" picking-mode="Ignore" /></ui:Button>
+                <ui:Button name="audit-button" class="pc-tile wide"><ui:VisualElement class="req-icon pc-tile-icon req-collect" picking-mode="Ignore" /><ui:Label name="tile-label" text="Audit Log" class="pc-tile-label" picking-mode="Ignore" /></ui:Button>
             </ui:VisualElement>
             <ui:Label text="click outside the screen or press Esc to log off" class="pc-footer" />
         </ui:VisualElement>

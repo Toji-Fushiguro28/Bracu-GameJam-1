@@ -217,6 +217,7 @@ public class Customer : ClickInteractable
             case State.WaitingForBook: UpdateWaitingForBook(); break;
         }
 
+        UpdateRequestIcon();
         if (reactionLeft > 0f)
         {
             reactionLeft -= Time.deltaTime;
@@ -508,12 +509,12 @@ public class Customer : ClickInteractable
         var need = new DialogueAsset.Line { id = "need",
             text = wantsToday ? $"As soon as possible! I can wait here in the library. Could it be here by <color=#D67840>{GameManager.FormatHour(GM.Hour + 2.5f)}</color>?"
                               : "No rush. I'll come back tomorrow for it." };
-        need.choices.Add(new DialogueAsset.Choice { text = wantsToday ? "I'll order it express for you." : "I'll order it for you.", next = "reserve" });
+        need.choices.Add(new DialogueAsset.Choice { text = wantsToday ? "I'll have it here for you today." : "I'll order it for you.", next = "reserve" });
         need.choices.Add(new DialogueAsset.Choice { text = "Sorry, I can't get that one.", next = "nohave" });
         d.lines.Add(need);
         d.lines.Add(new DialogueAsset.Line { id = "reserve", next = "end",
             text = !soldOut ? "Sold out? I'm sure I saw it on the shelf..."
-                 : wantsToday ? "Thank you! I'll find a seat and wait. Order it express on the computer, please."
+                 : wantsToday ? "Thank you! I'll find a seat and wait."
                  : "Wonderful! I'll pick it up tomorrow. Don't forget to order it!" });
         d.lines.Add(new DialogueAsset.Line { id = "nohave", next = "end",
             text = soldOut ? "That's a shame. Thanks for checking!" : "Really? I'm sure you do... never mind." });
@@ -719,7 +720,7 @@ public class Customer : ClickInteractable
         Members.Satisfy(Membership, 0.3f);
         GameAudio.Play(a => a.cardIssued, 0.7f);
         RequestLog.Finish(this, wantsToday ? $"Reserved, express by {GameManager.FormatHour(GM.Hour + 2.5f)}" : "Reserved for tomorrow");
-        Say(wantsToday ? $"Back at {GameManager.FormatHour(GM.Hour + 2.5f)}! Order it express, please."
+        Say(wantsToday ? $"Lovely! I'll be back at {GameManager.FormatHour(GM.Hour + 2.5f)}."
                        : $"Reserved \"{request.Target.Title}\". See you tomorrow!", 3f);
         Leave();
     }
@@ -1211,6 +1212,42 @@ public class Customer : ClickInteractable
         nameplate.EnableInClassList("hidden", string.IsNullOrEmpty(nameplate.text));
     }
 
+    VisualElement reqIcon;
+    string reqIconClass;
+
+    /// <summary>Icon class for what they want: card, buy, read, return, collect, new book or a rare book.</summary>
+    string RequestIconClass
+    {
+        get
+        {
+            if (state == State.CheckIn) return "req-return";
+            if (state == State.Checkout) return "req-buy";
+            switch (kind)
+            {
+                case Kind.SignUp: return "req-card";
+                case Kind.Pickup: return "req-collect";
+                case Kind.Seeker: return "req-new";
+                case Kind.Returner: return "req-return";
+                case Kind.Reader: return vip ? "req-rare" : "req-read";
+                default: return "req-buy";
+            }
+        }
+    }
+
+    /// <summary>Shows the icon only beside their request prompt (at the desk), not beside passing remarks.</summary>
+    void UpdateRequestIcon()
+    {
+        if (reqIcon == null) return;
+        bool prompt = (state == State.Waiting || state == State.CheckIn || state == State.Checkout) && !speech.ClassListContains("hidden") && reactionLeft <= 0f;
+        string cls = prompt ? RequestIconClass : null;
+        if (cls == reqIconClass) return;
+        if (reqIconClass != null) reqIcon.RemoveFromClassList(reqIconClass);
+        reqIconClass = cls;
+        if (cls != null) reqIcon.AddToClassList(cls);
+        reqIcon.EnableInClassList("on", cls != null);
+        reqIcon.MarkDirtyRepaint();
+    }
+
     void BuildOverhead()
     {
         overhead = new VisualElement();
@@ -1231,8 +1268,16 @@ public class Customer : ClickInteractable
         mouth = new VisualElement(); mouth.AddToClassList("mood-mouth");
         mood.Add(eyeL); mood.Add(eyeR); mood.Add(mouth);
 
+        // What kind of request this is, as an icon to the left of their bubble (same icons as the computer).
+        var sayRow = new VisualElement();
+        sayRow.AddToClassList("customer-say-row");
+        reqIcon = new VisualElement();
+        reqIcon.AddToClassList("req-icon");
+        RequestIcon.Attach(reqIcon);
+        sayRow.Add(reqIcon);
+        sayRow.Add(speech);
         overhead.Add(nameplate);
-        overhead.Add(speech);
+        overhead.Add(sayRow);
         overhead.Add(mood);
         RefreshNameplate();
         // Head height of the 0.75-scale characters (TopAnchor could pick the blob shadow).

@@ -163,6 +163,8 @@ public class DayReportUI : MonoBehaviour
         var gm = GameManager.Instance;
         if (gm == null) return;
         for (int i = 0; i < tabs.Length; i++) tabs[i]?.EnableInClassList("selected", i == tab);
+        PopularGlow.Ready(tabs[1], gm.StaffReady && tab != 1);
+        PopularGlow.Ready(tabs[2], gm.UpgradeReady && tab != 2);
         coinsLabel.text = $"Coins: {gm.Coins}";
         list.Clear();
         filter?.Root.EnableInClassList("hidden", tab != 0);
@@ -172,13 +174,14 @@ public class DayReportUI : MonoBehaviour
         else BuildLog(gm);
     }
 
-    void AddRow(string title, string sub, string button, bool enabled, System.Action onClick)
+    void AddRow(string title, string sub, string button, bool enabled, System.Action onClick, bool popular = false, bool glow = false)
     {
         var row = new VisualElement();
         row.AddToClassList("shelf-row");
+        if (glow) PopularGlow.Mark(row); // something you can afford to do here
         var text = new VisualElement();
         text.AddToClassList("shelf-row-text");
-        text.Add(new Label(title) { name = "row-title" });
+        text.Add(PopularGlow.TitleRow(new Label(title) { name = "row-title" }, popular, row));
         text.Add(new Label(sub) { name = "row-sub" });
         row.Add(text);
         var b = new Button(() => { onClick(); if (buySound != null) sfx.PlayOneShot(buySound, 0.7f); else GameAudio.Play(a => a.buy); RefreshPlan(); }) { text = button };
@@ -195,6 +198,7 @@ public class DayReportUI : MonoBehaviour
         // Titles the library doesn't have yet are in the list too: ordering one adds it to the library.
         var catalogue = new System.Collections.Generic.List<BookData>(gm.Books);
         catalogue.AddRange(gm.NewTitles);
+        catalogue.Sort((x, y) => gm.IsPopular(x) != gm.IsPopular(y) ? (gm.IsPopular(x) ? -1 : 1) : string.Compare(x.Title, y.Title, System.StringComparison.Ordinal));
         foreach (var b in catalogue)
         {
             if (BookRequest.IsRare(b) || !BookRequest.Available(b)) continue; // rare / locked-room books can't be bought
@@ -206,7 +210,7 @@ public class DayReportUI : MonoBehaviour
             AddRow(book.Title, (gm.IsNewTitle(book) ? $"New to the library  ·  {book.Subject}  ·  by {book.Author}" : $"{book.FormatName}  ·  {book.Subject}  ·  in stock {book.GoodCopies + book.WornCopies}")
                    + $"  ·  {price} coins · arrives tomorrow{who}",
                    "Buy", gm.Coins >= price,
-                   () => gm.OrderBook(book, false)); // arrives in the morning
+                   () => gm.OrderBook(book, false), gm.IsPopular(book)); // arrives in the morning
         }
     }
 
@@ -215,7 +219,7 @@ public class DayReportUI : MonoBehaviour
         foreach (var role in GameManager.StaffOrder)
         {
             var (title, sub, button, enabled) = gm.StaffRow(role);
-            AddRow(title, sub, button, enabled, () => gm.ToggleStaff(role));
+            AddRow(title, sub, button, enabled, () => gm.ToggleStaff(role), glow: gm.StaffActionReady(role));
         }
     }
 
@@ -239,9 +243,11 @@ public class DayReportUI : MonoBehaviour
             int lvl = gm.Upgrade(kind);
             bool maxed = lvl >= GameManager.MaxUpgrade;
             int cost = GameManager.UpgradeCost(lvl);
+            bool unlocked = gm.UpgradeUnlocked(kind);
+            bool canBuy = gm.CanBuyUpgrade(kind);
             AddRow($"{GameManager.UpgradeNames[i]}  (Lv {lvl}/{GameManager.MaxUpgrade})",
-                   GameManager.UpgradeInfo[i] + (maxed ? "" : $"  {cost} coins"),
-                   maxed ? "Max" : "Buy", !maxed && gm.Coins >= cost, () => gm.BuyUpgrade(kind));
+                   GameManager.UpgradeInfo[i] + (maxed ? "" : !unlocked ? $"  Unlocks on Day {GameManager.UpgradeUnlockDay[i]}." : $"  {cost} coins"),
+                   maxed ? "Max" : !unlocked ? $"Day {GameManager.UpgradeUnlockDay[i]}" : "Buy", canBuy, () => gm.BuyUpgrade(kind), glow: canBuy);
         }
     }
 }

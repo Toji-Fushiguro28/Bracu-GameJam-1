@@ -319,3 +319,41 @@
 .card-scroll .detail-key { font-size: 18px; }
 .card-scroll .card-options { margin: 2px 0 4px 0; }
 .card-feedback { color: rgb(240, 120, 100); font-size: 19px; white-space: normal; margin-top: 6px; -unity-text-align: middle-center; }
+
+/* Request type icons (visitors' prompts and the computer's tiles use the same ones) */
+.req-icon { width: 30px; height: 30px; margin-right: 6px; flex-shrink: 0; -unity-background-scale-mode: scale-to-fit; display: none; }
+.req-icon.on { display: flex; }
+.req-card { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconHeart01a.png"); }
+.req-buy { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconCoin01a.png"); }
+.req-read { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_BookCover01a.png"); }
+.req-return { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconRestart01a.png"); }
+.req-new { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconStar01c.png"); }
+.req-rare { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconStar01a.png"); }
+.req-collect { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconTick01a.png"); }
+.req-settings { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconGear01a.png"); }
+.pc-tile-icon { position: absolute; left: 16px; top: 50%; translate: 0 -50%; width: 36px; height: 36px; display: flex; }
+
+/* Popular today: gold glow that breathes (PopularGlow toggles .glow-on) */
+.popular { border-left-width: 4px; border-left-color: rgb(235, 200, 120); background-color: rgba(235, 200, 120, 0.04);
+           transition-property: background-color, border-left-color; transition-duration: 0.8s; }
+.popular.glow-on { background-color: rgba(235, 200, 120, 0.12); border-left-color: rgb(255, 228, 160); }
+.popular-badge { color: rgb(38, 52, 62); background-color: rgb(235, 200, 120); font-size: 17px; padding: 0 8px 3px 8px; margin-left: 10px;
+                 border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; }
+.popular-title { color: rgb(235, 200, 120); }
+/* Computer tiles: icon sits right beside its label */
+.pc-tile { flex-direction: row; justify-content: center; align-items: center; }
+.pc-tile .pc-tile-icon { position: relative; left: auto; top: auto; translate: 0 0; margin: 0 10px 0 0; width: 34px; height: 34px; }
+.pc-tile-label { padding: 0; margin: 0; -unity-text-align: middle-center; }
+.pc-filters, .page-filters { flex-wrap: wrap; }
+.req-read { background-image: none; }
+/* Catalogue rows: three tight lines that stay inside their row */
+.pc-book { height: 100%; justify-content: center; overflow: hidden; padding: 4px 12px; }
+.pc-book Label { margin: 0; padding: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pc-book #book-title { font-size: 24px; }
+.pc-book #book-sub, .pc-book #book-meta { font-size: 18px; }
+.pc-tile-note { position: absolute; left: 0; right: 0; bottom: 14px; font-size: 18px; margin: 0; padding: 0; -unity-text-align: middle-center; }
+.pc-tile-note.hidden { display: none; }
+
+/* Something to do behind this tab / tile (affordable upgrade or hire): gold, breathing */
+.ready { border-color: rgb(235, 200, 120); color: rgb(235, 200, 120); transition-property: background-color; transition-duration: 0.8s; }
+.ready.glow-on { background-color: rgba(235, 200, 120, 0.2); }

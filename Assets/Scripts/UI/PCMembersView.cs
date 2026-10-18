@@ -1,3 +1,4 @@
+using System.Linq;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -6,7 +7,7 @@ using UnityEngine.UIElements;
 
 /// <summary>
 /// PC "Members" screen: the card list (access, hearts, visits) and the New Card form.
-/// You type the name the visitor told you, pick their birthday on a day / month / year picker
+/// You type the name the visitor told you, pick their birthday from day / month / year drop-downs
 /// (only real dates can be picked) and choose the access level.
 /// </summary>
 public static class PCMembersView
@@ -19,7 +20,7 @@ public static class PCMembersView
     static int pickDay, pickMonth, pickYear; // 0 = not picked yet
     static AccessLevel? pickAccess;
     static Customer formFor;
-    static readonly List<Button> dayButtons = new List<Button>(), monthButtons = new List<Button>(), yearButtons = new List<Button>();
+    static Button dayButton, monthButton, yearButton;
 
     public static void Wire(VisualElement root, Action back)
     {
@@ -121,38 +122,39 @@ public static class PCMembersView
         var box = root.Q("card-dob");
         if (box == null) return;
         box.Clear();
-        Column(box, root, "Day", "day", 31, i => (i + 1).ToString("00"), i => pickDay = i + 1, dayButtons);
-        Column(box, root, "Month", "month", 12, i => Months[i], i => pickMonth = i + 1, monthButtons);
-        var years = Column(box, root, "Year", "year", LastYear - FirstYear + 1, i => (FirstYear + i).ToString(), i => pickYear = FirstYear + i, yearButtons);
-        // Open the year list around the selected year (or the middle of the range).
-        int start = pickYear > 0 ? pickYear - FirstYear : 1980 - FirstYear;
-        years.schedule.Execute(() => years.ScrollTo(yearButtons[Mathf.Clamp(start, 0, yearButtons.Count - 1)])).ExecuteLater(50);
+        box.style.height = StyleKeyword.Auto;
+        box.style.alignItems = Align.Center;
+        dayButton = DateButton(box, () =>
+        {
+            int days = DaysIn(pickMonth, pickYear);
+            PickList.Open(dayButton, Enumerable.Range(1, 31).Select(d => d.ToString("00")).ToArray(), pickDay - 1,
+                i => { pickDay = i + 1; UpdateForm(root); }, true, i => i < days); // no 31 Apr
+        });
+        monthButton = DateButton(box, () => PickList.Open(monthButton, Months, pickMonth - 1, i => { pickMonth = i + 1; UpdateForm(root); }, true));
+        yearButton = DateButton(box, () =>
+        {
+            var years = Enumerable.Range(FirstYear, LastYear - FirstYear + 1).Select(y => y.ToString()).ToArray();
+            // Nothing picked yet: open around 1980 rather than at 1930.
+            PickList.Open(yearButton, years, pickYear - FirstYear, i => { pickYear = FirstYear + i; UpdateForm(root); }, true, null, 1980 - FirstYear);
+        });
+        DateLabels();
     }
 
-    static ScrollView Column(VisualElement box, VisualElement root, string title, string cls, int count, Func<int, string> label, Action<int> pick, List<Button> buttons)
+    static void DateLabels()
     {
-        var col = new VisualElement();
-        col.AddToClassList("date-col");
-        col.AddToClassList(cls);
-        var head = new Label(title);
-        head.AddToClassList("date-head");
-        col.Add(head);
-        var list = new ScrollView();
-        list.AddToClassList("date-list");
-        list.AddToClassList("pc-scroll");
-        buttons.Clear();
-        for (int i = 0; i < count; i++)
-        {
-            int index = i;
-            var b = new Button(() => { pick(index); UpdateForm(root); }) { text = label(i) };
-            b.AddToClassList("pc-button");
-            b.AddToClassList("date-item");
-            buttons.Add(b);
-            list.Add(b);
-        }
-        col.Add(list);
-        box.Add(col);
-        return list;
+        if (dayButton != null) dayButton.text = "Day: " + (pickDay > 0 ? pickDay.ToString("00") : "--");
+        if (monthButton != null) monthButton.text = "Month: " + (pickMonth > 0 ? Months[pickMonth - 1] : "--");
+        if (yearButton != null) yearButton.text = "Year: " + (pickYear > 0 ? pickYear.ToString() : "--");
+    }
+
+    static Button DateButton(VisualElement box, Action open)
+    {
+        var b = new Button(open);
+        b.AddToClassList("pc-button");
+        b.AddToClassList("pc-filter");
+        b.style.flexGrow = 1;
+        box.Add(b);
+        return b;
     }
 
     // ---------------- Form ----------------
@@ -183,13 +185,7 @@ public static class PCMembersView
     {
         int days = DaysIn(pickMonth, pickYear);
         if (pickDay > days) pickDay = 0; // 31 Apr can't exist: pick the day again
-        for (int i = 0; i < dayButtons.Count; i++)
-        {
-            dayButtons[i].SetEnabled(i < days);
-            dayButtons[i].EnableInClassList("picked", pickDay == i + 1);
-        }
-        for (int i = 0; i < monthButtons.Count; i++) monthButtons[i].EnableInClassList("picked", pickMonth == i + 1);
-        for (int i = 0; i < yearButtons.Count; i++) yearButtons[i].EnableInClassList("picked", pickYear == FirstYear + i);
+        DateLabels();
 
         string name = NormalizeName(typedName);
         bool nameOk = NameReady(typedName.Trim());
