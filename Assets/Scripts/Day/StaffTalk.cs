@@ -80,8 +80,9 @@ public class StaffTalk : ClickInteractable
         if (gm != null && talkDay == gm.day && gm.Hour - talkHour < TalkCooldownHours)
         {
             var busy = role == GameManager.StaffRole.Cleaner ? SamBusy : role == GameManager.StaffRole.Repairer ? OmarBusy : ArthurBusy;
-            d.lines.Add(new DialogueAsset.Line { id = "busy", text = busy[Random.Range(0, busy.Length)], next = "end" });
-            ui.Play(d, () => Destroy(d));
+            // A quick line over their head; the clock keeps going.
+            Destroy(d);
+            if (WorldPrompts.Instance != null) WorldPrompts.Instance.ShowBubble(this, busy[Random.Range(0, busy.Length)], 3f);
             return;
         }
         if (gm != null) { talkDay = gm.day; talkHour = gm.Hour; }
