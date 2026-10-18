@@ -76,7 +76,7 @@ public class Customer : ClickInteractable
             }
             if (kind == Kind.SignUp) return introduced ? "Card on the PC" : "Talk";
             var carry = GameObject.FindWithTag("Player")?.GetComponent<PlayerCarry>();
-            return carry != null && MatchIndex(carry) >= 0 ? "Give book" : "Talk";
+            return carry != null && carry.Items.Count > 0 ? "Talk / give book" : "Talk"; // never gives away whether it's the right one
         }
     }
     public override Vector3 PromptAnchor => transform.position + Vector3.up * 1.0f;
@@ -440,11 +440,8 @@ public class Customer : ClickInteractable
             return;
         }
 
-        // Fast path: you're holding the right thing, hand it over.
-        var carry = player.GetComponent<PlayerCarry>();
-        int match = MatchIndex(carry);
-        if (match >= 0) { Give(carry, match); return; }
-        Converse(carry);
+        // Always talk it through, so the player can't tell a right book from a wrong one by the click.
+        Converse(player.GetComponent<PlayerCarry>());
     }
 
     void Give(PlayerCarry carry, int index)
@@ -471,7 +468,7 @@ public class Customer : ClickInteractable
 
         // Books in your hands you could offer.
         if (carry != null)
-            for (int i = carry.Count - 1; i >= 0 && start.choices.Count < 2; i--)
+            for (int i = carry.Count - 1; i >= 0; i--) // every book you carry
                 start.choices.Add(new DialogueAsset.Choice { text = $"Here: \"{carry.Items[i].book.Title}\"", next = "give" + i });
 
         bool pickup = kind == Kind.Pickup;
@@ -500,7 +497,7 @@ public class Customer : ClickInteractable
         bool ordered = pickup && reservation != null && GM.OnOrder(request.Target) > 0;
         d.lines.Add(new DialogueAsset.Line { id = "notyet", next = "end",
             text = ordered ? "Still on its way? I'll pop back tomorrow, then." : "You never ordered it, did you? How disappointing." });
-        for (int i = 0; i < 3; i++) d.lines.Add(new DialogueAsset.Line { id = "give" + i, text = "Let me see...", next = "end" });
+        for (int i = 0; i < (carry != null ? carry.Count : 0); i++) d.lines.Add(new DialogueAsset.Line { id = "give" + i, text = "Let me see...", next = "end" });
 
         string outcome = null;
         System.Action<string> seen = id => { if (id != "start") outcome = id; };
