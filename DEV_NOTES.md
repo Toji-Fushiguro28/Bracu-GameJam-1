@@ -366,3 +366,8 @@ Small, contained edits. Please check them when merging:
     - archivist: `perRepair` 4 per repaired book and `perShelved` 1 per shelved book
     - attendant: the reading fee and tip of each scholar they check in
   - The front ropes (`EndDayDoor`) won't lock up while anyone is still waiting to report (`StaffManager.PendingReport`).
+
+## Player name
+- Before the intro starts, a name box asks your name (`name-entry` in `InterviewUI.uxml`, max 16 characters, OK or Enter).
+- Saved as PlayerPrefs `PlayerName` and read with `GameManager.PlayerName` (default "Librarian").
+- It replaces "You" as your speaker name in all interview dialogue, and the Dean uses it in his lines and in the ending.

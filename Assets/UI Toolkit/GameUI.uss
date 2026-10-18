@@ -78,7 +78,7 @@
     top: -26px; left: 34px;
     padding: 6px 18px 10px 18px;
     color: rgb(255, 245, 230);
-    font-size: 22px;
+    font-size: 26px;
     -unity-font-style: bold;
     background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_FrameSelect01a.png");
     -unity-slice-left: 3; -unity-slice-right: 3; -unity-slice-top: 3; -unity-slice-bottom: 3;
@@ -86,7 +86,7 @@
 }
 .line {
     color: var(--ink);
-    font-size: 26px;
+    font-size: 34px;
     white-space: normal;
 }
 .continue {
@@ -109,7 +109,7 @@
     padding: 8px 20px 12px 20px;
     border-width: 0;
     color: var(--ink);
-    font-size: 22px;
+    font-size: 27px;
     -unity-text-align: middle-left;
     background-color: rgba(0, 0, 0, 0);
     background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Frame01a.png");
@@ -487,7 +487,7 @@
 
 /* Opening-day notice pinned under the top of the screen until noon. */
 .hud-pin {
-    position: absolute; top: 12px; align-self: center;
+    position: absolute; top: 18px; align-self: center;
     padding: 4px 18px 8px 18px;
     color: var(--ink);
     font-size: 22px;
@@ -496,8 +496,9 @@
     -unity-slice-scale: 4px;
 }
 
-/* Leave room for the pinned notice above it. */
-.hud-banner { top: 62px; }
+/* Same gap from the top as the HUD bar has from the bottom; drops below the pinned notice while it shows. */
+.hud-banner { top: 18px; }
+.hud-banner.below-pin { top: 70px; }
 
 /* ---------- Audit log rows (Day Report "Log" tab) ---------- */
 .log-row { padding: 6px 0 8px 0; border-bottom-width: 2px; border-bottom-color: rgba(128, 92, 70, 0.35); }

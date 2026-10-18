@@ -243,6 +243,9 @@ public class GameManager : MonoBehaviour
 
     // ---------------- Interviews ----------------
 
+    /// <summary>The librarian's name, typed in at the start of a new game.</summary>
+    public static string PlayerName => PlayerPrefs.GetString("PlayerName", "Librarian");
+
     /// <summary>The story ends after this day: the Dean visits before the next morning. Play carries on after.</summary>
     public const int EndingDay = 5;
     [NonSerialized] public bool endingSeen;
@@ -549,6 +552,7 @@ public class GameManager : MonoBehaviour
             var parts = PlayerPrefs.GetString("HiredStats_" + r, "").Split(',');
             int price = parts.Length == 4 && int.TryParse(parts[3], out int p) ? p : StaffHireFee[(int)r];
             if (TrySpend(price)) { staff[(int)r] = true; staffLevel[(int)r] = 0; }
+            else FindAnyObjectByType<HUD>()?.ShowBanner($"Not enough coins to hire the {StaffNames[(int)r]} ({price}).", 5f);
         }
         PlayerLock.Unlock(this);
         then?.Invoke();

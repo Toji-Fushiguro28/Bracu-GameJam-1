@@ -215,6 +215,7 @@ public class HUD : MonoBehaviour
                         : null;
             bool show = text != null && !MainMenuUI.Active && (RoomReveal.Instance == null || !PlayerLock.IsLocked);
             pin.EnableInClassList("hidden", !show);
+            banner?.EnableInClassList("below-pin", show);
             if (show && pin.text != text) pin.text = text;
         }
         if (bannerUntil > 0f && Time.time > bannerUntil) { bannerUntil = 0f; banner.AddToClassList("hidden"); }

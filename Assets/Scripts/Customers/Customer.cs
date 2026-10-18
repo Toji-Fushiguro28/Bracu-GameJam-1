@@ -880,7 +880,8 @@ public class Customer : ClickInteractable
         seat = null;
         agent.enabled = true;
         // The Rare Books attendant checks them in on the spot.
-        if (rareRoom && StaffManager.Instance != null && StaffManager.Instance.Working(GameManager.StaffRole.RareAttendant)) { maxPatience = patience = 1f; CheckIn(StaffManager.Instance.Worker(GameManager.StaffRole.RareAttendant)); return; }
+        var attendant = rareRoom && StaffManager.Instance != null ? StaffManager.Instance.Worker(GameManager.StaffRole.RareAttendant) : null;
+        if (attendant != null && attendant.gameObject.activeSelf && !attendant.OnHold && !attendant.WaitingToReport) { maxPatience = patience = 1f; CheckIn(attendant); return; }
         JoinQueue();
     }
 

@@ -37,3 +37,23 @@
 .ending-title { font-size: 52px; color: rgb(196, 110, 40); }
 .ending-text { color: var(--ink); font-size: 26px; white-space: normal; -unity-text-align: middle-center; margin-bottom: 14px; }
 .ending-sub { color: var(--ink-soft); font-size: 21px; white-space: normal; -unity-text-align: middle-center; margin-bottom: 24px; }
+
+/* Name entry at the start of a new game */
+.name-page { height: auto; justify-content: center; padding-bottom: 40px; }
+.name-hint { color: var(--ink-soft); font-size: 20px; white-space: normal; -unity-text-align: middle-center; margin-bottom: 18px; }
+.name-field { margin: 0 8px 20px 8px; font-size: 30px; }
+/* The TravelBook slot sprite as the text box, in the kit's ink and font */
+.name-field .unity-base-text-field__input {
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Slot01a.png");
+    -unity-slice-left: 4; -unity-slice-right: 4; -unity-slice-top: 4; -unity-slice-bottom: 4;
+    -unity-slice-scale: 4px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    min-height: 56px;
+    padding: 6px 16px 10px 16px;
+    color: rgb(255, 236, 200); /* light parchment on the dark kit slot */
+    font-size: 30px;
+    -unity-text-align: middle-center;
+    --unity-cursor-color: rgb(235, 200, 120);
+    --unity-selection-color: rgba(214, 120, 64, 0.35);
+}
