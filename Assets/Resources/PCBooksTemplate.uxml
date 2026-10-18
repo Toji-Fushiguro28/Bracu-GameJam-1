@@ -10,7 +10,7 @@
                 <ui:VisualElement class="pc-left">
                     <ui:VisualElement name="search-wrap" class="pc-search">
                         <ui:TextField name="book-search" />
-                        <ui:Label name="search-placeholder" text="search title or author" picking-mode="Ignore" />
+                        <ui:Label name="search-placeholder" text="search title, author or tag" picking-mode="Ignore" />
                     </ui:VisualElement>
                     <ui:VisualElement class="pc-filters">
                         <ui:Button name="filter-subject" text="Subject: All" class="pc-button pc-filter" />

@@ -25,7 +25,7 @@ public class BookFilterBar
 
         search = new TextField { name = pcStyle ? "book-search" : "page-search" };
         search.AddToClassList("filter-search");
-        search.textEdition.placeholder = "search title or author";
+        search.textEdition.placeholder = "search title, author or tag";
         search.RegisterValueChangedCallback(_ => changed?.Invoke());
         Root.Add(search);
 
@@ -59,7 +59,7 @@ public class BookFilterBar
     public bool Matches(BookData b)
     {
         string q = (search.value ?? "").Trim().ToLowerInvariant();
-        if (q.Length > 0 && !(b.Title ?? "").ToLowerInvariant().Contains(q) && !(b.Author ?? "").ToLowerInvariant().Contains(q)) return false;
+        if (q.Length > 0 && !(b.Title ?? "").ToLowerInvariant().Contains(q) && !(b.Author ?? "").ToLowerInvariant().Contains(q) && !(b.Tag ?? "").ToLowerInvariant().Contains(q)) return false;
         if (subject > 0 && b.Subject != Subjects[subject]) return false;
         if (type > 0 && b.Format != Types[type - 1]) return false;
         return true;

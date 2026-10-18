@@ -305,7 +305,7 @@ public class PCOverlayTrigger : MonoBehaviour
         string needle = (query ?? "").Trim().ToLowerInvariant();
         string subject = SubjectFilters[subjectFilter];
         filteredBooks = allBooks.Where(b =>
-            (needle.Length == 0 || (b.Title ?? "").ToLowerInvariant().Contains(needle) || (b.Author ?? "").ToLowerInvariant().Contains(needle)) &&
+            (needle.Length == 0 || (b.Title ?? "").ToLowerInvariant().Contains(needle) || (b.Author ?? "").ToLowerInvariant().Contains(needle) || (b.Tag ?? "").ToLowerInvariant().Contains(needle)) &&
             (subjectFilter == 0 || b.Subject == subject) &&
             (typeFilter == 0 || (int)b.Format == typeFilter - 1)).ToList();
         RefreshBooksList();
