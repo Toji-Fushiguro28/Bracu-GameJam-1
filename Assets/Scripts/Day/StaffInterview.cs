@@ -20,9 +20,13 @@ public class StaffInterview : MonoBehaviour
         public bool flexible;
         // What you've found out so far.
         public bool knowSpeed, knowCare, knowCharm, knowWage;
+        // Pay: "wage" is their price (paid once, when hired). Each has their own lowest price.
+        public int floor;
+        public bool payTalked, agreed, knowFloor;
     }
 
-    enum Q { Experience, Accident, Grumpy, Wage, Why }
+    // Speed, Care, Manner, and "why us?" (which shows whether they'll bargain on pay).
+    enum Q { Experience, Accident, Grumpy, Why }
 
     public const string SceneName = "InterviewScene";
     /// <summary>Jobs to interview for this morning (set by the library before loading this scene).</summary>
@@ -40,7 +44,11 @@ public class StaffInterview : MonoBehaviour
 
     // Statics survive between plays in the editor (and a failed load): always start clean.
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    static void ResetStatics() { Queue = null; Finished = null; Ending = false; }
+    static void ResetStatics() { Queue = null; Finished = null; Ending = false; Coins = int.MaxValue; }
+
+    /// <summary>The library's purse (morning interviews): you can only hire someone whose fee you can pay.</summary>
+    public static int Coins = int.MaxValue;
+
 
     public GameManager.StaffRole role = GameManager.StaffRole.Cleaner;
     [Tooltip("New-game intro: Dean Whitmore interviews you first, then you interview the cleaners.")]
@@ -119,8 +127,7 @@ public class StaffInterview : MonoBehaviour
     {
         yield return null;
         yield return Fade(false);
-        if (prologue) yield return Prologue();
-        if (!Overlay) { yield return HireFor(role); yield return Finish(lastHire); yield break; }
+        if (!Overlay) { yield return Prologue(); yield return Finish(null); yield break; }
 
         if (Ending) yield return Farewell();
         if (Morning) skip?.RemoveFromClassList("hidden");
@@ -170,26 +177,32 @@ public class StaffInterview : MonoBehaviour
         yield return Say(c.name, c.hello);
 
         var asked = new HashSet<Q>();
-        while (questionsLeft > 0)
+        while (questionsLeft > 0 || !c.payTalked)
         {
             Q? chosen = null;
-            bool done = false;
-            var d = Line("You", $"<color=#D67840>Questions left: {questionsLeft}</color>  What should I ask?");
-            foreach (Q q in System.Enum.GetValues(typeof(Q)))
-                if (!asked.Contains(q)) d.lines[0].choices.Add(new DialogueAsset.Choice { text = QuestionText(q), next = q.ToString() });
+            bool done = false, pay = false;
+            var d = Line("You", questionsLeft > 0 ? $"<color=#D67840>Questions left: {questionsLeft}</color>  What should I ask?" : "Anything else?");
+            if (questionsLeft > 0)
+                foreach (Q q in System.Enum.GetValues(typeof(Q)))
+                    if (!asked.Contains(q)) d.lines[0].choices.Add(new DialogueAsset.Choice { text = QuestionText(q), next = q.ToString() });
+            // Talking about pay doesn't use up a question.
+            if (!c.payTalked) d.lines[0].choices.Add(new DialogueAsset.Choice { text = "Let's talk about pay.", next = "pay" });
             d.lines[0].choices.Add(new DialogueAsset.Choice { text = "That's all, thank you.", next = "done" });
             foreach (Q q in System.Enum.GetValues(typeof(Q))) d.lines.Add(new DialogueAsset.Line { id = q.ToString(), text = QuestionText(q), next = "end" });
+            d.lines.Add(new DialogueAsset.Line { id = "pay", text = "Let's talk about pay.", next = "end" });
             d.lines.Add(new DialogueAsset.Line { id = "done", text = "I think I've heard enough. Thank you for coming in.", next = "end" });
-            System.Action<string> seen = id => { if (id == "done") done = true; else if (System.Enum.TryParse(id, out Q q)) chosen = q; };
+            System.Action<string> seen = id => { if (id == "done") done = true; else if (id == "pay") pay = true; else if (System.Enum.TryParse(id, out Q q)) chosen = q; };
             ui.LineShown += seen;
             yield return PlayDialogue(d);
             ui.LineShown -= seen;
+            if (pay) { yield return PayTalk(c); continue; }
             if (done || chosen == null) break;
 
             asked.Add(chosen.Value);
             questionsLeft--;
             yield return Say(c.name, Answer(c, chosen.Value));
             ShowResume();
+            yield return Say("You", $"<color=#D67840>{Thought(c, chosen.Value)}</color>");
         }
 
         yield return Say(c.name, Pick("Thank you for your time!", "Lovely to meet you. I hope to hear from you.", "Thanks! Fingers crossed."));
@@ -217,7 +230,8 @@ public class StaffInterview : MonoBehaviour
             text.Add(new Label(Notes(c)) { name = "pick-notes" });
             row.Add(text);
             var cc = c;
-            var b = new Button(() => { hired = cc; Play(clickSound); }) { text = "Hire" };
+            var b = new Button(() => { hired = cc; Play(clickSound); }) { text = Coins >= c.wage ? $"Hire ({c.wage})" : $"Need {c.wage}" };
+            b.SetEnabled(Coins >= c.wage);
             b.AddToClassList("kit-button");
             row.Add(b);
             list.Add(row);
@@ -237,8 +251,8 @@ public class StaffInterview : MonoBehaviour
         if (look.sqrMagnitude > 0.01f) go.transform.rotation = Quaternion.LookRotation(look);
         if (anim) { anim.SetSpeed(0f); anim.SetActivity(CharacterAnimator.Activity.Wave); }
         Play(hireSound);
-        yield return Say(hired.name, Morning ? $"Really? Thank you! I can start right away. {hired.wage} coins a day, as agreed."
-                                             : $"Really? Thank you! I'll be there first thing tomorrow, {hired.wage} coins a day as agreed.");
+        yield return Say(hired.name, hired.agreed ? $"Really? Thank you! {hired.wage} coins, just as we said. I can start right away!"
+                                                  : $"Really? Thank you! {hired.wage} coins it is, then. I can start right away!");
         if (anim) anim.SetActivity(CharacterAnimator.Activity.None);
         yield return Say("You", $"Welcome to the Whitmore Library, {hired.name.Split(' ')[0]}.");
         lastHire = hired;
@@ -278,13 +292,9 @@ public class StaffInterview : MonoBehaviour
         yield return Say(Dean, "I'll be honest with you. I'd decided before you sat down.");
         yield return Say(Dean, "My knees can't manage the Archive stairs any more, and my doctor says it's time I rested. So the library needs someone new to run it.");
         yield return Say(Dean, "It's yours to look after now. Don't worry, I'll still pop in as a visitor. I'll even pay my fees.");
-        yield return Say(Dean, "Now, your first job: you'll need a cleaner. Two applicants are waiting outside.");
-        yield return Say(Dean, "Take my chair. Ask good questions: you only get three each. And I'll pay their first day's wage, as a welcome gift.");
-
-        yield return Fade(true);
-        Destroy(deanGo);
-        SeatLibrarian(librarianSeat);
-        yield return Fade(false);
+        yield return Say(Dean, "When it gets busy, hire some help on the computer. Applicants come in the next morning, before the doors open, and you'll interview them right here.");
+        yield return Say(Dean, "Ask good questions, and talk about pay kindly. People remember how they were treated.");
+        yield return Say(Dean, "Now go on. The library opens at nine, and the books won't shelve themselves.");
     }
 
     // ---------------- The ending ----------------
@@ -362,7 +372,14 @@ public class StaffInterview : MonoBehaviour
     /// <summary>Saves the hire and heads into the library (Day 1).</summary>
     IEnumerator Finish(Candidate hired)
     {
-        Save(hired);
+        if (hired != null) Save(hired);
+        if (prologue)
+        {
+            // A fresh library: nobody is hired yet.
+            foreach (GameManager.StaffRole r in System.Enum.GetValues(typeof(GameManager.StaffRole)))
+                foreach (var key in new[] { "Hired_", "HiredPrefab_", "HiredStats_" }) PlayerPrefs.DeleteKey(key + r);
+            PlayerPrefs.Save();
+        }
         if (string.IsNullOrEmpty(returnScene)) yield break;
         yield return Fade(true);
         MainMenuUI.SkipOnce = true; // straight into Day 1, no title screen
@@ -374,13 +391,6 @@ public class StaffInterview : MonoBehaviour
         PlayerPrefs.SetString("Hired_" + role, hired.name);
         PlayerPrefs.SetString("HiredPrefab_" + role, hired.prefab);
         PlayerPrefs.SetString("HiredStats_" + role, $"{hired.speed},{hired.care},{hired.charm},{hired.wage}");
-        if (prologue)
-        {
-            PlayerPrefs.SetInt("InterviewNewHire", 1); // the library starts Day 1 with them on staff
-            // A fresh library: forget who was hired for the other jobs last game.
-            foreach (var other in new[] { GameManager.StaffRole.Repairer, GameManager.StaffRole.RareAttendant })
-                foreach (var key in new[] { "Hired_", "HiredPrefab_", "HiredStats_" }) PlayerPrefs.DeleteKey(key + other);
-        }
         PlayerPrefs.Save();
     }
 
@@ -389,7 +399,7 @@ public class StaffInterview : MonoBehaviour
     {
         StopAllCoroutines();
         Play(clickSound);
-        if (!Morning) { StartCoroutine(Finish(CandidatesFor(GameManager.StaffRole.Cleaner)[0])); return; }
+        if (!Morning) { StartCoroutine(Finish(null)); return; }
         StartCoroutine(SkipMorning());
     }
 
@@ -449,6 +459,79 @@ public class StaffInterview : MonoBehaviour
         Destroy(d);
     }
 
+    int Fee => GameManager.StaffHireFee[(int)role];
+
+    // ---------------- Talking about pay ----------------
+
+    static int Round5(float v) => Mathf.Max(5, Mathf.RoundToInt(v / 5f) * 5);
+
+    /// <summary>They name their price; you offer. Too low, and they politely say the lowest they can go
+    /// (different for everyone). Agree and that's what you'll pay if you hire them.</summary>
+    IEnumerator PayTalk(Candidate c)
+    {
+        c.payTalked = true;
+        int ask = c.wage;
+        yield return Say(c.name, Pick($"For this job I was hoping for {ask} coins.", $"I'd be asking {ask} coins, if that's all right.", $"My price would be {ask} coins, please."));
+        int low = Round5(ask * 0.6f), mid = Round5(ask * 0.8f);
+        yield return Choose("You", "What do I offer?", out var pick1, ($"Offer {low}", "low"), ($"Offer {mid}", "mid"), ($"{ask} sounds fair", "ask"));
+        string p = pick1();
+        int offer = p == "low" ? low : p == "mid" ? mid : ask;
+        if (offer >= c.floor)
+        {
+            c.wage = offer; c.agreed = true;
+            yield return Say(c.name, offer == ask ? Pick("Wonderful, thank you!", "Thank you, that's very kind.")
+                                                  : Pick($"{offer}? That's fair. I can do that.", $"{offer} works for me. Thank you for asking so kindly.", $"Alright, {offer}. I'd be happy with that."));
+            ShowResume();
+            yield break;
+        }
+        c.knowFloor = true;
+        yield return Say(c.name, Pick($"That's a little low for me, I'm afraid. The lowest I could go is {c.floor}.",
+                                      $"I appreciate the offer, but I couldn't manage {offer}. {c.floor} is really as low as I can go.",
+                                      $"Hmm, {offer} would be hard for me. Would {c.floor} work for you?"));
+        yield return Choose("You", "Hmm...", out var pick2, ($"{c.floor} it is", "yes"), ("Let me think about it", "no"));
+        if (pick2() == "yes")
+        {
+            c.wage = c.floor; c.agreed = true;
+            yield return Say(c.name, Pick("Thank you. That's very fair.", "Deal! I won't let you down."));
+        }
+        else yield return Say(c.name, Pick("Of course. Take your time.", "That's all right, I understand."));
+        ShowResume();
+    }
+
+    /// <summary>A line with choices; <paramref name="result"/> gives the chosen id once it's closed.</summary>
+    IEnumerator Choose(string speaker, string text, out System.Func<string> result, params (string label, string id)[] options)
+    {
+        string chosen = null;
+        result = () => chosen;
+        var d = Line(speaker, text);
+        foreach (var o in options)
+        {
+            d.lines[0].choices.Add(new DialogueAsset.Choice { text = o.label, next = o.id });
+            d.lines.Add(new DialogueAsset.Line { id = o.id, text = o.label, next = "end" });
+        }
+        System.Action<string> seen = id => { foreach (var o in options) if (o.id == id) chosen = id; };
+        ui.LineShown += seen;
+        return PlayAndUnhook(d, seen);
+    }
+
+    IEnumerator PlayAndUnhook(DialogueAsset d, System.Action<string> seen)
+    {
+        yield return PlayDialogue(d);
+        ui.LineShown -= seen;
+    }
+
+    /// <summary>What you make of their answer, with the stat it shows.</summary>
+    static string Thought(Candidate c, Q q)
+    {
+        switch (q)
+        {
+            case Q.Experience: return Tier(c.speed, "(Slow and steady.", "(Keeps a decent pace.", "(Quick on their feet!") + $" Speed {Stars(c.speed)})";
+            case Q.Accident: return Tier(c.care, "(Hmm, a bit careless.", "(Careful enough.", "(Very careful with books.") + $" Care {Stars(c.care)})";
+            case Q.Grumpy: return Tier(c.charm, "(Not great with people.", "(Polite enough.", "(Lovely with visitors.") + $" Manner {Stars(c.charm)})";
+            default: return c.flexible ? "(They really want this job. They might be open about the price.)" : "(They know what they're worth.)";
+        }
+    }
+
     string QuestionText(Q q)
     {
         switch (q)
@@ -459,7 +542,6 @@ public class StaffInterview : MonoBehaviour
                      : role == GameManager.StaffRole.Repairer ? "A first edition comes in with a torn spine. Walk me through it."
                      : "A scholar wants to touch a 400-year-old map with bare hands. What do you say?";
             case Q.Grumpy: return "A visitor is shouting at the desk. How do you handle it?";
-            case Q.Wage: return $"You asked for {current.wage} coins a day. Could you start on a little less?";
             default: return "Why the Whitmore Library?";
         }
     }
@@ -491,11 +573,8 @@ public class StaffInterview : MonoBehaviour
                 return Tier(c.charm, "Shout back? No, no... I'd probably hide in the stacks.",
                                      "Stay calm and fetch whoever's in charge.",
                                      "Offer them a seat and a cup of tea. Nobody stays cross with a biscuit in hand.");
-            case Q.Wage:
-                c.knowWage = true;
-                if (c.flexible) { c.wage -= 2; c.flexible = false; return $"For a library like this? Alright, {c.wage} coins would do."; }
-                return $"Sorry, {c.wage} is the lowest I can go.";
             default:
+                c.knowWage = true;
                 return c.why;
         }
     }
@@ -522,7 +601,7 @@ public class StaffInterview : MonoBehaviour
         $"Speed   {(c.knowSpeed ? Stars(c.speed) : "?")}\n" +
         $"Care    {(c.knowCare ? Stars(c.care) : "?")}\n" +
         $"Manner  {(c.knowCharm ? Stars(c.charm) : "?")}\n" +
-        $"Wage    {c.wage} a day{(c.knowWage ? " (final)" : "")}";
+        $"Price   {c.wage} coins{(c.agreed ? " (agreed)" : c.knowFloor ? $" (lowest {c.floor})" : " (asking)")}";
 
     void Play(AudioClip clip) { if (clip != null) sfx.PlayOneShot(clip, 0.8f); }
 
@@ -530,9 +609,14 @@ public class StaffInterview : MonoBehaviour
 
     static List<Candidate> CandidatesFor(GameManager.StaffRole r)
     {
-        int baseWage = GameManager.StaffWage[(int)r];
-        Candidate C(string name, string prefab, string bio, string hello, string why, int dWage, int speed, int care, int charm, bool flexible) =>
-            new Candidate { name = name, prefab = prefab, background = bio, hello = hello, why = why, wage = baseWage + dWage, speed = speed, care = care, charm = charm, flexible = flexible };
+        int basePrice = GameManager.StaffHireFee[(int)r];
+        Candidate C(string name, string prefab, string bio, string hello, string why, int dPrice, int speed, int care, int charm, bool flexible)
+        {
+            int price = Round5(basePrice * (1f + dPrice * 0.05f)); // e.g. -2 = 10% cheaper than usual
+            // How low they'll go: everyone's different, and keen people go lower.
+            int floor = Mathf.Min(price, Round5(price * (flexible ? Random.Range(0.55f, 0.8f) : Random.Range(0.8f, 0.95f))));
+            return new Candidate { name = name, prefab = prefab, background = bio, hello = hello, why = why, wage = price, floor = floor, speed = speed, care = care, charm = charm, flexible = flexible };
+        }
 
         if (r == GameManager.StaffRole.Cleaner) return new List<Candidate>
         {

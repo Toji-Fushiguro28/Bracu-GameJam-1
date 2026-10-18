@@ -68,13 +68,12 @@ public class MessSpot : ClickInteractable
         Clean(true);
     }
 
-    /// <summary>Staff tidied it: the library still earns the reward.</summary>
-    public void CleanByStaff()
+    /// <summary>Staff tidied it. Returns the reward: they hand it over with their end-of-day report.</summary>
+    public int CleanByStaff()
     {
-        if (!IsDirty) return;
-        var gm = GameManager.Instance;
+        if (!IsDirty) return 0;
         Clean(false);
-        if (gm != null) { gm.AddCoins(reward); gm.Today.income += reward; }
+        return reward;
     }
 
     /// <summary>Tidies it away. A book still holding its copy puts it back on the shelf.</summary>

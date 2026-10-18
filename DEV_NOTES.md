@@ -326,3 +326,43 @@ Small, contained edits. Please check them when merging:
 - He talks through your real numbers (members, staff names, days, reputation). You answer one question with 3 replies to pick from.
 - Then a **The End** page shows with your stats. **Keep running the library** fades back, and play carries on into Day 6.
 - `endingSeen` is saved, so it only plays once. If interviews were booked for the same morning, they run straight after the farewell.
+
+## Staff: fees, upgrades, help calls, reports
+- **Hiring:**
+  - The one-time hire fee (`GameManager.StaffHireFee`: Archive 250, Main hall 70, Rare 650) is paid when you pick someone in the morning interview. Booking needs that much in the purse.
+  - The Dean pays the cleaner's fee in the intro.
+  - The small daily wage is still paid each morning, and staff quit if you can't pay.
+- **Upgrade** replaces "Let go":
+  - Prices are in `StaffUpgradeCosts`: Main hall 35 → 70, Archive 150 → 300, Rare 650. Levels are saved in `staffLevel`.
+  - Each level gives +35% work speed (`StaffWorkFactor`): walk speed, cleaning time, and the repair desk speed for the archivist. Help calls also come less often.
+  - The staff rows (PC Shop and Day Report) share `GameManager.StaffRow`.
+- **Help calls (`StaffHelp`):**
+  - Every 80–150 s of game time (× (1 + level)) a staff member stops work. A "Help!" pointer appears over them, pinned to the screen edge with an arrow when they're off screen (`WorldPrompts.Pin`).
+  - Click them to pick a fix:
+    - paid (coins): they're back to work at once
+    - free: they wait 8 more seconds
+  - The Rare Books attendant can't serve VIPs while stuck.
+- **Reports:**
+  - At the closing bell, staff stop and wait with a "Report" pointer. Clicking them gives today's numbers (repaired, shelved, cleaned, scholars served, times you helped), then they go home.
+  - If you lock up first, they just leave.
+- **Interview:**
+  - The wage question is gone. "Why the Whitmore?" now shows whether they'll bargain.
+  - After each answer, an orange thought line shows the stat. With 3 picks from 4 questions, one thing stays "?".
+  - At hire time you haggle: offer −4, −2 or agree. Flexible people go down to their ask − 3 and counter once. Push again and they insist on the full price. Firm people won't budge.
+
+## Update: pay is talked over in the interview, and the intro hires nobody
+- The intro (`InterviewScene` on its own) is only the talk with the Dean. Nobody is hired, and every role is hired from the computer: Interview → next morning, after the Day Report.
+- No daily wages any more (`StaffWage` is all 0). Each applicant asks a one-time price around `StaffHireFee` (70 / 250 / 650).
+- In the interview, "Let's talk about pay" (free, once per applicant):
+  1. They name their price, and you offer 60%, 80% or the full price.
+  2. If the offer is at or above their private `floor` (random each interview: keen people 55–80%, others 80–95%), they agree politely.
+  3. If it's lower, they say the lowest they can go, and you can accept that or think it over.
+- The agreed price (or their asking price) is shown in their notes and on the Hire button, and paid when you hire.
+- This replaces the post-hire bargaining and the daily-wage text in the section above.
+- Reports: at the closing bell, staff walk to the main gate and wait there side by side (`StaffManager.arrivePoint` ± 1.2 m).
+- **Reports pay out and are required:**
+  - Staff keep the coins their work earns during the day and hand them over with their report:
+    - cleaner: each mess's reward
+    - archivist: `perRepair` 4 per repaired book and `perShelved` 1 per shelved book
+    - attendant: the reading fee and tip of each scholar they check in
+  - The front ropes (`EndDayDoor`) won't lock up while anyone is still waiting to report (`StaffManager.PendingReport`).

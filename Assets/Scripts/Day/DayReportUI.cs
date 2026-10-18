@@ -208,14 +208,8 @@ public class DayReportUI : MonoBehaviour
     {
         foreach (var role in GameManager.StaffOrder)
         {
-            int i = (int)role;
-            bool hired = gm.Hired(role), open = gm.StaffUnlocked(role);
-            bool booked = gm.InterviewBooked(role);
-            AddRow(hired ? $"{GameManager.StaffNames[i]}: {GameManager.StaffPerson[i]}" : GameManager.StaffNames[i],
-                   booked ? "Interview booked: two applicants come in tomorrow morning, before the library opens."
-                          : $"{GameManager.StaffInfo[i]}  Wage about {GameManager.StaffWage[i]} / day.",
-                   hired ? "Let go" : booked ? "Cancel" : open ? "Interview" : $"Day {GameManager.StaffUnlockDay[i]}",
-                   hired || open, () => gm.ToggleStaff(role));
+            var (title, sub, button, enabled) = gm.StaffRow(role);
+            AddRow(title, sub, button, enabled, () => gm.ToggleStaff(role));
         }
     }
 

@@ -131,7 +131,7 @@ public class HUD : MonoBehaviour
     void OnPhase(GameManager.Phase phase)
     {
         if (phase == GameManager.Phase.Closing) ShowBanner("Closing time! No new visitors.");
-        else if (phase == GameManager.Phase.Closed) ShowBanner("The library is closed. Tidy up, then lock the front doors.", 6f);
+        else if (phase == GameManager.Phase.Closed) ShowBanner("The library is closed. Tidy up, then click the front ropes to lock up.", 6f);
     }
 
     void Start()
@@ -232,7 +232,7 @@ public class HUD : MonoBehaviour
         }
         if (deltaUntil > 0f && Time.time > deltaUntil) { deltaUntil = 0f; coinDelta.AddToClassList("hidden"); }
         if (gm == null || clockLabel == null) return;
-        string clock = gm.CurrentPhase == GameManager.Phase.Closed ? "Closed - tidy up, then lock the front doors" : gm.Paused ? gm.ClockText + "  (paused)" : gm.ClockText;
+        string clock = gm.CurrentPhase == GameManager.Phase.Closed ? "Closed - tidy up, then click the front ropes" : gm.Paused ? gm.ClockText + "  (paused)" : gm.ClockText;
         string day = $"Day {gm.day}";
         if (dayLabel != null && dayLabel.text != day) dayLabel.text = day;
         if (clock != lastClock) clockLabel.text = lastClock = clock;

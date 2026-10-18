@@ -75,6 +75,40 @@ public class StaffTalk : ClickInteractable
         var ui = DialogueUI.Instance;
         if (ui == null || ui.IsOpen) return;
         var gm = GameManager.Instance;
+        var worker = GetComponent<StaffWorker>();
+        var help = GetComponent<StaffHelp>();
+        // End of the day: they tell you how it went, then head home.
+        if (worker != null && worker.WaitingToReport && help != null && help.Reporting)
+        {
+            worker.StopToTalk(player.transform.position); // stop where you caught them, then head home
+            var r = ScriptableObject.CreateInstance<DialogueAsset>();
+            r.speaker = Name;
+            r.lines.Add(new DialogueAsset.Line { id = "start", text = Report(worker, help), next = "end" });
+            ui.Play(r, () =>
+            {
+                Destroy(r);
+                help.ReportDone();
+                if (worker.earnedToday > 0 && gm != null)
+                {
+                    gm.AddCoins(worker.earnedToday);
+                    gm.Today.income += worker.earnedToday;
+                    GameAudio.Play(a => a.coin);
+                    worker.earnedToday = 0;
+                }
+                StaffManager.Instance?.Dismiss(worker);
+            });
+            return;
+        }
+        // Stuck on something: sort it out.
+        var problem = help != null ? help.ProblemDialogue(Name) : null;
+        if (problem != null)
+        {
+            string how = null;
+            System.Action<string> seen = id => { if (id == "paid" || id == "free") how = id; };
+            ui.LineShown += seen;
+            ui.Play(problem, () => { ui.LineShown -= seen; Destroy(problem); if (how != null) help.Resolve(how); });
+            return;
+        }
         var d = ScriptableObject.CreateInstance<DialogueAsset>();
         d.speaker = Name;
         if (gm != null && talkDay == gm.day && gm.Hour - talkHour < TalkCooldownHours)
@@ -108,7 +142,22 @@ public class StaffTalk : ClickInteractable
         ui.Play(d, () =>
         {
             Destroy(d);
-            if (agent != null && agent.enabled) agent.isStopped = false;
+            if (agent != null && agent.enabled) agent.isStopped = worker != null && worker.OnHold;
         });
+    }
+
+    /// <summary>A few words about today's work.</summary>
+    string Report(StaffWorker w, StaffHelp help)
+    {
+        string work = role == GameManager.StaffRole.Cleaner
+            ? (w.cleanedToday > 0 ? $"I tidied up <color=#D67840>{w.cleanedToday}</color> messes today." : "Quiet day for mess. I polished the floor instead.")
+            : role == GameManager.StaffRole.Repairer
+            ? (w.repairedToday + w.shelvedToday > 0 ? $"I mended <color=#D67840>{w.repairedToday}</color> books and put <color=#D67840>{w.shelvedToday}</color> back on the shelves." : "Nothing came in for repair today, so I caught up on the catalogue.")
+            : (w.servedToday > 0 ? $"I looked after <color=#D67840>{w.servedToday}</color> scholars in Rare Books." : "No scholars came by, so I dusted the display cases. Twice.");
+        string thanks = help.helpedToday > 1 ? $" Thanks for helping me out {help.helpedToday} times."
+                      : help.helpedToday == 1 ? " Thanks for sorting out that problem." : "";
+        string bye = role == GameManager.StaffRole.Cleaner ? " Night, boss!" : role == GameManager.StaffRole.Repairer ? " Goodnight!" : " Goodnight, my dear.";
+        string money = w.earnedToday > 0 ? $" Here's what came in from my work: <color=#D67840>{w.earnedToday} coins</color>." : "";
+        return work + money + thanks + bye;
     }
 }

@@ -25,6 +25,8 @@ public class StaffManager : MonoBehaviour
     public Vector3 arrivePoint = new Vector3(20f, 0f, 1.6f);
 
     public AudioClip typingClip;
+    [Tooltip("How far inside the front doors (from Arrive Point) staff wait to report at closing.")]
+    public float reportDepth = 0.5f;
 
     readonly StaffWorker[] workers = new StaffWorker[3];
     float checkTimer;
@@ -51,19 +53,39 @@ public class StaffManager : MonoBehaviour
         new[] { "Time for my tea. Goodnight, all.", "I'll say goodnight to the old books on my way out.", "Another lovely day. Off I toddle." },
     };
 
-    /// <summary>The closing bell: each staff member says goodbye and walks out the front door.</summary>
+    /// <summary>The closing bell: staff line up by the main gate and wait to tell you about their day.</summary>
     void SendHome()
     {
-        var door = CounterQueue.Instance != null ? CounterQueue.Instance.exit.position : arrivePoint;
         for (int i = 0; i < workers.Length; i++)
         {
             var w = workers[i];
             if (w == null || !w.gameObject.activeSelf) continue;
-            var talk = w.GetComponent<StaffTalk>();
-            var lines = Goodbyes[i];
-            if (talk != null) WorldPrompts.Instance?.ShowBubble(talk, lines[Random.Range(0, lines.Length)], 3.5f);
-            w.GoHome(door);
+            // Side by side, a few steps inside the main gate: far enough back that the gate rope (which
+            // you click to lock up) doesn't cover them on screen, so both stay clickable.
+            var spot = arrivePoint + new Vector3((i - 1) * 1.4f, 0f, reportDepth);
+            w.WaitToReport(NavMesh.SamplePosition(spot, out var hit, 2f, NavMesh.AllAreas) ? hit.position : spot);
+            var help = w.GetComponent<StaffHelp>();
+            if (help != null) help.WaitToReport();
         }
+    }
+
+    /// <summary>After their report: a goodbye, then out of the front door.</summary>
+    public void Dismiss(StaffWorker w)
+    {
+        var door = CounterQueue.Instance != null ? CounterQueue.Instance.exit.position : arrivePoint;
+        var talk = w.GetComponent<StaffTalk>();
+        var lines = Goodbyes[(int)w.role];
+        if (talk != null) WorldPrompts.Instance?.ShowBubble(talk, lines[Random.Range(0, lines.Length)], 3.5f);
+        w.GoHome(door);
+    }
+
+    public StaffWorker Worker(GameManager.StaffRole r) => workers[(int)r];
+
+    /// <summary>Someone still waiting by the gate to give their report (null if everyone has).</summary>
+    public StaffWorker PendingReport()
+    {
+        foreach (var w in workers) if (w != null && w.gameObject.activeSelf && w.WaitingToReport) return w;
+        return null;
     }
 
     /// <summary>Nine o'clock: staff walk in through the front door (visitors start at ten past).</summary>
@@ -79,6 +101,7 @@ public class StaffManager : MonoBehaviour
             w.gameObject.SetActive(true);
             if (agent != null) agent.enabled = true;
             w.StartShift();
+            w.GetComponent<StaffHelp>()?.NewDay();
         }
     }
 
@@ -126,6 +149,9 @@ public class StaffManager : MonoBehaviour
             // New hires start work while the library is open; after the bell they come in tomorrow.
             if (want && workers[i] == null && gm.CurrentPhase == GameManager.Phase.Open) workers[i] = Spawn(role);
             else if (!want && workers[i] != null) Dismiss(i);
+            // Upgrades make them quicker on their feet too.
+            if (workers[i] != null && workers[i].TryGetComponent(out NavMeshAgent a))
+                a.speed = workers[i].walkSpeed * GameManager.StaffSpeed[i] * gm.StaffWorkFactor(role);
         }
     }
 
@@ -170,6 +196,9 @@ public class StaffManager : MonoBehaviour
         var talk = go.GetComponent<StaffTalk>();
         if (talk == null) talk = go.AddComponent<StaffTalk>();
         talk.role = role;
+        var help = go.GetComponent<StaffHelp>();
+        if (help == null) help = go.AddComponent<StaffHelp>();
+        help.role = role;
         go.GetComponent<NavMeshAgent>().speed = w.walkSpeed * GameManager.StaffSpeed[(int)role];
         go.SetActive(true);
         return w;

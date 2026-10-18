@@ -505,3 +505,25 @@
 .log-line { color: var(--ink); font-size: 19px; white-space: normal; }
 .log-outcome { color: var(--ink-soft); font-size: 17px; white-space: normal; margin-top: 2px; }
 .log-empty { color: var(--ink-soft); font-size: 20px; white-space: normal; -unity-text-align: middle-center; margin-top: 30px; }
+
+/* ---------- Staff calling for help / waiting to report ---------- */
+.staff-pointer {
+    position: absolute;
+    flex-direction: row;
+    align-items: center;
+    padding: 6px 12px 9px 10px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Popup01a.png");
+    -unity-slice-left: 4; -unity-slice-right: 4; -unity-slice-top: 4; -unity-slice-bottom: 4;
+    -unity-slice-scale: 4px;
+}
+.staff-pointer-icon {
+    width: 32px; height: 32px; margin-right: 6px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Alert01a.png");
+    -unity-background-scale-mode: scale-to-fit;
+}
+#staff-pointer-label { color: rgb(196, 110, 40); font-size: 28px; }
+.staff-pointer-arrow {
+    width: 22px; height: 22px; margin-left: 6px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconArrow01a.png");
+    -unity-background-scale-mode: scale-to-fit;
+}

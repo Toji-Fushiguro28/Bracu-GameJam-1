@@ -11,7 +11,7 @@ using UnityEngine.AI;
 [RequireComponent(typeof(NavMeshAgent))]
 public class StaffWorker : MonoBehaviour
 {
-    enum State { ToChair, AtChair, ToBin, ToDesk, Repairing, Wander, Idle, ToMess, Cleaning, ToCollect, ToShelf, ToBinShelve, GoingHome, OffDuty }
+    enum State { ToChair, AtChair, ToBin, ToDesk, Repairing, Wander, Idle, ToMess, Cleaning, ToCollect, ToShelf, ToBinShelve, GoingHome, OffDuty, ToReport, Reporting }
 
     public GameManager.StaffRole role;
     public SeatPoint chair;
@@ -28,6 +28,47 @@ public class StaffWorker : MonoBehaviour
     RepairDesk.Job job;
     MessSpot target;
     ShelfInteractable shelf;
+
+    /// <summary>Today's work, for the end-of-day report.</summary>
+    public int repairedToday, shelvedToday, cleanedToday, servedToday;
+    /// <summary>Coins their work brought in today, handed over with the report.</summary>
+    public int earnedToday;
+    [Tooltip("Coins the library earns for each book the archivist repairs / puts back on a shelf.")]
+    public int perRepair = 4, perShelved = 1;
+    /// <summary>Stuck on a problem (see StaffHelp): no work until the librarian helps.</summary>
+    public bool OnHold { get; private set; }
+    /// <summary>Closing time: standing by to tell the librarian about the day.</summary>
+    public bool WaitingToReport => state == State.Reporting || state == State.ToReport;
+
+    /// <summary>Stops (or restarts) them where they are.</summary>
+    public void SetHold(bool hold)
+    {
+        OnHold = hold;
+        if (agent.enabled) agent.isStopped = hold;
+        if (hold && typing != null && typing.isPlaying) typing.Stop();
+        else if (!hold && state == State.AtChair && role == GameManager.StaffRole.Repairer && typing != null && typing.clip != null) typing.Play();
+        // Standing staff fidget while they wait; seated ones stay put.
+        if (anim && agent.enabled) anim.SetActivity(hold ? CharacterAnimator.Activity.Impatient : CharacterAnimator.Activity.None);
+    }
+
+    /// <summary>Caught on the way to the gate: stop here and turn to face the librarian for the report.</summary>
+    public void StopToTalk(Vector3 lookAt)
+    {
+        if (agent.enabled) { agent.isStopped = true; agent.ResetPath(); }
+        if (state == State.ToReport) state = State.Reporting;
+        if (anim) anim.SetSpeed(0f);
+        if (agent.enabled) FaceTowards(lookAt);
+    }
+
+    /// <summary>The closing bell: put down what they're doing, walk to the main gate and wait to report.</summary>
+    public void WaitToReport(Vector3 gateSpot)
+    {
+        if (carried != null) { ReturnBin.Instance?.Add(carried, carriedCondition); carried = null; if (anim) anim.SetCarrying(false); }
+        job = null; target = null;
+        OnHold = false;
+        if (agent.enabled) agent.isStopped = false;
+        Walk(gateSpot, State.ToReport);
+    }
 
     void Awake()
     {
@@ -55,6 +96,8 @@ public class StaffWorker : MonoBehaviour
     void Update()
     {
         if (agent.enabled && anim) anim.SetSpeed(Mathf.Clamp01(agent.velocity.magnitude / walkSpeed) * 0.5f);
+        if (state == State.ToReport && Arrived()) { agent.ResetPath(); state = State.Reporting; }
+        if (OnHold || state == State.Reporting || state == State.ToReport) return;
         timer -= GameManager.Dt;
         switch (state)
         {
@@ -72,7 +115,7 @@ public class StaffWorker : MonoBehaviour
             case State.ToMess: UpdateToMess(); break;
             case State.Cleaning:
                 if (timer > 0f) break;
-                if (target != null && target.IsDirty) { target.CleanByStaff(); GameAudio.Play(a => a.tidy, 0.4f); }
+                if (target != null && target.IsDirty) { earnedToday += target.CleanByStaff(); cleanedToday++; GameAudio.Play(a => a.tidy, 0.4f); }
                 target = null;
                 if (MessWaiting()) GoClean(); else Wander();
                 break;
@@ -87,6 +130,7 @@ public class StaffWorker : MonoBehaviour
     void Walk(Vector3 to, State next)
     {
         Stand();
+        if (agent.enabled) agent.isStopped = false;
         state = next;
         agent.SetDestination(OnMesh(to));
     }
@@ -215,6 +259,9 @@ public class StaffWorker : MonoBehaviour
     /// <summary>A new morning: in through the door at nine, then off to work.</summary>
     public void StartShift()
     {
+        repairedToday = shelvedToday = cleanedToday = servedToday = earnedToday = 0;
+        OnHold = false;
+        if (agent.enabled) agent.isStopped = false;
         if (role == GameManager.StaffRole.Cleaner) Wander(); else GoToChair();
     }
 
@@ -223,6 +270,8 @@ public class StaffWorker : MonoBehaviour
     {
         var desk = RepairDesk.Instance;
         if (desk == null || !desk.TakeDone(out carried, out carriedCondition)) { GoToChair(); return; }
+        repairedToday++;
+        earnedToday += perRepair;
         if (anim) { anim.PlayReachShelf(); anim.SetCarrying(true); }
         GoToShelfFor(carried);
     }
@@ -234,6 +283,8 @@ public class StaffWorker : MonoBehaviour
         {
             carried.AddCopy(carriedCondition);
             carried = null;
+            shelvedToday++;
+            if (role == GameManager.StaffRole.Repairer) earnedToday += perShelved;
             GameManager.Instance?.NotifyBooksChanged();
         }
         GoToChair();
@@ -278,7 +329,7 @@ public class StaffWorker : MonoBehaviour
             FaceTowards(target.transform.position);
             if (anim) anim.PlayReachShelf();
             state = State.Cleaning;
-            timer = 1.6f;
+            timer = 1.6f / (GameManager.Instance != null ? GameManager.Instance.StaffWorkFactor(role) : 1f);
         }
     }
 

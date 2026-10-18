@@ -93,17 +93,11 @@ public static class PCShopView
         }
         else
         {
-            note.text = gm.DailyWages > 0 ? $"Wages are paid each morning: {gm.DailyWages} coins a day." : "Staff are paid each morning. If you can't pay, they quit.";
+            note.text = "Press Interview: two applicants come in tomorrow morning. Staff are paid once, when you hire them.";
             foreach (var role in GameManager.StaffOrder)
             {
-                int i = (int)role;
-                bool hired = gm.Hired(role), open = gm.StaffUnlocked(role), booked = gm.InterviewBooked(role);
-                Row(list, GameManager.StaffNames[i] + (hired ? $"  ({GameManager.StaffPerson[i]})" : ""),
-                    booked ? "Interview booked: two applicants come in tomorrow morning, before the library opens."
-                           : $"{GameManager.StaffInfo[i]}  Wage about {GameManager.StaffWage[i]} a day.", null,
-                    hired ? "Let go" : booked ? "Cancel" : open ? "Interview" : $"Day {GameManager.StaffUnlockDay[i]}",
-                    hired || open,
-                    () => gm.ToggleStaff(role), root);
+                var (title, sub, button, enabled) = gm.StaffRow(role);
+                Row(list, title, sub, null, button, enabled, () => gm.ToggleStaff(role), root);
             }
         }
         list.schedule.Execute(() => list.scrollOffset = new Vector2(0, scroll));

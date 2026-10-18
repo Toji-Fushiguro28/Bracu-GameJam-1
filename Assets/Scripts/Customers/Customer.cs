@@ -240,6 +240,8 @@ public class Customer : ClickInteractable
     bool AttendantServes()
     {
         if (!GM.RareOpen || StaffManager.Instance == null || !StaffManager.Instance.Working(GameManager.StaffRole.RareAttendant)) return false;
+        var attendant = StaffManager.Instance.Worker(GameManager.StaffRole.RareAttendant);
+        if (attendant == null || attendant.OnHold || attendant.WaitingToReport) return false; // busy with a problem
         var rare = GM.Books.FindAll(b => BookRequest.IsRare(b) && BookRequest.InStock(b));
         if (rare.Count == 0) return false;
         var book = rare[Random.Range(0, rare.Count)];
@@ -250,6 +252,7 @@ public class Customer : ClickInteractable
         heldCondition = cond;
         GM.NotifyBooksChanged();
         Say("Good day! The attendant has my book ready.", 3f);
+        attendant.servedToday++;
         state = State.ToSeat;
         agent.SetDestination(NearestOnNavMesh(seat.ApproachPosition(seatIndex)));
         return true;
@@ -877,7 +880,7 @@ public class Customer : ClickInteractable
         seat = null;
         agent.enabled = true;
         // The Rare Books attendant checks them in on the spot.
-        if (rareRoom && StaffManager.Instance != null && StaffManager.Instance.Working(GameManager.StaffRole.RareAttendant)) { maxPatience = patience = 1f; CheckIn(); return; }
+        if (rareRoom && StaffManager.Instance != null && StaffManager.Instance.Working(GameManager.StaffRole.RareAttendant)) { maxPatience = patience = 1f; CheckIn(StaffManager.Instance.Worker(GameManager.StaffRole.RareAttendant)); return; }
         JoinQueue();
     }
 
@@ -894,7 +897,9 @@ public class Customer : ClickInteractable
         Say(CheckInLine);
     }
 
-    void CheckIn()
+    /// <param name="attendant">The Rare Books attendant, if they checked the scholar in: the fee goes in
+    /// their purse and reaches you with their end-of-day report.</param>
+    void CheckIn(StaffWorker attendant = null)
     {
         int fee = 0, tip = 0;
         if (kind == Kind.Reader)
@@ -915,7 +920,8 @@ public class Customer : ClickInteractable
             // Some returns are overdue: a small late fee.
             if (Random.value < 0.35f) fee = Random.Range(2, 6);
         }
-        if (fee + tip > 0)
+        if (fee + tip > 0 && attendant != null) attendant.earnedToday += fee + tip;
+        else if (fee + tip > 0)
         {
             GM.AddCoins(fee + tip);
             GM.Today.income += fee + tip;
