@@ -31102,8 +31102,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e09cdbaaa6a474f4fa38f59607ae27db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Housekeeping
-  cupChance: 0.5
-  cupRange: 4
+  cupChance: 0.7
+  cupRange: 5
   openBooksAtClosing: {x: 1, y: 3}
   cleanerInterval: 10
   repairerInterval: 6

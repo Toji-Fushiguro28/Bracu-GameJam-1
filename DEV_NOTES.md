@@ -378,3 +378,27 @@ Small, contained edits. Please check them when merging:
 - They're in `CustomerSpawner.customerPrefabs` (MainGame, 28 visitors) and have member profiles in `Members.Profiles`.
 - Visitors whose prefab name contains "Professor" (Victor, Ingrid) come as VIP scholars.
 - A review row of all 15 is in `Library Management.unity` (`NPC_Variants_Review`).
+
+## Book requests: "Can you order it?" (from Day 1)
+- `BookDatabase.newTitles` holds 12 books the library doesn't own yet (main-hall subjects).
+  - At runtime they live in `GameManager.NewTitles`.
+  - `OrderBook` on one calls `AddToLibrary`, which moves it into `Books` with 0 copies until the delivery arrives. It's saved in SaveData `added`.
+- **Seeker visitors** (`Customer.Kind.Seeker`):
+  - They pick a new title (or a sold-out book), check 1–2 shelves (the right one first), then queue and say they couldn't find it.
+  - Spawn chance is `CustomerSpawner.seekerChance` (0.12), with at least one per day after 10:15.
+- **At the counter:** "When do you need it?" → they answer "As soon as possible" or "I'll come back tomorrow", and you pick "I'll order it for you" or "Sorry".
+  - **ASAP** (`ReserveAndWait`): they sit in the library (`State.WaitingForBook`).
+    - When the ordered copy arrives (in stock or on the cart), they come to the desk to collect it.
+    - About 30 minutes past their time (or at closing): if it's on order they come back tomorrow; if you never ordered it they leave unhappy (−reputation).
+  - **Tomorrow:** a normal reservation and a pickup the next morning.
+- Sold-out buyers use the same "When do you need it?" flow, and it now works from Day 1.
+- The PC Shop and the Day Report shop list requested new titles (gold "NEW · Requested" badge) so you can order them. Members' wishes pick new titles first.
+- Shelves show damaged copies in red (title, count and the "Damaged" button).
+- The Repair desk's left page also lists worn and damaged copies still out in the library (shelf and returns bin).
+- **Closing:**
+  - `Customer.HandleClosed` runs every frame once the library is closed. Readers (even ones still walking to a seat) stop and queue to check their book in, and anyone holding a book waits for you; everyone else goes home.
+  - Readers who sit down after the closing bell only read for about 8 s.
+- **Spawner:** the same character is never in the library twice at once, and pickups wait if that person is already inside. The Dean visits at most once a day.
+- **Saying "Sorry, we can't get that"** removes any reservation for that visitor.
+- **New members' wishes are no longer auto-reserved:** the member asks you at the desk (same "When do you need it?" flow), and you decide.
+- **Shops:** not-yet-owned titles are in the normal, searchable book list ("New to the library"), not only under Reservations.

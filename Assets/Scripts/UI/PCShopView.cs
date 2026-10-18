@@ -50,7 +50,7 @@ public static class PCShopView
                 list.Add(Header("Reservations"));
                 foreach (var r in gm.reservations)
                 {
-                    var rb = gm.Books.Find(x => x.Title == r.title);
+                    var rb = gm.FindTitle(r.title);
                     bool coming = rb != null && (gm.OnOrder(rb) > 0 || BookRequest.InStock(rb) || (DeliveryCart.Instance != null && DeliveryCart.Instance.Has(rb)));
                     string when = r.urgent ? $"needs it TODAY by {GameManager.FormatHour(r.dueHour)} (express!)" : "tomorrow";
                     var l = new Label($"{r.name}: \"{r.title}\" ({when}) - {(coming ? "ready or on its way" : "NOT ORDERED YET")}");
@@ -60,14 +60,19 @@ public static class PCShopView
                 }
                 list.Add(Header("Order books"));
             }
-            foreach (var b in gm.Books)
+            // Everything you can order, including titles the library doesn't have yet (search for them by name).
+            var catalogue = new System.Collections.Generic.List<BookData>(gm.Books);
+            catalogue.AddRange(gm.NewTitles);
+            foreach (var b in catalogue)
             {
                 if (BookRequest.IsRare(b) || !BookRequest.Available(b)) continue; // locked rooms can't be stocked yet
                 if (filter != null && !filter.Matches(b)) continue;
                 var book = b;
                 int price = GameManager.OrderPrice(book, false), express = GameManager.OrderPrice(book, true);
                 int onOrder = gm.OnOrder(book);
-                string sub = $"{book.FormatName} · {book.Subject} · {ShelfInteractable.NameOf(book.ShelfLocation)} · in stock {book.GoodCopies + book.WornCopies}";
+                string sub = gm.IsNewTitle(book)
+                    ? $"New to the library · {book.Subject} · by {book.Author} · goes on {ShelfInteractable.NameOf(book.ShelfLocation)}"
+                    : $"{book.FormatName} · {book.Subject} · {ShelfInteractable.NameOf(book.ShelfLocation)} · in stock {book.GoodCopies + book.WornCopies}";
                 if (onOrder > 0) sub += $" · on order {onOrder}";
                 var req = gm.reservations.Find(r => r.title == book.Title);
                 Row(list, book.Title, sub, null, $"Order {price}", gm.Coins >= price,

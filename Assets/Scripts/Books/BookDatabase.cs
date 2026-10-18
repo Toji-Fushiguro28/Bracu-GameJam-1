@@ -13,4 +13,8 @@ public class BookDatabase : ScriptableObject
     public List<BookData> books = new List<BookData>();
 
     public List<BookData> CreateRuntimeCopy() => books.Select(b => b.Clone()).ToList();
+
+    [Tooltip("Books the library doesn't own yet. Visitors ask for these; ordering one adds it to the library.")]
+    public List<BookData> newTitles = new List<BookData>();
+    public List<BookData> CreateNewTitlesCopy() => newTitles.Select(b => b.Clone()).ToList();
 }

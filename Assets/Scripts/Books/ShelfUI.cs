@@ -93,9 +93,11 @@ public class ShelfUI : MonoBehaviour
         {
             var book = b;
             string sub = $"{book.Author}  ·  x{book.Quantity}";
-            if (book.WornCopies > 0 || book.DamagedCopies > 0) sub += $"  ·  {book.ConditionSummary}";
+            if (book.WornCopies > 0) sub += $"  ·  {book.WornCopies} worn";
+            if (book.DamagedCopies > 0) sub += $"  ·  <color=#B8322A>{book.DamagedCopies} damaged</color>";
             if (book.Tier != BookTier.Normal) sub += "  ·  " + book.Tier;
             var row = Row(book.Title, sub);
+            row.EnableInClassList("has-damage", book.DamagedCopies > 0);
 
             // Main Take grabs the best copy; extra buttons let you pick a worn/damaged one on purpose.
             // Only greyed out when there are no copies; full hands are handled in Take().
@@ -107,7 +109,7 @@ public class ShelfUI : MonoBehaviour
             if (book.GoodCopies > 0 && book.WornCopies > 0)
                 buttons.Add(TakeButton("Worn", true, () => Take(book, BookCondition.Worn)));
             if (book.DamagedCopies > 0 && (book.GoodCopies > 0 || book.WornCopies > 0))
-                buttons.Add(TakeButton("Damaged", true, () => Take(book, BookCondition.Damaged)));
+                buttons.Add(TakeButton("Damaged", true, () => Take(book, BookCondition.Damaged), "take-damaged"));
             row.Add(buttons);
             list.Add(row);
         }

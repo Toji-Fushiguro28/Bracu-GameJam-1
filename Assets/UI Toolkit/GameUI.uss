@@ -528,3 +528,9 @@
     background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconArrow01a.png");
     -unity-background-scale-mode: scale-to-fit;
 }
+
+/* Damaged copies on a shelf: red title and a red "Damaged" button */
+.shelf-row.has-damage #row-title { color: rgb(184, 50, 42); }
+.take-damaged { color: rgb(184, 50, 42); }
+/* Repair desk: heading for copies still out in the library */
+.repair-section { margin-top: 14px; color: rgb(196, 110, 40); }

@@ -22,6 +22,8 @@ public class CustomerSpawner : MonoBehaviour
     [Range(0f, 1f)] public float returnerChance = 0.08f;
     [Tooltip("Chance a visitor without a library card comes to sign up.")]
     [Range(0f, 1f)] public float signUpChance = 0.15f;
+    [Tooltip("Visitors who look for a book we don't have, then ask you to order it.")]
+    [Range(0f, 1f)] public float seekerChance = 0.12f;
     [Tooltip("Chance (from day 3) a professor visits as a VIP scholar.")]
     [Range(0f, 1f)] public float vipChance = 0.08f;
 
@@ -42,11 +44,20 @@ public class CustomerSpawner : MonoBehaviour
     }
 
     /// <summary>Everyone due to collect a reservation today comes in early.</summary>
-    bool vipToday;
+    bool vipToday, seekerToday, deanToday;
+
+    /// <summary>Is this character already in the library? (No one is in two places at once.)</summary>
+    static bool Present(string prefabName)
+    {
+        foreach (var c in FindObjectsByType<Customer>()) if (c.profileKey == prefabName) return true;
+        return false;
+    }
 
     void QueuePickups()
     {
         vipToday = false;
+        seekerToday = false;
+        deanToday = false;
         pickups.Clear();
         spawnTimer = firstDelay;
         var gm = GameManager.Instance;
@@ -81,10 +92,13 @@ public class CustomerSpawner : MonoBehaviour
         GameObject prefab = null;
         GameManager.Reservation pickup = null;
         bool vip = false;
-        while (pickups.Count > 0 && prefab == null)
+        int tries = pickups.Count;
+        while (pickups.Count > 0 && prefab == null && tries-- > 0)
         {
             pickup = pickups.Dequeue();
             if (!gm.reservations.Contains(pickup)) { pickup = null; continue; }
+            // Already here (e.g. still waiting in the library): try them again later.
+            if (Present(pickup.key)) { pickups.Enqueue(pickup); pickup = null; continue; }
             prefab = System.Array.Find(customerPrefabs, p => p != null && p.name == pickup.key);
         }
         if (prefab == null)
@@ -122,12 +136,16 @@ public class CustomerSpawner : MonoBehaviour
         else
         {
             float r = Random.value;
-            customer.kind = r < browserChance ? Customer.Kind.Browser
+            // At least one "can you order it?" visitor a day, from Day 1, keeps the shop in use.
+            bool seek = Random.value < seekerChance || (!seekerToday && gm.Hour >= 10.25f);
+            if (seek) { customer.kind = Customer.Kind.Seeker; seekerToday = true; }
+            else customer.kind = r < browserChance ? Customer.Kind.Browser
                 : r < browserChance + readerChance ? Customer.Kind.Reader
                 : r < browserChance + readerChance + returnerChance ? Customer.Kind.Returner
                 : Customer.Kind.Buyer;
         }
         if (vip) vipToday = true;
+        if (prefab.name.Contains("Dean")) deanToday = true;
         go.SetActive(true);
     }
 
@@ -140,6 +158,8 @@ public class CustomerSpawner : MonoBehaviour
             var p = customerPrefabs[i];
             if (p == null) continue;
             if (StaffManager.Instance != null && StaffManager.Instance.IsStaffCharacter(p.name)) continue; // working here today
+            if (Present(p.name)) continue;                          // already in the library
+            if (p.name.Contains("Dean") && deanToday) continue;    // the Dean pops in once a day at most
             bool professor = p.name.Contains("Professor");
             if (professor == vip) pool.Add(i);
         }

@@ -192,13 +192,19 @@ public class DayReportUI : MonoBehaviour
 
     void BuildShop(GameManager gm)
     {
-        foreach (var b in gm.Books)
+        // Titles the library doesn't have yet are in the list too: ordering one adds it to the library.
+        var catalogue = new System.Collections.Generic.List<BookData>(gm.Books);
+        catalogue.AddRange(gm.NewTitles);
+        foreach (var b in catalogue)
         {
             if (BookRequest.IsRare(b) || !BookRequest.Available(b)) continue; // rare / locked-room books can't be bought
             if (filter != null && !filter.Matches(b)) continue;
             var book = b;
             int price = Price(book);
-            AddRow(book.Title, $"{book.FormatName}  ·  {book.Subject}  ·  in stock {book.GoodCopies + book.WornCopies}  ·  {price} coins · arrives tomorrow",
+            var req = gm.reservations.Find(r => r.title == book.Title);
+            string who = req != null ? $"  ·  requested by {req.name}" : "";
+            AddRow(book.Title, (gm.IsNewTitle(book) ? $"New to the library  ·  {book.Subject}  ·  by {book.Author}" : $"{book.FormatName}  ·  {book.Subject}  ·  in stock {book.GoodCopies + book.WornCopies}")
+                   + $"  ·  {price} coins · arrives tomorrow{who}",
                    "Buy", gm.Coins >= price,
                    () => gm.OrderBook(book, false)); // arrives in the morning
         }

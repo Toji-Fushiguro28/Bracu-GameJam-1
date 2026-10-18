@@ -42,6 +42,22 @@ public class GameManager : MonoBehaviour
     public float Hour { get; private set; }
     public Phase CurrentPhase { get; private set; }
     public List<BookData> Books { get; private set; } = new List<BookData>();
+    /// <summary>Books the library doesn't have yet (not on any shelf). Ordering one adds it to the library.</summary>
+    public List<BookData> NewTitles { get; private set; } = new List<BookData>();
+    [NonSerialized] readonly List<string> addedTitles = new List<string>();
+
+    /// <summary>A title in the library, or one it could order.</summary>
+    public BookData FindTitle(string title) => Books.Find(b => b.Title == title) ?? NewTitles.Find(b => b.Title == title);
+    public bool IsNewTitle(BookData b) => b != null && NewTitles.Contains(b);
+
+    /// <summary>A brand-new title joins the catalogue and its shelf (no copies until the order arrives).</summary>
+    public void AddToLibrary(BookData b)
+    {
+        if (b == null || !NewTitles.Remove(b)) return;
+        Books.Add(b);
+        if (!addedTitles.Contains(b.Title)) addedTitles.Add(b.Title);
+        NotifyBooksChanged();
+    }
 
     public event Action<int, int> CoinsChanged;   // new total, delta
     public event Action<Phase> PhaseChanged;
@@ -207,6 +223,7 @@ public class GameManager : MonoBehaviour
     public bool OrderBook(BookData b, bool express)
     {
         if (b == null || !TrySpend(OrderPrice(b, express))) return false;
+        AddToLibrary(b); // a requested new title becomes part of the library
         bool sameDay = express && CurrentPhase != Phase.Closed && Hour + ExpressHours < closeHour;
         orders.Add(new Order { book = b, arriveDay = sameDay ? day : day + 1, arriveHour = sameDay ? Hour + ExpressHours : openHour });
         foreach (var r in reservations) if (r.title == b.Title) r.ordered = true;
@@ -375,11 +392,11 @@ public class GameManager : MonoBehaviour
     public bool loadSave = true;
 
     [Serializable] class BookSave { public string title; public int good, worn, damaged; }
-    [Serializable] class SaveData { public int day, coins, reputation, difficulty = 1; public bool[] staff; public int[] upgrades; public List<BookSave> books = new List<BookSave>(); public List<Member> members = new List<Member>(); public List<Reservation> reservations = new List<Reservation>(); public List<RequestLog.Entry> log = new List<RequestLog.Entry>(); public List<int> interviews = new List<int>(); public bool endingSeen; public int[] staffLevel; }
+    [Serializable] class SaveData { public int day, coins, reputation, difficulty = 1; public bool[] staff; public int[] upgrades; public List<BookSave> books = new List<BookSave>(); public List<Member> members = new List<Member>(); public List<Reservation> reservations = new List<Reservation>(); public List<RequestLog.Entry> log = new List<RequestLog.Entry>(); public List<int> interviews = new List<int>(); public bool endingSeen; public int[] staffLevel; public List<string> added = new List<string>(); }
 
     public void Save()
     {
-        var data = new SaveData { day = day, difficulty = (int)difficulty, coins = Coins, reputation = Reputation, staff = staff, upgrades = upgrades, members = members, reservations = reservations, log = RequestLog.All, interviews = interviews, endingSeen = endingSeen, staffLevel = staffLevel };
+        var data = new SaveData { day = day, difficulty = (int)difficulty, coins = Coins, reputation = Reputation, staff = staff, upgrades = upgrades, members = members, reservations = reservations, log = RequestLog.All, interviews = interviews, endingSeen = endingSeen, staffLevel = staffLevel, added = addedTitles };
         foreach (var b in Books) data.books.Add(new BookSave { title = b.Title, good = b.GoodCopies, worn = b.WornCopies, damaged = b.DamagedCopies });
         // Copies out of the shelves (returns, repair table, hands) still belong to the library.
         void Count(BookData b, BookCondition c)
@@ -417,6 +434,8 @@ public class GameManager : MonoBehaviour
         if (data.interviews != null) interviews = data.interviews;
         endingSeen = data.endingSeen;
         if (data.staffLevel != null && data.staffLevel.Length == 3) staffLevel = data.staffLevel;
+        // Titles you ordered in earlier days are part of the library now.
+        if (data.added != null) foreach (var t in data.added) { var nb = NewTitles.Find(b => b.Title == t); if (nb != null) AddToLibrary(nb); }
         RequestLog.Reset(data.log);
         foreach (var s in data.books)
         {
@@ -450,7 +469,7 @@ public class GameManager : MonoBehaviour
     {
         Instance = this;
         var db = Resources.Load<BookDatabase>(BookDatabase.ResourceName);
-        if (db != null) Books = db.CreateRuntimeCopy();
+        if (db != null) { Books = db.CreateRuntimeCopy(); NewTitles = db.CreateNewTitlesCopy(); }
         else Debug.LogWarning("[Game] No BookDatabase in Resources — library is empty.", this);
         Coins = startingCoins;
         Hour = openHour;

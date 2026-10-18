@@ -624,3 +624,160 @@ MonoBehaviour:
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
+  newTitles:
+  - Title: The Lighthouse Keeper's Almanac
+    Format: 0
+    Author: Mira Solberg
+    Subject: Science
+    Tag: New Release
+    Abstract: Tides, storms and the stars, as logged by three generations of lighthouse keepers.
+    ShelfLocation: SCI
+    Tier: 0
+    BaseValue: 28
+    Sellable: 1
+    GoodCopies: 0
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: Quiet Machines
+    Format: 0
+    Author: Theo Abernathy
+    Subject: Science
+    Tag: New Release, Best Seller
+    Abstract: How clocks, looms and music boxes taught us to build computers.
+    ShelfLocation: SCI
+    Tier: 0
+    BaseValue: 32
+    Sellable: 1
+    GoodCopies: 0
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: The Salt Road
+    Format: 0
+    Author: Amina Yusuf
+    Subject: History
+    Tag: New Release
+    Abstract: The traders, camels and cities of the great desert salt routes.
+    ShelfLocation: HIS
+    Tier: 0
+    BaseValue: 26
+    Sellable: 1
+    GoodCopies: 0
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: Queens of the Riverlands
+    Format: 0
+    Author: Elspeth Carrow
+    Subject: History
+    Tag: New Release, Best Seller
+    Abstract: Five forgotten rulers who held river kingdoms together.
+    ShelfLocation: HIS
+    Tier: 0
+    BaseValue: 30
+    Sellable: 1
+    GoodCopies: 0
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: A Year of Small Revolutions
+    Format: 0
+    Author: Jonas Petrov
+    Subject: History
+    Tag: New Release
+    Abstract: Twelve months, twelve towns, and the ordinary people who changed them.
+    ShelfLocation: HIS
+    Tier: 0
+    BaseValue: 24
+    Sellable: 1
+    GoodCopies: 0
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: Patterns in the Rain
+    Format: 0
+    Author: "Luc\xEDa Ortega"
+    Subject: Math
+    Tag: New Release
+    Abstract: Fractals, ripples and the hidden maths of weather.
+    ShelfLocation: MATH
+    Tier: 0
+    BaseValue: 27
+    Sellable: 1
+    GoodCopies: 0
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: The Joy of Zero
+    Format: 0
+    Author: Raymond Achebe
+    Subject: Math
+    Tag: New Release, Best Seller
+    Abstract: How nothing became the most useful number in the world.
+    ShelfLocation: MATH
+    Tier: 0
+    BaseValue: 29
+    Sellable: 1
+    GoodCopies: 0
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: Kind Arguments
+    Format: 0
+    Author: Hana Kobayashi
+    Subject: Philosophy
+    Tag: New Release
+    Abstract: How to disagree well, from ancient debates to the dinner table.
+    ShelfLocation: PHI
+    Tier: 0
+    BaseValue: 25
+    Sellable: 1
+    GoodCopies: 0
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: The Weight of a Feather
+    Format: 0
+    Author: Samuel Okoro
+    Subject: Philosophy
+    Tag: New Release, Best Seller
+    Abstract: Short essays on what really matters, and why small things count.
+    ShelfLocation: PHI
+    Tier: 0
+    BaseValue: 31
+    Sellable: 1
+    GoodCopies: 0
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: Letters to a Young Librarian
+    Format: 0
+    Author: Edith Marlowe
+    Subject: Philosophy
+    Tag: New Release
+    Abstract: A retired librarian's warm advice on books, people and patience.
+    ShelfLocation: PHI
+    Tier: 0
+    BaseValue: 23
+    Sellable: 1
+    GoodCopies: 0
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: Maps of Imaginary Islands
+    Format: 0
+    Author: Oskar Lind
+    Subject: History
+    Tag: New Release
+    Abstract: Every island that sailors swore was real, and the maps that drew them.
+    ShelfLocation: HIS
+    Tier: 0
+    BaseValue: 28
+    Sellable: 1
+    GoodCopies: 0
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: Counting the Stars
+    Format: 0
+    Author: Priyanka Rao
+    Subject: Math
+    Tag: New Release
+    Abstract: 'From shepherds to satellites: the numbers behind the night sky.'
+    ShelfLocation: MATH
+    Tier: 0
+    BaseValue: 26
+    Sellable: 1
+    GoodCopies: 0
+    WornCopies: 0
+    DamagedCopies: 0
