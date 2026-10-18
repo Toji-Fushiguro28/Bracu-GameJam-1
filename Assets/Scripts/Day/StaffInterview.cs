@@ -34,8 +34,13 @@ public class StaffInterview : MonoBehaviour
     public static bool Ending;
     public static int EndingDays, EndingMembers, EndingReputation;
     public static List<string> EndingStaff = new List<string>();
-    /// <summary>Loaded on top of the library (morning interviews and/or the ending).</summary>
-    bool Overlay => Morning || Ending;
+    /// <summary>Loaded on top of the library (morning interviews and/or the ending). Only when the library is
+    /// actually there: on its own (the new-game intro) this scene is always the Dean's interview.</summary>
+    bool Overlay => (Morning || Ending) && GameManager.Instance != null && Finished != null;
+
+    // Statics survive between plays in the editor (and a failed load): always start clean.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStatics() { Queue = null; Finished = null; Ending = false; }
 
     public GameManager.StaffRole role = GameManager.StaffRole.Cleaner;
     [Tooltip("New-game intro: Dean Whitmore interviews you first, then you interview the cleaners.")]
@@ -63,6 +68,7 @@ public class StaffInterview : MonoBehaviour
 
     void Start()
     {
+        if (!Overlay) { Queue = null; Ending = false; } // on its own: the new-game intro, nothing left over
         if (Overlay)
         {
             // Loaded on top of the library: move the room well away from it.
