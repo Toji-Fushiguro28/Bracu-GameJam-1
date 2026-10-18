@@ -57,7 +57,7 @@ public class StaffTalk : ClickInteractable
     int lastLine = -1;
     NavMeshAgent agent;
 
-    string Name => role == GameManager.StaffRole.Cleaner ? "Sam" : role == GameManager.StaffRole.Repairer ? "Omar" : "Arthur";
+    string Name => GameManager.StaffPerson[(int)role];
     string[][] Lines => role == GameManager.StaffRole.Cleaner ? Sam : role == GameManager.StaffRole.Repairer ? Omar : Arthur;
 
     protected override string DefaultVerb => "Talk to " + Name;

@@ -12,6 +12,40 @@ public class HUD : MonoBehaviour
     Label pin;
     bool upgradeBannerShown;
 
+    /// <summary>Fades to black and stays there; <paramref name="atBlack"/> runs once it's dark. FadeIn() lifts it.</summary>
+    public static void FadeOut(System.Action atBlack)
+    {
+        if (instance == null || instance.fade == null) { atBlack?.Invoke(); return; }
+        var f = instance.fade;
+        f.pickingMode = PickingMode.Position;
+        f.AddToClassList("on");
+        f.schedule.Execute(() => atBlack?.Invoke()).ExecuteLater(600);
+    }
+
+    /// <summary>Starts the screen black (arriving from another scene), then fades in.</summary>
+    public static void StartBlack()
+    {
+        if (instance == null || instance.fade == null) return;
+        var f = instance.fade;
+        f.style.opacity = 1f; // no fade-to-black flash first
+        f.AddToClassList("on");
+        f.schedule.Execute(() => { f.style.opacity = StyleKeyword.Null; f.RemoveFromClassList("on"); f.pickingMode = PickingMode.Ignore; }).ExecuteLater(300);
+    }
+
+    public static void FadeIn()
+    {
+        if (instance == null || instance.fade == null) return;
+        var f = instance.fade;
+        f.schedule.Execute(() => { f.RemoveFromClassList("on"); f.pickingMode = PickingMode.Ignore; }).ExecuteLater(150);
+    }
+
+    /// <summary>Hides the whole game UI (while another scene, like the interview room, is showing).</summary>
+    public static void SetHidden(bool hidden)
+    {
+        if (instance == null) return;
+        instance.GetComponent<UIDocument>().rootVisualElement.style.display = hidden ? DisplayStyle.None : DisplayStyle.Flex;
+    }
+
     /// <summary>Fades to black, runs <paramref name="atBlack"/>, then fades back in.</summary>
     public static void FadeThen(System.Action atBlack)
     {

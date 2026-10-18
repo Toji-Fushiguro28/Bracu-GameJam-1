@@ -35,8 +35,11 @@ public class DialogueUI : MonoBehaviour
     public bool IsOpen => current != null;
     bool Typing => fullText != null && shownChars < fullText.Length;
 
+    DialogueUI previous; // another scene's box (e.g. the library's, under the interview room)
+
     void Awake()
     {
+        previous = Instance;
         Instance = this;
         voice = gameObject.AddComponent<AudioSource>();
         voice.playOnAwake = false;
@@ -57,7 +60,7 @@ public class DialogueUI : MonoBehaviour
 
     void OnDestroy()
     {
-        if (Instance == this) Instance = null;
+        if (Instance == this) Instance = previous;
         PlayerLock.Unlock(this);
     }
 

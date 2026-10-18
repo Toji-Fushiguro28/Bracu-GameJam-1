@@ -1,0 +1,39 @@
+/* Staff interview: the applicant's notes card (top left) and the hiring page. */
+.resume {
+    position: absolute;
+    left: 28px; top: 28px;
+    width: 340px;
+    padding: 26px 28px 24px 30px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_BookPageLeft01a.png");
+    -unity-background-scale-mode: stretch-to-fill;
+}
+.resume-head { color: var(--ink-soft); font-size: 20px; }
+.resume-name { color: var(--ink); font-size: 34px; margin-bottom: 2px; }
+.resume-role { color: rgb(196, 110, 40); font-size: 21px; margin-bottom: 8px; }
+.resume-bio { color: var(--ink-soft); font-size: 20px; white-space: normal; margin-bottom: 12px; }
+.resume-notes { color: var(--ink); font-size: 24px; white-space: pre; margin-bottom: 10px; }
+.resume-left { color: rgb(196, 110, 40); font-size: 21px; }
+
+.pick-page { justify-content: center; }
+.pick-hint { color: var(--ink-soft); font-size: 21px; white-space: normal; -unity-text-align: middle-center; }
+.pick-row {
+    flex-direction: row;
+    align-items: center;
+    padding: 8px 4px 10px 4px;
+    margin-bottom: 8px;
+    border-bottom-width: 2px;
+    border-bottom-color: rgba(90, 60, 40, 0.25);
+}
+.pick-text { flex-grow: 1; flex-shrink: 1; margin-right: 8px; }
+#pick-name { color: var(--ink); font-size: 26px; }
+#pick-notes { color: var(--ink-soft); font-size: 19px; white-space: pre; }
+
+.skip-intro { position: absolute; right: 24px; top: 20px; font-size: 20px; }
+.fade { position: absolute; left: 0; top: 0; right: 0; bottom: 0; background-color: rgb(0, 0, 0); opacity: 0; transition-property: opacity; transition-duration: 0.6s; }
+.fade.on { opacity: 1; }
+
+/* The End page */
+.ending-page { justify-content: center; align-items: center; }
+.ending-title { font-size: 52px; color: rgb(196, 110, 40); }
+.ending-text { color: var(--ink); font-size: 26px; white-space: normal; -unity-text-align: middle-center; margin-bottom: 14px; }
+.ending-sub { color: var(--ink-soft); font-size: 21px; white-space: normal; -unity-text-align: middle-center; margin-bottom: 24px; }

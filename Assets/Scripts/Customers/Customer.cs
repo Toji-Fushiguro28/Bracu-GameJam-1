@@ -862,7 +862,7 @@ public class Customer : ClickInteractable
     {
         state = State.Reading;
         agent.enabled = false;
-        transform.SetPositionAndRotation(seat.SeatPosition(seatIndex), seat.SeatRotation);
+        transform.SetPositionAndRotation(seat.SitPosition(seatIndex), seat.SeatRotation);
         if (anim) { anim.SetSpeed(0f); anim.SetActivity(CharacterAnimator.Activity.SitRead); }
         timer = Random.Range(readSeconds.x, readSeconds.y);
     }

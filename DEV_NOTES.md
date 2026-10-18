@@ -284,3 +284,45 @@ Small, contained edits. Please check them when merging:
 - The clock only stops for talking, cutscenes and menus (`PlayerLock.FreezesTime`). While you use the PC, a shelf or the repair desk, time keeps running and visitors' patience keeps draining.
 - Staff give one real chat, then a "busy" line for 3.5 game hours (`StaffTalk.TalkCooldownHours`).
 - New members without a book wish stay 60% of the time (`Customer.StayAsMember`): they browse, or queue again to read or buy.
+
+## Opening interview (InterviewScene)
+- When you pick a mode for a fresh game, or start over, the save is deleted and `InterviewScene` loads (`MainMenuUI.introScene`, empty = the old direct start).
+- Dean Whitmore interviews you. Every answer works, and he hands the library over.
+- Then you interview three cleaners (Sam, Finn, Leo), with 3 of 5 questions each. Hiring loads `MainGame`, skips the title screen and starts Day 1.
+- The hire is saved in PlayerPrefs: `Hired_Cleaner`, `HiredPrefab_Cleaner` and `HiredStats_Cleaner` (speed,care,charm,wage).
+- `GameManager.ApplyInterviewHire` puts the hired cleaner on staff for Day 1, with that day's wage already paid, and uses their wage.
+- Speed stars scale the cleaner's walk speed (`CleanerSpeed`). Care and Manner only show in the interview; they have no gameplay effect yet.
+- If you hire Finn or Leo, `StaffManager.cleanerCandidates` spawns that character instead of the scene's Sam. `StaffTalk` uses their name but still Sam's chat lines.
+- "Skip intro" (top right) hires Sam.
+- `StaffInterview.prologue = false` turns the scene into a plain interview for any role (PlayerPrefs `InterviewRole`).
+
+## Hiring by interview
+- The Staff lists (PC Shop and Day Report) show only the Archivist and the Rare Books attendant (`GameManager.StaffOrder`). The cleaner comes from the opening interview.
+- **Interview** books applicants for the next morning (`GameManager.interviews`, which is saved), and a banner tells the player. **Cancel** unbooks. **Let go** still works straight away.
+- On "Open next day":
+  1. The screen fades out and `RunMorningInterviews` loads `InterviewScene` on top of the library. The room is moved 300 m away, and the library's camera and all its UI are hidden.
+  2. Each booked job has 2 applicants. You hire one of them.
+  3. The room fades out and unloads, the day starts, and the screen fades back in.
+- New hires get paid with the normal morning wages.
+- Per-role hire data lives in `GameManager.StaffPerson`, `StaffPrefab`, `StaffSpeed` and `StaffWage`, loaded from PlayerPrefs by `LoadHires`.
+- `StaffManager.staffCandidates` holds the prefabs for Finn, Kai and Clara.
+- Applicants: Cleaner = Sam or Finn, Archivist = Omar or Kai, Rare Books attendant = Arthur or Clara.
+
+## Hiring by interview
+- The Staff lists (PC Shop and Day Report) show only the Archivist and the Rare Books attendant (`GameManager.StaffOrder`). The cleaner comes from the opening interview.
+- **Interview** books applicants for the next morning (`GameManager.interviews`, which is saved), and a banner tells the player. **Cancel** unbooks. **Let go** still works straight away.
+- On "Open next day":
+  1. The screen fades out and `RunMorningInterviews` loads `InterviewScene` on top of the library. The room is moved 300 m away, and the library's camera and all its UI are hidden.
+  2. Each booked job has 2 applicants. You hire one of them.
+  3. The room fades out and unloads, the day starts, and the screen fades back in.
+- New hires get paid with the normal morning wages.
+- Per-role hire data lives in `GameManager.StaffPerson`, `StaffPrefab`, `StaffSpeed` and `StaffWage`, loaded from PlayerPrefs by `LoadHires`.
+- `StaffManager.staffCandidates` holds the prefabs for Finn, Kai and Clara.
+- Applicants: Cleaner = Sam or Finn, Archivist = Omar or Kai, Rare Books attendant = Arthur or Clara.
+
+## Ending (after Day 5)
+- On Day 5's "Open next day", `GameManager.EndingDue` (`day >= EndingDay` and not `endingSeen`) loads the interview room on top of the library.
+- The Dean walks in and sits in the seat you sat in on Day 1, while you take the interviewer's chair.
+- He talks through your real numbers (members, staff names, days, reputation). You answer one question with 3 replies to pick from.
+- Then a **The End** page shows with your stats. **Keep running the library** fades back, and play carries on into Day 6.
+- `endingSeen` is saved, so it only plays once. If interviews were booked for the same morning, they run straight after the farewell.

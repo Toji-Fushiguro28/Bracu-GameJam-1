@@ -93,7 +93,13 @@ public class DayReportUI : MonoBehaviour
         PlayerLock.Unlock(this);
     }
 
-    void StartNextDay() => HUD.FadeThen(DoStartNextDay);
+    void StartNextDay()
+    {
+        var gm = GameManager.Instance;
+        // Applicants first: the interview happens before the library opens.
+        if (gm != null && gm.MorningVisitDue) { HUD.FadeOut(() => gm.RunMorningInterviews(() => { DoStartNextDay(); HUD.FadeIn(); })); return; }
+        HUD.FadeThen(DoStartNextDay);
+    }
 
     void DoStartNextDay()
     {
@@ -204,9 +210,12 @@ public class DayReportUI : MonoBehaviour
         {
             int i = (int)role;
             bool hired = gm.Hired(role), open = gm.StaffUnlocked(role);
-            AddRow(GameManager.StaffNames[i], $"{GameManager.StaffInfo[i]}  Wage {GameManager.StaffWage[i]} / day.",
-                   hired ? "Let go" : open ? $"Hire {GameManager.StaffWage[i]}" : $"Day {GameManager.StaffUnlockDay[i]}",
-                   hired || (open && gm.Coins >= GameManager.StaffWage[i]), () => gm.ToggleStaff(role));
+            bool booked = gm.InterviewBooked(role);
+            AddRow(hired ? $"{GameManager.StaffNames[i]}: {GameManager.StaffPerson[i]}" : GameManager.StaffNames[i],
+                   booked ? "Interview booked: two applicants come in tomorrow morning, before the library opens."
+                          : $"{GameManager.StaffInfo[i]}  Wage about {GameManager.StaffWage[i]} / day.",
+                   hired ? "Let go" : booked ? "Cancel" : open ? "Interview" : $"Day {GameManager.StaffUnlockDay[i]}",
+                   hired || open, () => gm.ToggleStaff(role));
         }
     }
 

@@ -115,7 +115,7 @@ public class StaffWorker : MonoBehaviour
         state = State.AtChair;
         timer = 1f;
         agent.enabled = false;
-        transform.SetPositionAndRotation(chair.SeatPosition(0), chair.SeatRotation);
+        transform.SetPositionAndRotation(chair.SitPosition(0), chair.SeatRotation);
         if (anim) anim.SetSpeed(0f);
         if (role == GameManager.StaffRole.Repairer)
         {

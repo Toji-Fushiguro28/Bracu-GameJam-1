@@ -14,6 +14,9 @@ public class StaffManager : MonoBehaviour
     public GameObject attendantPrefab;
     [Tooltip("Scene character used as the cleaner (hidden until hired).")]
     public GameObject cleaner;
+    [Tooltip("Other people you can hire in interviews (picked by prefab name).")]
+    public GameObject[] staffCandidates;
+    readonly GameObject[] hiredPrefab = new GameObject[3];
 
     [Header("Places")]
     public SeatPoint archiveChair;
@@ -88,8 +91,21 @@ public class StaffManager : MonoBehaviour
     }
 
     GameObject Source(int role) =>
+        hiredPrefab[role] != null ? hiredPrefab[role] : Usual(role);
+
+    GameObject Usual(int role) =>
         role == (int)GameManager.StaffRole.Repairer ? archivistPrefab :
         role == (int)GameManager.StaffRole.RareAttendant ? attendantPrefab : cleaner;
+
+    /// <summary>The interview pick for this role, if it isn't the usual character.</summary>
+    GameObject Chosen(GameManager.StaffRole role)
+    {
+        string want = GameManager.StaffPrefab[(int)role];
+        var usual = Usual((int)role);
+        if (string.IsNullOrEmpty(want) || usual != null && usual.name.Contains(want) || staffCandidates == null) return null;
+        foreach (var p in staffCandidates) if (p != null && p.name.Contains(want)) return p;
+        return null;
+    }
 
     void Update()
     {
@@ -119,7 +135,9 @@ public class StaffManager : MonoBehaviour
     {
         Vector3 pos = NavMesh.SamplePosition(arrivePoint, out var hit, 2f, NavMesh.AllAreas) ? hit.position : arrivePoint;
         GameObject go;
-        if (role == GameManager.StaffRole.Cleaner)
+        hiredPrefab[(int)role] = null;
+        hiredPrefab[(int)role] = Chosen(role);
+        if (role == GameManager.StaffRole.Cleaner && hiredPrefab[(int)role] == null)
         {
             if (cleaner == null) return null;
             go = cleaner;
@@ -129,7 +147,7 @@ public class StaffManager : MonoBehaviour
         }
         else
         {
-            var prefab = role == GameManager.StaffRole.Repairer ? archivistPrefab : attendantPrefab;
+            var prefab = hiredPrefab[(int)role] != null ? hiredPrefab[(int)role] : role == GameManager.StaffRole.Repairer ? archivistPrefab : attendantPrefab;
             if (prefab == null) return null;
             go = Instantiate(prefab, pos, Quaternion.identity);
             go.name = prefab.name + " (Staff)";
@@ -152,6 +170,7 @@ public class StaffManager : MonoBehaviour
         var talk = go.GetComponent<StaffTalk>();
         if (talk == null) talk = go.AddComponent<StaffTalk>();
         talk.role = role;
+        go.GetComponent<NavMeshAgent>().speed = w.walkSpeed * GameManager.StaffSpeed[(int)role];
         go.SetActive(true);
         return w;
     }

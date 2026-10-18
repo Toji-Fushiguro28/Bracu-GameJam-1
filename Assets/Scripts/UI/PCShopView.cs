@@ -97,11 +97,12 @@ public static class PCShopView
             foreach (var role in GameManager.StaffOrder)
             {
                 int i = (int)role;
-                bool hired = gm.Hired(role), open = gm.StaffUnlocked(role);
-                Row(list, GameManager.StaffNames[i] + (hired ? "  (hired)" : ""),
-                    $"{GameManager.StaffInfo[i]}  Wage {GameManager.StaffWage[i]} a day.", null,
-                    hired ? "Let go" : open ? $"Hire {GameManager.StaffWage[i]}" : $"Day {GameManager.StaffUnlockDay[i]}",
-                    hired || (open && gm.Coins >= GameManager.StaffWage[i]),
+                bool hired = gm.Hired(role), open = gm.StaffUnlocked(role), booked = gm.InterviewBooked(role);
+                Row(list, GameManager.StaffNames[i] + (hired ? $"  ({GameManager.StaffPerson[i]})" : ""),
+                    booked ? "Interview booked: two applicants come in tomorrow morning, before the library opens."
+                           : $"{GameManager.StaffInfo[i]}  Wage about {GameManager.StaffWage[i]} a day.", null,
+                    hired ? "Let go" : booked ? "Cancel" : open ? "Interview" : $"Day {GameManager.StaffUnlockDay[i]}",
+                    hired || open,
                     () => gm.ToggleStaff(role), root);
             }
         }

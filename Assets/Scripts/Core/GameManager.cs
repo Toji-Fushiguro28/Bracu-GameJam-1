@@ -55,13 +55,14 @@ public class GameManager : MonoBehaviour
     public static readonly string[] StaffNames = { "Archivist", "Cleaner", "Rare Books attendant" };
     public static readonly string[] StaffInfo =
     {
-        "Omar works at his desk in the Archive. He takes worn and damaged books from the returns and repairs them one by one.",
-        "Sam roams the library tidying cups and open books, putting copies back on their shelves.",
-        "Arthur looks after VIP scholars in Rare Books: he fetches their rare book and checks them in, so you don't have to.",
+        "Works at a desk in the Archive, taking worn and damaged books from the returns and repairing them one by one.",
+        "Roams the library tidying cups and open books, putting copies back on their shelves.",
+        "Looks after VIP scholars in Rare Books: fetches their rare book and checks them in, so you don't have to.",
     };
     /// <summary>Hiring order: Cleaner from day 1, Archivist when the Archive opens, attendant with Rare Books.</summary>
     public static readonly int[] StaffUnlockDay = { ArchiveDay, 1, RareDay };
-    public static readonly StaffRole[] StaffOrder = { StaffRole.Cleaner, StaffRole.Repairer, StaffRole.RareAttendant };
+    /// <summary>Staff you can hire from the PC and the day report (the cleaner is hired in the opening interview).</summary>
+    public static readonly StaffRole[] StaffOrder = { StaffRole.Repairer, StaffRole.RareAttendant };
     public bool StaffUnlocked(StaffRole r) => day >= StaffUnlockDay[(int)r];
     public static readonly int[] StaffWage = { 15, 10, 12 };
     public static readonly string[] UpgradeNames = { "Repair tools", "Restoration kit", "Comfy queue", "Running shoes", "Cozy lamps", "Reading nooks", "Town flyers", "Book bag", "Stamina" };
@@ -231,7 +232,37 @@ public class GameManager : MonoBehaviour
         Reserved?.Invoke();
     }
 
+    // ---------------- Interviews ----------------
+
+    /// <summary>The story ends after this day: the Dean visits before the next morning. Play carries on after.</summary>
+    public const int EndingDay = 5;
+    [NonSerialized] public bool endingSeen;
+    public bool EndingDue => day >= EndingDay && !endingSeen;
+    /// <summary>Something happens in the interview room before the next day (the ending, or applicants).</summary>
+    public bool MorningVisitDue => EndingDue || interviews.Count > 0;
+
+    /// <summary>Roles with applicants coming in tomorrow morning, before the library opens.</summary>
+    [NonSerialized] public List<int> interviews = new List<int>();
+    public bool InterviewBooked(StaffRole r) => interviews.Contains((int)r);
+
+    /// <summary>Hire button: books (or cancels) an interview for tomorrow morning. Let go works straight away.</summary>
     public void ToggleStaff(StaffRole r)
+    {
+        int i = (int)r;
+        if (!staff[i])
+        {
+            if (!StaffUnlocked(r)) return;
+            var hud = FindAnyObjectByType<HUD>();
+            if (interviews.Remove(i)) { if (hud != null) hud.ShowBanner($"Interview for the {StaffNames[i]} cancelled.", 4f); return; }
+            interviews.Add(i);
+            if (hud != null) hud.ShowBanner($"Interview booked! Two {StaffNames[i]} applicants will come in tomorrow morning, before the library opens.", 6f);
+            return;
+        }
+        ToggleStaffNow(r);
+    }
+
+    /// <summary>Hire or let go right away (hiring pays the first day up front).</summary>
+    public void ToggleStaffNow(StaffRole r)
     {
         if (!staff[(int)r] && !StaffUnlocked(r)) return;
         int i = (int)r;
@@ -329,11 +360,11 @@ public class GameManager : MonoBehaviour
     public bool loadSave = true;
 
     [Serializable] class BookSave { public string title; public int good, worn, damaged; }
-    [Serializable] class SaveData { public int day, coins, reputation, difficulty = 1; public bool[] staff; public int[] upgrades; public List<BookSave> books = new List<BookSave>(); public List<Member> members = new List<Member>(); public List<Reservation> reservations = new List<Reservation>(); public List<RequestLog.Entry> log = new List<RequestLog.Entry>(); }
+    [Serializable] class SaveData { public int day, coins, reputation, difficulty = 1; public bool[] staff; public int[] upgrades; public List<BookSave> books = new List<BookSave>(); public List<Member> members = new List<Member>(); public List<Reservation> reservations = new List<Reservation>(); public List<RequestLog.Entry> log = new List<RequestLog.Entry>(); public List<int> interviews = new List<int>(); public bool endingSeen; }
 
     public void Save()
     {
-        var data = new SaveData { day = day, difficulty = (int)difficulty, coins = Coins, reputation = Reputation, staff = staff, upgrades = upgrades, members = members, reservations = reservations, log = RequestLog.All };
+        var data = new SaveData { day = day, difficulty = (int)difficulty, coins = Coins, reputation = Reputation, staff = staff, upgrades = upgrades, members = members, reservations = reservations, log = RequestLog.All, interviews = interviews, endingSeen = endingSeen };
         foreach (var b in Books) data.books.Add(new BookSave { title = b.Title, good = b.GoodCopies, worn = b.WornCopies, damaged = b.DamagedCopies });
         // Copies out of the shelves (returns, repair table, hands) still belong to the library.
         void Count(BookData b, BookCondition c)
@@ -368,6 +399,8 @@ public class GameManager : MonoBehaviour
         if (data.upgrades != null) Array.Copy(data.upgrades, upgrades, Mathf.Min(data.upgrades.Length, upgrades.Length));
         if (data.members != null) members = data.members;
         if (data.reservations != null) reservations = data.reservations;
+        if (data.interviews != null) interviews = data.interviews;
+        endingSeen = data.endingSeen;
         RequestLog.Reset(data.log);
         foreach (var s in data.books)
         {
@@ -411,7 +444,102 @@ public class GameManager : MonoBehaviour
         // A new game picked on the title screen: its mode and starting coins.
         if (PendingDifficulty.HasValue && !HasSave) { difficulty = PendingDifficulty.Value; Coins = DifficultyStartCoins[(int)difficulty]; }
         PendingDifficulty = null;
+        ApplyInterviewHire();
         ReputationAtStart = Reputation;
+    }
+
+    // ---------------- Who you hired in interviews ----------------
+
+    static readonly string[] DefaultPerson = { "Omar", "Sam", "Arthur" };
+    static readonly string[] DefaultPrefab = { "Scholar_Omar", "Janitor_Sam", "Visitor_Arthur" };
+    static readonly int[] DefaultWage = { 15, 10, 12 };
+    /// <summary>First name of each role's hire (by StaffRole).</summary>
+    public static readonly string[] StaffPerson = (string[])DefaultPerson.Clone();
+    /// <summary>Prefab name part of each hire, e.g. "Writer_Finn".</summary>
+    public static readonly string[] StaffPrefab = (string[])DefaultPrefab.Clone();
+    /// <summary>Walk-speed multiplier from their Speed stars (3 stars = normal).</summary>
+    public static readonly float[] StaffSpeed = { 1f, 1f, 1f };
+
+    /// <summary>Reads each role's interview pick (PlayerPrefs) into the staff tables.</summary>
+    public static void LoadHires()
+    {
+        foreach (StaffRole r in Enum.GetValues(typeof(StaffRole)))
+        {
+            int i = (int)r;
+            var parts = PlayerPrefs.GetString("HiredStats_" + r, "").Split(',');
+            bool ok = parts.Length == 4 && int.TryParse(parts[0], out int speed) & int.TryParse(parts[3], out int wage);
+            StaffSpeed[i] = ok ? 0.7f + 0.1f * int.Parse(parts[0]) : 1f;
+            StaffWage[i] = ok ? int.Parse(parts[3]) : DefaultWage[i];
+            StaffPerson[i] = ok ? PlayerPrefs.GetString("Hired_" + r, DefaultPerson[i]).Split(' ')[0] : DefaultPerson[i];
+            StaffPrefab[i] = ok ? PlayerPrefs.GetString("HiredPrefab_" + r, DefaultPrefab[i]) : DefaultPrefab[i];
+        }
+    }
+
+    void ApplyInterviewHire()
+    {
+        LoadHires();
+        // Fresh from the interview: they start on Day 1, and the Dean paid that first day.
+        if (PlayerPrefs.GetInt("InterviewNewHire", 0) == 1 && !HasSave)
+        {
+            staff[(int)StaffRole.Cleaner] = true;
+            wagePaidFor[(int)StaffRole.Cleaner] = day;
+        }
+        PlayerPrefs.DeleteKey("InterviewNewHire");
+    }
+
+    /// <summary>Before the next day opens: the booked interviews (in their own room, faded in and out),
+    /// then the chosen people join the staff. Their first wage is paid with the morning wages.</summary>
+    public void RunMorningInterviews(Action then) => StartCoroutine(MorningInterviews(then));
+
+    System.Collections.IEnumerator MorningInterviews(Action then)
+    {
+        var roles = new List<StaffRole>();
+        foreach (int i in interviews) if (!staff[i]) roles.Add((StaffRole)i);
+        interviews.Clear();
+        bool ending = EndingDue;
+        if (roles.Count == 0 && !ending) { then?.Invoke(); yield break; }
+        if (ending)
+        {
+            // What the Dean will talk about.
+            var names = new List<string>();
+            foreach (StaffRole r in Enum.GetValues(typeof(StaffRole))) if (staff[(int)r]) names.Add(StaffPerson[(int)r]);
+            StaffInterview.Ending = true;
+            StaffInterview.EndingDays = day;
+            StaffInterview.EndingMembers = members.Count;
+            StaffInterview.EndingReputation = Reputation;
+            StaffInterview.EndingStaff = names;
+        }
+
+        PlayerLock.Lock(this);
+        List<StaffRole> hired = null;
+        StaffInterview.Queue = roles;
+        StaffInterview.Finished = h => hired = h;
+        yield return UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(StaffInterview.SceneName, UnityEngine.SceneManagement.LoadSceneMode.Additive);
+        // The interview room has its own camera, UI and dialogue box.
+        var cam = Camera.main != null && Camera.main.gameObject.scene == gameObject.scene ? Camera.main.gameObject : null;
+        if (cam != null) cam.SetActive(false);
+        // Hide every library UI (HUD, notebook, labels) while the interview room is up.
+        var docs = new List<UnityEngine.UIElements.UIDocument>();
+        foreach (var d in FindObjectsByType<UnityEngine.UIElements.UIDocument>())
+            if (d.gameObject.scene == gameObject.scene && d.rootVisualElement != null && d.rootVisualElement.style.display != UnityEngine.UIElements.DisplayStyle.None)
+            {
+                docs.Add(d);
+                d.rootVisualElement.style.display = UnityEngine.UIElements.DisplayStyle.None;
+            }
+        while (hired == null) yield return null;
+
+        foreach (var d in docs) if (d != null) d.rootVisualElement.style.display = UnityEngine.UIElements.StyleKeyword.Null; // still black: the HUD fade stays on
+        if (cam != null) cam.SetActive(true);
+        yield return UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync(StaffInterview.SceneName);
+        StaffInterview.Queue = null;
+        if (ending) endingSeen = true;
+        StaffInterview.Ending = false;
+        LoadHires();
+        foreach (var r in hired) staff[(int)r] = true;
+        PlayerLock.Unlock(this);
+        then?.Invoke();
+        var hud = FindAnyObjectByType<HUD>();
+        if (hud != null && hired.Count > 0) hud.ShowBanner($"{string.Join(" and ", hired.ConvertAll(r => StaffPerson[(int)r]))} started work today!", 5f);
     }
 
     // Where the librarian starts the day (their spot in the scene).

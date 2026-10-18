@@ -16,6 +16,8 @@ public class MainMenuUI : MonoBehaviour
     public static bool Active => Instance != null && Instance.showing;
     /// <summary>Set before reloading for a new game, so it starts straight away.</summary>
     public static bool SkipOnce;
+    [Tooltip("New games start with this intro scene (the Dean's interview). Empty = straight into Day 1.")]
+    public string introScene = "InterviewScene";
 
     public string gameTitle = "The Whitmore Library";
     public string subtitle = "a cozy library tale";
@@ -49,7 +51,7 @@ public class MainMenuUI : MonoBehaviour
         ("Sold out?", "If nobody has the book, tell them it's sold out. They'll reserve it.\n\nOrder it on the computer (Shop): normal arrives tomorrow, express in 2 hours. Collect it from the book cart and hand it over when they come back.\n\nSome need it today: they say when they'll be back, so order express! Others are happy with tomorrow.\n\nNew members may ask you to order a book. It gets a gold Requested tag in the Shop."),
         ("Cards & readers", "Visitors who want a library card tell you their name, birthday and which rooms they need. On the computer (Members), type their name, pick the birthday and choose the access.\n\nChat with seated readers: point them to the right shelf for a tip."),
         ("Repairs & rooms", "Worn or damaged copies go to the repair desk: glue, press and fit a new cover for a perfect restoration. When it's done, the desk glows: click it to pick the book up and put it back on its shelf.\n\nThe Archive opens on Day 2 and Rare Books on Day 3. VIP scholars need a Rare card."),
-        ("Staff", "Hire help on the computer (Shop > Staff). Wages are paid each morning.\n\nSam the cleaner (Day 1) tidies cups and open books.\nOmar the archivist (Day 2) repairs worn books from the returns one at a time, then shelves them.\nArthur (Day 3) looks after VIP scholars in Rare Books.\n\nSay hello now and then: click them for a chat."),
+        ("Staff", "Your cleaner is hired in the opening interview with the Dean.\n\nNeed more help? Press Interview on the computer (Shop > Staff) or in the Day Report. Two applicants come in the next morning, before the library opens: ask each three questions, then hire one. Wages are paid each morning.\n\nThe archivist (Day 2) repairs worn books. The Rare Books attendant (Day 3) looks after VIP scholars.\n\nSay hello now and then: click them for a chat."),
         ("End of the day", "At 6 pm the library closes. Tidy cups and open books, shelve the returns, then click the front ropes to lock up.\n\nIn the Day Report you can order books, hire staff and buy upgrades. The game saves every morning.\n\nThe Audit Log on the computer (and the Log tab in the Day Report) lists every request, your notes and how it ended, day by day."),
     };
     Label saveLabel;
@@ -137,7 +139,7 @@ public class MainMenuUI : MonoBehaviour
         GameAudio.HookClicks(doc);
 
         cancel?.Enable();
-        if (SkipOnce) { SkipOnce = false; root.AddToClassList("hidden"); BeginPlay(false); return; }
+        if (SkipOnce) { SkipOnce = false; root.AddToClassList("hidden"); BeginPlay(false); HUD.StartBlack(); return; }
 
         showing = true;
         PlayerLock.Lock(this);
@@ -215,7 +217,7 @@ public class MainMenuUI : MonoBehaviour
         "Left click", "Left Shift", "Shift", "WASD", "Esc", "Standard mode", "front ropes", "Day Report", "book cart",
         "Add to note", "To Shelve", "Audit Log", "Log tab", "notebook", "Reservations",
         "repair desk", "Rare Books", "Rare card", "VIP scholars", "Archive", "computer", "sold out", "reserve", "hint", "express", "today", "Requested",
-        "tips", "tip", "stamina", "Shop", "Members", "Books", "Staff", "Sam", "Omar", "Arthur", "Day 1", "Day 2", "Day 3", "6 pm",
+        "tips", "tip", "stamina", "Shop", "Members", "Books", "Staff", "Interview", "Day 1", "Day 2", "Day 3", "6 pm",
     };
     int lastHowtoPage;
 
@@ -263,8 +265,17 @@ public class MainMenuUI : MonoBehaviour
             Show(confirm);
             return;
         }
+        if (!string.IsNullOrEmpty(introScene)) { GameManager.PendingDifficulty = mode; GoToIntro(); return; }
         GameManager.Instance?.StartFresh(mode);
         Play();
+    }
+
+    /// <summary>A brand-new library: meet the Dean and hire a cleaner first, then Day 1.</summary>
+    void GoToIntro()
+    {
+        GameManager.Instance?.DeleteSave();
+        PlayerLock.Reset();
+        UnityEngine.SceneManagement.SceneManager.LoadScene(introScene);
     }
 
     void NewGame()
@@ -272,6 +283,7 @@ public class MainMenuUI : MonoBehaviour
         // Fresh library from Day 1: wipe the save and reload, skipping the title screen.
         SkipOnce = true;
         GameManager.PendingDifficulty = chosenMode;
+        if (!string.IsNullOrEmpty(introScene)) { GoToIntro(); return; }
         GameManager.Instance?.NewGame();
     }
 
