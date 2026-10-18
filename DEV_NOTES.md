@@ -371,3 +371,10 @@ Small, contained edits. Please check them when merging:
 - Before the intro starts, a name box asks your name (`name-entry` in `InterviewUI.uxml`, max 16 characters, OK or Enter).
 - Saved as PlayerPrefs `PlayerName` and read with `GameManager.PlayerName` (default "Librarian").
 - It replaces "You" as your speaker name in all interview dialogue, and the Dean uses it in his lines and in the ending.
+
+## More visitors (15 recoloured NPCs)
+- `Assets/Prefabs/Characters/Variants/PF_NPC_*` are Prefab Variants of the original NPCs. Each one only swaps in a recoloured mesh (`Assets/Art/Models/Characters/Variants/SM_NPC_*`).
+- The recolouring moves palette UVs, so they use the same texture and material as the originals.
+- They're in `CustomerSpawner.customerPrefabs` (MainGame, 28 visitors) and have member profiles in `Members.Profiles`.
+- Visitors whose prefab name contains "Professor" (Victor, Ingrid) come as VIP scholars.
+- A review row of all 15 is in `Library Management.unity` (`NPC_Variants_Review`).

@@ -1,0 +1,63 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &1686148821130635276
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 683675615195364427, guid: 6b39dcd1f31d18b4f97ba542f5b8d9ed, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 4300000, guid: 73337de63be58214a994027a0de0c950, type: 2}
+    - target: {fileID: 3650815648369871127, guid: 6b39dcd1f31d18b4f97ba542f5b8d9ed, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 1.3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3650815648369871127, guid: 6b39dcd1f31d18b4f97ba542f5b8d9ed, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3650815648369871127, guid: 6b39dcd1f31d18b4f97ba542f5b8d9ed, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 1.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 3650815648369871127, guid: 6b39dcd1f31d18b4f97ba542f5b8d9ed, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: -0.00000004371139
+      objectReference: {fileID: 0}
+    - target: {fileID: 3650815648369871127, guid: 6b39dcd1f31d18b4f97ba542f5b8d9ed, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3650815648369871127, guid: 6b39dcd1f31d18b4f97ba542f5b8d9ed, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3650815648369871127, guid: 6b39dcd1f31d18b4f97ba542f5b8d9ed, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3650815648369871127, guid: 6b39dcd1f31d18b4f97ba542f5b8d9ed, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3650815648369871127, guid: 6b39dcd1f31d18b4f97ba542f5b8d9ed, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3650815648369871127, guid: 6b39dcd1f31d18b4f97ba542f5b8d9ed, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4170788254640395181, guid: 6b39dcd1f31d18b4f97ba542f5b8d9ed, type: 3}
+      propertyPath: m_Name
+      value: PF_NPC_Student_Clara_V07
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 6b39dcd1f31d18b4f97ba542f5b8d9ed, type: 3}

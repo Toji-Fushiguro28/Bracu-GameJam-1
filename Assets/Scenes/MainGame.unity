@@ -6938,7 +6938,7 @@ Transform:
   m_GameObject: {fileID: 360388545}
   serializedVersion: 2
   m_LocalRotation: {x: -0.2546322, y: 0.29631096, z: -0.082288325, w: -0.9168375}
-  m_LocalPosition: {x: 33.991154, y: 16.138319, z: -14.097127}
+  m_LocalPosition: {x: 33.99066, y: 16.138319, z: -14.097485}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -11523,6 +11523,21 @@ MonoBehaviour:
   - {fileID: 68159219552847585, guid: fb6db40dd9398f145b8b5aa3e9a54bdd, type: 3}
   - {fileID: 7853304992041478549, guid: 1df4e83b9be0b134f90d661390d53566, type: 3}
   - {fileID: 7382478910551104893, guid: b111b73abe17c9a408b56081fc5c058a, type: 3}
+  - {fileID: 1380711317205160750, guid: cc671554e0e2c9f47ae50df863ddc818, type: 3}
+  - {fileID: 2825193933190333900, guid: 8a6678fd1ecc1654fadfee28974948a0, type: 3}
+  - {fileID: 4776542966526532109, guid: 951a7dabc0c793145bbd04db5d20957a, type: 3}
+  - {fileID: 7348313090465165828, guid: 4c7cb9c4948e95e4b91c331fb8577608, type: 3}
+  - {fileID: 6067384564490020820, guid: dae063df50b9c7544b19f21226377054, type: 3}
+  - {fileID: 1820408567117934387, guid: 2d3e5e1a6ed2de34db55efaf2cdc3360, type: 3}
+  - {fileID: 3352924126768085921, guid: 7576247da7a7b7a4a81cad921b0c79ef, type: 3}
+  - {fileID: 7011946931607505250, guid: b913c39ad797be64ba5f5931996d5794, type: 3}
+  - {fileID: 2210805825003511082, guid: d7518b6e4af57ca49a87a1063818ab1d, type: 3}
+  - {fileID: 2918588781510997545, guid: bfade66edec0c8545b8267dff0cf32cf, type: 3}
+  - {fileID: 3607134878575062803, guid: d35e2329fae2f904398c80084ee752cc, type: 3}
+  - {fileID: 6819963128300865190, guid: d6bd68d8e6ab5d1439817cc359d392d9, type: 3}
+  - {fileID: 1581169799712850571, guid: aa593435017e49f48877e1abfa2dfde6, type: 3}
+  - {fileID: 5849814231395071068, guid: ca61dbbd81be8c7418571ff63afbf43a, type: 3}
+  - {fileID: 3893405954081694575, guid: 7d32e81c391c0d5409106a6563c95ce7, type: 3}
   firstDelay: 4
   interval: {x: 15, y: 26}
   maxCustomers: 4
@@ -17904,7 +17919,7 @@ Transform:
   m_GameObject: {fileID: 961739749}
   serializedVersion: 2
   m_LocalRotation: {x: -0.2546322, y: 0.29631096, z: -0.082288325, w: -0.9168375}
-  m_LocalPosition: {x: 33.991154, y: 16.138319, z: -14.097127}
+  m_LocalPosition: {x: 33.99066, y: 16.138319, z: -14.097485}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -31057,7 +31072,7 @@ MonoBehaviour:
   openHour: 9
   closingHour: 17.5
   closeHour: 18
-  realMinutesPerDay: 0.11
+  realMinutesPerDay: 4
   closingBell: {fileID: 8300000, guid: ba96316a9f453e747b55ec6288842105, type: 3}
   loadSave: 1
 --- !u!4 &1670038177
@@ -31149,6 +31164,7 @@ MonoBehaviour:
   rareChair: {fileID: 1799341479}
   arrivePoint: {x: 20, y: 0, z: 1.6}
   typingClip: {fileID: 8300000, guid: 023db57c226014249a71c26109f4c914, type: 3}
+  reportDepth: 0.5
 --- !u!114 &1670038181
 MonoBehaviour:
   m_ObjectHideFlags: 0
