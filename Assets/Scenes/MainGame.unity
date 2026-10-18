@@ -11545,6 +11545,7 @@ MonoBehaviour:
   readerChance: 0.3
   returnerChance: 0.08
   signUpChance: 0.15
+  seekerChance: 0.12
   vipChance: 0.08
   busyness:
     serializedVersion: 2
