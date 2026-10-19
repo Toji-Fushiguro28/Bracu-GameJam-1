@@ -35,6 +35,8 @@ public class StaffWorker : MonoBehaviour
     public int earnedToday;
     [Tooltip("Coins the library earns for each book the archivist repairs / puts back on a shelf.")]
     public int perRepair = 5, perShelved = 2;
+    [Tooltip("Most a single repair adds on top of perRepair (40% of the book's value, up to this).")]
+    public int maxRepairBonus = 20;
     /// <summary>Stuck on a problem (see StaffHelp): no work until the librarian helps.</summary>
     public bool OnHold { get; private set; }
     /// <summary>Closing time: standing by to tell the librarian about the day.</summary>
@@ -319,7 +321,8 @@ public class StaffWorker : MonoBehaviour
         var desk = RepairDesk.Instance;
         if (desk == null || !desk.TakeDone(out carried, out carriedCondition)) { GoToChair(); return; }
         repairedToday++;
-        earnedToday += perRepair + Mathf.RoundToInt(carried.BaseValue * 0.4f); // a mended book is worth a fair bit
+        // A mended book is worth a fair bit, but capped: rare books (140-500) paid up to 200 a repair.
+        earnedToday += perRepair + Mathf.Min(maxRepairBonus, Mathf.RoundToInt(carried.BaseValue * 0.4f));
         if (anim) { anim.PlayReachShelf(); anim.SetCarrying(true); }
         GoToShelfFor(carried);
     }

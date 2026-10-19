@@ -36,7 +36,7 @@ public class StaffInterview : MonoBehaviour
     bool Morning => Queue != null && Queue.Count > 0;
     /// <summary>The story's ending: the Dean comes back to thank you (set by the library, with its numbers).</summary>
     public static bool Ending;
-    public static int EndingDays, EndingMembers, EndingReputation;
+    public static int EndingDays, EndingMembers, EndingReputation, EndingGoal, EndingTier = 2;
     public static List<string> EndingStaff = new List<string>();
     /// <summary>Loaded on top of the library (morning interviews and/or the ending). Only when the library is
     /// actually there: on its own (the new-game intro) this scene is always the Dean's interview.</summary>
@@ -317,6 +317,9 @@ public class StaffInterview : MonoBehaviour
         yield return Say(Dean, "It's yours to look after now. Don't worry, I'll still pop in as a visitor. I'll even pay my fees.");
         yield return Say(Dean, "When it gets busy, hire some help on the computer. Applicants come in the next morning, before the doors open, and you'll interview them right here.");
         yield return Say(Dean, "Ask good questions, and talk about pay kindly. People remember how they were treated.");
+        int goal = GameManager.Instance != null ? GameManager.Instance.ReputationGoal : 60;
+        yield return Say(Dean, $"One more thing. The university board wants to see the town loves this place again. Get the library's <color=#D67840>reputation to {goal}</color> by the end of <color=#D67840>Day {GameManager.EndingDay}</color>, and they'll stop asking questions.");
+        yield return Say(Dean, "Serve people well and they'll talk. Hand them the wrong book, or let them walk out, and they'll talk too.");
         yield return Say(Dean, "Now go on. The library opens at nine, and the books won't shelve themselves.");
     }
 
@@ -341,6 +344,13 @@ public class StaffInterview : MonoBehaviour
         yield return Say(Dean, "I've been coming in every day, you know. Sitting in the corner with a book I wasn't really reading. Watching.");
         yield return Say(Dean, $"<color=#D67840>{EndingMembers} members</color> carry a Whitmore card now. When I left, it was eleven, and nine of them were my bridge club.");
         yield return Say(Dean, staffLine);
+        // How the week went against the goal he set.
+        if (EndingTier >= 2)
+            yield return Say(Dean, $"And the reputation! <color=#D67840>{EndingReputation}</color>. I asked for {EndingGoal}. The board read the number twice, then signed the papers. The Whitmore is yours, for good.");
+        else if (EndingTier == 1)
+            yield return Say(Dean, $"Reputation <color=#D67840>{EndingReputation}</color>. Not quite the {EndingGoal} I asked for, but close. The board wants one more season to be sure. I told them they'd be fools to wait.");
+        else
+            yield return Say(Dean, $"I won't pretend. Reputation <color=#D67840>{EndingReputation}</color>, and I asked for {EndingGoal}. The board is worried. I've asked them for one more season. Show them what I see in you.");
         yield return Ask("So tell me honestly. How has it been?",
             ("I couldn't have done it without your library.", "Nonsense. A library is only bricks and paper until someone opens the doors. You opened them."),
             ("Honestly? Some days were chaos.", "Ha! The good days always are. A quiet library is a lonely one."),
@@ -348,14 +358,15 @@ public class StaffInterview : MonoBehaviour
         yield return Say(Dean, "My Margaret used to say a library is a house where stories wait for someone to come home.");
         yield return Say(Dean, "For years, hardly anybody came home. I kept the lamps lit anyway. Forty-one years, I kept them lit.");
         yield return Say(Dean, "I was so afraid that when I stepped down, they'd finally go out.");
-        yield return Say(Dean, $"They didn't. Because of you, {Me}.");
+        yield return Say(Dean, EndingTier >= 1 ? $"They didn't. Because of you, {Me}." : $"They're flickering, {Me}. But they haven't gone out. Keep them lit.");
         yield return Say(Me, "...Thank you, Dean.");
         yield return Say(Dean, "Edgar. Please. Now, enough of an old man's sniffling. The doors open at nine, and someone has to keep the lamps lit.");
 
         // The End page.
         Play(hireSound);
         var stats = ending.Q<Label>("ending-stats");
-        if (stats != null) stats.text = $"{EndingDays} days at the Whitmore\n{EndingMembers} members\nReputation {EndingReputation}" +
+        if (stats != null) stats.text = $"{EndingDays} days at the Whitmore\n{EndingMembers} members\nReputation {EndingReputation} of {EndingGoal}" +
+                                         (EndingTier >= 2 ? " - goal reached!" : EndingTier == 1 ? " - so close" : " - goal missed") +
                                          (EndingStaff.Count > 0 ? $"\nStaff: {string.Join(", ", EndingStaff)}" : "");
         bool go = false;
         var cont = ending.Q<Button>("ending-continue");

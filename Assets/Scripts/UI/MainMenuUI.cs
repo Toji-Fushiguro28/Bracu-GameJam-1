@@ -34,6 +34,7 @@ public class MainMenuUI : MonoBehaviour
         "Tip: sold out? Reserve it, then order it from the PC Shop.",
         "Tip: chat with readers - point them to the right shelf for a bigger tip.",
         "Tip: popular books get asked for most. Keep them in stock!",
+        "Tip: a visitor who walks out costs 3 reputation, and a regular won't come back tomorrow.",
         "Tip: the Archive opens on Day 2 and Rare Books on Day 3.",
         "Tip: VIP scholars need a Rare Books card before they can read.",
     };
@@ -44,8 +45,8 @@ public class MainMenuUI : MonoBehaviour
 
     static readonly (string title, string text)[] HowTo =
     {
-        ("Welcome!", "Run the library: find books, serve visitors, keep it tidy.\n\nMove: WASD    Run: Shift\nInteract: Left click    Menu: Esc\n\nThe clock stops while you're talking."),
-        ("The counter", "Click visitors at the counter to talk. The icon by their words shows what they want.\n\nHappy visitors tip more. A hint helps, but shrinks the tip."),
+        ("Welcome!", "Run the library: find books, serve visitors, keep it tidy.\n\nThe Dean's goal: get the reputation (the star at the bottom) to his target by the end of Day 5.\n\nMove: WASD    Run: Shift\nInteract: Left click    Menu: Esc\n\nThe clock stops while you're talking."),
+        ("The counter", "Click visitors at the counter to talk. The icon by their words shows what they want.\n\nHappy visitors tip more. A hint helps, but shrinks the tip.\n\nWrong books and walk-outs cost reputation, and regulars you let down stay away the next day. Visitors get less patient after Day 2."),
         ("Finding books", "Look books up on the computer: search titles, authors or tags, and read the abstracts.\n\nTake a copy from its shelf and hand it over."),
         ("Your notebook", "Every request goes in your notebook. On the computer, Add to note writes a book and its shelf down."),
         ("Ordering books", "Sold out, or a book you don't have? Order it in the computer Shop and hand it over when it arrives.\n\nPopular books get asked for most, so keep them in stock."),

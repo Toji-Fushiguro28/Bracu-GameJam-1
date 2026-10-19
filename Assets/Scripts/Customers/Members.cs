@@ -12,6 +12,8 @@ public class Member
     public AccessLevel access;
     public float satisfaction = 3f;
     public int visits, spent;
+    /// <summary>Let down (left angry, lied to, or never got their order): they stay away until after this day.</summary>
+    public int awayUntil;
     public int Hearts => Mathf.Clamp(Mathf.RoundToInt(satisfaction), 0, 5);
 }
 
@@ -79,6 +81,15 @@ public static class Members
     public static float TipFactor(Member m) =>
         (m == null ? 0.6f : 0.6f + 0.16f * m.satisfaction) * (GameManager.Instance != null ? GameManager.Instance.TipMultiplier : 1f);
     public static float PatienceFactor(Member m) => m == null ? 1f : 1f + 0.04f * m.satisfaction;
+
+    /// <summary>A regular you let down skips tomorrow.</summary>
+    public static void LetDown(Member m)
+    {
+        var gm = GameManager.Instance;
+        if (m != null && gm != null) m.awayUntil = gm.day + 1;
+    }
+
+    public static bool Away(Member m) => m != null && GameManager.Instance != null && m.awayUntil >= GameManager.Instance.day;
 
     public static void Satisfy(Member m, float amount, int spent = 0)
     {

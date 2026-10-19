@@ -36,6 +36,13 @@ public class Customer : ClickInteractable
     [Tooltip("Browsers who sit and read their pick here (the rest take it home).")]
     [Range(0f, 1f)] public float readHereChance = 0.75f;
 
+    // VIP scholars still pay the most, but not so much that money stops mattering once Rare Books opens.
+    // (A rare read now pays about 43-77 with tip, a normal read about 13. It used to be 73-198.)
+    const int VipCardFee = 50, VipCardTip = 10;     // normal cards: 10 + 6
+    const float VipFeeMultiplier = 1.5f;            // on top of the reading fee
+    const float RareShare = 0.06f; const int RareMinFee = 15;
+    const int MaxChatBonus = 10;                    // "right shelf" bonus, was 10% of the book's value (up to 50 on rare books)
+
     NavMeshAgent agent;
     CharacterAnimator anim;
     State state;
@@ -518,7 +525,8 @@ public class Customer : ClickInteractable
                  : "Wonderful! I'll pick it up tomorrow. Don't forget to order it!" });
         d.lines.Add(new DialogueAsset.Line { id = "nohave", next = "end",
             text = soldOut ? "That's a shame. Thanks for checking!" : "Really? I'm sure you do... never mind." });
-        bool ordered = pickup && reservation != null && GM.OnOrder(request.Target) > 0;
+        // Ordered (still on its way, or already sitting on the delivery cart): not the player's fault it isn't handed over yet.
+        bool ordered = pickup && reservation != null && (reservation.ordered || GM.OnOrder(request.Target) > 0);
         d.lines.Add(new DialogueAsset.Line { id = "notyet", next = "end",
             text = ordered ? "Still on its way? I'll pop back tomorrow, then." : "You never ordered it, did you? How disappointing." });
         for (int i = 0; i < (carry != null ? carry.Count : 0); i++) d.lines.Add(new DialogueAsset.Line { id = "give" + i, text = "Let me see...", next = "end" });
@@ -544,12 +552,12 @@ public class Customer : ClickInteractable
                     GM.reservations.RemoveAll(r => r.key == profileKey); // nothing left waiting for them
                     RequestLog.Finish(this, soldOut ? "Sold out, sent away" : "Told we didn't have it (we did)");
                     if (soldOut) { Say("Maybe next time!", 2.5f); Leave(); }
-                    else { GM.AddReputation(-1); Members.Satisfy(Membership, -0.5f); Say("Hmph. I'll try elsewhere.", 2.5f); Leave(); }
+                    else { GM.AddReputation(-2); Members.Satisfy(Membership, -0.5f); Members.LetDown(Membership); Say("Hmph. I'll try elsewhere.", 2.5f); Leave(); }
                     break;
                 case "notyet":
                     RequestLog.Finish(this, ordered ? "Not here yet, back tomorrow" : "Never ordered");
                     if (ordered) { Say(reservation.urgent ? "Not yet? Fine, tomorrow then." : "See you tomorrow!", 2.5f); reservation.day = GM.day + 1; reservation.urgent = false; reservation.queued = false; Leave(); }
-                    else { GM.reservations.Remove(reservation); GM.Today.angry++; GM.AddReputation(-2); Members.Satisfy(Membership, -1f); GameAudio.Play(a => a.angryLeave); Say("I won't reserve here again.", 2.5f); Leave(); }
+                    else { GM.reservations.Remove(reservation); GM.Today.angry++; GM.AddReputation(-3); Members.Satisfy(Membership, -1f); Members.LetDown(Membership); GameAudio.Play(a => a.angryLeave); Say("I won't reserve here again.", 2.5f); Leave(); }
                     break;
                 default:
                     if (outcome != null && outcome.StartsWith("give") && int.TryParse(outcome.Substring(4), out int idx)) TryGive(carry, idx);
@@ -573,6 +581,7 @@ public class Customer : ClickInteractable
             RequestLog.Rejected(this, book);
             Say("Hmm, that's not what I asked for.", 2.5f);
             GameAudio.Play(a => a.wrongBook);
+            GM.AddReputation(-1); // word gets around
             Penalise(wrongBookPenalty);
             return;
         }
@@ -705,7 +714,7 @@ public class Customer : ClickInteractable
         else
         {
             if (reservation != null) GM.reservations.Remove(reservation);
-            GM.Today.angry++; GM.AddReputation(-1); Members.Satisfy(Membership, -0.75f);
+            GM.Today.angry++; GM.AddReputation(-2); Members.Satisfy(Membership, -0.75f); Members.LetDown(Membership);
             GameAudio.Play(a => a.angryLeave);
             RequestLog.Finish(this, "Waited all that time: never ordered");
             Say("I waited all that time for nothing...", 3f);
@@ -778,6 +787,7 @@ public class Customer : ClickInteractable
         var shelves = new List<string>();
         foreach (var b in GM.Books)
         {
+            if (!BookRequest.Available(b)) continue; // no shelves from rooms that are still locked
             string n = ShelfInteractable.NameOf(b.ShelfLocation);
             if (n != shelf && !shelves.Contains(n) && !string.IsNullOrEmpty(n)) shelves.Add(n);
         }
@@ -807,7 +817,7 @@ public class Customer : ClickInteractable
         {
             ui.LineShown -= seen;
             Destroy(d);
-            if (outcome == "right") { chatBonus = Mathf.Max(3, Mathf.RoundToInt(heldBook != null ? heldBook.BaseValue * 0.1f : 3)); Members.Satisfy(Membership, 0.5f); GameAudio.Play(a => a.served, 0.6f); }
+            if (outcome == "right") { chatBonus = Mathf.Clamp(Mathf.RoundToInt(heldBook != null ? heldBook.BaseValue * 0.1f : 3), 3, MaxChatBonus); Members.Satisfy(Membership, 0.5f); GameAudio.Play(a => a.served, 0.6f); }
             else if (outcome == "wrong") { Members.Satisfy(Membership, -0.25f); GameAudio.Play(a => a.wrongBook, 0.6f); }
             else Members.Satisfy(Membership, 0.15f);
         });
@@ -916,7 +926,7 @@ public class Customer : ClickInteractable
         }
         RequestLog.CardAttempt(this, $"Card: {name}, born {dob}, {access} access", null);
         var member = Members.Add(profileKey, p, access);
-        int fee = vip ? 80 : 10, tip = Mathf.RoundToInt((vip ? 20 : 6) * PatienceLeft); // VIP cards: their own room, attendant and all
+        int fee = vip ? VipCardFee : 10, tip = Mathf.RoundToInt((vip ? VipCardTip : 6) * PatienceLeft); // VIP cards: their own room, attendant and all
         Members.Satisfy(member, PatienceLeft > 0.5f ? 0.5f : 0f, fee + tip);
         GM.AddCoins(fee + tip);
         GM.Today.income += fee + tip; GM.Today.tips += tip; GM.Today.served++; GM.Today.signups++;
@@ -1072,10 +1082,10 @@ public class Customer : ClickInteractable
         {
             // Reading fee: cheap shelves pay a big share, precious books a small share of a big value.
             bool rare = BookRequest.IsRare(heldBook), archive = BookRequest.IsArchive(heldBook);
-            float share = rare ? 0.1f : archive ? 0.15f : 0.4f;
-            int minFee = rare ? 20 : archive ? 8 : 4;
-            fee = Mathf.RoundToInt(Mathf.Max(minFee, heldBook.BaseValue * share) * GM.ReadingFeeMultiplier);
-            if (vip) fee *= 2; // VIP scholars pay for the Rare Books room's service
+            float share = rare ? RareShare : archive ? 0.15f : 0.4f;
+            int minFee = rare ? RareMinFee : archive ? 8 : 4;
+            // VIP scholars pay extra for the Rare Books room's service.
+            fee = Mathf.RoundToInt(Mathf.Max(minFee, heldBook.BaseValue * share) * GM.ReadingFeeMultiplier * (vip ? VipFeeMultiplier : 1f));
             tip = Mathf.RoundToInt(fee * 0.6f * PatienceLeft * Members.TipFactor(Membership) * HintTipFactor) + chatBonus;
             Members.Satisfy(Membership, PatienceLeft > 0.5f ? 0.5f : 0.2f, fee + tip);
             GM.Today.booksRead++;
@@ -1163,9 +1173,11 @@ public class Customer : ClickInteractable
     {
         GM.Today.angry++;
         Members.Satisfy(Membership, -1f);
-        GM.AddReputation(-2);
+        GM.AddReputation(-3);
         GameAudio.Play(a => a.angryLeave);
-        Say("Hmph! Forget it.", 2.5f);
+        // Regulars remember: they won't come in tomorrow.
+        Members.LetDown(Membership);
+        Say(Membership != null ? "Hmph! Don't expect me tomorrow." : "Hmph! Forget it.", 2.5f);
         RequestLog.Finish(this, "Left angry");
         Leave();
     }

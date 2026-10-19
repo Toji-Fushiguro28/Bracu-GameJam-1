@@ -60,9 +60,10 @@ Script paths are under `Assets/Scripts/`. After editing code, let Unity recompil
 |---|---|
 | Book values | `Assets/Resources/BookDatabase.asset` → each book's **Base Value**. Everything below is based on it |
 | Sale price and tip | `Customers/Customer.cs` → `Sell()` (price = value, 80% if worn; tip up to 40%) and `StampOut()` (browsers, 15% tip) |
-| Reading fees | `Customers/Customer.cs` → `CheckIn()`. `share` 40% / 15% / 10% and `minFee` 4 / 8 / 20 for hall / Archive / Rare |
+| Reading fees | `Customers/Customer.cs` → `CheckIn()`. `share` 40% / 15% / 6% (`RareShare`) and `minFee` 4 / 8 / 15 (`RareMinFee`) for hall / Archive / Rare. VIPs pay ×`VipFeeMultiplier` (1.5). Tip = 60% of the fee × patience × member tip factor |
+| "Right shelf" chat bonus | `Customers/Customer.cs` → `Chat()`: 10% of the book's value, 3 to `MaxChatBonus` (10) |
 | Tip bonus per hint type | `Customers/BookRequest.cs` → `TipBonus` |
-| Card fee | `Customers/Customer.cs` → `ReceiveCard()` (`fee = vip ? 25 : 10`) |
+| Card fee | `Customers/Customer.cs` → `ReceiveCard()`: normal 10 + up to 6 tip, VIP `VipCardFee` 50 + up to `VipCardTip` 10 |
 | Late fee on returns | `Customers/Customer.cs` → `CheckIn()` (35% chance, 2–5 coins) |
 | Book order price and express | `Core/GameManager.cs` → `OrderPrice()` (60% of value, express ×1.5), `ExpressHours` (2) |
 | Starting coins | `Core/GameManager.cs` → `DifficultyStartCoins` (100 / 50 / 30) |
@@ -87,12 +88,16 @@ All of it is in `Core/GameManager.cs`, in the *Play mode* section:
 |---|---|
 | Upgrade names and descriptions | `Core/GameManager.cs` → `UpgradeNames`, `UpgradeInfo` |
 | Upgrade cost and max level | `Core/GameManager.cs` → `UpgradeCost()` (40 / 80 / 120), `MaxUpgrade` (3) |
+| The Dean's reputation goal | `Core/GameManager.cs` → `ReputationGoals` (Cozy 40 / Standard 60 / Busy 75), checked at the end of `EndingDay` (5). `GoalTier`: reached, close (60%+), missed |
+| Patience by day | `Core/GameManager.cs` → `PatienceDayFactor` (100% Days 1-2, 85% Day 3, 75% after) |
+| Reputation changes | `Customers/Customer.cs`: +1 per served visitor, read or card. Wrong book -1, walked out -3, never ordered -3, "we can't get that" when you could -2, waited for nothing -2 |
+| Regulars staying away | `Customers/Members.cs` → `LetDown()`: a let-down member skips the next day (`awayUntil`, checked in `CustomerSpawner.Pick`) |
 | Day each upgrade unlocks | `Core/GameManager.cs` → `UpgradeUnlockDay` (same order as `UpgradeKind`) |
 | Popular books per day | `Core/GameManager.cs` → `PopularPerDay` (4); how much more they are asked for: `Customers/BookRequest.cs` → `Weighted()` (6x) |
 | What each upgrade does | Search the upgrade name in `GameManager.cs`: `PatienceMultiplier`, `TipMultiplier`, `ReadingFeeMultiplier`, `VisitorMultiplier`, `BagCapacity`, `ApplyUpgrades()` (shoes, repair speed and chance). Stamina: `Player/PlayerMover.cs` → `MaxSeconds`, `Recovery` |
 | Upgrade icons | `Assets/UI Toolkit/PC.uss` → `.upg-0` … `.upg-8` |
 | Staff names, wages, unlock days, order | `Core/GameManager.cs` → `StaffNames`, `StaffInfo`, `StaffWage`, `StaffUnlockDay`, `StaffOrder` |
-| Staff hire fees and upgrade prices | `Core/GameManager.cs` → `StaffHireFee` (usual one-time price: Archive 250, Main hall 70, Rare 650; candidates ± `dPrice`×5%), `StaffUpgradeCosts`; speed per level in `StaffWorkFactor` (+35%) |
+| Staff hire fees and upgrade prices | `Core/GameManager.cs` → `StaffHireFee` (usual one-time price: Archive 250, Main hall 70, Rare 450; candidates ± `dPrice`×5%), `StaffUpgradeCosts`; speed per level in `StaffWorkFactor` (+35%) |
 | How often staff need help, and their problems | `Day/StaffHelp.cs` → `ResetTimer` (80–150 s × (1 + level)), `Problems` |
 | Interview pay talk | `Day/StaffInterview.cs` → `PayTalk` (offers 60% / 80% / full) and the `floor` range in `CandidatesFor` |
 | Which character is which staff, their chairs, typing sound | Inspector → `GameManager` → `StaffManager` |

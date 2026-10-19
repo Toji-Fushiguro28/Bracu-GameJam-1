@@ -37,7 +37,13 @@ public class GameManager : MonoBehaviour
     public int Reputation { get; private set; }
     /// <summary>Reputation when this day opened (for the report).</summary>
     public int ReputationAtStart { get; private set; }
-    public void AddReputation(int amount) => Reputation = Mathf.Max(0, Reputation + amount);
+    public void AddReputation(int amount)
+    {
+        int before = Reputation;
+        Reputation = Mathf.Max(0, Reputation + amount);
+        if (Reputation != before) ReputationChanged?.Invoke(Reputation, Reputation - before);
+    }
+    public event Action<int, int> ReputationChanged; // new total, change
 
     public int Coins { get; private set; }
     public float Hour { get; private set; }
@@ -174,7 +180,9 @@ public class GameManager : MonoBehaviour
         CoinsChanged?.Invoke(Coins, 0);
     }
 
-    public float PatienceMultiplier => (1f + 0.15f * Upgrade(UpgradeKind.ComfyQueue)) * Mode(1.5f, 1f, 0.7f);
+    public float PatienceMultiplier => (1f + 0.15f * Upgrade(UpgradeKind.ComfyQueue)) * Mode(1.5f, 1f, 0.7f) * PatienceDayFactor;
+    /// <summary>Visitors get less patient as the library gets known: full patience on Days 1-2, 85% on Day 3, 75% after.</summary>
+    public float PatienceDayFactor => day <= 2 ? 1f : day == 3 ? 0.85f : 0.75f;
     public float TipMultiplier => 1f + 0.1f * Upgrade(UpgradeKind.CozyLamps);
     public float ReadingFeeMultiplier => 1f + 0.15f * Upgrade(UpgradeKind.ReadingNooks);
     public float VisitorMultiplier => (1f + 0.25f * Upgrade(UpgradeKind.TownFlyers)) * Mode(0.75f, 1f, 1.3f);
@@ -279,6 +287,14 @@ public class GameManager : MonoBehaviour
     public const int EndingDay = 5;
     [NonSerialized] public bool endingSeen;
     public bool EndingDue => day >= EndingDay && !endingSeen;
+
+    /// <summary>The Dean's goal for the first week: this reputation by the end of Day 5 (Cozy / Standard / Busy).</summary>
+    public static readonly int[] ReputationGoals = { 40, 60, 75 };
+    public int ReputationGoal => ReputationGoals[(int)difficulty];
+    /// <summary>Still working towards the Dean's goal (the ending hasn't played yet).</summary>
+    public bool GoalActive => !endingSeen && day <= EndingDay;
+    /// <summary>How the first week went: 2 = goal reached, 1 = close (60% or more), 0 = short of it.</summary>
+    public int GoalTier => Reputation >= ReputationGoal ? 2 : Reputation >= Mathf.CeilToInt(ReputationGoal * 0.6f) ? 1 : 0;
     /// <summary>Something happens in the interview room before the next day (the ending, or applicants).</summary>
     public bool MorningVisitDue => EndingDue || interviews.Count > 0;
 
@@ -584,6 +600,8 @@ public class GameManager : MonoBehaviour
             StaffInterview.EndingDays = day;
             StaffInterview.EndingMembers = members.Count;
             StaffInterview.EndingReputation = Reputation;
+            StaffInterview.EndingGoal = ReputationGoal;
+            StaffInterview.EndingTier = GoalTier;
             StaffInterview.EndingStaff = names;
         }
 

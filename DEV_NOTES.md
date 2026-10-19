@@ -414,7 +414,7 @@ Small, contained edits. Please check them when merging:
   - Cleaner: 5 per cup, 6 per book, 2 per returned copy shelved. The cleaner now also shelves good returns.
 - **Staff hours:** they work until the library closes at 6, then report.
 - **Rare Books attendant:** costs 450, and the upgrade costs 450.
-- **VIPs:** cards cost 80 and reading fees are doubled. VIPs stay after getting a card and go to read.
+- **VIPs:** cards cost 50 (+ up to 10 tip) and reading fees are ×1.5 (see the VIP income note below). VIPs stay after getting a card and go to read.
 - **Dialogue:** half-typed rich text is auto-closed, so coloured hints type in instead of popping in.
 - **Notebook and Reserved lists:** they scroll instead of running off the screen.
 - **Click guard** (`Interaction/ClickGuard.cs`): for 0.25 s after a panel opens (`PlayerLock.Lock`), after choices appear, or after the interview hire and end pages show, button presses are swallowed, so one click can't also press a button that just appeared under the cursor. It's attached to the game UI, the PC overlay and the interview UI.
@@ -430,3 +430,21 @@ Small, contained edits. Please check them when merging:
 - Visitors don't say "express" any more. The computer (Shop, notebook) still marks urgent orders as express.
 - Upgrades unlock by day: `GameManager.UpgradeUnlockDay` (in `UpgradeKind` order). Restoration kit, Cozy lamps and Reading nooks unlock on Day 2, Town flyers on Day 3, and the rest on Day 1. Locked rows show "Day N", and `BuyUpgrade` refuses them. Levels already bought in an old save are kept.
 - Glow for things you can do: affordable upgrades and staff rows (an interview you can afford, or a hire's upgrade) glow in the PC Shop and the Day Report. Their tabs and the computer's Shop tile glow too (`PopularGlow.Ready`, `GameManager.UpgradeReady` / `StaffReady`).
+
+## Play-test fixes (Days 1-5, scripted run)
+- Delivery cart: clicking it now hands you the book the visitor at the desk is waiting for first, then other reserved titles (it used to give the first reserved book in the list).
+- Pickups: if you say "it isn't here yet" for a book that was ordered and is already on the cart, they come back tomorrow. They're no longer told it was "never ordered", which made them leave angry and cost reputation.
+- Reader chat: "where would I find more like this?" no longer offers shelves in rooms that are still locked.
+- Archivist pay: 5 per repair plus 40% of the book's value, capped at `StaffWorker.maxRepairBonus` (20). Rare books used to pay up to 200 per repair (489 in one day).
+- Delivery cart page: clicking the cart opens the shelf screen in cart mode (`ShelfUI.OpenCart`). Each title shows how many copies came and who it's for (someone at the desk, a reservation, or which shelf it goes on), with a Take button. Put back returns copies that came off the cart (`DeliveryCart.Take`, `PutBack`, `CameFromCart`). An express delivery that arrives while it's open shows up straight away.
+
+## VIP income rebalance
+- From Day 3 money used to explode (156 to 1,938 coins in one play-tested day): VIP rare reads paid 73-198 each, and cards 80 + 20.
+- Now: card 50 + up to 10 tip. Rare reading fee 6% of the book's value (minimum 15), ×1.5 for VIPs. The "right shelf" chat bonus is capped at 10. A rare read pays about 43-77 with tip, still 3-6× a normal reader (about 13).
+- The numbers are constants at the top of `Customer.cs` (`VipCardFee`, `VipCardTip`, `VipFeeMultiplier`, `RareShare`, `RareMinFee`, `MaxChatBonus`). The table is in `TUNING_GUIDE.md`.
+
+## The Dean's goal, consequences and the ending
+- **Goal:** reach `GameManager.ReputationGoal` (Cozy 40 / Standard 60 / Busy 75) by the end of Day 5. The Dean sets it at the end of the new-game intro. It shows on the HUD bar (star, "37/60", gold once reached, with a +/- pop), in the morning banner and in the Day Report (how many to go and how many days left). After the ending the HUD shows just the reputation.
+- **Ending:** `GoalTier` (2 reached, 1 close at 60%+, 0 missed) changes the Dean's farewell: the board signs the library over, wants one more season, or is worried. The end page shows "Reputation X of Y" and the result. The game carries on either way.
+- **Consequences:** wrong book -1 reputation. Walked out -3, never ordered -3, said "we can't get that" when you could -2, waited for nothing -2. A member let down in those ways stays away the next day (`Member.awayUntil`, saved with the members). Pickups still come.
+- **Patience:** `PatienceDayFactor` cuts patience to 85% on Day 3 and 75% from Day 4 (all modes; Cozy visitors still never walk out).

@@ -159,6 +159,7 @@ public class CustomerSpawner : MonoBehaviour
             if (p == null) continue;
             if (StaffManager.Instance != null && StaffManager.Instance.IsStaffCharacter(p.name)) continue; // working here today
             if (Present(p.name)) continue;                          // already in the library
+            if (Members.Away(Members.Find(p.name))) continue;       // let down yesterday: staying away today
             if (p.name.Contains("Dean") && deanToday) continue;    // the Dean pops in once a day at most
             bool professor = p.name.Contains("Professor");
             if (professor == vip) pool.Add(i);

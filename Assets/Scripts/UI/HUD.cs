@@ -63,7 +63,8 @@ public class HUD : MonoBehaviour
     VisualElement carrySlot;
     PlayerCarry carry;
     string lastClock;
-    Label banner, coinDelta;
+    Label banner, coinDelta, repLabel, repDelta;
+    float repDeltaUntil;
     VisualElement stamina, staminaFill;
     PlayerMover mover;
     float bannerUntil, deltaUntil;
@@ -96,6 +97,10 @@ public class HUD : MonoBehaviour
         coinDelta.AddToClassList("hud-coin-delta");
         coinDelta.AddToClassList("hidden");
         root.Q(className: "hud-coins")?.Add(coinDelta);
+        repLabel = root.Q<Label>("hud-rep");
+        repDelta = new Label { name = "hud-rep-delta", pickingMode = PickingMode.Ignore };
+        repDelta.AddToClassList("hidden");
+        root.Q(className: "hud-rep")?.Add(repDelta);
     }
 
     public void ShowBanner(string text, float seconds = 4f)
@@ -103,6 +108,26 @@ public class HUD : MonoBehaviour
         banner.text = text;
         banner.RemoveFromClassList("hidden");
         bannerUntil = Time.time + seconds;
+    }
+
+    /// <summary>"37/60" while the Dean's goal is on (gold once reached), just the reputation after the ending.</summary>
+    void ShowReputation()
+    {
+        var gm = GameManager.Instance;
+        if (gm == null || repLabel == null) return;
+        repLabel.text = gm.GoalActive ? $"{gm.Reputation}/{gm.ReputationGoal}" : gm.Reputation.ToString();
+        repLabel.parent.EnableInClassList("goal-met", gm.GoalActive && gm.Reputation >= gm.ReputationGoal);
+    }
+
+    void OnReputation(int total, int delta)
+    {
+        ShowReputation();
+        if (repDelta == null) return;
+        repDelta.text = delta > 0 ? $"+{delta}" : delta.ToString();
+        repDelta.EnableInClassList("negative", delta < 0);
+        repDelta.RemoveFromClassList("hidden");
+        repDeltaUntil = Time.time + 1.6f;
+        if (delta < 0) repLabel.parent.experimental.animation.Scale(1.18f, 90).OnCompleted(() => repLabel.parent.experimental.animation.Scale(1f, 140));
     }
 
     void OnCoins(int total, int delta)
@@ -121,6 +146,10 @@ public class HUD : MonoBehaviour
         if (gm.day == GameManager.ArchiveDay) text += "\nThe Archive is open from today.";
         else if (gm.day == GameManager.RareDay) text += "\nThe Rare Books room is open from today. Watch for VIP scholars!";
         else if (gm.day < GameManager.ArchiveDay) text += $"\nThe Archive opens on Day {GameManager.ArchiveDay}, Rare Books on Day {GameManager.RareDay}.";
+        if (gm.GoalActive)
+            text += gm.day == GameManager.EndingDay
+                ? $"\nLast day! The Dean's goal: reputation {gm.ReputationGoal} by tonight (now {gm.Reputation})."
+                : $"\nThe Dean's goal: reputation {gm.ReputationGoal} by the end of Day {GameManager.EndingDay} (now {gm.Reputation}).";
         int due = gm.reservations.FindAll(r => r.day <= gm.day).Count;
         if (due > 0) text += due == 1 ? "\nSomeone is coming for a reserved book." : $"\n{due} people are coming for reserved books.";
         return text;
@@ -148,9 +177,12 @@ public class HUD : MonoBehaviour
                 ShowBanner(n == 1 ? "Delivery! A book is waiting at the book cart." : $"Delivery! {n} books are waiting at the book cart.", 6f);
             };
             gm.DayStarted += () => upgradeBannerShown = false;
+            gm.ReputationChanged += OnReputation;
+            gm.DayStarted += ShowReputation;
             ShowBanner(MorningText(gm), 6f);
             coinLabel.text = gm.Coins.ToString();
             dayLabel.text = "Day " + gm.day;
+            ShowReputation();
         }
         var player = GameObject.FindWithTag("Player");
         carry = player ? player.GetComponent<PlayerCarry>() : null;
@@ -232,6 +264,7 @@ public class HUD : MonoBehaviour
             ShowBanner("You can afford an upgrade! Check the Shop on the computer.", 5f);
         }
         if (deltaUntil > 0f && Time.time > deltaUntil) { deltaUntil = 0f; coinDelta.AddToClassList("hidden"); }
+        if (repDeltaUntil > 0f && Time.time > repDeltaUntil) { repDeltaUntil = 0f; repDelta.AddToClassList("hidden"); }
         if (gm == null || clockLabel == null) return;
         string clock = gm.CurrentPhase == GameManager.Phase.Closed ? "Closed - tidy up, then click the front ropes" : gm.Paused ? gm.ClockText + "  (paused)" : gm.ClockText;
         string day = $"Day {gm.day}";

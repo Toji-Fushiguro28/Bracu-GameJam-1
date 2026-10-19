@@ -561,3 +561,13 @@
 /* Something to do behind this tab (affordable upgrade or hire): warm tint that breathes */
 .ready { color: rgb(214, 120, 64); transition-property: -unity-background-image-tint-color; transition-duration: 0.8s; }
 .ready.glow-on { -unity-background-image-tint-color: rgb(255, 214, 140); }
+
+/* Reputation (and the Dean's goal) on the HUD bar, with a pop when it changes. */
+.hud-rep { flex-direction: row; align-items: center; margin-left: 28px; }
+.hud-rep Label { color: var(--ink); font-size: 30px; margin-left: 8px; }
+.icon-rep { width: 32px; height: 32px; -unity-background-scale-mode: scale-to-fit;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconStar01a.png"); }
+#hud-rep-delta { position: absolute; top: -30px; right: 0; font-size: 26px; color: rgb(110, 215, 95);
+    -unity-text-outline-width: 1.5px; -unity-text-outline-color: rgb(40, 30, 20); }
+#hud-rep-delta.negative { color: rgb(235, 85, 70); }
+.hud-rep.goal-met Label { color: rgb(214, 120, 64); }

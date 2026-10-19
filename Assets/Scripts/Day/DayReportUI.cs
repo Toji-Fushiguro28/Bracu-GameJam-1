@@ -120,6 +120,19 @@ public class DayReportUI : MonoBehaviour
 
     int Stars(GameManager.DayStats d) => Mathf.Clamp(1 + (d.served + d.booksRead - 2 * d.angry + cleanBonus * 2) / 3, 1, 5);
 
+    /// <summary>The Dean's goal: how close you are, and what tonight means on the last day.</summary>
+    static string GoalLine(GameManager gm)
+    {
+        if (!gm.GoalActive) return "";
+        int left = gm.ReputationGoal - gm.Reputation;
+        if (gm.day >= GameManager.EndingDay)
+            return left <= 0 ? $"\n<color=#D67840>The Dean's goal of {gm.ReputationGoal}: reached!</color> He'll visit in the morning."
+                             : $"\nThe Dean's goal was {gm.ReputationGoal}: {left} short. He'll visit in the morning.";
+        int daysLeft = GameManager.EndingDay - gm.day;
+        return left <= 0 ? $"\n<color=#D67840>The Dean's goal of {gm.ReputationGoal}: reached!</color> Keep it up."
+                         : $"\nThe Dean's goal: {gm.ReputationGoal} by Day {GameManager.EndingDay}. {left} to go, {daysLeft} day{(daysLeft == 1 ? "" : "s")} left.";
+    }
+
     void RefreshReport()
     {
         var gm = GameManager.Instance;
@@ -152,7 +165,8 @@ public class DayReportUI : MonoBehaviour
         stars.text = new string('*', s) + new string('-', 5 - s);
         int delta = gm.Reputation - gm.ReputationAtStart;
         repLabel.text = $"Reputation {gm.Reputation} ({(delta >= 0 ? "+" : "")}{delta})" +
-                        (cleanBonus > 0 ? "\nThe library is spotless!" : cleanBonus < 0 ? "\nThe library was left messy." : "");
+                        (cleanBonus > 0 ? "\nThe library is spotless!" : cleanBonus < 0 ? "\nThe library was left messy." : "") +
+                        GoalLine(gm);
         nextDay.text = $"Open Day {gm.day + 1}";
     }
 
