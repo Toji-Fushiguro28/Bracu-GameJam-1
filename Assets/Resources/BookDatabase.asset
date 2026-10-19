@@ -22,7 +22,6 @@ MonoBehaviour:
     ShelfLocation: SCI
     Tier: 0
     BaseValue: 25
-    Popularity: 5
     Sellable: 1
     GoodCopies: 2
     WornCopies: 1
@@ -36,7 +35,6 @@ MonoBehaviour:
     ShelfLocation: SCI
     Tier: 0
     BaseValue: 30
-    Popularity: 4
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -50,7 +48,6 @@ MonoBehaviour:
     ShelfLocation: SCI
     Tier: 0
     BaseValue: 20
-    Popularity: 3
     Sellable: 1
     GoodCopies: 3
     WornCopies: 0
@@ -64,7 +61,6 @@ MonoBehaviour:
     ShelfLocation: SCI
     Tier: 0
     BaseValue: 22
-    Popularity: 3
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -78,7 +74,6 @@ MonoBehaviour:
     ShelfLocation: SCI
     Tier: 0
     BaseValue: 18
-    Popularity: 4
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -92,7 +87,6 @@ MonoBehaviour:
     ShelfLocation: HIS
     Tier: 0
     BaseValue: 28
-    Popularity: 2
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -106,7 +100,6 @@ MonoBehaviour:
     ShelfLocation: HIS
     Tier: 0
     BaseValue: 25
-    Popularity: 5
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -120,7 +113,6 @@ MonoBehaviour:
     ShelfLocation: HIS
     Tier: 0
     BaseValue: 30
-    Popularity: 3
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -134,7 +126,6 @@ MonoBehaviour:
     ShelfLocation: HIS
     Tier: 0
     BaseValue: 20
-    Popularity: 2
     Sellable: 1
     GoodCopies: 1
     WornCopies: 0
@@ -148,7 +139,6 @@ MonoBehaviour:
     ShelfLocation: HIS
     Tier: 0
     BaseValue: 22
-    Popularity: 2
     Sellable: 1
     GoodCopies: 0
     WornCopies: 2
@@ -162,7 +152,6 @@ MonoBehaviour:
     ShelfLocation: HIS
     Tier: 0
     BaseValue: 26
-    Popularity: 3
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -176,7 +165,6 @@ MonoBehaviour:
     ShelfLocation: PHI
     Tier: 0
     BaseValue: 24
-    Popularity: 1
     Sellable: 1
     GoodCopies: 0
     WornCopies: 1
@@ -190,7 +178,6 @@ MonoBehaviour:
     ShelfLocation: PHI
     Tier: 0
     BaseValue: 20
-    Popularity: 5
     Sellable: 1
     GoodCopies: 1
     WornCopies: 1
@@ -204,7 +191,6 @@ MonoBehaviour:
     ShelfLocation: PHI
     Tier: 0
     BaseValue: 22
-    Popularity: 2
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -218,7 +204,6 @@ MonoBehaviour:
     ShelfLocation: PHI
     Tier: 0
     BaseValue: 30
-    Popularity: 4
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -232,7 +217,6 @@ MonoBehaviour:
     ShelfLocation: PHI
     Tier: 0
     BaseValue: 18
-    Popularity: 1
     Sellable: 1
     GoodCopies: 1
     WornCopies: 0
@@ -246,7 +230,6 @@ MonoBehaviour:
     ShelfLocation: MATH
     Tier: 0
     BaseValue: 18
-    Popularity: 5
     Sellable: 1
     GoodCopies: 2
     WornCopies: 1
@@ -260,7 +243,6 @@ MonoBehaviour:
     ShelfLocation: MATH
     Tier: 0
     BaseValue: 26
-    Popularity: 2
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -274,7 +256,6 @@ MonoBehaviour:
     ShelfLocation: MATH
     Tier: 0
     BaseValue: 20
-    Popularity: 1
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -288,7 +269,6 @@ MonoBehaviour:
     ShelfLocation: MATH
     Tier: 0
     BaseValue: 24
-    Popularity: 1
     Sellable: 1
     GoodCopies: 1
     WornCopies: 0
@@ -302,7 +282,6 @@ MonoBehaviour:
     ShelfLocation: ARC-A
     Tier: 1
     BaseValue: 140
-    Popularity: 3
     Sellable: 1
     GoodCopies: 0
     WornCopies: 1
@@ -316,7 +295,6 @@ MonoBehaviour:
     ShelfLocation: ARC-B
     Tier: 1
     BaseValue: 180
-    Popularity: 3
     Sellable: 1
     GoodCopies: 0
     WornCopies: 0
@@ -330,7 +308,6 @@ MonoBehaviour:
     ShelfLocation: RARE-I
     Tier: 2
     BaseValue: 500
-    Popularity: 3
     Sellable: 0
     GoodCopies: 1
     WornCopies: 0
@@ -344,7 +321,6 @@ MonoBehaviour:
     ShelfLocation: RARE-II
     Tier: 1
     BaseValue: 300
-    Popularity: 4
     Sellable: 0
     GoodCopies: 1
     WornCopies: 0
@@ -358,7 +334,6 @@ MonoBehaviour:
     ShelfLocation: RARE-I
     Tier: 1
     BaseValue: 250
-    Popularity: 3
     Sellable: 0
     GoodCopies: 0
     WornCopies: 1
@@ -372,7 +347,6 @@ MonoBehaviour:
     ShelfLocation: ARC-B
     Tier: 0
     BaseValue: 60
-    Popularity: 3
     Sellable: 1
     GoodCopies: 0
     WornCopies: 1
@@ -386,7 +360,6 @@ MonoBehaviour:
     ShelfLocation: ARC-B
     Tier: 0
     BaseValue: 45
-    Popularity: 4
     Sellable: 1
     GoodCopies: 1
     WornCopies: 0
@@ -400,7 +373,6 @@ MonoBehaviour:
     ShelfLocation: ARC-B
     Tier: 1
     BaseValue: 160
-    Popularity: 4
     Sellable: 1
     GoodCopies: 0
     WornCopies: 1
@@ -414,7 +386,6 @@ MonoBehaviour:
     ShelfLocation: ARC-B
     Tier: 0
     BaseValue: 50
-    Popularity: 3
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -428,7 +399,6 @@ MonoBehaviour:
     ShelfLocation: ARC-C
     Tier: 0
     BaseValue: 55
-    Popularity: 3
     Sellable: 1
     GoodCopies: 0
     WornCopies: 0
@@ -442,7 +412,6 @@ MonoBehaviour:
     ShelfLocation: ARC-D
     Tier: 1
     BaseValue: 150
-    Popularity: 3
     Sellable: 1
     GoodCopies: 1
     WornCopies: 0
@@ -456,7 +425,6 @@ MonoBehaviour:
     ShelfLocation: RARE-II
     Tier: 2
     BaseValue: 450
-    Popularity: 4
     Sellable: 0
     GoodCopies: 1
     WornCopies: 0
@@ -470,7 +438,6 @@ MonoBehaviour:
     ShelfLocation: NEWS
     Tier: 0
     BaseValue: 5
-    Popularity: 1
     Sellable: 1
     GoodCopies: 5
     WornCopies: 0
@@ -484,7 +451,6 @@ MonoBehaviour:
     ShelfLocation: NEWS
     Tier: 0
     BaseValue: 5
-    Popularity: 4
     Sellable: 1
     GoodCopies: 4
     WornCopies: 0
@@ -498,7 +464,6 @@ MonoBehaviour:
     ShelfLocation: NEWS
     Tier: 0
     BaseValue: 8
-    Popularity: 3
     Sellable: 1
     GoodCopies: 3
     WornCopies: 0
@@ -512,7 +477,6 @@ MonoBehaviour:
     ShelfLocation: MAG
     Tier: 0
     BaseValue: 10
-    Popularity: 3
     Sellable: 1
     GoodCopies: 3
     WornCopies: 0
@@ -526,7 +490,6 @@ MonoBehaviour:
     ShelfLocation: MAG
     Tier: 0
     BaseValue: 10
-    Popularity: 3
     Sellable: 1
     GoodCopies: 3
     WornCopies: 0
@@ -540,7 +503,6 @@ MonoBehaviour:
     ShelfLocation: MAG
     Tier: 0
     BaseValue: 9
-    Popularity: 1
     Sellable: 1
     GoodCopies: 3
     WornCopies: 0
@@ -554,7 +516,6 @@ MonoBehaviour:
     ShelfLocation: MAG
     Tier: 0
     BaseValue: 9
-    Popularity: 4
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -568,7 +529,6 @@ MonoBehaviour:
     ShelfLocation: JRNL
     Tier: 0
     BaseValue: 15
-    Popularity: 1
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -582,7 +542,6 @@ MonoBehaviour:
     ShelfLocation: JRNL
     Tier: 0
     BaseValue: 15
-    Popularity: 3
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -596,7 +555,6 @@ MonoBehaviour:
     ShelfLocation: JRNL
     Tier: 0
     BaseValue: 15
-    Popularity: 3
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -610,7 +568,6 @@ MonoBehaviour:
     ShelfLocation: JRNL
     Tier: 0
     BaseValue: 15
-    Popularity: 1
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -624,7 +581,6 @@ MonoBehaviour:
     ShelfLocation: PAPR
     Tier: 0
     BaseValue: 12
-    Popularity: 2
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -638,7 +594,6 @@ MonoBehaviour:
     ShelfLocation: PAPR
     Tier: 0
     BaseValue: 12
-    Popularity: 2
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -652,7 +607,6 @@ MonoBehaviour:
     ShelfLocation: PAPR
     Tier: 0
     BaseValue: 12
-    Popularity: 5
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -666,7 +620,6 @@ MonoBehaviour:
     ShelfLocation: PAPR
     Tier: 0
     BaseValue: 12
-    Popularity: 3
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -681,7 +634,6 @@ MonoBehaviour:
     ShelfLocation: SCI
     Tier: 0
     BaseValue: 28
-    Popularity: 3
     Sellable: 1
     GoodCopies: 0
     WornCopies: 0
@@ -695,7 +647,6 @@ MonoBehaviour:
     ShelfLocation: SCI
     Tier: 0
     BaseValue: 32
-    Popularity: 5
     Sellable: 1
     GoodCopies: 0
     WornCopies: 0
@@ -709,7 +660,6 @@ MonoBehaviour:
     ShelfLocation: HIS
     Tier: 0
     BaseValue: 26
-    Popularity: 4
     Sellable: 1
     GoodCopies: 0
     WornCopies: 0
@@ -723,7 +673,6 @@ MonoBehaviour:
     ShelfLocation: HIS
     Tier: 0
     BaseValue: 30
-    Popularity: 5
     Sellable: 1
     GoodCopies: 0
     WornCopies: 0
@@ -737,7 +686,6 @@ MonoBehaviour:
     ShelfLocation: HIS
     Tier: 0
     BaseValue: 24
-    Popularity: 1
     Sellable: 1
     GoodCopies: 0
     WornCopies: 0
@@ -751,7 +699,6 @@ MonoBehaviour:
     ShelfLocation: MATH
     Tier: 0
     BaseValue: 27
-    Popularity: 4
     Sellable: 1
     GoodCopies: 0
     WornCopies: 0
@@ -765,7 +712,6 @@ MonoBehaviour:
     ShelfLocation: MATH
     Tier: 0
     BaseValue: 29
-    Popularity: 5
     Sellable: 1
     GoodCopies: 0
     WornCopies: 0
@@ -779,7 +725,6 @@ MonoBehaviour:
     ShelfLocation: PHI
     Tier: 0
     BaseValue: 25
-    Popularity: 3
     Sellable: 1
     GoodCopies: 0
     WornCopies: 0
@@ -793,7 +738,6 @@ MonoBehaviour:
     ShelfLocation: PHI
     Tier: 0
     BaseValue: 31
-    Popularity: 5
     Sellable: 1
     GoodCopies: 0
     WornCopies: 0
@@ -807,7 +751,6 @@ MonoBehaviour:
     ShelfLocation: PHI
     Tier: 0
     BaseValue: 23
-    Popularity: 4
     Sellable: 1
     GoodCopies: 0
     WornCopies: 0
@@ -821,7 +764,6 @@ MonoBehaviour:
     ShelfLocation: HIS
     Tier: 0
     BaseValue: 28
-    Popularity: 2
     Sellable: 1
     GoodCopies: 0
     WornCopies: 0
@@ -835,7 +777,6 @@ MonoBehaviour:
     ShelfLocation: MATH
     Tier: 0
     BaseValue: 26
-    Popularity: 4
     Sellable: 1
     GoodCopies: 0
     WornCopies: 0

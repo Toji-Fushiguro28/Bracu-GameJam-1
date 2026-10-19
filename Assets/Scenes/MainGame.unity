@@ -16131,6 +16131,12 @@ MonoBehaviour:
   normal: {fileID: 2800000, guid: 76cc10d201d4acc4b83d864b6ed30ddc, type: 3}
   hover: {fileID: 2800000, guid: 68ea7569b886850489238f9599b26a42, type: 3}
   hotspot: {x: 1, y: 1}
+  click:
+  - {fileID: 2800000, guid: 36e253184bba08648a1ec2775daf7db1, type: 3}
+  - {fileID: 2800000, guid: 43dc1695519264343a8816151aa00058, type: 3}
+  - {fileID: 2800000, guid: 98a9cc338ed63174fbc8572d4740432c, type: 3}
+  clickHotspot: {x: 8, y: 6}
+  clickFrameTime: 0.06
 --- !u!4 &874339563
 Transform:
   m_ObjectHideFlags: 0

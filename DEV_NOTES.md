@@ -507,4 +507,5 @@ Small, contained edits. Please check them when merging:
 ## Mouse cursor (`UI/GameCursor.cs`)
 - TravelBook `Cursor01c` normally, `Cursor01d` over something clickable (`InteractionController.HoveringSomething`, or a UI Toolkit button under the mouse on any panel) and while the left button is held.
 - The 14x16 art is scaled up in whole pixels for the screen (`Screen.height / 540`, 2x at 1080p) at runtime, so the two textures are imported Read/Write, uncompressed, point filter.
+- Each click plays `MouseCursorClick01a` frames 1-3 (`GameCursor.click`, 0.06 s a frame, hotspot (8,6) so the tip doesn't jump), then back to the arrow. Those frames are imported Read/Write, uncompressed, point filter too.
 - On its own root object `GameCursor` in MainGame; `DontDestroyOnLoad`, so it carries into the intro scene; a reloaded scene's copy destroys itself.
