@@ -475,3 +475,24 @@ Small, contained edits. Please check them when merging:
 ## Stuck visitors
 - Visitors heading to a shelf aim for a slightly random spot beside it (`Customer.ShelfSpot`), so two of them don't fight over one point.
 - `Customer.Watchdog()` runs every frame: a visitor who is walking but hasn't moved 20 cm in 3 s (game time) is freed. Within 1.5 m of where they're going, they count as arrived; after 6 s they hop (NavMeshAgent.Warp) to their destination. In the queue they hop to their place in line.
+
+## Small fixes (catalogue buying, freezing, VIP seats, reservations, staff help sound)
+- **Catalogue buying**: "Buy books" in the catalogue header opens the Shop's Books tab with the same search (`PCShopView.OpenOnBooks`); its Back returns to the catalogue. "Buy (price)" beside "Add to note" orders one copy (normal delivery, tomorrow). It's hidden for Rare Books and greyed out when you can't afford it.
+- **Nobody walks during a conversation**: while `GameManager.Paused` (dialogue), customers' and staff's NavMeshAgents are stopped (`Customer.Update`, `StaffWorker.Update`); staff resume, or stay put if on hold.
+- **VIPs read in Rare Books** whatever the book, and wait there for express orders; a main hall chair only if every rare seat is taken.
+- **Reserved panel** (right edge) lists only reservations still to order; once ordered (or in stock / on the cart) they leave it.
+- **Staff help** has its own sound (`GameAudio.staffHelp` = `Audio/SFX/staff help.mp3`), rung 3 times 0.7 s apart (`StaffHelp.Ring`), not the impatient counter bell.
+
+## Staff mood, problems and special jobs (`StaffHelp`, `StaffTalk`, `GameManager`, `Day/SpecialJobs.cs`)
+- **Problems**: 8 per role, no repeats in the same day (`StaffHelp.usedToday`).
+- **Mood** (`GameManager.staffMood`, 0-5, saved, 3 on hiring): speed x(0.7 + 0.1 x mood) via `StaffWorkFactor` (agent speed, cleaner timer, repair desk). Paid fix +0.5 and they come in **rested** tomorrow (x1.25 that day, `staffRestedDay`); free fix -0.3 (and slower for the rest of today, as before); coming over within 20 s +0.2; each 30 s reminder while you leave them waiting -0.15; first chat of the day +0.15; nobody talked to them all day -0.3 at the report. A banner says when their mood word changes (happy / content / grumpy / fed up). Shown in the Staff rows and in their end-of-day report.
+- **Special jobs** (once anyone is hired, from Day 2; one a day, offered at the desk around 10-11:45, can be turned down):
+  - Special order: a regular wants a title by tomorrow; becomes a "Requested" reservation with `Reservation.bonus` (15-40) paid on collection (+1 reputation).
+  - VIP request: a professor wants a rare book in your hands at 3:00 PM (+40 coins, +2 rep; not ready: -1 rep).
+  - Book club: 3 copies of a main-hall book on the shelves at 4:00 PM; they buy them all (+15 bonus, +2 rep; too few: -1 rep).
+  - Accepted VIP / book club jobs show in the Reserved panel with progress.
+
+## Feedback polish
+- **Patience**: bigger mood face with a draining bar beside it (`.mood-bar`), green / amber / red; the face throbs when they're about to give up. Angry exits (`Customer.StormOff`): a stomp on the spot with a shaking red face and red "Hmph!", the impatient bell, then they march out at 1.8x speed.
+- **Skill rewards** (`HUD.SkillPop`, gold text rising from the spot): right shelf in a reader chat (bonus paid on the spot, +1 rep), perfect repair (+5 coins, +1 rep), special order collected, VIP request done.
+- **Day Report Summary tab** (opens first each evening): income by source (`DayStats.Earn`: sales, reading fees, cards, VIP, staff, other), what went wrong (walk-outs, wrong books, people let down, mess, unordered reservations, unhappy staff) and one tip for tomorrow picked from the day's biggest problem.

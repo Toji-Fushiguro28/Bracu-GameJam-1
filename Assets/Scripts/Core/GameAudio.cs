@@ -21,6 +21,8 @@ public class GameAudio : MonoBehaviour
     public AudioClip impatient;
     [Header("Chores")]
     public AudioClip tidy;
+    [Tooltip("A staff member calling for help (not the counter bell).")]
+    public AudioClip staffHelp;
     public AudioClip cardIssued;
     public AudioClip cardWrong;
     [Header("Day")]

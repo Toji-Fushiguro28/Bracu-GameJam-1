@@ -199,14 +199,22 @@ public class PCOverlayTrigger : MonoBehaviour
 
     void ShowMembers() => ShowView("PCMembersTemplate", PCMembersView.Wire);
 
-    /// <summary>Swaps the screen to a Resources template and lets its view wire itself up.</summary>
-    void ShowView(string templateName, System.Action<VisualElement, System.Action> wire)
+    /// <summary>Swaps the screen to a Resources template and lets its view wire itself up.
+    /// back: where its Back button goes (the menu unless said otherwise).</summary>
+    void ShowView(string templateName, System.Action<VisualElement, System.Action> wire, System.Action back = null)
     {
         var template = Resources.Load<VisualTreeAsset>(templateName);
         if (template == null || overlayDoc == null) return;
         overlayDoc.visualTreeAsset = template;
         RehookBackdrop();
-        wire(overlayDoc.rootVisualElement, ShowMenu);
+        wire(overlayDoc.rootVisualElement, back ?? ShowMenu);
+    }
+
+    /// <summary>The Shop's Books tab straight from the catalogue (with the same search); Back comes back here.</summary>
+    void ShowShopBooks(string search)
+    {
+        PCShopView.OpenOnBooks(search);
+        ShowView("PCShopTemplate", PCShopView.Wire, ShowBooks);
     }
 
     void ShowMenu()
@@ -259,12 +267,24 @@ public class PCOverlayTrigger : MonoBehaviour
             RequestLog.AddToNote(selectedBook);
             UpdateSelectButton();
         });
+        // "Buy": order one more copy of the selected book (normal delivery, tomorrow morning).
+        root.Q<Button>("detail-buy")?.RegisterCallback<ClickEvent>(_ =>
+        {
+            var gm = GameManager.Instance;
+            if (gm == null || selectedBook == null || !CanOrder(selectedBook)) return;
+            if (gm.OrderBook(selectedBook, false)) { GameAudio.Play(a => a.buy); bought = selectedBook; }
+            UpdateSelectButton();
+        });
+        root.Q<Button>("buy-books-button")?.RegisterCallback<ClickEvent>(_ => ShowShopBooks(searchField != null ? searchField.value : null));
         ApplySearchFilter();
         UpdateSearchPlaceholder();
         ShowDetails(null);
     }
 
-    BookData selectedBook;
+    BookData selectedBook, bought;
+
+    /// <summary>Copies of it can be bought in the Shop (not Rare Books, not rooms that are still locked).</summary>
+    static bool CanOrder(BookData b) => b != null && !BookRequest.IsRare(b) && BookRequest.Available(b);
 
     /// <summary>"Add to note" goes under the open book request, or on the "To Shelve" page.</summary>
     void UpdateSelectButton()
@@ -274,10 +294,25 @@ public class PCOverlayTrigger : MonoBehaviour
         var note = root.Q<Label>("detail-select-note");
         bool noted = RequestLog.IsNoted(selectedBook);
         button?.SetEnabled(selectedBook != null && !noted);
+        var gm = GameManager.Instance;
+        var buy = root.Q<Button>("detail-buy");
+        bool orderable = gm != null && CanOrder(selectedBook);
+        int price = orderable ? GameManager.OrderPrice(selectedBook, false) : 0;
+        if (buy != null)
+        {
+            buy.style.display = orderable ? DisplayStyle.Flex : DisplayStyle.None; // Rare Books can't be bought
+            buy.text = $"Buy ({price})";
+            buy.SetEnabled(orderable && gm.Coins >= price);
+        }
         if (note != null)
-            note.text = noted ? "Already in your notebook."
+        {
+            int onOrder = gm != null && selectedBook != null ? gm.OnOrder(selectedBook) : 0;
+            note.text = bought != null && bought == selectedBook ? $"Ordered! It arrives on the book cart tomorrow morning ({onOrder} on order)."
+                      : noted ? "Already in your notebook."
                       : RequestLog.Current != null ? "Adds it to the visitor's request in your notebook."
                       : "Nobody's asking: adds it to your To Shelve list.";
+            if (orderable && gm.Coins < price && bought != selectedBook) note.text += $" Buying needs {price} coins.";
+        }
     }
 
     /// <summary>Right-hand pane: where the selected book lives and its state.</summary>

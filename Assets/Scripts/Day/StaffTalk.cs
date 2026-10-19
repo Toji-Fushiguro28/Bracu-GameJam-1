@@ -83,7 +83,10 @@ public class StaffTalk : ClickInteractable
             worker.StopToTalk(player.transform.position); // stop where you caught them, then head home
             var r = ScriptableObject.CreateInstance<DialogueAsset>();
             r.speaker = Name;
-            r.lines.Add(new DialogueAsset.Line { id = "start", text = Report(worker, help), next = "end" });
+            // Left alone all day (no help, no chat): it shows.
+            bool ignored = !help.attentionToday;
+            if (ignored && gm != null) gm.ChangeStaffMood(role, -0.3f);
+            r.lines.Add(new DialogueAsset.Line { id = "start", text = Report(worker, help, ignored), next = "end" });
             ui.Play(r, () =>
             {
                 Destroy(r);
@@ -91,7 +94,7 @@ public class StaffTalk : ClickInteractable
                 if (worker.earnedToday > 0 && gm != null)
                 {
                     gm.AddCoins(worker.earnedToday);
-                    gm.Today.income += worker.earnedToday;
+                    gm.Today.Earn(GameManager.DayStats.Source.Staff, worker.earnedToday);
                     GameAudio.Play(a => a.coin);
                     worker.earnedToday = 0;
                 }
@@ -121,6 +124,8 @@ public class StaffTalk : ClickInteractable
         }
         if (gm != null) { talkDay = gm.day; talkHour = gm.Hour; }
 
+        // The first chat of the day cheers them up a little (and counts as looking after them).
+        if (help != null && !help.attentionToday) { help.attentionToday = true; gm?.ChangeStaffMood(role, 0.15f); }
         var lines = Lines;
         int pick = Random.Range(0, lines.Length);
         if (pick == lastLine) pick = (pick + 1) % lines.Length;
@@ -147,7 +152,7 @@ public class StaffTalk : ClickInteractable
     }
 
     /// <summary>A few words about today's work.</summary>
-    string Report(StaffWorker w, StaffHelp help)
+    string Report(StaffWorker w, StaffHelp help, bool ignored)
     {
         string work = role == GameManager.StaffRole.Cleaner
             ? (w.cleanedToday > 0 ? $"I tidied up <color=#D67840>{w.cleanedToday}</color> messes today." : "Quiet day for mess. I polished the floor instead.")
@@ -158,6 +163,14 @@ public class StaffTalk : ClickInteractable
                       : help.helpedToday == 1 ? " Thanks for sorting out that problem." : "";
         string bye = role == GameManager.StaffRole.Cleaner ? " Night, boss!" : role == GameManager.StaffRole.Repairer ? " Goodnight!" : " Goodnight, my dear.";
         string money = w.earnedToday > 0 ? $" Here's what came in from my work: <color=#D67840>{w.earnedToday} coins</color>." : "";
-        return work + money + thanks + bye;
+        // How they feel about the job (their mood decides how fast they work).
+        var gm = GameManager.Instance;
+        float mood = gm != null ? gm.staffMood[(int)role] : 3f;
+        string feel = ignored ? " You didn't stop by once today. Just saying."
+                    : help.paidToday ? " And thanks for paying for the proper fix. I'll be in bright and early tomorrow."
+                    : mood >= 4f ? " I do love this job, you know."
+                    : mood < 1.2f ? " I'm not sure how much more of this I can take, boss."
+                    : mood < 2.5f ? " Bit of a long day, if I'm honest." : "";
+        return work + money + thanks + feel + bye;
     }
 }

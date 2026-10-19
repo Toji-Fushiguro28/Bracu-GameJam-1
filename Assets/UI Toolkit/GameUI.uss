@@ -597,3 +597,37 @@
     -unity-text-outline-color: rgb(40, 30, 20);
 }
 .hud Label.coin-pop.negative { color: rgb(235, 85, 70); }
+
+/* ---------- Clearer patience: a bigger face, a draining bar beside it, and an angry face when they storm out ---------- */
+.mood { width: 34px; height: 34px; overflow: visible; }
+.mood-bar {
+    position: absolute;
+    left: 40px; top: 12px;
+    width: 46px; height: 9px;
+    background-color: rgba(40, 30, 20, 0.7);
+    border-width: 1px; border-color: rgb(40, 30, 20);
+    border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;
+    overflow: hidden;
+}
+.mood-bar-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; background-color: rgb(120, 200, 90); }
+.mood-bar-fill.ok { background-color: rgb(240, 186, 92); }
+.mood-bar-fill.sad { background-color: rgb(225, 80, 60); }
+.mood.angry { -unity-background-image-tint-color: rgb(255, 110, 90); }
+.customer-speech.angry { color: rgb(200, 45, 35); }
+
+/* A reward for doing something well, rising from where it happened. */
+.hud Label.skill-pop {
+    position: absolute;
+    font-size: 40px;
+    color: rgb(255, 214, 110);
+    -unity-text-outline-width: 2px;
+    -unity-text-outline-color: rgb(40, 30, 20);
+    white-space: nowrap;
+}
+
+/* ---------- Day Report: Summary tab (income by source, what went wrong, a tip for tomorrow) ---------- */
+.plan-tab { margin: 0 3px; font-size: 20px; }
+.summary-head { color: var(--accent); font-size: 23px; margin: 12px 4px 4px 4px; }
+.summary-note { color: var(--ink); font-size: 20px; white-space: normal; margin: 2px 6px; }
+.summary-note.bad { color: rgb(190, 70, 50); }
+.summary-tip { color: var(--ink); font-size: 21px; white-space: normal; margin: 4px 6px; padding: 8px 10px; background-color: rgba(235, 200, 120, 0.35); }

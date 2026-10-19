@@ -30950,6 +30950,7 @@ MonoBehaviour:
   angryLeave: {fileID: 8300000, guid: 247cae9b4dfd4af468547efb43ffbeea, type: 3}
   impatient: {fileID: 8300000, guid: b9a697f503083774f88aef4468728bae, type: 3}
   tidy: {fileID: 8300000, guid: 9ae94536735eba847ab52a6c5888aa81, type: 3}
+  staffHelp: {fileID: 8300000, guid: a6dbb0ae9a92dfc4a8fe86f340b70ad6, type: 3}
   cardIssued: {fileID: 8300000, guid: 6c1d2ca9b1850c4478e8add4e5476f92, type: 3}
   cardWrong: {fileID: 8300000, guid: 587c19f22fe2c594e998d3fa64a361be, type: 3}
   closed: {fileID: 8300000, guid: 835048ab320820242907b0ded3ae52aa, type: 3}

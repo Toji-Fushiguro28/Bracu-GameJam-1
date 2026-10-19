@@ -266,7 +266,7 @@ public class DayStory : MonoBehaviour
 
     static void Reward(int coins, int reputation)
     {
-        if (coins > 0) { GM.AddCoins(coins); GM.Today.income += coins; }
+        if (coins > 0) { GM.AddCoins(coins); GM.Today.Earn(GameManager.DayStats.Source.Other, coins); }
         if (reputation != 0) GM.AddReputation(reputation);
     }
 

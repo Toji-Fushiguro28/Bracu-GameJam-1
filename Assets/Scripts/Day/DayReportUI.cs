@@ -2,8 +2,9 @@ using UnityEngine;
 using UnityEngine.UIElements;
 
 /// <summary>
-/// End of day (open book). Left page: the Day Report. Right page: evening planning with
-/// Shop (buy copies), Staff (hire / let go), Upgrades and Log (today's requests) tabs. "Open Day N" starts the next day.
+/// End of day (open book). Left page: the Day Report. Right page: Summary (where the money came from, what went
+/// wrong and a tip for tomorrow; shown first), then evening planning with Shop (buy copies), Staff (hire / let go),
+/// Upgrades and Log (today's requests) tabs. "Open Day N" starts the next day.
 /// </summary>
 [RequireComponent(typeof(UIDocument))]
 public class DayReportUI : MonoBehaviour
@@ -53,7 +54,7 @@ public class DayReportUI : MonoBehaviour
         repLabel = doc.Q<Label>("report-rep");
         coinsLabel = doc.Q<Label>("plan-coins");
         nextDay = doc.Q<Button>("report-next");
-        tabs = new[] { doc.Q<Button>("tab-shop"), doc.Q<Button>("tab-staff"), doc.Q<Button>("tab-upgrades"), doc.Q<Button>("tab-log") };
+        tabs = new[] { doc.Q<Button>("tab-shop"), doc.Q<Button>("tab-staff"), doc.Q<Button>("tab-upgrades"), doc.Q<Button>("tab-log"), doc.Q<Button>("tab-summary") };
         for (int i = 0; i < tabs.Length; i++)
         {
             int t = i;
@@ -80,6 +81,7 @@ public class DayReportUI : MonoBehaviour
         }
         PlayerLock.Lock(this);
         GameAudio.Play(a => a.panelOpen, 0.6f);
+        if (root.ClassListContains("hidden")) tab = SummaryTab; // each evening opens on the summary
         root.RemoveFromClassList("hidden");
         RefreshReport();
         RefreshPlan();
@@ -191,7 +193,105 @@ public class DayReportUI : MonoBehaviour
         if (tab == 0) BuildShop(gm);
         else if (tab == 1) BuildStaff(gm);
         else if (tab == 2) BuildUpgrades(gm);
+        else if (tab == SummaryTab) BuildSummary(gm);
         else BuildLog(gm);
+    }
+
+    // ---------------- Summary ----------------
+
+    const int SummaryTab = 4;
+
+    void SummaryHead(string text)
+    {
+        var l = new Label(text);
+        l.AddToClassList("summary-head");
+        list.Add(l);
+    }
+
+    void SummaryRow(string key, int value, bool total = false)
+    {
+        var r = new VisualElement();
+        r.AddToClassList("report-row");
+        if (total) r.AddToClassList("total");
+        var k = new Label(key); k.AddToClassList("report-key");
+        var v = new Label(value > 0 ? value.ToString() : "-"); v.AddToClassList("report-val");
+        r.Add(k); r.Add(v);
+        list.Add(r);
+    }
+
+    void SummaryNote(string text, string cls)
+    {
+        var l = new Label(text);
+        l.AddToClassList(cls);
+        list.Add(l);
+    }
+
+    /// <summary>Reservations nobody has ordered yet (they'll be let down tomorrow).</summary>
+    static int UnorderedReservations(GameManager gm) => gm.reservations.FindAll(r =>
+    {
+        var b = gm.FindTitle(r.title);
+        return b != null && gm.OnOrder(b) == 0 && !BookRequest.InStock(b) && !(DeliveryCart.Instance != null && DeliveryCart.Instance.Has(b));
+    }).Count;
+
+    /// <summary>Where the money came from, what went wrong, and one thing to do better tomorrow.</summary>
+    void BuildSummary(GameManager gm)
+    {
+        var d = gm.Today;
+        SummaryHead("Where the money came from");
+        // Only what actually earned something today, so the rest of the page fits.
+        void Source(string key, int value) { if (value > 0) SummaryRow(key, value); }
+        Source("Book sales", d.fromSales);
+        Source("Reading fees", d.fromReading);
+        Source("Library cards", d.fromCards);
+        Source("VIP scholars", d.fromVip);
+        Source("Staff work", d.fromStaff);
+        Source("Tidying, rewards and jobs", d.fromOther);
+        if (d.income > 0) SummaryRow("Total", d.income, true);
+        else SummaryNote("No money came in today.", "summary-note");
+        if (d.tips > 0) SummaryNote($"Tips (already in the totals above): {d.tips}", "summary-note");
+
+        SummaryHead("What went wrong");
+        int wrong = 0;
+        void Bad(string text) { SummaryNote(text, "summary-note"); list[list.childCount - 1].AddToClassList("bad"); wrong++; }
+        if (d.angry > 0) Bad($"{d.angry} {(d.angry == 1 ? "visitor" : "visitors")} walked out angry.");
+        if (d.wrongBooks > 0) Bad($"{d.wrongBooks} wrong {(d.wrongBooks == 1 ? "book" : "books")} handed over.");
+        if (d.letDown > 0) Bad($"{d.letDown} {(d.letDown == 1 ? "person" : "people")} let down (lied to, never ordered for, or left waiting).");
+        if (cleanBonus < 0) Bad($"Mess left at closing ({cleanBonus} reputation).");
+        int unordered = UnorderedReservations(gm);
+        if (unordered > 0) Bad($"{unordered} {(unordered == 1 ? "reservation isn't" : "reservations aren't")} ordered yet.");
+        foreach (var role in GameManager.StaffOrder)
+            if (gm.Hired(role) && gm.staffMood[(int)role] < 2.5f)
+                Bad($"{GameManager.StaffPerson[(int)role]} is {GameManager.MoodWord(gm.staffMood[(int)role])}, and working slower for it.");
+        if (wrong == 0) SummaryNote("Nothing! A clean day.", "summary-note");
+
+        SummaryHead("Tip for tomorrow");
+        SummaryNote(Tip(gm, unordered), "summary-tip");
+    }
+
+    /// <summary>The one thing most worth doing better tomorrow, from what happened today.</summary>
+    string Tip(GameManager gm, int unordered)
+    {
+        var d = gm.Today;
+        if (unordered > 0)
+            return $"{unordered} {(unordered == 1 ? "reservation still needs" : "reservations still need")} ordering. Do it now in the Shop tab, or someone gets let down tomorrow.";
+        if (d.angry > 0)
+            return "People walked out. Serve the front of the queue first, and ask for a hint when a request is hard to place.";
+        if (d.wrongBooks >= 2)
+            return "Check the request on the computer before you hand a book over. Wrong books cost reputation.";
+        if (cleanBonus < 0)
+            return "Tidy the cups and books before you lock up. A spotless library earns reputation; a messy one loses it.";
+        foreach (var role in GameManager.StaffOrder)
+            if (gm.Hired(role) && gm.staffMood[(int)role] < 2.5f)
+                return $"{GameManager.StaffPerson[(int)role]} is {GameManager.MoodWord(gm.staffMood[(int)role])}. Go over quickly when they need help, pay for proper fixes and stop for a chat. Happy staff work faster.";
+        bool repairs = (ReturnBin.Instance != null && ReturnBin.Instance.Count > 0) || gm.Books.Exists(b => b.DamagedCopies > 0 && !BookRequest.IsRare(b));
+        if (repairs)
+            return "Some books are waiting for repair. Mended books can be sold and lent again, and a perfect repair earns a bonus.";
+        if (gm.GoalActive && gm.Reputation < gm.ReputationGoal)
+        {
+            int left = gm.ReputationGoal - gm.Reputation, days = Mathf.Max(1, GameManager.EndingDay - gm.day);
+            return $"The Dean wants {gm.ReputationGoal} reputation by Day {GameManager.EndingDay}. That's {left} more in {days} {(days == 1 ? "day" : "days")}: every visitor you serve well is +1.";
+        }
+        return "The popular books change every morning. Check the catalogue first thing and stock up on the ones that glow.";
     }
 
     void AddRow(string title, string sub, string button, bool enabled, System.Action onClick, bool popular = false, bool glow = false)

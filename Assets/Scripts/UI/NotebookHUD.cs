@@ -138,15 +138,19 @@ public class NotebookHUD : MonoBehaviour
         {
             var rb = gm.Books.Find(x => x.Title == r.title);
             bool coming = rb != null && (gm.OnOrder(rb) > 0 || BookRequest.InStock(rb) || (DeliveryCart.Instance != null && DeliveryCart.Instance.Has(rb)));
+            if (coming) continue; // ordered (or on the shelf): nothing left to do, so it leaves the list
             string when = r.urgent ? $"Today by {GameManager.FormatHour(r.dueHour)} (express!)" : r.day <= gm.day ? "Today" : "Tomorrow";
             lines.Add(($"{r.name}: \"{r.title}\"", $"{when}  ·  {(coming ? "ready or on its way" : "NOT ORDERED YET")}", coming));
         }
+        // Jobs you've taken on today (SpecialJobs): a VIP's book, the book club's copies.
+        if (SpecialJobs.Instance != null)
+            foreach (var (what, status, ready) in SpecialJobs.Instance.Lines()) lines.Add((what, status, ready));
         string signature = string.Join("|", lines);
         if (signature == reserveSignature) return;
         reserveSignature = signature;
         reserveList.Clear();
         if (reserveTab != null) reserveTab.text = lines.Count > 0 ? $"Reserved ({lines.Count})" : "Reserved";
-        if (lines.Count == 0) { Line(reserveList, "nb-empty", "No reservations. Sold-out books can be reserved at the counter."); return; }
+        if (lines.Count == 0) { Line(reserveList, "nb-empty", gm.reservations.Count > 0 ? "Everything reserved is ordered or on the shelf." : "No reservations or jobs. Sold-out books can be reserved at the counter."); return; }
         foreach (var (who, when, coming) in lines)
         {
             var box = new VisualElement();

@@ -36,6 +36,8 @@ public class MainMenuUI : MonoBehaviour
         "Tip: popular books get asked for most. Keep them in stock!",
         "Tip: a visitor who walks out costs 3 reputation, and a regular won't come back tomorrow.",
         "Tip: each of the first five days has its own surprise. Check the morning banner and the notice board.",
+        "Tip: happy staff work faster. Help them quickly, pay for proper fixes, and stop for a chat.",
+        "Tip: once you have staff, people bring you special jobs. They pay well, if you can deliver.",
         "Tip: the Archive opens on Day 2 and Rare Books on Day 3.",
         "Tip: VIP scholars need a Rare Books card before they can read.",
     };

@@ -83,6 +83,7 @@
             </ui:VisualElement>
             <ui:VisualElement class="page page-right">
                 <ui:VisualElement class="plan-tabs">
+                    <ui:Button name="tab-summary" class="kit-button plan-tab" text="Summary" />
                     <ui:Button name="tab-shop" class="kit-button plan-tab" text="Shop" />
                     <ui:Button name="tab-staff" class="kit-button plan-tab" text="Staff" />
                     <ui:Button name="tab-upgrades" class="kit-button plan-tab" text="Upgrades" />

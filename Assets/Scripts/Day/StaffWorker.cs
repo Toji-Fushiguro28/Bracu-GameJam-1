@@ -102,9 +102,20 @@ public class StaffWorker : MonoBehaviour
         if (role == GameManager.StaffRole.Cleaner) Wander(); else GoToChair();
     }
 
+    bool frozenByClock;
+
     void Update()
     {
+        // Talking freezes the clock: stand still until it runs again (the agent would otherwise walk on).
+        var gm = GameManager.Instance;
+        bool frozen = gm != null && gm.Paused;
+        if (agent.enabled && agent.isOnNavMesh)
+        {
+            if (frozen) { agent.isStopped = true; frozenByClock = true; }
+            else if (frozenByClock) { frozenByClock = false; agent.isStopped = OnHold || state == State.Reporting; }
+        }
         if (agent.enabled && anim) anim.SetSpeed(Mathf.Clamp01(agent.velocity.magnitude / walkSpeed) * 0.5f);
+        if (frozen) return; // nothing moves on while you're in a conversation
         if (state == State.ToReport && Arrived()) { agent.ResetPath(); state = State.Reporting; }
         if (state == State.Reporting || state == State.ToReport) return;
         timer -= GameManager.Dt;

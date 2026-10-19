@@ -227,6 +227,41 @@ public class HUD : MonoBehaviour
         Shake(1f);
     }
 
+    /// <summary>A gold line that rises from a spot in the world and fades: a reward for doing something well
+    /// (the right shelf in a chat, a perfect repair, a special order).</summary>
+    public static void SkillPop(Vector3 world, string text)
+    {
+        if (instance == null || instance.hudLayer == null || !instance.isActiveAndEnabled) return;
+        instance.StartCoroutine(instance.SkillPopping(world, text));
+    }
+
+    IEnumerator SkillPopping(Vector3 world, string text)
+    {
+        var cam = Camera.main;
+        if (cam == null) yield break;
+        var pop = new Label(text) { pickingMode = PickingMode.Ignore };
+        pop.AddToClassList("skill-pop");
+        pop.style.visibility = Visibility.Hidden; // until it has a size to centre with
+        hudLayer.Add(pop);
+        const float duration = 2f;
+        for (float t = 0f; t < 1f; t += Time.unscaledDeltaTime / duration)
+        {
+            var vp = cam.WorldToViewportPoint(world);
+            float w = hudLayer.resolvedStyle.width, h = hudLayer.resolvedStyle.height, pw = pop.resolvedStyle.width;
+            if (vp.z > 0f && !float.IsNaN(pw))
+            {
+                pop.style.visibility = Visibility.Visible;
+                pop.style.left = vp.x * w - pw * 0.5f;
+                pop.style.top = (1f - vp.y) * h - 70f * (1f - (1f - t) * (1f - t)) - pop.resolvedStyle.height;
+            }
+            pop.style.opacity = t < 0.7f ? 1f : 1f - (t - 0.7f) / 0.3f;
+            float s = t < 0.12f ? Mathf.Lerp(1.5f, 1f, t / 0.12f) : 1f;
+            pop.style.scale = new Scale(new Vector3(s, s, 1f));
+            yield return null;
+        }
+        pop.RemoveFromHierarchy();
+    }
+
     /// <summary>"+12" in big green (or "-40" in red) just under the purse, floating up and fading.</summary>
     IEnumerator Pop(int delta)
     {

@@ -9,6 +9,14 @@ public static class PCShopView
 {
     static int tab;
     static BookFilterBar filter;
+    static string pendingSearch;
+
+    /// <summary>The next time the Shop opens: on the Books tab, searching for this (from the catalogue).</summary>
+    public static void OpenOnBooks(string search)
+    {
+        tab = 0;
+        pendingSearch = search;
+    }
 
     public static void Wire(VisualElement root, Action back)
     {
@@ -17,6 +25,8 @@ public static class PCShopView
         var shopList = root.Q<ScrollView>("shop-list");
         filter = new BookFilterBar(() => Refresh(root), true);
         shopList.parent.Insert(shopList.parent.IndexOf(shopList), filter.Root);
+        if (!string.IsNullOrEmpty(pendingSearch)) filter.SetSearch(pendingSearch);
+        pendingSearch = null;
         string[] names = { "tab-books", "tab-upgrades", "tab-staff" };
         for (int i = 0; i < names.Length; i++)
         {

@@ -163,12 +163,23 @@ public class RepairDesk : ClickInteractable
         {
             if (perfect) gm.Today.repairsPerfect++; else gm.Today.repairsNormal++;
             gm.NotifyBooksChanged();
+            if (perfect)
+            {
+                // A perfect job gets noticed: a small donation from the Friends of the Whitmore, and the word gets round.
+                gm.AddCoins(PerfectBonus);
+                gm.Today.Earn(GameManager.DayStats.Source.Other, PerfectBonus);
+                gm.AddReputation(1);
+                HUD.SkillPop(transform.position + Vector3.up * 1.6f, $"Perfect repair! +{PerfectBonus} coins, +1 reputation");
+            }
         }
         if (doneSound != null) AudioSource.PlayClipAtPoint(doneSound, transform.position, 0.8f);
         Bubble(fixedTo == BookCondition.Good ? $"\"{job.book.Title}\" is good as new! It's ready on the table." : $"\"{job.book.Title}\" is patched up (worn). It's ready on the table.");
         Finished?.Invoke(job, perfect);
         Changed?.Invoke();
     }
+
+    /// <summary>Coins for a perfect repair (as good as new from damaged, or a lucky roll).</summary>
+    const int PerfectBonus = 5;
 
     void Bubble(string text)
     {

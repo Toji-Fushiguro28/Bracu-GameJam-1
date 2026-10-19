@@ -90,6 +90,9 @@ public class BookFilterBar
         Labels();
     }
 
+    /// <summary>Starts with this in the search box (e.g. carried over from the catalogue).</summary>
+    public void SetSearch(string text) => search.SetValueWithoutNotify(text ?? "");
+
     public bool Matches(BookData b)
     {
         string q = (search.value ?? "").Trim().ToLowerInvariant();

@@ -5,6 +5,7 @@
             <ui:VisualElement class="pc-header">
                 <ui:Button name="back-button" text="&lt; Back" class="pc-button" />
                 <ui:Label text="CATALOGUE" class="pc-title font-title" />
+                <ui:Button name="buy-books-button" text="Buy books" class="pc-button pc-header-button" />
             </ui:VisualElement>
             <ui:VisualElement class="pc-columns">
                 <ui:VisualElement class="pc-left">
@@ -32,7 +33,10 @@
                         <ui:VisualElement class="detail-row"><ui:Label text="Condition" class="detail-key" /><ui:Label name="detail-condition" class="detail-value" /></ui:VisualElement>
                         <ui:VisualElement class="detail-row"><ui:Label text="Sale" class="detail-key" /><ui:Label name="detail-sale" class="detail-value" /></ui:VisualElement>
                         <ui:Label name="detail-abstract" class="detail-abstract" />
-                        <ui:Button name="detail-select" text="Add to note" class="pc-button detail-select" />
+                        <ui:VisualElement class="detail-actions">
+                            <ui:Button name="detail-select" text="Add to note" class="pc-button detail-select" />
+                            <ui:Button name="detail-buy" text="Buy" class="pc-button detail-select detail-buy" />
+                        </ui:VisualElement>
                         <ui:Label name="detail-select-note" class="detail-select-note" />
                     </ui:VisualElement>
                 </ui:VisualElement>
