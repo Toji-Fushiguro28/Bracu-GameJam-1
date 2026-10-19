@@ -35,6 +35,7 @@ public class MainMenuUI : MonoBehaviour
         "Tip: chat with readers - point them to the right shelf for a bigger tip.",
         "Tip: popular books get asked for most. Keep them in stock!",
         "Tip: a visitor who walks out costs 3 reputation, and a regular won't come back tomorrow.",
+        "Tip: each of the first five days has its own surprise. Check the morning banner and the notice board.",
         "Tip: the Archive opens on Day 2 and Rare Books on Day 3.",
         "Tip: VIP scholars need a Rare Books card before they can read.",
     };

@@ -447,10 +447,20 @@ public class PCOverlayTrigger : MonoBehaviour
     /// <summary>Open the PC overlay (used by the shared click system).</summary>
     public void Open() => Show();
 
+    /// <summary>Shut it from outside (the power just went).</summary>
+    public void ForceClose() => Hide();
+
     void Show()
     {
         if (isOpen || overlayObject == null)
             return;
+        if (DayStory.PowerOut)
+        {
+            // Power cut: a dead screen.
+            var click = GetComponent<ComputerClick>();
+            if (click != null) WorldPrompts.Instance?.ShowBubble(click, "No power. The computer's dead until 2:00 PM.", 3f);
+            return;
+        }
         isOpen = true;
         subjectFilter = typeFilter = showFilter = 0; // the catalogue opens on All books every time
         PlayerLock.Lock(this);

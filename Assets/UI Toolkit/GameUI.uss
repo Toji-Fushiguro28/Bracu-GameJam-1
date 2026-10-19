@@ -39,7 +39,6 @@
 .prompt-label {
     color: var(--ink);
     font-size: 20px;
-    -unity-font-style: bold;
 }
 
 /* ---------- Inspect bubble ---------- */
@@ -79,7 +78,6 @@
     padding: 6px 18px 10px 18px;
     color: rgb(255, 245, 230);
     font-size: 26px;
-    -unity-font-style: bold;
     background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_FrameSelect01a.png");
     -unity-slice-left: 3; -unity-slice-right: 3; -unity-slice-top: 3; -unity-slice-bottom: 3;
     -unity-slice-scale: 4px;
@@ -571,3 +569,31 @@
     -unity-text-outline-width: 1.5px; -unity-text-outline-color: rgb(40, 30, 20); }
 #hud-rep-delta.negative { color: rgb(235, 85, 70); }
 .hud-rep.goal-met Label { color: rgb(214, 120, 64); }
+
+/* ---------- Coins: their own purse in the top right, with a shake, flying coins and a "+12" when you're paid ---------- */
+.hud-purse {
+    position: absolute;
+    top: 18px; right: 24px;
+    padding: 8px 22px 12px 18px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Popup01a.png");
+    -unity-slice-left: 4; -unity-slice-right: 4; -unity-slice-top: 4; -unity-slice-bottom: 4;
+    -unity-slice-scale: 4px;
+    transform-origin: center;
+}
+.hud-purse .icon-coin { width: 44px; height: 48px; }
+.hud-purse Label { color: var(--ink); font-size: 40px; margin-left: 10px; min-width: 60px; }
+/* A coin flying up into the purse. */
+.coin-fly {
+    position: absolute;
+    width: 26px; height: 28px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconCoin01a.png");
+}
+/* The "+12" / "-40" that floats up beside the purse. */
+.hud Label.coin-pop {
+    position: absolute;
+    font-size: 72px;
+    color: rgb(110, 215, 95);
+    -unity-text-outline-width: 2px;
+    -unity-text-outline-color: rgb(40, 30, 20);
+}
+.hud Label.coin-pop.negative { color: rgb(235, 85, 70); }

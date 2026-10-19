@@ -55,7 +55,7 @@ What changed in `MainGame.unity` and `Assets/Scripts`, and where. Nothing here c
    | Returner | 8% | **Check in** (sometimes a late fee) |
    | Sign-up | 15% of non-members | Talk to them, then fill the card in on **PC → Members** |
    | VIP scholar | 8%, Day 3+ | Professors with a gold name plate; need a **Rare** card, then read in Rare Books |
-   | Pickup | first thing in the morning | Comes for yesterday's reservation |
+   | Pickup | at their own random time of day (9:30 to 4:15, one slot each) | Comes for yesterday's reservation |
 
 3. **Closing.** The bell rings at 17:30 and the library closes at 18:00. The last visitors leave, then the **front ropes appear** across the doorway.
 4. **Tidy up.** Teacups and open books appear on tables, and the return bin may have copies in it.
@@ -448,3 +448,30 @@ Small, contained edits. Please check them when merging:
 - **Ending:** `GoalTier` (2 reached, 1 close at 60%+, 0 missed) changes the Dean's farewell: the board signs the library over, wants one more season, or is worried. The end page shows "Reputation X of Y" and the result. The game carries on either way.
 - **Consequences:** wrong book -1 reputation. Walked out -3, never ordered -3, said "we can't get that" when you could -2, waited for nothing -2. A member let down in those ways stays away the next day (`Member.awayUntil`, saved with the members). Pickups still come.
 - **Patience:** `PatienceDayFactor` cuts patience to 85% on Day 3 and 75% from Day 4 (all modes; Cozy visitors still never walk out).
+- **End page:** besides "Keep running the library" there's "Back to main menu" (`StaffInterview.EndingToMenu`). The new day is started and saved first (so the ending isn't replayed), then `GameManager.ReturnToMenu()`; Continue on the title screen picks up from there.
+- **Visitor tags** sit at 1.4 m above the visitor (was 1.75) so they don't hide the counter computer. Card applicants' name and birthday are highlighted in their line and in the notebook.
+
+## The first week's story and daily twists (`Day/DayStory.cs`)
+- Runs on Days 1 to 5 only (`GameManager.GoalActive`). After the ending, days are ordinary again. `GameManager` adds the component at runtime (no scene change).
+- **One twist a day**, in a random order per game (`GameManager.storySeed`, saved; never a power cut on Day 1): exam rush, book thief, leaky roof, inspection, book signing, power cut. Each has 4-5 beats (someone at the desk, a banner, a pointer, a popup) and a real effect:
+  - **Exam rush**: more students, mostly readers, after one subject, a bit less patient.
+  - **Thief**: a "Stranger in a long coat" browses, pockets a book and walks slowly to the door. Click them (`Customer.Caught`) to get it back; if they get out, the copy is lost.
+  - **Leaky roof**: a shelf gets a "Leak!" pointer; until you click it (`ShelfInteractable` → `DayStory.FixLeak`) copies on it turn Damaged.
+  - **Inspection**: Mr. Pryce looks around 1:00-2:30; mess on the floor and walk-outs decide the verdict.
+  - **Book signing**: one of the library's own authors; their two books are popular all day and asked for more during the signing; sales decide the thank-you.
+  - **Power cut**: 12:00-2:00 the PC won't open (`PCOverlayTrigger`), the library goes dark (`DayNightCycle` uses `DayStory.Darkness`), visitors are more patient.
+- **The week's own beats** (the same every game): Walter's first card (Day 1), the car-park rumour (Day 1), the Archive historian and the lost glasses (Day 2), the Board's letter and the Archive cat (Day 3), the writer and the man with the clicker (Day 4), the Dean's note and the regulars' card (Day 5).
+- **Story visitors** are normal `Customer`s with `story` set (`CustomerSpawner.SpawnStory`): they queue, wait without patience, and play a `DayStory.Visit` scene when clicked. Afterwards they can ask for a book like anyone else (`ContinueWithRequest`), sign up (`ContinueAsSignUp`), look round the shelves and come back for a second scene (`lingerUntil` + `next`), or leave. If their character is busy (working here, already inside) an alternative steps in.
+- **Letting the player know**: the morning banner names the day's twist, the notice board pins a notice for it first, banners and pointers mark each moment, and the Day Report has a row for it.
+- **Small talk**: the first time you talk to a visitor, some mention their day first (`DayStory.Opener`), often about the twist. Days 1 to 5 only: the 28 everyday lines are shared out across those days (5 or 6 each, no repeats), and after the ending there's no small talk.
+- **Pickups** no longer all come at opening: each gets its own time across the day (`CustomerSpawner.QueuePickups`).
+- To test a twist without playing to it: in Play mode set `GameManager.day`, pick a `storySeed` whose `DayStory.TwistFor` is the twist you want, call `SetUpDay` and move `GameManager.Hour` (nothing is saved until the next day starts).
+
+## Coin purse (HUD)
+- Coins have their own purse in the top right (`#hud-purse` in `GameUI.uxml`), out of the bottom bar.
+- Getting paid (`HUD.OnCoins`): 3 to 9 coins fly on a curve from the librarian up into the purse; each one that lands shakes the purse and updates the total; a big green "+12" floats up under it. Spending: a shake and a red "-40". The coin sound still comes from `GameAudio`.
+- Effects are skipped (just the number changes) until the HUD has been laid out, e.g. on the first frame.
+
+## Stuck visitors
+- Visitors heading to a shelf aim for a slightly random spot beside it (`Customer.ShelfSpot`), so two of them don't fight over one point.
+- `Customer.Watchdog()` runs every frame: a visitor who is walking but hasn't moved 20 cm in 3 s (game time) is freed. Within 1.5 m of where they're going, they count as arrived; after 6 s they hop (NavMeshAgent.Warp) to their destination. In the queue they hop to their place in line.

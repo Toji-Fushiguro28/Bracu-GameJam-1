@@ -78,6 +78,7 @@ public class ReturnBin : ClickInteractable
         var copy = pile[pile.Count - 1];
         pile.RemoveAt(pile.Count - 1);
         carry.PickUp(copy.book, copy.condition);
+        ShelfUI.Instance?.PlayTake(); // same sound as taking a book off a shelf
         string note = copy.condition == BookCondition.Good ? "" : $" ({copy.condition.ToString().ToLower()})";
         Bubble($"Took \"{copy.book.Title}\"{note} from the returns.");
     }

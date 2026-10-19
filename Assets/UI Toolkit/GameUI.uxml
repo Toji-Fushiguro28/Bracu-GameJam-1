@@ -10,14 +10,14 @@
         <ui:VisualElement class="hud-bar" picking-mode="Ignore">
             <ui:Label name="hud-day" class="hud-day" text="Day 1" picking-mode="Ignore" />
             <ui:Label name="hud-clock" class="hud-clock" text="09:00" picking-mode="Ignore" />
-            <ui:VisualElement class="hud-coins" picking-mode="Ignore">
-                <ui:VisualElement class="icon-coin" picking-mode="Ignore" />
-                <ui:Label name="hud-coins" text="0" picking-mode="Ignore" />
-            </ui:VisualElement>
             <ui:VisualElement class="hud-rep" picking-mode="Ignore">
                 <ui:VisualElement class="icon-rep" picking-mode="Ignore" />
                 <ui:Label name="hud-rep" text="0" picking-mode="Ignore" />
             </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="hud-purse" class="hud-coins hud-purse" picking-mode="Ignore">
+            <ui:VisualElement class="icon-coin" picking-mode="Ignore" />
+            <ui:Label name="hud-coins" text="0" picking-mode="Ignore" />
         </ui:VisualElement>
         <ui:VisualElement name="hud-carry-slot" class="hud-carry hidden" picking-mode="Ignore">
             <ui:VisualElement class="hud-carry-icon" picking-mode="Ignore" />

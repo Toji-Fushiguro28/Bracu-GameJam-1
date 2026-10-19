@@ -56,7 +56,7 @@ public class DayNightCycle : MonoBehaviour
             if (gm == null || ForceDay) return 0f;
             if (gm.CurrentPhase == GameManager.Phase.Closed) return 1f;
             float t = Mathf.InverseLerp(duskStart, gm.closeHour, gm.Hour);
-            return Mathf.Clamp01(nightCurve.Evaluate(t));
+            return Mathf.Max(Mathf.Clamp01(nightCurve.Evaluate(t)), DayStory.Darkness); // a power cut: candlelight at noon
         }
     }
 

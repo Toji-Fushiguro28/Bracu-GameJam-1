@@ -38,13 +38,15 @@ public class StaffInterview : MonoBehaviour
     public static bool Ending;
     public static int EndingDays, EndingMembers, EndingReputation, EndingGoal, EndingTier = 2;
     public static List<string> EndingStaff = new List<string>();
+    /// <summary>Set when the player picks "Back to main menu" on the End page: the day is saved, then the title screen.</summary>
+    public static bool EndingToMenu;
     /// <summary>Loaded on top of the library (morning interviews and/or the ending). Only when the library is
     /// actually there: on its own (the new-game intro) this scene is always the Dean's interview.</summary>
     bool Overlay => (Morning || Ending) && GameManager.Instance != null && Finished != null;
 
     // Statics survive between plays in the editor (and a failed load): always start clean.
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    static void ResetStatics() { Queue = null; Finished = null; Ending = false; Coins = int.MaxValue; }
+    static void ResetStatics() { Queue = null; Finished = null; Ending = false; EndingToMenu = false; Coins = int.MaxValue; }
 
     /// <summary>The library's purse (morning interviews): you can only hire someone whose fee you can pay.</summary>
     public static int Coins = int.MaxValue;
@@ -371,10 +373,13 @@ public class StaffInterview : MonoBehaviour
         bool go = false;
         var cont = ending.Q<Button>("ending-continue");
         if (cont != null) cont.clicked += () => { go = true; Play(clickSound); };
+        var menu = ending.Q<Button>("ending-menu");
+        if (menu != null) menu.clicked += () => { EndingToMenu = go = true; Play(clickSound); };
         ClickGuard.Block();
         ending.RemoveFromClassList("hidden");
         while (!go) yield return null;
         ending.AddToClassList("hidden");
+        if (EndingToMenu) yield break; // off to the title screen: no need to watch him leave
 
         // He heads off; the library is yours.
         if (dean) dean.SetActivity(CharacterAnimator.Activity.None);

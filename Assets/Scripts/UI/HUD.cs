@@ -1,8 +1,9 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 /// <summary>
-/// Top bar (day, clock, coins) and the carried-book slot. Lives on the GameUI object and adds the notebook.
+/// Bottom bar (day, clock, reputation), the coin purse in the top right, and the carried-book slot. Lives on the GameUI object and adds the notebook.
 /// </summary>
 [RequireComponent(typeof(UIDocument))]
 public class HUD : MonoBehaviour
@@ -63,11 +64,11 @@ public class HUD : MonoBehaviour
     VisualElement carrySlot;
     PlayerCarry carry;
     string lastClock;
-    Label banner, coinDelta, repLabel, repDelta;
+    Label banner, repLabel, repDelta;
     float repDeltaUntil;
     VisualElement stamina, staminaFill;
     PlayerMover mover;
-    float bannerUntil, deltaUntil;
+    float bannerUntil;
 
     void OnEnable()
     {
@@ -93,10 +94,8 @@ public class HUD : MonoBehaviour
         banner.AddToClassList("hud-banner");
         banner.AddToClassList("hidden");
         root.Q("hud")?.Add(banner);
-        coinDelta = new Label { name = "hud-coin-delta", pickingMode = PickingMode.Ignore };
-        coinDelta.AddToClassList("hud-coin-delta");
-        coinDelta.AddToClassList("hidden");
-        root.Q(className: "hud-coins")?.Add(coinDelta);
+        purse = root.Q("hud-purse");
+        hudLayer = root.Q("hud");
         repLabel = root.Q<Label>("hud-rep");
         repDelta = new Label { name = "hud-rep-delta", pickingMode = PickingMode.Ignore };
         repDelta.AddToClassList("hidden");
@@ -130,14 +129,123 @@ public class HUD : MonoBehaviour
         if (delta < 0) repLabel.parent.experimental.animation.Scale(1.18f, 90).OnCompleted(() => repLabel.parent.experimental.animation.Scale(1f, 140));
     }
 
+    // ---------------- Coins: the purse in the top right ----------------
+
+    VisualElement purse, hudLayer;
+    Coroutine shaking;
+
+    /// <summary>Paid: coins fly up from the librarian into the purse, which shakes as each one lands and counts up,
+    /// and a big "+12" floats up beside it (the coin sound plays from GameAudio). Spending: a shake and a red "-40".</summary>
     void OnCoins(int total, int delta)
     {
-        coinLabel.text = total.ToString();
-        coinDelta.text = delta > 0 ? $"+{delta}" : delta.ToString();
-        coinDelta.EnableInClassList("negative", delta < 0);
-        coinDelta.RemoveFromClassList("hidden");
-        deltaUntil = Time.time + 1.6f;
-        coinLabel.parent.experimental.animation.Scale(1.18f, 90).OnCompleted(() => coinLabel.parent.experimental.animation.Scale(1f, 140));
+        // No effects until the HUD has been laid out (e.g. coins changed on the very first frame).
+        bool ready = purse != null && hudLayer != null && isActiveAndEnabled && purse.worldBound.width > 0f && !float.IsNaN(purse.worldBound.width);
+        if (delta <= 0 || !ready) coinLabel.text = total.ToString();
+        if (delta == 0 || !ready) return;
+        StartCoroutine(Pop(delta));
+        if (delta > 0) StartCoroutine(FlyCoins(delta));
+        else Shake(0.8f);
+    }
+
+    void Shake(float strength)
+    {
+        if (shaking != null) StopCoroutine(shaking);
+        shaking = StartCoroutine(Shaking(strength));
+    }
+
+    /// <summary>A wobble that settles, with a little swell.</summary>
+    IEnumerator Shaking(float strength)
+    {
+        const float duration = 0.45f;
+        for (float t = 0f; t < 1f; t += Time.unscaledDeltaTime / duration)
+        {
+            float fade = 1f - t;
+            purse.style.rotate = new Rotate(new Angle(Mathf.Sin(t * 40f) * 12f * strength * fade));
+            float s = 1f + 0.25f * strength * fade * fade;
+            purse.style.scale = new Scale(new Vector3(s, s, 1f));
+            yield return null;
+        }
+        purse.style.rotate = StyleKeyword.Null;
+        purse.style.scale = StyleKeyword.Null;
+        shaking = null;
+    }
+
+    /// <summary>Where on the HUD the librarian is (the money comes from the counter), or the middle of the screen.</summary>
+    Vector2 FlyStart()
+    {
+        float w = hudLayer.resolvedStyle.width, h = hudLayer.resolvedStyle.height;
+        var cam = Camera.main;
+        var player = GameObject.FindWithTag("Player");
+        if (cam != null && player != null)
+        {
+            var vp = cam.WorldToViewportPoint(player.transform.position + Vector3.up * 1.4f);
+            if (vp.z > 0f && vp.x > 0f && vp.x < 1f && vp.y > 0f && vp.y < 1f) return new Vector2(vp.x * w, (1f - vp.y) * h);
+        }
+        return new Vector2(w * 0.5f, h * 0.6f);
+    }
+
+    Vector2 PurseCoin()
+    {
+        var icon = purse.Q(className: "icon-coin") ?? purse;
+        return hudLayer.WorldToLocal(icon.worldBound.center);
+    }
+
+    /// <summary>More coins for more money (3 to 9), one after another.</summary>
+    IEnumerator FlyCoins(int delta)
+    {
+        int n = Mathf.Clamp(2 + delta / 8, 3, 9);
+        Vector2 from = FlyStart();
+        for (int i = 0; i < n; i++)
+        {
+            StartCoroutine(FlyOne(from + Random.insideUnitCircle * 30f));
+            yield return new WaitForSecondsRealtime(0.07f);
+        }
+    }
+
+    /// <summary>One coin on a curve up to the purse; when it lands the purse shakes and shows the new total.</summary>
+    IEnumerator FlyOne(Vector2 from)
+    {
+        var coin = new VisualElement { pickingMode = PickingMode.Ignore };
+        coin.AddToClassList("coin-fly");
+        hudLayer.Add(coin);
+        float side = Random.Range(-140f, 140f);
+        const float duration = 0.7f;
+        for (float t = 0f; t < 1f; t += Time.unscaledDeltaTime / duration)
+        {
+            float e = t * t; // speeds up into the purse
+            Vector2 to = PurseCoin();
+            Vector2 mid = (from + to) * 0.5f + new Vector2(side, 0f);
+            Vector2 p = (1f - e) * (1f - e) * from + 2f * (1f - e) * e * mid + e * e * to;
+            coin.style.left = p.x - 13f;
+            coin.style.top = p.y - 14f;
+            float s = Mathf.Lerp(1.4f, 0.9f, e);
+            coin.style.scale = new Scale(new Vector3(s, s, 1f));
+            yield return null;
+        }
+        coin.RemoveFromHierarchy();
+        if (GameManager.Instance != null) coinLabel.text = GameManager.Instance.Coins.ToString();
+        Shake(1f);
+    }
+
+    /// <summary>"+12" in big green (or "-40" in red) just under the purse, floating up and fading.</summary>
+    IEnumerator Pop(int delta)
+    {
+        var pop = new Label(delta > 0 ? $"+{delta}" : delta.ToString()) { pickingMode = PickingMode.Ignore };
+        pop.AddToClassList("coin-pop");
+        pop.EnableInClassList("negative", delta < 0);
+        hudLayer.Add(pop);
+        var box = hudLayer.WorldToLocal(purse.worldBound);
+        pop.style.left = box.xMin + 8f;
+        const float duration = 1.4f;
+        for (float t = 0f; t < 1f; t += Time.unscaledDeltaTime / duration)
+        {
+            pop.style.top = Mathf.Lerp(box.yMax + 60f, box.yMax + 4f, 1f - (1f - t) * (1f - t));
+            pop.style.opacity = t < 0.65f ? 1f : 1f - (t - 0.65f) / 0.35f;
+            float s = t < 0.15f ? Mathf.Lerp(1.5f, 1f, t / 0.15f) : 1f;
+            pop.style.scale = new Scale(new Vector3(s, s, 1f));
+            yield return null;
+        }
+        pop.RemoveFromHierarchy();
     }
 
     public static string MorningText(GameManager gm)
@@ -150,8 +258,9 @@ public class HUD : MonoBehaviour
             text += gm.day == GameManager.EndingDay
                 ? $"\nLast day! The Dean's goal: reputation {gm.ReputationGoal} by tonight (now {gm.Reputation})."
                 : $"\nThe Dean's goal: reputation {gm.ReputationGoal} by the end of Day {GameManager.EndingDay} (now {gm.Reputation}).";
+        text += DayStory.MorningLine(gm);
         int due = gm.reservations.FindAll(r => r.day <= gm.day).Count;
-        if (due > 0) text += due == 1 ? "\nSomeone is coming for a reserved book." : $"\n{due} people are coming for reserved books.";
+        if (due > 0) text += due == 1 ? "\nSomeone is coming for a reserved book today." : $"\n{due} people are coming for reserved books during the day.";
         return text;
     }
 
@@ -263,7 +372,6 @@ public class HUD : MonoBehaviour
             upgradeBannerShown = true;
             ShowBanner("You can afford an upgrade! Check the Shop on the computer.", 5f);
         }
-        if (deltaUntil > 0f && Time.time > deltaUntil) { deltaUntil = 0f; coinDelta.AddToClassList("hidden"); }
         if (repDeltaUntil > 0f && Time.time > repDeltaUntil) { repDeltaUntil = 0f; repDelta.AddToClassList("hidden"); }
         if (gm == null || clockLabel == null) return;
         string clock = gm.CurrentPhase == GameManager.Phase.Closed ? "Closed - tidy up, then click the front ropes" : gm.Paused ? gm.ClockText + "  (paused)" : gm.ClockText;

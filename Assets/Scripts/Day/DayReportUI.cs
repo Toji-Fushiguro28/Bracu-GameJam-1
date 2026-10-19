@@ -97,7 +97,12 @@ public class DayReportUI : MonoBehaviour
     {
         var gm = GameManager.Instance;
         // Applicants first: the interview happens before the library opens.
-        if (gm != null && gm.MorningVisitDue) { HUD.FadeOut(() => gm.RunMorningInterviews(() => { DoStartNextDay(); HUD.FadeIn(); })); return; }
+        if (gm != null && gm.MorningVisitDue) { HUD.FadeOut(() => gm.RunMorningInterviews(() =>
+        {
+            DoStartNextDay(); // saves the new day (and that the ending was seen)
+            if (StaffInterview.EndingToMenu) { StaffInterview.EndingToMenu = false; gm.ReturnToMenu(); return; }
+            HUD.FadeIn();
+        })); return; }
         HUD.FadeThen(DoStartNextDay);
     }
 
@@ -159,6 +164,7 @@ public class DayReportUI : MonoBehaviour
         Row("Things tidied", d.cleaned.ToString());
         Row("New members", d.signups.ToString());
         Row("Tips", d.tips.ToString());
+        if (DayStory.Instance != null && DayStory.Instance.ReportRow(out var twist, out var outcome)) Row(twist, outcome); // today's twist
         if (gm.WagesDueTomorrow > 0) Row("Staff wages (tomorrow)", $"-{gm.WagesDueTomorrow}");
         Row("Income", d.income.ToString(), true);
         int s = Stars(d);

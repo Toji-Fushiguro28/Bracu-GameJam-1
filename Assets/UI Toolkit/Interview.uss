@@ -36,6 +36,7 @@
 .ending-page { justify-content: center; align-items: center; }
 .ending-title { font-size: 52px; color: rgb(196, 110, 40); }
 .ending-text { color: var(--ink); font-size: 26px; white-space: normal; -unity-text-align: middle-center; margin-bottom: 14px; }
+.ending-menu { margin-top: 12px; }
 .ending-sub { color: var(--ink-soft); font-size: 21px; white-space: normal; -unity-text-align: middle-center; margin-bottom: 24px; }
 
 /* Name entry at the start of a new game */

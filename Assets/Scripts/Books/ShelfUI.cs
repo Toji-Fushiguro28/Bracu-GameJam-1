@@ -288,6 +288,9 @@ public class ShelfUI : MonoBehaviour
         Refresh();
     }
 
+    /// <summary>The book-taken sound, for other places books are picked up (e.g. the return bin).</summary>
+    public void PlayTake() => Play(takeSound);
+
     void Play(AudioClip clip)
     {
         if (clip != null) sfx.PlayOneShot(clip, 0.7f);

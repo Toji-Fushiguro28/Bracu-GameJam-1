@@ -180,7 +180,7 @@ public class GameManager : MonoBehaviour
         CoinsChanged?.Invoke(Coins, 0);
     }
 
-    public float PatienceMultiplier => (1f + 0.15f * Upgrade(UpgradeKind.ComfyQueue)) * Mode(1.5f, 1f, 0.7f) * PatienceDayFactor;
+    public float PatienceMultiplier => (1f + 0.15f * Upgrade(UpgradeKind.ComfyQueue)) * Mode(1.5f, 1f, 0.7f) * PatienceDayFactor * DayStory.PatienceFactor;
     /// <summary>Visitors get less patient as the library gets known: full patience on Days 1-2, 85% on Day 3, 75% after.</summary>
     public float PatienceDayFactor => day <= 2 ? 1f : day == 3 ? 0.85f : 0.75f;
     public float TipMultiplier => 1f + 0.1f * Upgrade(UpgradeKind.CozyLamps);
@@ -286,6 +286,8 @@ public class GameManager : MonoBehaviour
     /// <summary>The story ends after this day: the Dean visits before the next morning. Play carries on after.</summary>
     public const int EndingDay = 5;
     [NonSerialized] public bool endingSeen;
+    /// <summary>Shuffles the order of the first week's daily twists (DayStory). 0 = not picked yet.</summary>
+    [NonSerialized] public int storySeed;
     public bool EndingDue => day >= EndingDay && !endingSeen;
 
     /// <summary>The Dean's goal for the first week: this reputation by the end of Day 5 (Cozy / Standard / Busy).</summary>
@@ -421,11 +423,11 @@ public class GameManager : MonoBehaviour
     public bool loadSave = true;
 
     [Serializable] class BookSave { public string title; public int good, worn, damaged; }
-    [Serializable] class SaveData { public int day, coins, reputation, difficulty = 1; public bool[] staff; public int[] upgrades; public List<BookSave> books = new List<BookSave>(); public List<Member> members = new List<Member>(); public List<Reservation> reservations = new List<Reservation>(); public List<RequestLog.Entry> log = new List<RequestLog.Entry>(); public List<int> interviews = new List<int>(); public bool endingSeen; public int[] staffLevel; public List<string> added = new List<string>(); }
+    [Serializable] class SaveData { public int day, coins, reputation, difficulty = 1; public bool[] staff; public int[] upgrades; public List<BookSave> books = new List<BookSave>(); public List<Member> members = new List<Member>(); public List<Reservation> reservations = new List<Reservation>(); public List<RequestLog.Entry> log = new List<RequestLog.Entry>(); public List<int> interviews = new List<int>(); public bool endingSeen; public int[] staffLevel; public List<string> added = new List<string>(); public int storySeed; }
 
     public void Save()
     {
-        var data = new SaveData { day = day, difficulty = (int)difficulty, coins = Coins, reputation = Reputation, staff = staff, upgrades = upgrades, members = members, reservations = reservations, log = RequestLog.All, interviews = interviews, endingSeen = endingSeen, staffLevel = staffLevel, added = addedTitles };
+        var data = new SaveData { day = day, difficulty = (int)difficulty, coins = Coins, reputation = Reputation, staff = staff, upgrades = upgrades, members = members, reservations = reservations, log = RequestLog.All, interviews = interviews, endingSeen = endingSeen, staffLevel = staffLevel, added = addedTitles, storySeed = storySeed };
         foreach (var b in Books) data.books.Add(new BookSave { title = b.Title, good = b.GoodCopies, worn = b.WornCopies, damaged = b.DamagedCopies });
         // Copies out of the shelves (returns, repair table, hands) still belong to the library.
         void Count(BookData b, BookCondition c)
@@ -462,6 +464,7 @@ public class GameManager : MonoBehaviour
         if (data.reservations != null) reservations = data.reservations;
         if (data.interviews != null) interviews = data.interviews;
         endingSeen = data.endingSeen;
+        storySeed = data.storySeed;
         if (data.staffLevel != null && data.staffLevel.Length == 3) staffLevel = data.staffLevel;
         // Titles you ordered in earlier days are part of the library now.
         if (data.added != null) foreach (var t in data.added) { var nb = NewTitles.Find(b => b.Title == t); if (nb != null) AddToLibrary(nb); }
@@ -512,6 +515,7 @@ public class GameManager : MonoBehaviour
         PickPopularBooks();
         ApplyInterviewHire();
         ReputationAtStart = Reputation;
+        if (GetComponent<DayStory>() == null) gameObject.AddComponent<DayStory>(); // the first week's twists and story
     }
 
     /// <summary>Books everyone wants today: visitors ask for them far more often, and they glow on the

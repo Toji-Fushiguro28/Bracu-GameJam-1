@@ -26,6 +26,12 @@ public class Customer : ClickInteractable
     public bool vip;
     [Tooltip("Character prefab name: who this visitor is (see Members).")]
     public string profileKey;
+    /// <summary>Set before they wake: a story visit (DayStory). They queue, wait without losing patience, and talk when clicked.</summary>
+    [System.NonSerialized] public DayStory.Visit story;
+    /// <summary>Set before they wake: browses, pockets a book and heads for the door. Click them before they get out.</summary>
+    [System.NonSerialized] public bool thief;
+    /// <summary>Shown instead of their card name (the inspector, a visiting author, the thief), with a name tag.</summary>
+    [System.NonSerialized] public string displayName;
     public Member Membership => Members.Find(profileKey);
     public float walkSpeed = 1.6f;
     [Tooltip("Share of patience lost for a wrong book.")]
@@ -76,6 +82,8 @@ public class Customer : ClickInteractable
     {
         get
         {
+            if (sneaking) return "Stop them!";
+            if (story != null) return "Talk";
             switch (state)
             {
                 case State.CheckIn: return "Check in";
@@ -88,17 +96,17 @@ public class Customer : ClickInteractable
         }
     }
     public override Vector3 PromptAnchor => transform.position + Vector3.up * 1.0f;
-    public override bool CanInteract => state == State.Waiting || state == State.CheckIn || state == State.Reading || state == State.Checkout || state == State.WaitingForBook;
+    public override bool CanInteract => sneaking || state == State.Waiting || state == State.CheckIn || state == State.Reading || state == State.Checkout || state == State.WaitingForBook;
 
     bool introduced;
     /// <summary>The sign-up visitor waiting at the counter who has told you their details.</summary>
     public static Customer WaitingForCard { get; private set; }
-    string FirstName => Members.TryProfile(profileKey, out var p) ? p.name.Split(' ')[0] : "Visitor";
-    string FullName => Members.TryProfile(profileKey, out var p) ? p.name : "Visitor";
+    string FirstName => !string.IsNullOrEmpty(displayName) ? displayName : Members.TryProfile(profileKey, out var p) ? p.name.Split(' ')[0] : "Visitor";
+    string FullName => !string.IsNullOrEmpty(displayName) ? displayName : Members.TryProfile(profileKey, out var p) ? p.name : "Visitor";
 
     string SignUpText => !introduced
         ? (vip ? "Good day. I'll need a library card with Rare Books access." : "I'd like a library card, please!")
-        : Members.TryProfile(profileKey, out var p) ? $"I'm {p.name}, born {p.dob}.\n<i>{p.line}</i>" : "";
+        : Members.TryProfile(profileKey, out var p) ? $"I'm <color=#D67840>{p.name}</color>, born <color=#D67840>{p.dob}</color>.\n<i>{p.line}</i>" : "";
 
     string RequestText
     {
@@ -128,6 +136,13 @@ public class Customer : ClickInteractable
     void Start()
     {
         BuildOverhead();
+        if (story != null) { JoinQueue(); return; }
+        if (thief)
+        {
+            if (GoBrowse()) return;
+            thief = false; displayName = null; // nothing on the shelves to take: just an ordinary visitor
+            RefreshNameplate();
+        }
         if (kind == Kind.Returner)
         {
             // A copy they borrowed some days ago, in whatever state they kept it.
@@ -166,6 +181,8 @@ public class Customer : ClickInteractable
     /// browsers with a book get it stamped, everyone else heads home. Nobody is left sitting in the dark.</summary>
     void HandleClosed()
     {
+        // Story visitors (still waiting, or looking around) just head home.
+        if ((story != null || lingering) && state != State.Leaving) { lingering = false; Leave(); return; }
         switch (state)
         {
             case State.Reading: if (timer > 0f) timer = 0f; return; // stands up and queues to check in
@@ -194,12 +211,17 @@ public class Customer : ClickInteractable
     void Update()
     {
         if (GM != null && GM.CurrentPhase == GameManager.Phase.Closed) HandleClosed();
+        Watchdog();
         if (agent.enabled && anim) anim.SetSpeed(Mathf.Clamp01(agent.velocity.magnitude / walkSpeed) * 0.5f);
 
         switch (state)
         {
             case State.Queueing: UpdateQueue(); break;
             case State.Waiting:
+                // A story visitor waits as long as it takes (they're here to talk, not on a clock).
+                if (story != null) transform.rotation = Quaternion.RotateTowards(transform.rotation, CounterQueue.Instance.FacingDesk, 360f * Time.deltaTime);
+                else UpdatePatience();
+                break;
             case State.CheckIn:
             case State.Checkout: UpdatePatience(); break;
             case State.ToShelf:
@@ -219,7 +241,9 @@ public class Customer : ClickInteractable
                 if (timer <= 0f && (DialogueUI.Instance == null || !DialogueUI.Instance.IsOpen)) StandUp();
                 break;
             case State.Leaving:
-                if (Arrived()) Destroy(gameObject);
+                if (!Arrived()) break;
+                if (sneaking) { sneaking = false; DayStory.Instance?.ThiefGotAway(this, heldBook); heldBook = null; }
+                Destroy(gameObject);
                 break;
             case State.WaitingForBook: UpdateWaitingForBook(); break;
         }
@@ -234,7 +258,7 @@ public class Customer : ClickInteractable
 
     /// <summary>Until you talk to them, a waiting visitor only shows a small "?" bubble.</summary>
     bool heard;
-    string WaitingText => heard ? RequestText : AskMark;
+    string WaitingText => story != null ? story.teaser : heard ? RequestText : AskMark;
     const string AskMark = "?";
 
     void ShowIdleLine()
@@ -289,19 +313,20 @@ public class Customer : ClickInteractable
         if (shelves.Count == 0) return false;
         browseShelf = shelves[Random.Range(0, shelves.Count)];
         state = State.ToShelf;
-        agent.SetDestination(NearestOnNavMesh(browseShelf.transform.position, 2.5f));
+        agent.SetDestination(NearestOnNavMesh(ShelfSpot(browseShelf), 2.5f));
         return true;
     }
 
     void StartBrowsing()
     {
         state = State.Browsing;
-        timer = Random.Range(4f, 7f);
+        timer = lingering ? Random.Range(10f, 18f) : Random.Range(4f, 7f); // story visitors take their time
         if (anim) anim.PlayReachShelf();
     }
 
     void PickFromShelf()
     {
+        if (lingering) { if (GM.Hour >= lingerUntil || !GoBrowse()) EndLinger(); return; } // just looking (the inspector, the author)
         if (kind == Kind.Seeker) { NotHere(); return; }
         var pool = new List<BookData>();
         if (browseShelf != null) foreach (var b in browseShelf.Books) if (b.Sellable && BookRequest.InStock(b)) pool.Add(b);
@@ -320,6 +345,7 @@ public class Customer : ClickInteractable
         heldCondition = cond;
         GM.NotifyBooksChanged();
         if (anim) anim.PlayReachShelf();
+        if (thief) { Pocket(); return; }
 
         // Most browsers sit down and read it here, then check it in at the counter (reading fee).
         // The rest take it home: they bring it to the counter to be stamped out.
@@ -348,6 +374,7 @@ public class Customer : ClickInteractable
         GM.AddCoins(price + tip);
         GM.Today.served++; GM.Today.booksSold++; GM.Today.income += price + tip; GM.Today.tips += tip;
         GM.AddReputation(1);
+        DayStory.Instance?.Sold(heldBook);
         heldBook = null; // it leaves with them
         GameAudio.Play(a => a.served);
         Say(tip > 0 ? $"Thank you!  +{price + tip}" : $"Thanks!  +{price}", 2.5f);
@@ -370,6 +397,13 @@ public class Customer : ClickInteractable
         if (index != 0 || !Arrived()) return;
         transform.rotation = queue.FacingDesk;
         GameAudio.Play(a => a.customerArrives);
+
+        if (story != null)
+        {
+            state = State.Waiting;
+            Say(WaitingText);
+            return;
+        }
 
         if (kind == Kind.Browser && heldBook != null)
         {
@@ -444,6 +478,8 @@ public class Customer : ClickInteractable
 
     public override void Interact(GameObject player)
     {
+        if (sneaking) { Caught(); return; }
+        if (story != null && state == State.Waiting) { PlayStory(); return; }
         switch (state)
         {
             case State.CheckIn: CheckIn(); return;
@@ -487,6 +523,13 @@ public class Customer : ClickInteractable
         var d = ScriptableObject.CreateInstance<DialogueAsset>();
         d.speaker = vip ? $"{FullName} (VIP)" : FirstName;
         var start = new DialogueAsset.Line { id = "start", text = RequestText };
+        // The first time you talk, some mention their day before getting to the point.
+        if (!openerSaid && kind != Kind.Pickup)
+        {
+            openerSaid = true;
+            string opener = DayStory.Opener(profileKey);
+            if (opener != null) d.lines.Add(new DialogueAsset.Line { id = "chat", text = opener, next = "start" });
+        }
         d.lines.Add(start);
 
         // Books in your hands you could offer.
@@ -631,7 +674,7 @@ public class Customer : ClickInteractable
         if (shelves.Count == 0) return false;
         browseShelf = home != null && browseShelf != home ? home : shelves[Random.Range(0, shelves.Count)];
         state = State.ToShelf;
-        agent.SetDestination(NearestOnNavMesh(browseShelf.transform.position, 2.5f));
+        agent.SetDestination(NearestOnNavMesh(ShelfSpot(browseShelf), 2.5f));
         return true;
     }
 
@@ -999,6 +1042,7 @@ public class Customer : ClickInteractable
         GM.AddCoins(price + tip);
         GM.Today.served++; GM.Today.booksSold++; GM.Today.income += price + tip; GM.Today.tips += tip;
         GM.AddReputation(worn ? 0 : 1);
+        DayStory.Instance?.Sold(book);
         if (reservation != null) GM.reservations.Remove(reservation);
         GM.NotifyBooksChanged();
         var playerAnim = GameObject.FindWithTag("Player")?.GetComponent<CharacterAnimator>();
@@ -1151,6 +1195,108 @@ public class Customer : ClickInteractable
         return c;
     }
 
+    // ---------------- Story visits and the book thief (DayStory) ----------------
+
+    bool openerSaid;           // said their opening small talk already
+    bool sneaking;           // the thief, heading out with a book under their coat
+    bool lingering;          // a story visitor looking round the shelves before coming back to the desk
+    float lingerUntil;
+
+    /// <summary>Their scene from DayStory; afterwards they ask for a book, come back later, or head off.</summary>
+    void PlayStory()
+    {
+        var ui = DialogueUI.Instance;
+        if (ui == null || ui.IsOpen) return;
+        var visit = story;
+        var d = visit.talk != null ? visit.talk(this) : null;
+        if (d == null) { FinishStory(visit, null); return; }
+        if (string.IsNullOrEmpty(d.speaker)) d.speaker = FullName;
+        string last = null;
+        System.Action<string> seen = id => last = id;
+        ui.LineShown += seen;
+        ui.Play(d, () =>
+        {
+            ui.LineShown -= seen;
+            Destroy(d);
+            FinishStory(visit, last);
+        });
+    }
+
+    void FinishStory(DayStory.Visit visit, string last)
+    {
+        if (story != visit || state != State.Waiting) return;
+        story = null;
+        visit.after?.Invoke(this, last);
+        if (request != null || kind == Kind.SignUp || state != State.Waiting) return; // now asking for something like anyone else
+        if (visit.next != null)
+        {
+            // Off to look round the shelves; back to the desk later for their next scene.
+            story = visit.next;
+            lingerUntil = visit.lingerUntil;
+            lingering = true;
+            CounterQueue.Instance.Leave(this);
+            speech.AddToClassList("hidden");
+            if (GM.Hour >= lingerUntil || !GoBrowse()) EndLinger();
+            return;
+        }
+        Leave();
+    }
+
+    void EndLinger()
+    {
+        lingering = false;
+        JoinQueue();
+    }
+
+    /// <summary>A story visitor who, having said their piece, asks for a book like anyone else.</summary>
+    public void ContinueWithRequest(BookRequest r, bool reading)
+    {
+        if (r == null || r.Target == null) return;
+        story = null;
+        kind = reading ? Kind.Reader : Kind.Buyer;
+        request = r;
+        heard = true;
+        StartPatience(request.Patience);
+        state = State.Waiting;
+        LogRequest();
+        Say(RequestText);
+    }
+
+    /// <summary>A story visitor who wants a library card (filled in on the PC as usual).</summary>
+    public void ContinueAsSignUp()
+    {
+        story = null;
+        kind = Kind.SignUp;
+        introduced = false;
+        heard = false;
+        StartPatience(70f);
+        state = State.Waiting;
+        Say(WaitingText);
+    }
+
+    /// <summary>The thief: book under the coat, slowly towards the door (so you have a chance).</summary>
+    void Pocket()
+    {
+        sneaking = true;
+        state = State.Leaving;
+        agent.speed = walkSpeed * 0.6f;
+        agent.SetDestination(CounterQueue.Instance.exit.position);
+        Say("*slips a book into their coat*");
+        DayStory.Instance?.ThiefPocketed(this);
+    }
+
+    /// <summary>Clicked before they reached the door: the book goes back, and they leave empty-handed.</summary>
+    void Caught()
+    {
+        sneaking = false;
+        agent.speed = walkSpeed;
+        var book = heldBook;
+        if (book != null) { book.AddCopy(heldCondition); GM.NotifyBooksChanged(); }
+        heldBook = null;
+        Say("...", 2f);
+        DayStory.Instance?.ThiefCaught(this, book);
+    }
+
     // ---------------- Reactions ----------------
 
     void Penalise(float share)
@@ -1204,6 +1350,49 @@ public class Customer : ClickInteractable
         agent.SetDestination(CounterQueue.Instance.exit.position);
     }
 
+    /// <summary>A spot by the shelf, a little different for everyone, so two visitors don't fight over one point.</summary>
+    static Vector3 ShelfSpot(ShelfInteractable shelf)
+    {
+        var r = Random.insideUnitCircle * 0.9f;
+        return shelf.transform.position + new Vector3(r.x, 0f, r.y);
+    }
+
+    // ---------------- Stuck watchdog ----------------
+
+    Vector3 lastPos;
+    float stuckFor;
+    const float StuckAfter = 3f, HopAfter = 6f;
+
+    /// <summary>Frees a visitor who's walking somewhere but hasn't moved for a while (usually two people wanting
+    /// the same spot and pushing against each other). Close to where they're going: that counts as there.
+    /// Still stuck: they hop to it. In the queue they hop to their place in line.</summary>
+    void Watchdog()
+    {
+        bool walking = agent.enabled && agent.isOnNavMesh && !agent.pathPending && agent.hasPath
+                    && agent.remainingDistance > agent.stoppingDistance + 0.1f;
+        if (!walking || (transform.position - lastPos).sqrMagnitude > 0.04f)
+        {
+            lastPos = transform.position;
+            stuckFor = 0f;
+            return;
+        }
+        stuckFor += Dt;
+        if (stuckFor < StuckAfter) return;
+        Vector3 dest = agent.destination;
+        bool close = agent.remainingDistance < 1.5f;
+        if (state == State.Queueing)
+        {
+            // Their place in line is set every frame, so hop there rather than stopping short.
+            if (close || stuckFor >= HopAfter) { agent.Warp(dest); stuckFor = 0f; }
+            return;
+        }
+        if (close) agent.SetDestination(transform.position); // near enough: they arrive where they stand
+        else if (stuckFor >= HopAfter) { agent.Warp(NearestOnNavMesh(dest)); agent.SetDestination(dest); }
+        else return;
+        lastPos = transform.position;
+        stuckFor = 0f;
+    }
+
     static Vector3 NearestOnNavMesh(Vector3 p, float radius = 1.5f) =>
         NavMesh.SamplePosition(p, out var hit, radius, NavMesh.AllAreas) ? hit.position : p;
 
@@ -1219,7 +1408,7 @@ public class Customer : ClickInteractable
     void RefreshNameplate()
     {
         var m = Membership;
-        nameplate.text = vip ? $"VIP  {FullName}" : "";
+        nameplate.text = vip ? $"VIP  {FullName}" : !string.IsNullOrEmpty(displayName) || story != null ? FullName : "";
         nameplate.EnableInClassList("vip", vip);
         nameplate.EnableInClassList("hidden", string.IsNullOrEmpty(nameplate.text));
     }
@@ -1250,7 +1439,7 @@ public class Customer : ClickInteractable
     void UpdateRequestIcon()
     {
         if (reqIcon == null) return;
-        bool prompt = (state == State.Waiting || state == State.CheckIn || state == State.Checkout) && !speech.ClassListContains("hidden") && reactionLeft <= 0f;
+        bool prompt = story == null && (state == State.Waiting || state == State.CheckIn || state == State.Checkout) && !speech.ClassListContains("hidden") && reactionLeft <= 0f;
         string cls = prompt ? RequestIconClass : null;
         if (cls == reqIconClass) return;
         if (reqIconClass != null) reqIcon.RemoveFromClassList(reqIconClass);
@@ -1293,6 +1482,6 @@ public class Customer : ClickInteractable
         overhead.Add(mood);
         RefreshNameplate();
         // Head height of the 0.75-scale characters (TopAnchor could pick the blob shadow).
-        follower = WorldPrompts.Instance?.Follow(overhead, () => transform.position + Vector3.up * 1.75f);
+        follower = WorldPrompts.Instance?.Follow(overhead, () => transform.position + Vector3.up * 1.4f);
     }
 }

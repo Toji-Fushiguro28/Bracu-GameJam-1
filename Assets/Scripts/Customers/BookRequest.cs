@@ -179,7 +179,7 @@ public class BookRequest
         for (int i = 0; i < pool.Count; i++)
         {
             bool popular = GameManager.Instance != null && GameManager.Instance.IsPopular(pool[i]);
-            w[i] = (popular ? 6f : 1f) * (day < 2 && InStock(pool[i]) ? 2f : 1f);
+            w[i] = (popular ? 6f : 1f) * (day < 2 && InStock(pool[i]) ? 2f : 1f) * DayStory.RequestWeight(pool[i]); // exam subject, the signing author
             total += w[i];
         }
         float r = Random.value * total;

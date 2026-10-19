@@ -38,6 +38,7 @@
                 <ui:Label text="Thank you for playing The Whitmore Library." class="ending-text" />
                 <ui:Label text="The lamps are lit, and the doors are yours. You can keep running the library for as long as you like." class="ending-sub" />
                 <ui:Button name="ending-continue" class="kit-button wide" text="Keep running the library" />
+                <ui:Button name="ending-menu" class="kit-button wide ending-menu" text="Back to main menu" />
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
