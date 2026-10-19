@@ -18,6 +18,9 @@ public class InteractionController : MonoBehaviour
     InputAction clickAction;
     Camera cam;
     ClickInteractable hovered;
+    /// <summary>The mouse is over something in the library you can click (the cursor changes).</summary>
+    public static bool HoveringSomething { get; private set; }
+
     readonly RaycastHit[] hits = new RaycastHit[32];
 
     void Awake()
@@ -30,11 +33,11 @@ public class InteractionController : MonoBehaviour
 
     void OnEnable() => clickAction?.Enable();
 
-    void OnDisable() => SetHovered(null);
+    void OnDisable() => SetHovered(null); // also clears HoveringSomething
 
     void Update()
     {
-        SetHovered(PlayerLock.IsLocked ? null : Pick());
+        SetHovered(PlayerLock.IsLocked || NotebookHUD.PointerOver ? null : Pick());
 
         bool inReach = hovered != null && hovered.InReach(transform.position);
         if (WorldPrompts.Instance != null)
@@ -82,5 +85,6 @@ public class InteractionController : MonoBehaviour
         HoverOutline.Set(hovered, false, outlineMaterial);
         hovered = next;
         HoverOutline.Set(hovered, true, outlineMaterial);
+        HoveringSomething = hovered != null;
     }
 }

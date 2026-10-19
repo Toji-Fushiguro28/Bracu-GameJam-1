@@ -42,16 +42,21 @@ public class DayNightCycle : MonoBehaviour
                 ? lightShafts[i].sharedMaterial.GetColor(BaseColor) : Color.white;
     }
 
+    /// <summary>Morning scenes (the interview room before opening) show daylight, whatever the clock says.</summary>
+    public static bool ForceDay;
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStatics() => ForceDay = false;
+
     /// <summary>0 = day, 1 = night, for the current game hour.</summary>
     public float NightAmount
     {
         get
         {
             var gm = GameManager.Instance;
-            if (gm == null) return 0f;
+            if (gm == null || ForceDay) return 0f;
             if (gm.CurrentPhase == GameManager.Phase.Closed) return 1f;
             float t = Mathf.InverseLerp(duskStart, gm.closeHour, gm.Hour);
-            return Mathf.Clamp01(nightCurve.Evaluate(t));
+            return Mathf.Max(Mathf.Clamp01(nightCurve.Evaluate(t)), DayStory.Darkness); // a power cut: candlelight at noon
         }
     }
 
@@ -59,7 +64,7 @@ public class DayNightCycle : MonoBehaviour
     {
         float target = NightAmount;
         // Ease towards the target so jumps (new day) don't pop; normal time flow is slow anyway.
-        current = current < 0f ? target : Mathf.MoveTowards(current, target, Time.deltaTime / Mathf.Max(0.01f, blendSpeed));
+        current = current < 0f || ForceDay ? target : Mathf.MoveTowards(current, target, Time.deltaTime / Mathf.Max(0.01f, blendSpeed));
         volume.weight = current;
 
         float shaft = Mathf.Lerp(1f, shaftsAtNight, current);

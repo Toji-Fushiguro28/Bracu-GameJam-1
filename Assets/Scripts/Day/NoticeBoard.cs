@@ -56,8 +56,12 @@ public class NoticeBoard : ClickInteractable
         }
         int day = GameManager.Instance != null ? GameManager.Instance.day : 1;
         if (day != readsDay) { readsDay = day; reads = 0; }
+        // In the first week, today's twist has its own notice, pinned first.
+        string pinned = DayStory.Instance != null ? DayStory.Instance.Notice : null;
+        int k = pinned != null ? reads++ % (perDay + 1) : reads++ % perDay;
+        if (pinned != null) { if (k == 0) return pinned; k--; }
         // Each day pins its own set of notices; clicks cycle through that day's set.
-        int index = ((day - 1) * perDay + reads++ % perDay) % order.Length;
+        int index = ((day - 1) * perDay + k) % order.Length;
         return notices[order[index]];
     }
 

@@ -46,10 +46,18 @@ public class StaffTalk : ClickInteractable
         new[] { "In my day we had card catalogues. Now you have a computer. Marvellous, really.", "Want me to show you?", "Do you miss the cards?", "Perhaps on a slow afternoon. Don't let me press anything.", "A little. They smelled better." },
     };
 
+    // Busy replies once you've had a chat; a new chat is ready a few hours later.
+    static readonly string[] SamBusy = { "Can't stop, boss, these floors won't mop themselves.", "Later, alright? There's a spill with my name on it.", "Back to work for me. Ask me again after tea." };
+    static readonly string[] OmarBusy = { "Sorry, the glue's setting. Can't look away.", "Mid-stitch! Talk later?", "I've got a pile of books glaring at me. Later." };
+    static readonly string[] ArthurBusy = { "Forgive me, a scholar is waiting.", "Duty calls, I'm afraid. Another time.", "The Rare Books won't watch themselves, my dear." };
+    const float TalkCooldownHours = 3.5f;
+    int talkDay = -1;
+    float talkHour;
+
     int lastLine = -1;
     NavMeshAgent agent;
 
-    string Name => role == GameManager.StaffRole.Cleaner ? "Sam" : role == GameManager.StaffRole.Repairer ? "Omar" : "Arthur";
+    string Name => GameManager.StaffPerson[(int)role];
     string[][] Lines => role == GameManager.StaffRole.Cleaner ? Sam : role == GameManager.StaffRole.Repairer ? Omar : Arthur;
 
     protected override string DefaultVerb => "Talk to " + Name;
@@ -66,14 +74,64 @@ public class StaffTalk : ClickInteractable
     {
         var ui = DialogueUI.Instance;
         if (ui == null || ui.IsOpen) return;
+        var gm = GameManager.Instance;
+        var worker = GetComponent<StaffWorker>();
+        var help = GetComponent<StaffHelp>();
+        // End of the day: they tell you how it went, then head home.
+        if (worker != null && worker.WaitingToReport && help != null && help.Reporting)
+        {
+            worker.StopToTalk(player.transform.position); // stop where you caught them, then head home
+            var r = ScriptableObject.CreateInstance<DialogueAsset>();
+            r.speaker = Name;
+            // Left alone all day (no help, no chat): it shows.
+            bool ignored = !help.attentionToday;
+            if (ignored && gm != null) gm.ChangeStaffMood(role, -0.3f);
+            r.lines.Add(new DialogueAsset.Line { id = "start", text = Report(worker, help, ignored), next = "end" });
+            ui.Play(r, () =>
+            {
+                Destroy(r);
+                help.ReportDone();
+                if (worker.earnedToday > 0 && gm != null)
+                {
+                    gm.AddCoins(worker.earnedToday);
+                    gm.Today.Earn(GameManager.DayStats.Source.Staff, worker.earnedToday);
+                    GameAudio.Play(a => a.coin);
+                    worker.earnedToday = 0;
+                }
+                StaffManager.Instance?.Dismiss(worker);
+            });
+            return;
+        }
+        // Stuck on something: sort it out.
+        var problem = help != null ? help.ProblemDialogue(Name) : null;
+        if (problem != null)
+        {
+            string how = null;
+            System.Action<string> seen = id => { if (id == "paid" || id == "free") how = id; };
+            ui.LineShown += seen;
+            ui.Play(problem, () => { ui.LineShown -= seen; Destroy(problem); if (how != null) help.Resolve(how); });
+            return;
+        }
+        var d = ScriptableObject.CreateInstance<DialogueAsset>();
+        d.speaker = Name;
+        if (gm != null && talkDay == gm.day && gm.Hour - talkHour < TalkCooldownHours)
+        {
+            var busy = role == GameManager.StaffRole.Cleaner ? SamBusy : role == GameManager.StaffRole.Repairer ? OmarBusy : ArthurBusy;
+            // A quick line over their head; the clock keeps going.
+            Destroy(d);
+            if (WorldPrompts.Instance != null) WorldPrompts.Instance.ShowBubble(this, busy[Random.Range(0, busy.Length)], 3f);
+            return;
+        }
+        if (gm != null) { talkDay = gm.day; talkHour = gm.Hour; }
+
+        // The first chat of the day cheers them up a little (and counts as looking after them).
+        if (help != null && !help.attentionToday) { help.attentionToday = true; gm?.ChangeStaffMood(role, 0.15f); }
         var lines = Lines;
         int pick = Random.Range(0, lines.Length);
         if (pick == lastLine) pick = (pick + 1) % lines.Length;
         lastLine = pick;
         var t = lines[pick];
 
-        var d = ScriptableObject.CreateInstance<DialogueAsset>();
-        d.speaker = Name;
         var start = new DialogueAsset.Line { id = "start", text = t[0] };
         start.choices.Add(new DialogueAsset.Choice { text = t[1], next = "a" });
         start.choices.Add(new DialogueAsset.Choice { text = t[2], next = "b" });
@@ -89,7 +147,30 @@ public class StaffTalk : ClickInteractable
         ui.Play(d, () =>
         {
             Destroy(d);
-            if (agent != null && agent.enabled) agent.isStopped = false;
+            if (agent != null && agent.enabled) agent.isStopped = worker != null && worker.OnHold;
         });
+    }
+
+    /// <summary>A few words about today's work.</summary>
+    string Report(StaffWorker w, StaffHelp help, bool ignored)
+    {
+        string work = role == GameManager.StaffRole.Cleaner
+            ? (w.cleanedToday > 0 ? $"I tidied up <color=#D67840>{w.cleanedToday}</color> messes today." : "Quiet day for mess. I polished the floor instead.")
+            : role == GameManager.StaffRole.Repairer
+            ? (w.repairedToday + w.shelvedToday > 0 ? $"I mended <color=#D67840>{w.repairedToday}</color> books and put <color=#D67840>{w.shelvedToday}</color> back on the shelves." : "Nothing came in for repair today, so I caught up on the catalogue.")
+            : (w.servedToday > 0 ? $"I looked after <color=#D67840>{w.servedToday}</color> scholars in Rare Books." : "No scholars came by, so I dusted the display cases. Twice.");
+        string thanks = help.helpedToday > 1 ? $" Thanks for helping me out {help.helpedToday} times."
+                      : help.helpedToday == 1 ? " Thanks for sorting out that problem." : "";
+        string bye = role == GameManager.StaffRole.Cleaner ? " Night, boss!" : role == GameManager.StaffRole.Repairer ? " Goodnight!" : " Goodnight, my dear.";
+        string money = w.earnedToday > 0 ? $" Here's what came in from my work: <color=#D67840>{w.earnedToday} coins</color>." : "";
+        // How they feel about the job (their mood decides how fast they work).
+        var gm = GameManager.Instance;
+        float mood = gm != null ? gm.staffMood[(int)role] : 3f;
+        string feel = ignored ? " You didn't stop by once today. Just saying."
+                    : help.paidToday ? " And thanks for paying for the proper fix. I'll be in bright and early tomorrow."
+                    : mood >= 4f ? " I do love this job, you know."
+                    : mood < 1.2f ? " I'm not sure how much more of this I can take, boss."
+                    : mood < 2.5f ? " Bit of a long day, if I'm honest." : "";
+        return work + money + thanks + feel + bye;
     }
 }

@@ -128,7 +128,7 @@
 }
 .howto-body.turn { opacity: 0; translate: 26px 0; }
 .howto-body.turn-back { opacity: 0; translate: -26px 0; }
-.howto-head { flex-direction: row; align-items: center; justify-content: center; margin: 2px 0 4px 0; }
+.howto-head { flex-direction: row; align-items: center; justify-content: center; margin: 2px 0 4px 0; flex-shrink: 0; }
 .howto-icon {
     width: 40px; height: 40px; margin-right: 10px;
     -unity-background-scale-mode: scale-to-fit;
@@ -137,9 +137,9 @@
     transition-timing-function: ease-out-back;
 }
 .howto-icon.pop { rotate: -12deg; scale: 1.25 1.25; }
-.howto-title { color: var(--accent); font-size: 36px; }
+.howto-title { color: var(--accent); font-size: 36px; flex-shrink: 0; } /* full line height, so the text centres on the icon */
 .howto-rule {
-    height: 6px; margin: 2px 30px 10px 30px;
+    height: 6px; margin: 2px 30px 10px 30px; flex-shrink: 0;
     background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Line01a.png");
     -unity-slice-left: 2; -unity-slice-right: 2; -unity-slice-scale: 3px;
 }
@@ -160,10 +160,28 @@
 .howto-icon.p0 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconStar01a.png"); }
 .howto-icon.p1 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconHeart01a.png"); }
 .howto-icon.p2 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_BookCover01a.png"); }
-.howto-icon.p3 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconCoin01a.png"); }
-.howto-icon.p4 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconTick01a.png"); }
-.howto-icon.p5 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconGear01a.png"); }
-.howto-icon.p6 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconHome01a.png"); }
-.howto-icon.p7 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconPause01a.png"); }
+/* Notebook: the kit's paper page, tinted, with a dark outline and spine so it reads on the cream page. */
+.howto-icon.p3 {
+    width: 30px; height: 38px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_BookPageRight01a.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    -unity-background-image-tint-color: rgb(214, 120, 64);
+    border-color: var(--ink);
+    border-width: 2px;
+    border-left-width: 6px;
+    border-top-right-radius: 3px; border-bottom-right-radius: 3px;
+}
+.howto-icon.p4 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconCoin01a.png"); }
+.howto-icon.p5 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconTick01a.png"); }
+.howto-icon.p6 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconGear01a.png"); }
+.howto-icon.p7 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconHome01a.png"); }
+.howto-icon.p8 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconPause01a.png"); }
 
 .howto-body .howto-text { min-height: 0; font-size: 19px; }
+/* Mode picker fits inside the page (title and Back stay off the book's edges) */
+.mode-card { margin: 3px 16px; padding: 4px 14px 8px 14px; }
+.mode-card.recommended { padding-top: 4px; margin-bottom: 6px; }
+.mode-card Label { margin: 0; padding: 0; }
+.mode-name { font-size: 26px; }
+.mode-card.recommended .mode-name { font-size: 30px; }
+.mode-info { font-size: 16px; }

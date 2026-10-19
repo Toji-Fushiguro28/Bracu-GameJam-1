@@ -35,8 +35,11 @@ public class DialogueUI : MonoBehaviour
     public bool IsOpen => current != null;
     bool Typing => fullText != null && shownChars < fullText.Length;
 
+    DialogueUI previous; // another scene's box (e.g. the library's, under the interview room)
+
     void Awake()
     {
+        previous = Instance;
         Instance = this;
         voice = gameObject.AddComponent<AudioSource>();
         voice.playOnAwake = false;
@@ -53,11 +56,12 @@ public class DialogueUI : MonoBehaviour
         choiceBox = doc.Q("choices");
         continueArrow = doc.Q("continue");
         root?.AddToClassList("hidden");
+        ClickGuard.Attach(doc); // covers every panel on this document (shelf, repair, report...)
     }
 
     void OnDestroy()
     {
-        if (Instance == this) Instance = null;
+        if (Instance == this) Instance = previous;
         PlayerLock.Unlock(this);
     }
 
@@ -103,13 +107,20 @@ public class DialogueUI : MonoBehaviour
             while (shownChars < target)
             {
                 char c = fullText[shownChars++];
+                // Rich-text tags (e.g. a highlighted hint) appear whole, never half-typed.
+                if (c == '<')
+                {
+                    int close = fullText.IndexOf('>', shownChars);
+                    if (close >= 0) shownChars = close + 1;
+                    continue;
+                }
                 if (!char.IsWhiteSpace(c) && shownChars % Mathf.Max(1, blipEvery) == 0) Blip();
             }
-            lineLabel.text = fullText.Substring(0, shownChars);
+            lineLabel.text = Closed(fullText.Substring(0, shownChars));
             if (!Typing) OnLineTyped();
         }
 
-        if (clickAction == null || !clickAction.WasPressedThisFrame() || Time.frameCount == lastInputFrame) return;
+        if (clickAction == null || !clickAction.WasPressedThisFrame() || Time.frameCount == lastInputFrame || NotebookHUD.PointerOver) return;
         lastInputFrame = Time.frameCount;
 
         if (Typing)
@@ -124,6 +135,29 @@ public class DialogueUI : MonoBehaviour
         }
     }
 
+    /// <summary>Closes any rich-text tags left open by a half-typed line, so coloured hints type in
+    /// letter by letter instead of popping in when their closing tag arrives.</summary>
+    static string Closed(string partial)
+    {
+        var open = new System.Collections.Generic.List<string>();
+        for (int i = 0; i < partial.Length; i++)
+        {
+            if (partial[i] != '<') continue;
+            int end = partial.IndexOf('>', i);
+            if (end < 0) return partial.Substring(0, i); // never show half a tag
+            string tag = partial.Substring(i + 1, end - i - 1);
+            if (tag.StartsWith("/")) { if (open.Count > 0) open.RemoveAt(open.Count - 1); }
+            else
+            {
+                int cut = tag.IndexOfAny(new[] { '=', ' ' });
+                open.Add(cut > 0 ? tag.Substring(0, cut) : tag);
+            }
+            i = end;
+        }
+        for (int k = open.Count - 1; k >= 0; k--) partial += "</" + open[k] + ">";
+        return partial;
+    }
+
     void OnLineTyped()
     {
         var choices = current.lines[index].choices;
@@ -133,6 +167,7 @@ public class DialogueUI : MonoBehaviour
             return;
         }
         choiceBox.RemoveFromClassList("hidden");
+        ClickGuard.Block(); // the click that finished the line mustn't also pick a choice
         foreach (var choice in choices)
         {
             var c = choice;

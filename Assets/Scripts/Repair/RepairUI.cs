@@ -146,6 +146,39 @@ public class RepairUI : MonoBehaviour
             list.Add(row);
         }
 
+        // Worn and damaged copies still out in the library (on shelves or in the returns bin).
+        var needs = new System.Collections.Generic.List<(string title, string where)>();
+        var gmb = GameManager.Instance;
+        if (gmb != null)
+            foreach (var b in gmb.Books)
+            {
+                if (b.WornCopies == 0 && b.DamagedCopies == 0) continue;
+                string what = b.DamagedCopies > 0 ? $"<color=#B8322A>{b.DamagedCopies} damaged</color>" : "";
+                if (b.WornCopies > 0) what += (what.Length > 0 ? ", " : "") + $"{b.WornCopies} worn";
+                needs.Add((b.Title, $"{ShelfInteractable.NameOf(b.ShelfLocation)} shelf  ·  {what}"));
+            }
+        if (ReturnBin.Instance != null)
+            foreach (var (b, c) in ReturnBin.Instance.Copies)
+                if (c != BookCondition.Good) needs.Add((b.Title, $"Returns bin  ·  {(c == BookCondition.Damaged ? "<color=#B8322A>damaged</color>" : "worn")}"));
+        if (needs.Count > 0)
+        {
+            var head = new Label("Still out in the library") { name = "row-title" };
+            head.AddToClassList("repair-section");
+            list.Add(head);
+            list.Add(new Label("Take them from the shelf (Worn / Damaged) and bring them here.") { name = "row-sub" });
+            foreach (var (t, where) in needs)
+            {
+                var row = new VisualElement();
+                row.AddToClassList("shelf-row");
+                var text = new VisualElement();
+                text.AddToClassList("shelf-row-text");
+                text.Add(new Label(t) { name = "row-title" });
+                text.Add(new Label(where) { name = "row-sub" });
+                row.Add(text);
+                list.Add(row);
+            }
+        }
+
         int total = desk.RepairAllCost();
         totalLabel.text = desk.Waiting.Count > 0 ? $"Repair all: {total} coins" : "";
         repairAll.SetEnabled(gameJob == null && desk.Waiting.Count > 0 && GameManager.Instance != null && GameManager.Instance.Coins >= total);

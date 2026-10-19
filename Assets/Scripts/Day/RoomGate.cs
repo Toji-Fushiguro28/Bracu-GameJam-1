@@ -76,7 +76,7 @@ public class RoomGate : ClickInteractable
     {
         if (sign == null || room == Room.FrontDoor) return;
         var gm = GameManager.Instance;
-        bool openingDay = Open && gm != null && gm.day == OpenDay(room);
+        bool openingDay = Open && gm != null && gm.day == OpenDay(room) && gm.Hour < 10f; // "NOW OPEN!" until 10 AM
         bool show = !Open || openingDay;
         if (sign.activeSelf != show) sign.SetActive(show);
         if (!show) return;

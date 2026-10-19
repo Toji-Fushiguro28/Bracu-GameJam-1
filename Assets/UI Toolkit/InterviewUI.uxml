@@ -1,0 +1,55 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="GameUI.uss" />
+    <Style src="Interview.uss" />
+    <ui:VisualElement name="resume" class="resume" picking-mode="Ignore">
+        <ui:Label text="Applicant" class="resume-head" picking-mode="Ignore" />
+        <ui:Label name="resume-name" class="resume-name" picking-mode="Ignore" />
+        <ui:Label name="resume-role" class="resume-role" picking-mode="Ignore" />
+        <ui:Label name="resume-bio" class="resume-bio" picking-mode="Ignore" />
+        <ui:Label name="resume-notes" class="resume-notes" picking-mode="Ignore" />
+        <ui:Label name="resume-left" class="resume-left" picking-mode="Ignore" />
+    </ui:VisualElement>
+    <ui:VisualElement name="pick" class="layer modal" picking-mode="Position">
+        <ui:VisualElement class="book-spread">
+            <ui:VisualElement class="page page-left pick-page">
+                <ui:Label text="Who gets the job?" class="page-title" />
+                <ui:Label text="Your notes from today. Unknown traits are marked ?" class="pick-hint" />
+            </ui:VisualElement>
+            <ui:VisualElement class="page page-right">
+                <ui:ScrollView name="pick-list" class="shelf-list" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:VisualElement name="dialogue" class="layer dialogue" picking-mode="Ignore">
+        <ui:VisualElement name="choices" class="choices" picking-mode="Ignore" />
+        <ui:VisualElement class="dialogue-box">
+            <ui:Label name="speaker" class="speaker" />
+            <ui:Label name="line" class="line" />
+            <ui:VisualElement name="continue" class="continue" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:VisualElement name="ending" class="layer modal" picking-mode="Position">
+        <ui:VisualElement class="book-spread">
+            <ui:VisualElement class="page page-left ending-page">
+                <ui:Label text="The End" class="page-title ending-title" />
+                <ui:Label name="ending-stats" class="ending-text" />
+            </ui:VisualElement>
+            <ui:VisualElement class="page page-right ending-page">
+                <ui:Label text="Thank you for playing The Whitmore Library." class="ending-text" />
+                <ui:Label text="The lamps are lit, and the doors are yours. You can keep running the library for as long as you like." class="ending-sub" />
+                <ui:Button name="ending-continue" class="kit-button wide" text="Keep running the library" />
+                <ui:Button name="ending-menu" class="kit-button wide ending-menu" text="Back to main menu" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:VisualElement name="name-entry" class="layer modal" picking-mode="Position">
+        <ui:VisualElement class="page page-left name-page">
+            <ui:Label text="What's your name?" class="page-title" />
+            <ui:Label text="The new head librarian of the Whitmore Library." class="name-hint" />
+            <ui:TextField name="name-field" class="name-field" />
+            <ui:Button name="name-ok" class="kit-button wide" text="That's me" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:Button name="skip" class="kit-button skip-intro" text="Skip intro" />
+    <ui:VisualElement name="fade" class="fade" picking-mode="Ignore" />
+</ui:UXML>

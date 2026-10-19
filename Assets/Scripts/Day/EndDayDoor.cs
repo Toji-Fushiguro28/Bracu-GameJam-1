@@ -1,12 +1,15 @@
 using UnityEngine;
 
 /// <summary>
-/// The front doors: once the library has closed and the last visitor is gone,
-/// click them to lock up for the night and open the Day Report.
+/// Locking up for the night: once the library has closed and the last visitor is gone, this opens the Day Report.
+/// You click the front ropes (RoomGate, Front Door) to do it; the doors' own box isn't clickable, so it never
+/// covers the ropes or the staff waiting to report.
 /// </summary>
 public class EndDayDoor : ClickInteractable
 {
     float confirmUntil;
+
+    public override bool CanInteract => false;
 
     protected override string DefaultVerb => "Lock up for the night";
     public override string Verb
@@ -28,6 +31,9 @@ public class EndDayDoor : ClickInteractable
             return;
         }
         if (FindObjectsByType<Customer>().Length > 0) { Bubble("Wait until the last visitor has left."); return; }
+        // Staff hand over their report (and the day's takings) before you can lock up.
+        var waiting = StaffManager.Instance != null ? StaffManager.Instance.PendingReport() : null;
+        if (waiting != null) { Bubble($"{GameManager.StaffPerson[(int)waiting.role]} is waiting by the gate with their report."); return; }
 
         int messes = MessSpot.All.Count;
         int returns = ReturnBin.Instance != null ? ReturnBin.Instance.Count : 0;

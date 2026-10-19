@@ -16,6 +16,8 @@ public class MainMenuUI : MonoBehaviour
     public static bool Active => Instance != null && Instance.showing;
     /// <summary>Set before reloading for a new game, so it starts straight away.</summary>
     public static bool SkipOnce;
+    [Tooltip("New games start with this intro scene (the Dean's interview). Empty = straight into Day 1.")]
+    public string introScene = "InterviewScene";
 
     public string gameTitle = "The Whitmore Library";
     public string subtitle = "a cozy library tale";
@@ -28,10 +30,14 @@ public class MainMenuUI : MonoBehaviour
 
     static readonly string[] Tips =
     {
-        "Tip: the PC catalogue only searches titles and authors. Read the abstracts!",
+        "Tip: the computer searches titles, authors and tags. Vague request? Read the abstracts!",
         "Tip: sold out? Reserve it, then order it from the PC Shop.",
         "Tip: chat with readers - point them to the right shelf for a bigger tip.",
-        "Tip: the clock stops while you're in a menu or a conversation.",
+        "Tip: popular books get asked for most. Keep them in stock!",
+        "Tip: a visitor who walks out costs 3 reputation, and a regular won't come back tomorrow.",
+        "Tip: each of the first five days has its own surprise. Check the morning banner and the notice board.",
+        "Tip: happy staff work faster. Help them quickly, pay for proper fixes, and stop for a chat.",
+        "Tip: once you have staff, people bring you special jobs. They pay well, if you can deliver.",
         "Tip: the Archive opens on Day 2 and Rare Books on Day 3.",
         "Tip: VIP scholars need a Rare Books card before they can read.",
     };
@@ -42,14 +48,15 @@ public class MainMenuUI : MonoBehaviour
 
     static readonly (string title, string text)[] HowTo =
     {
-        ("Welcome!", "You run the library: lend books, help readers and keep the place tidy.\n\nMove: WASD\nRun: Shift (uses stamina; when it runs out, catch your breath)\nInteract: Left click\nMenu: Esc\n\nThe clock stops whenever a menu or chat is open, so take your time.\n\nStandard mode is the way the game is meant to be played."),
-        ("The counter", "Visitors queue at the counter. Click them to talk.\n\nThe face over their head shows their mood: keep them smiling for bigger tips. Stuck? Ask for a hint, but it shrinks their tip.\n\nBrowsers pick a book themselves: just click to stamp it out, or check it in after they've read it."),
-        ("Finding books", "Use the computer: Books searches titles and authors. Filter by subject and type, and read the abstracts for vague requests.\n\nClick a shelf to take a copy, then click the visitor to hand it over. Upgrade your Book bag to carry more.\n\nNot sure where a book goes? Look it up on the computer: it shows every book's shelf."),
-        ("Sold out?", "If nobody has the book, tell them it's sold out. They'll reserve it.\n\nOrder it on the computer (Shop): normal arrives tomorrow, express in 2 hours. Collect it from the book cart and hand it over when they come back."),
-        ("Cards & readers", "Visitors who want a library card tell you their name, birthday and which rooms they need. Fill it in on the computer (Members).\n\nChat with seated readers: point them to the right shelf for a tip."),
-        ("Repairs & rooms", "Worn or damaged copies go to the repair desk: glue, press and fit a new cover for a perfect restoration. When it's done, the desk glows: click it to pick the book up and put it back on its shelf.\n\nThe Archive opens on Day 2 and Rare Books on Day 3. VIP scholars need a Rare card."),
-        ("Staff", "Hire help on the computer (Shop > Staff). Wages are paid each morning.\n\nSam the cleaner (Day 1) tidies cups and open books.\nOmar the archivist (Day 2) repairs worn books from the returns one at a time, then shelves them.\nArthur (Day 3) looks after VIP scholars in Rare Books.\n\nSay hello now and then: click them for a chat."),
-        ("End of the day", "At 6 pm the library closes. Tidy cups and open books, shelve the returns, then click the front ropes to lock up.\n\nIn the Day Report you can order books, hire staff and buy upgrades. The game saves every morning."),
+        ("Welcome!", "Run the library: find books, serve visitors, keep it tidy.\n\nThe Dean's goal: get the reputation (the star at the bottom) to his target by the end of Day 5.\n\nMove: WASD    Run: Shift\nInteract: Left click    Menu: Esc\n\nThe clock stops while you're talking."),
+        ("The counter", "Click visitors at the counter to talk. The icon by their words shows what they want.\n\nHappy visitors tip more. A hint helps, but shrinks the tip.\n\nWrong books and walk-outs cost reputation, and regulars you let down stay away the next day. Visitors get less patient after Day 2."),
+        ("Finding books", "Look books up on the computer: search titles, authors or tags, and read the abstracts.\n\nTake a copy from its shelf and hand it over."),
+        ("Your notebook", "Every request goes in your notebook. On the computer, Add to note writes a book and its shelf down."),
+        ("Ordering books", "Sold out, or a book you don't have? Order it in the computer Shop and hand it over when it arrives.\n\nPopular books get asked for most, so keep them in stock."),
+        ("Cards & readers", "Library cards: type their name, pick their birthday and access on the computer (Members).\n\nChat with readers for tips."),
+        ("Repairs & rooms", "Damaged books go to the repair desk.\n\nThe Archive opens on Day 2, Rare Books on Day 3."),
+        ("Staff", "Hire help from the Shop or the Day Report. Interview them the next morning.\n\nWhen staff call for Help!, go and sort it out."),
+        ("End of the day", "At closing, tidy up, collect staff reports and click the front ropes.\n\nThe Day Report is where you order books and hire staff."),
     };
     Label saveLabel;
     Button continueButton, newButton;
@@ -136,7 +143,7 @@ public class MainMenuUI : MonoBehaviour
         GameAudio.HookClicks(doc);
 
         cancel?.Enable();
-        if (SkipOnce) { SkipOnce = false; root.AddToClassList("hidden"); BeginPlay(false); return; }
+        if (SkipOnce) { SkipOnce = false; root.AddToClassList("hidden"); BeginPlay(false); HUD.StartBlack(); return; }
 
         showing = true;
         PlayerLock.Lock(this);
@@ -212,8 +219,9 @@ public class MainMenuUI : MonoBehaviour
     static readonly string[] HowToKeywords =
     {
         "Left click", "Left Shift", "Shift", "WASD", "Esc", "Standard mode", "front ropes", "Day Report", "book cart",
-        "repair desk", "Rare Books", "Rare card", "VIP scholars", "Archive", "computer", "sold out", "reserve", "hint",
-        "tips", "tip", "stamina", "Shop", "Members", "Books", "Staff", "Sam", "Omar", "Arthur", "Day 1", "Day 2", "Day 3", "6 pm",
+        "Add to note", "To Shelve", "Audit Log", "Log tab", "notebook", "Reservations",
+        "repair desk", "Rare Books", "Rare card", "VIP scholars", "Archive", "computer", "sold out", "reserve", "hint", "express", "today", "Requested",
+        "tips", "tip", "stamina", "Shop", "Members", "Books", "Staff", "Interview", "Day 1", "Day 2", "Day 3", "6 pm",
     };
     int lastHowtoPage;
 
@@ -261,8 +269,17 @@ public class MainMenuUI : MonoBehaviour
             Show(confirm);
             return;
         }
+        if (!string.IsNullOrEmpty(introScene)) { GameManager.PendingDifficulty = mode; GoToIntro(); return; }
         GameManager.Instance?.StartFresh(mode);
         Play();
+    }
+
+    /// <summary>A brand-new library: meet the Dean and hire a cleaner first, then Day 1.</summary>
+    void GoToIntro()
+    {
+        GameManager.Instance?.DeleteSave();
+        PlayerLock.Reset();
+        UnityEngine.SceneManagement.SceneManager.LoadScene(introScene);
     }
 
     void NewGame()
@@ -270,6 +287,7 @@ public class MainMenuUI : MonoBehaviour
         // Fresh library from Day 1: wipe the save and reload, skipping the title screen.
         SkipOnce = true;
         GameManager.PendingDifficulty = chosenMode;
+        if (!string.IsNullOrEmpty(introScene)) { GoToIntro(); return; }
         GameManager.Instance?.NewGame();
     }
 

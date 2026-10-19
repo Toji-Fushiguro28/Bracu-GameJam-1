@@ -106,7 +106,7 @@ public class BookRequest
             var missing = items.Where(b => b.Sellable && !InStock(b) && Available(b)).ToList();
             if (missing.Count > 0)
             {
-                var want = missing[Random.Range(0, missing.Count)];
+                var want = Weighted(missing, day);
                 var oos = new BookRequest { Target = want, Format = want.Format };
                 return Random.value < 0.6f
                     ? Set(oos, HintType.Title, null, Pick($"Do you have \"{want.Title}\"?", $"I'm looking for \"{want.Title}\"."))
@@ -115,14 +115,24 @@ public class BookRequest
         }
 
         bool archive = gm == null || gm.ArchiveOpen, rareOpen = gm == null || gm.RareOpen;
-        var candidates = items.Where(b => InStock(b) && Available(b) && (b.Sellable || (forReading && ((archive && IsArchive(b)) || (vip && rareOpen && IsRare(b)))))).ToList();
+        // Today's popular books are asked for more, whether or not you have them in: that's what makes stocking them pay.
+        // Readers only ask for what's on the shelves (they want to read it now).
+        var candidates = items.Where(b => Available(b) && (InStock(b) || !forReading) && (b.Sellable || (forReading && ((archive && IsArchive(b)) || (vip && rareOpen && IsRare(b)))))).ToList();
         if (vip && forReading && Random.value < 0.7f)
         {
             var rare = candidates.Where(IsRare).ToList();
             if (rare.Count > 0) candidates = rare;
         }
         if (candidates.Count == 0) return null;
-        var item = candidates[Random.Range(0, candidates.Count)];
+        var item = Weighted(candidates, day);
+        // Wanted but not in stock: they ask for it by name, so you can order it for them.
+        if (!InStock(item) && !forReading && item.Sellable)
+        {
+            var oos = new BookRequest { Target = item, Format = item.Format };
+            return Random.value < 0.6f || day < 2
+                ? Set(oos, HintType.Title, null, Pick($"Do you have \"{item.Title}\"?", $"I'm looking for \"{item.Title}\"."))
+                : About(oos);
+        }
         var req = new BookRequest { Target = item, Format = item.Format };
         var tags = (item.Tag ?? "").Split(',').Select(t => t.Trim()).Where(TagLines.ContainsKey).ToList();
         float r = Random.value;
@@ -158,6 +168,23 @@ public class BookRequest
         if (r < 0.55f) return Set(req, HintType.Subject, item.Subject, $"I need a good {item.Subject} book.");
         if (r < 0.8f && tags.Count > 0) return Tag(req, tags);
         return About(req);
+    }
+
+    /// <summary>Picks a book: today's popular books are asked for six times as often as the rest.
+    /// On Day 1, books you have in stock get a little extra weight so the first day isn't all "sorry".</summary>
+    static BookData Weighted(List<BookData> pool, int day)
+    {
+        float total = 0f;
+        var w = new float[pool.Count];
+        for (int i = 0; i < pool.Count; i++)
+        {
+            bool popular = GameManager.Instance != null && GameManager.Instance.IsPopular(pool[i]);
+            w[i] = (popular ? 6f : 1f) * (day < 2 && InStock(pool[i]) ? 2f : 1f) * DayStory.RequestWeight(pool[i]); // exam subject, the signing author
+            total += w[i];
+        }
+        float r = Random.value * total;
+        for (int i = 0; i < pool.Count; i++) { r -= w[i]; if (r <= 0f) return pool[i]; }
+        return pool[pool.Count - 1];
     }
 
     static BookRequest Set(BookRequest r, HintType hint, string value, string line)

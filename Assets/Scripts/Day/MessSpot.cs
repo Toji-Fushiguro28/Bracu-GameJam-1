@@ -45,6 +45,7 @@ public class MessSpot : ClickInteractable
     /// <summary>Someone left this here. A book can carry a real copy taken off the shelves.</summary>
     public void MakeMess(BookData copyOf = null, BookCondition copyCondition = BookCondition.Good)
     {
+        Tutorial.Show("mess", "Visitors leave cups and books lying about. Click them to tidy up: a spotless library earns reputation at closing.");
         book = copyOf;
         condition = copyCondition;
         SetDirty(true);
@@ -68,13 +69,12 @@ public class MessSpot : ClickInteractable
         Clean(true);
     }
 
-    /// <summary>Staff tidied it: the library still earns the reward.</summary>
-    public void CleanByStaff()
+    /// <summary>Staff tidied it. Returns the reward: they hand it over with their end-of-day report.</summary>
+    public int CleanByStaff()
     {
-        if (!IsDirty) return;
-        var gm = GameManager.Instance;
+        if (!IsDirty) return 0;
         Clean(false);
-        if (gm != null) { gm.AddCoins(reward); gm.Today.income += reward; }
+        return kind == Kind.Book ? 6 : 5; // the cleaner earns well for each cup and book cleared
     }
 
     /// <summary>Tidies it away. A book still holding its copy puts it back on the shelf.</summary>
@@ -86,7 +86,7 @@ public class MessSpot : ClickInteractable
         if (gm != null)
         {
             gm.Today.cleaned++;
-            if (byPlayer) { GameAudio.Play(a => a.tidy); gm.AddCoins(reward); gm.Today.income += reward; }
+            if (byPlayer) { GameAudio.Play(a => a.tidy); gm.AddCoins(reward); gm.Today.Earn(GameManager.DayStats.Source.Other, reward); }
         }
         SetDirty(false);
     }

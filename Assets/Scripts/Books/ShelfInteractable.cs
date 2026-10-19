@@ -38,6 +38,7 @@ public class ShelfInteractable : ClickInteractable
 
     public override void Interact(GameObject player)
     {
+        if (DayStory.Instance != null && DayStory.Instance.FixLeak(this)) return; // the leaky roof: deal with the drip first
         if (ShelfUI.Instance != null) ShelfUI.Instance.Open(this, player.GetComponent<PlayerCarry>());
     }
 }

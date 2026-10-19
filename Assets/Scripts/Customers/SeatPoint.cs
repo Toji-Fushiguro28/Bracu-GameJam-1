@@ -31,6 +31,14 @@ public class SeatPoint : MonoBehaviour
     void OnDisable() => all.Remove(this);
 
     public Vector3 SeatPosition(int i) => transform.TransformPoint(seats[i]);
+
+    /// <summary>Where a sitter's root goes. The sit pose puts the body behind and below the root, so lift them
+    /// onto the seat and forward off the backrest; sofas and armchairs have higher, deeper cushions.</summary>
+    public Vector3 SitPosition(int i)
+    {
+        bool soft = name.Contains("Sofa") || name.Contains("Armchair");
+        return SeatPosition(i) + Vector3.up * (soft ? 0.2f : 0.1f) + SeatRotation * Vector3.forward * (soft ? 0.2f : 0.12f);
+    }
     public Quaternion SeatRotation => Quaternion.LookRotation(Vector3.ProjectOnPlane(transform.forward, Vector3.up));
     public Vector3 ApproachPosition(int i) => SeatPosition(i) + SeatRotation * Vector3.forward * approachDistance;
 

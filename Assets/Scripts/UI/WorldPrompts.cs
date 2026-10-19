@@ -17,7 +17,7 @@ public class WorldPrompts : MonoBehaviour
     class Bubble { public VisualElement el; public ClickInteractable target; public float until; }
 
     /// <summary>A UI element kept above a moving world point (e.g. a customer's patience bar).</summary>
-    public class Follower { public VisualElement el; public System.Func<Vector3> anchor; }
+    public class Follower { public VisualElement el, arrow; public System.Func<Vector3> anchor; }
     readonly List<Follower> followers = new List<Follower>();
 
     public Follower Follow(VisualElement el, System.Func<Vector3> anchor)
@@ -27,6 +27,15 @@ public class WorldPrompts : MonoBehaviour
         layer.Add(el);
         var f = new Follower { el = el, anchor = anchor };
         followers.Add(f);
+        return f;
+    }
+
+    /// <summary>Like Follow, but kept on screen: off-screen it sits at the edge and shows its arrow
+    /// pointing the way (e.g. a staff member calling for help).</summary>
+    public Follower Pin(VisualElement el, VisualElement arrow, System.Func<Vector3> anchor)
+    {
+        var f = Follow(el, anchor);
+        if (f != null) f.arrow = arrow;
         return f;
     }
 
@@ -103,7 +112,11 @@ public class WorldPrompts : MonoBehaviour
             Place(prompt, hoverTarget.PromptAnchor);
 
         for (int i = followers.Count - 1; i >= 0; i--)
-            Place(followers[i].el, followers[i].anchor());
+        {
+            var f = followers[i];
+            if (f.arrow != null) PlacePinned(f);
+            else Place(f.el, f.anchor());
+        }
 
         for (int i = bubbles.Count - 1; i >= 0; i--)
         {
@@ -116,6 +129,30 @@ public class WorldPrompts : MonoBehaviour
             }
             Place(b.el, b.target.TopAnchor);
         }
+    }
+
+    void PlacePinned(Follower f)
+    {
+        Vector3 vp = cam.WorldToViewportPoint(f.anchor());
+        // Safe area: keeps pins off the screen edges and above the HUD bar at the bottom.
+        const float left = 0.07f, right = 0.93f, bottom = 0.17f, top = 0.9f;
+        bool onScreen = vp.z > 0f && vp.x > left && vp.x < right && vp.y > bottom && vp.y < top;
+        f.arrow.style.display = onScreen ? DisplayStyle.None : DisplayStyle.Flex;
+        if (onScreen) { Place(f.el, f.anchor() - Vector3.up * heightOffset); return; }
+        float w = layer.resolvedStyle.width, h = layer.resolvedStyle.height;
+        if (w <= 0f || h <= 0f) return;
+        // Push the point to the edge of the safe area, in the direction of the target.
+        var c = new Vector2((left + right) * 0.5f, (bottom + top) * 0.5f);
+        var d = new Vector2(vp.x - c.x, vp.y - c.y);
+        if (vp.z < 0f) d = -d;
+        if (d.sqrMagnitude < 0.0001f) d = Vector2.down;
+        float sx = Mathf.Abs(d.x) > 0.0001f ? ((d.x > 0f ? right : left) - c.x) / d.x : float.MaxValue;
+        float sy = Mathf.Abs(d.y) > 0.0001f ? ((d.y > 0f ? top : bottom) - c.y) / d.y : float.MaxValue;
+        var p = c + d * Mathf.Min(sx, sy);
+        f.el.style.visibility = Visibility.Visible;
+        f.el.style.left = p.x * w - f.el.resolvedStyle.width * 0.5f;
+        f.el.style.top = (1f - p.y) * h - f.el.resolvedStyle.height * 0.5f;
+        f.arrow.style.rotate = new Rotate(new Angle(Mathf.Atan2(-d.y, d.x) * Mathf.Rad2Deg));
     }
 
     /// <summary>Centres an element horizontally above a world point (bottom edge at the point).</summary>

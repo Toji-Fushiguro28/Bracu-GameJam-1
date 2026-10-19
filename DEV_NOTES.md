@@ -14,7 +14,7 @@ What changed in `MainGame.unity` and `Assets/Scripts`, and where. Nothing here c
   - **Continue** (only when a save exists; shows Day, coins and members).
   - **New Game** (asks for confirmation if a save exists; wipes it and reloads straight into Day 1).
   - **Start** (when there's no save).
-  - **How to Play** (8 short pages: controls and stamina, counter, finding books, sold out, cards and readers, repairs and rooms, staff, end of day).
+  - **How to Play** (9 short pages: controls and stamina, counter, finding books, your notebook, sold out and reservations, cards and readers, repairs and rooms, staff, end of day and the audit log).
   - **Settings** (volume, music, fullscreen; same values as the PC Settings screen).
   - **Credits**.
   - **Quit** (hidden on WebGL).
@@ -55,7 +55,7 @@ What changed in `MainGame.unity` and `Assets/Scripts`, and where. Nothing here c
    | Returner | 8% | **Check in** (sometimes a late fee) |
    | Sign-up | 15% of non-members | Talk to them, then fill the card in on **PC → Members** |
    | VIP scholar | 8%, Day 3+ | Professors with a gold name plate; need a **Rare** card, then read in Rare Books |
-   | Pickup | first thing in the morning | Comes for yesterday's reservation |
+   | Pickup | at their own random time of day (9:30 to 4:15, one slot each) | Comes for yesterday's reservation |
 
 3. **Closing.** The bell rings at 17:30 and the library closes at 18:00. The last visitors leave, then the **front ropes appear** across the doorway.
 4. **Tidy up.** Teacups and open books appear on tables, and the return bin may have copies in it.
@@ -112,7 +112,10 @@ What changed in `MainGame.unity` and `Assets/Scripts`, and where. Nothing here c
 - **Name tags** only show for VIPs. Members' names appear in the conversation.
 - **Staff shifts:** staff walk in through the front door at 9:00 and visitors start at 9:10. At the closing bell they say goodbye and leave (`StaffManager.SendHome` / `BringIn`).
 - **Staff jobs:** the archivist also shelves good copies from the returns. Staff tidying earns the tidy reward.
-- **Hiring:** pays the first day's wage up front, so you can't hire with an empty purse.
+- **Hiring:** pays the first work day up front (today while open, tomorrow if hired at night), so you can't hire with an empty purse.
+  - Letting someone go before they've worked a day refunds it.
+  - Morning wages skip anyone already paid for that day (`GameManager.wagePaidFor`).
+- **Day Report:** has no close button. After locking up, the only way on is the next day.
 - **Repairs:** always move a copy up one step (Worn → Good; Damaged → Good or Worn).
 - **Reminders:**
   - The computer glows gold, the Shop tile says *★ Upgrade ready!*, and a banner appears once a day while an upgrade is affordable. All three stop once you open Upgrades.
@@ -122,9 +125,9 @@ What changed in `MainGame.unity` and `Assets/Scripts`, and where. Nothing here c
   - the lights come up and the rope swings aside, with the *fascinated* sound and a banner
   - the camera glides back
 
-  The clock is paused while it plays. The sign then bobs *NOW OPEN!* all day.
+  The clock is paused while it plays. The sign then bobs *NOW OPEN!* all day. A notice also stays pinned at the top of the screen until 10 AM (the sign switches off at 10 too) (`HUD` → `hud-pin`).
 - **At least one VIP** comes each day once Rare Books is open.
-- **Fades:** the screen fades between the day's end, the report and the next morning (`HUD.FadeThen`).
+- **Fades:** the screen fades to black at lock-up. The Day Report sits on solid black, and the next morning fades in (`HUD.FadeThen`).
 - **Shops:** both the PC Shop and the end-of-day shop have search and Subject/Type filters (`BookFilterBar`). The catalogue filters reset every time you open the PC.
 - **Small talk:** students only get the exam/CGPA/advising topics (`Customer.StudentTopics`).
 - **Reader chats:**
@@ -183,7 +186,14 @@ What changed in `MainGame.unity` and `Assets/Scripts`, and where. Nothing here c
   - Banners: morning info, closing, lunch lull, deliveries.
   - "(paused)" on the clock.
   - The carried list shows bag contents.
-- **`PCShopView.cs`, `PCSettingsView.cs`, `PCMembersView.cs`**: PC screens, using templates in `Assets/Resources/`.
+- **`PCShopView.cs`, `PCSettingsView.cs`, `PCMembersView.cs`, `PCAuditView.cs`**: PC screens, using templates in `Assets/Resources/`.
+- **New library card form (`PCMembersView`):**
+  - You **type the name** (30 characters max). Only letters, single spaces, hyphens and apostrophes get into the box.
+  - On Issue the name is normalized to how cards save names: lower case, then a capital at the start of each word ("edmund THORNE" becomes "Edmund Thorne").
+  - The **birthday** comes from a Day / Month / Year picker (years 1930–2010). Days that don't exist in the chosen month are greyed out, and a day that stops existing is cleared. The result is written like the profiles, for example "04 Feb 1958".
+  - Access is still three buttons.
+  - Issue only unlocks with a valid name (2+ letters), a full date and an access level. A wrong name or date is still rejected by the visitor (`ReceiveCard`).
+- **Notebook & Audit Log**: see the section at the end.
 - **`PC.uss` / `GameUI.uss`**: styles for the catalogue filters, shop rows, mood face, VIP plate and banners.
 
 ---
@@ -196,8 +206,8 @@ Small, contained edits. Please check them when merging:
   - The Members, Shop and Settings buttons open the new screens (`ShowView`).
   - Click sounds are re-hooked after every view swap (`RehookBackdrop`).
   - **Catalogue search now matches title and author only.** Subject and Type are filter buttons (`WireFilters`). This is deliberate, so players have to read abstracts to solve vague requests.
-- **`PCBooksTemplate.uxml`**: added the filter button row.
-- **`PCOverlayTemplate.uxml`**: the "Upgrades" tile now reads **"Shop"** (the element name is still `upgrades-button`).
+- **`PCBooksTemplate.uxml`**: added the filter button row. The gold `pc-requests` box was removed (the notebook replaces it), and the details pane has an **Add to note** button (`detail-select`).
+- **`PCOverlayTemplate.uxml`**: the "Upgrades" tile now reads **"Shop"** (the element name is still `upgrades-button`). A wide **Audit Log** tile (`audit-button`) was added, and tiles are now 30% high so three rows fit.
 
 ---
 
@@ -236,3 +246,265 @@ Small, contained edits. Please check them when merging:
   - `CustomerSpawner`: visitor mix and the `busyness` curve.
   - `BookRequest.OutOfStockChance`: sold-out frequency.
   - `Customer.patienceScale`: how long visitors wait.
+
+## Hints, requests, express wishes
+- Hints are gold (`<color=#D67840>`) in the speech bubble and the dialogue. The typewriter skips over the rich-text tags.
+- What waiting visitors want is in the notebook on the right of the screen (it replaced the PC's gold box and `Customer.PCNote`).
+- New members: 60% ask the library to get a book in (`Customer.PickWish`). This creates a `requested` reservation, and the shop marks the book with a gold "Requested" badge.
+- Sold-out reservations: 40% need the book today. They return at Hour + 2.5 (`Reservation.urgent` / `dueHour`), so it has to be ordered with Express (2 h). If it hasn't arrived, they come back tomorrow. The rest pick up next morning.
+
+## Notebook & Audit Log
+- **`RequestLog`** (`Core/RequestLog.cs`, static) holds every entry: day, time, who, kind (Book / Pickup / Card), the request line, the hint, guesses (wrong ones struck through), notes and the outcome.
+  - `Open` is what the notebook shows. `All` is the whole log; it is saved in `GameManager.SaveData.log` and reset on each scene load.
+- **When entries change** (hooks in `Customer.cs`):
+  - Begin: the first time you talk to a visitor (`LogRequest`; for library cards, what they tell you: name, birthday, line), or when you hand over a book without talking first.
+  - Hint: added when asked for, or straight away for Cozy's free hint.
+  - Wrong book handed over (`TryGive`): `Rejected` strikes the guess, or adds a struck "Handed:" line.
+  - Library cards: every card submitted from the PC is a line (`ReceiveCard` → `CardAttempt`). Wrong ones show the visitor's reason. A new member's wish is a note.
+  - Finish: sold, reading, reserved, sent away, left angry, never ordered, card issued, closing time. `Leave()` closes anything left as "Left". A finished entry leaves the notebook.
+- **`NotebookHUD`** (`UI/NotebookHUD.cs`, `Resources/Notebook.uxml`, `UI Toolkit/Notebook.uss`):
+  - Created at runtime by `HUD.Start` on a copy of PS_Game with **sort order 25**, so it stays above the PC (20) and its dark backdrop, and under the main menu (30). It must be a **root** GameObject: a UIDocument under another UIDocument joins that one's panel and ignores its own sort order.
+  - Sits on the right edge, vertically centred. The tab button collapses it, and the state is remembered in PlayerPrefs `NotebookCollapsed`.
+  - Each entry has a Clear button, which removes it from the notebook but not from the log.
+  - Hidden on the title screen and behind the Day Report.
+  - `NotebookHUD.PointerOver` stops clicks on it reaching the world (`InteractionController`) or skipping dialogue (`DialogueUI`).
+- **Reservations panel** (bottom right, in the same `Notebook.uxml`):
+  - Lists `GameManager.reservations`: who, which book, when, and whether it's ordered. The status uses the same rules as the PC Shop, which is unchanged.
+  - Starts collapsed every session.
+  - `GameManager.Reserved` fires on each new reservation. The first one in a session opens the panel by itself. Later ones make the tab gold and pulsing (`.notebook-tab.new`) until you open it.
+- **PC catalogue: Add to note** writes `Noted: "Title" (Shelf)`.
+  - With a book request open, it goes on the newest request. A new pick replaces an untested one; after a wrong one it adds a new line. It's only a note: any matching book still works.
+  - With no request open, it goes on a **To Shelve** page, for books from the return bin, tables and so on. Putting a book back on its shelf (`ShelfUI.PutBack` → `RequestLog.Shelved`) ticks it off. The page isn't part of the audit log.
+- **Audit Log:**
+  - PC → **Audit Log** (`PCAuditView`) has a button for each day so far, with today selected. Newest entries are at the top.
+  - Day Report → **Log** tab shows today's entries.
+  - Both use `RequestLog.BuildRow`, styled by `.log-*` classes in `PC.uss` and `GameUI.uss`.
+
+## Clock, staff chat, new members
+- The clock only stops for talking, cutscenes and menus (`PlayerLock.FreezesTime`). While you use the PC, a shelf or the repair desk, time keeps running and visitors' patience keeps draining.
+- Staff give one real chat, then a "busy" line for 3.5 game hours (`StaffTalk.TalkCooldownHours`).
+- New members without a book wish stay 60% of the time (`Customer.StayAsMember`): they browse, or queue again to read or buy.
+
+## Opening interview (InterviewScene)
+- When you pick a mode for a fresh game, or start over, the save is deleted and `InterviewScene` loads (`MainMenuUI.introScene`, empty = the old direct start).
+- Dean Whitmore interviews you. Every answer works, and he hands the library over.
+- Then you interview three cleaners (Sam, Finn, Leo), with 3 of 5 questions each. Hiring loads `MainGame`, skips the title screen and starts Day 1.
+- The hire is saved in PlayerPrefs: `Hired_Cleaner`, `HiredPrefab_Cleaner` and `HiredStats_Cleaner` (speed,care,charm,wage).
+- `GameManager.ApplyInterviewHire` puts the hired cleaner on staff for Day 1, with that day's wage already paid, and uses their wage.
+- Speed stars scale the cleaner's walk speed (`CleanerSpeed`). Care and Manner only show in the interview; they have no gameplay effect yet.
+- If you hire Finn or Leo, `StaffManager.cleanerCandidates` spawns that character instead of the scene's Sam. `StaffTalk` uses their name but still Sam's chat lines.
+- "Skip intro" (top right) hires Sam.
+- `StaffInterview.prologue = false` turns the scene into a plain interview for any role (PlayerPrefs `InterviewRole`).
+
+## Hiring by interview
+- The Staff lists (PC Shop and Day Report) show only the Archivist and the Rare Books attendant (`GameManager.StaffOrder`). The cleaner comes from the opening interview.
+- **Interview** books applicants for the next morning (`GameManager.interviews`, which is saved), and a banner tells the player. **Cancel** unbooks. **Let go** still works straight away.
+- On "Open next day":
+  1. The screen fades out and `RunMorningInterviews` loads `InterviewScene` on top of the library. The room is moved 300 m away, and the library's camera and all its UI are hidden.
+  2. Each booked job has 2 applicants. You hire one of them.
+  3. The room fades out and unloads, the day starts, and the screen fades back in.
+- New hires get paid with the normal morning wages.
+- Per-role hire data lives in `GameManager.StaffPerson`, `StaffPrefab`, `StaffSpeed` and `StaffWage`, loaded from PlayerPrefs by `LoadHires`.
+- `StaffManager.staffCandidates` holds the prefabs for Finn, Kai and Clara.
+- Applicants: Cleaner = Sam or Finn, Archivist = Omar or Kai, Rare Books attendant = Arthur or Clara.
+
+## Hiring by interview
+- The Staff lists (PC Shop and Day Report) show only the Archivist and the Rare Books attendant (`GameManager.StaffOrder`). The cleaner comes from the opening interview.
+- **Interview** books applicants for the next morning (`GameManager.interviews`, which is saved), and a banner tells the player. **Cancel** unbooks. **Let go** still works straight away.
+- On "Open next day":
+  1. The screen fades out and `RunMorningInterviews` loads `InterviewScene` on top of the library. The room is moved 300 m away, and the library's camera and all its UI are hidden.
+  2. Each booked job has 2 applicants. You hire one of them.
+  3. The room fades out and unloads, the day starts, and the screen fades back in.
+- New hires get paid with the normal morning wages.
+- Per-role hire data lives in `GameManager.StaffPerson`, `StaffPrefab`, `StaffSpeed` and `StaffWage`, loaded from PlayerPrefs by `LoadHires`.
+- `StaffManager.staffCandidates` holds the prefabs for Finn, Kai and Clara.
+- Applicants: Cleaner = Sam or Finn, Archivist = Omar or Kai, Rare Books attendant = Arthur or Clara.
+
+## Ending (after Day 5)
+- On Day 5's "Open next day", `GameManager.EndingDue` (`day >= EndingDay` and not `endingSeen`) loads the interview room on top of the library.
+- The Dean walks in and sits in the seat you sat in on Day 1, while you take the interviewer's chair.
+- He talks through your real numbers (members, staff names, days, reputation). You answer one question with 3 replies to pick from.
+- Then a **The End** page shows with your stats. **Keep running the library** fades back, and play carries on into Day 6.
+- `endingSeen` is saved, so it only plays once. If interviews were booked for the same morning, they run straight after the farewell.
+
+## Staff: fees, upgrades, help calls, reports
+- **Hiring:**
+  - The one-time hire fee (`GameManager.StaffHireFee`: Archive 250, Main hall 70, Rare 650) is paid when you pick someone in the morning interview. Booking needs that much in the purse.
+  - The Dean pays the cleaner's fee in the intro.
+  - The small daily wage is still paid each morning, and staff quit if you can't pay.
+- **Upgrade** replaces "Let go":
+  - Prices are in `StaffUpgradeCosts`: Main hall 35 → 70, Archive 150 → 300, Rare 650. Levels are saved in `staffLevel`.
+  - Each level gives +35% work speed (`StaffWorkFactor`): walk speed, cleaning time, and the repair desk speed for the archivist. Help calls also come less often.
+  - The staff rows (PC Shop and Day Report) share `GameManager.StaffRow`.
+- **Help calls (`StaffHelp`):**
+  - Every 80–150 s of game time (× (1 + level)) a staff member stops work. A "Help!" pointer appears over them, pinned to the screen edge with an arrow when they're off screen (`WorldPrompts.Pin`).
+  - Click them to pick a fix:
+    - paid (coins): they're back to work at once
+    - free: they wait 8 more seconds
+  - The Rare Books attendant can't serve VIPs while stuck.
+- **Reports:**
+  - At the closing bell, staff stop and wait with a "Report" pointer. Clicking them gives today's numbers (repaired, shelved, cleaned, scholars served, times you helped), then they go home.
+  - If you lock up first, they just leave.
+- **Interview:**
+  - The wage question is gone. "Why the Whitmore?" now shows whether they'll bargain.
+  - After each answer, an orange thought line shows the stat. With 3 picks from 4 questions, one thing stays "?".
+  - At hire time you haggle: offer −4, −2 or agree. Flexible people go down to their ask − 3 and counter once. Push again and they insist on the full price. Firm people won't budge.
+
+## Update: pay is talked over in the interview, and the intro hires nobody
+- The intro (`InterviewScene` on its own) is only the talk with the Dean. Nobody is hired, and every role is hired from the computer: Interview → next morning, after the Day Report.
+- No daily wages any more (`StaffWage` is all 0). Each applicant asks a one-time price around `StaffHireFee` (70 / 250 / 650).
+- In the interview, "Let's talk about pay" (free, once per applicant):
+  1. They name their price, and you offer 60%, 80% or the full price.
+  2. If the offer is at or above their private `floor` (random each interview: keen people 55–80%, others 80–95%), they agree politely.
+  3. If it's lower, they say the lowest they can go, and you can accept that or think it over.
+- The agreed price (or their asking price) is shown in their notes and on the Hire button, and paid when you hire.
+- This replaces the post-hire bargaining and the daily-wage text in the section above.
+- Reports: at the closing bell, staff walk to the main gate and wait there side by side (`StaffManager.arrivePoint` ± 1.2 m).
+- **Reports pay out and are required:**
+  - Staff keep the coins their work earns during the day and hand them over with their report:
+    - cleaner: each mess's reward
+    - archivist: `perRepair` 4 per repaired book and `perShelved` 1 per shelved book
+    - attendant: the reading fee and tip of each scholar they check in
+  - The front ropes (`EndDayDoor`) won't lock up while anyone is still waiting to report (`StaffManager.PendingReport`).
+
+## Player name
+- Before the intro starts, a name box asks your name (`name-entry` in `InterviewUI.uxml`, max 16 characters, OK or Enter).
+- Saved as PlayerPrefs `PlayerName` and read with `GameManager.PlayerName` (default "Librarian").
+- It replaces "You" as your speaker name in all interview dialogue, and the Dean uses it in his lines and in the ending.
+
+## More visitors (15 recoloured NPCs)
+- `Assets/Prefabs/Characters/Variants/PF_NPC_*` are Prefab Variants of the original NPCs. Each one only swaps in a recoloured mesh (`Assets/Art/Models/Characters/Variants/SM_NPC_*`).
+- The recolouring moves palette UVs, so they use the same texture and material as the originals.
+- They're in `CustomerSpawner.customerPrefabs` (MainGame, 28 visitors) and have member profiles in `Members.Profiles`.
+- Visitors whose prefab name contains "Professor" (Victor, Ingrid) come as VIP scholars.
+- A review row of all 15 is in `Library Management.unity` (`NPC_Variants_Review`).
+
+## Book requests: "Can you order it?" (from Day 1)
+- `BookDatabase.newTitles` holds 12 books the library doesn't own yet (main-hall subjects).
+  - At runtime they live in `GameManager.NewTitles`.
+  - `OrderBook` on one calls `AddToLibrary`, which moves it into `Books` with 0 copies until the delivery arrives. It's saved in SaveData `added`.
+- **Seeker visitors** (`Customer.Kind.Seeker`):
+  - They pick a new title (or a sold-out book), check 1–2 shelves (the right one first), then queue and say they couldn't find it.
+  - Only on seeker days (`CustomerSpawner.SeekerDay`): Day 1 always, then about one day in three (20% a day, the same days for a given game via `storySeed`), never more than 3 days in a row without one. Just one that day, at a random time between 10:15 and 2:30.
+- **At the counter:** "When do you need it?" → they answer "As soon as possible" or "I'll come back tomorrow", and you pick "I'll order it for you" or "Sorry".
+  - **ASAP** (`ReserveAndWait`): they sit in the library (`State.WaitingForBook`).
+    - When the ordered copy arrives (in stock or on the cart), they come to the desk to collect it.
+    - About 30 minutes past their time (or at closing): if it's on order they come back tomorrow; if you never ordered it they leave unhappy (−reputation).
+  - **Tomorrow:** a normal reservation and a pickup the next morning.
+- Sold-out buyers use the same "When do you need it?" flow, and it now works from Day 1.
+- The PC Shop and the Day Report shop list requested new titles (gold "NEW · Requested" badge) so you can order them. Members' wishes pick new titles first.
+- Shelves show damaged copies in red (title, count and the "Damaged" button).
+- The Repair desk's left page also lists worn and damaged copies still out in the library (shelf and returns bin).
+- **Closing:**
+  - `Customer.HandleClosed` runs every frame once the library is closed. Readers (even ones still walking to a seat) stop and queue to check their book in, and anyone holding a book waits for you; everyone else goes home.
+  - Readers who sit down after the closing bell only read for about 8 s.
+- **Spawner:** the same character is never in the library twice at once, and pickups wait if that person is already inside. The Dean visits at most once a day.
+- **Saying "Sorry, we can't get that"** removes any reservation for that visitor.
+- **New members' wishes are no longer auto-reserved:** the member asks you at the desk (same "When do you need it?" flow), and you decide.
+- **Shops:** not-yet-owned titles are in the normal, searchable book list ("New to the library"), not only under Reservations.
+
+## Staff and VIP polish
+- **Interview:** Hire costs the last price you settled on: the agreed price, or the lowest one they mentioned (`FinalPrice`).
+- **Staff problems:**
+  - While a problem is open, the person can't do their job (`StaffWorker.CanWork`). The cleaner roams without tidying; the archivist and attendant sit at their desks. They remind you every 30 s.
+  - The paid fix gets them working at full speed. The free fix gets them working, but slower for the rest of the day (`Slow`).
+- **Archivist:** also fetches worn and damaged copies from the shelves. If the till can't pay for a repair, they say so (bubble and banner).
+- **Staff pay:**
+  - Archivist: 5 + 40% of the book's value per repair, 2 per book shelved.
+  - Cleaner: 5 per cup, 6 per book, 2 per returned copy shelved. The cleaner now also shelves good returns.
+- **Staff hours:** they work until the library closes at 6, then report.
+- **Rare Books attendant:** costs 450, and the upgrade costs 450.
+- **VIPs:** cards cost 50 (+ up to 10 tip) and reading fees are ×1.5 (see the VIP income note below). VIPs stay after getting a card and go to read.
+- **Dialogue:** half-typed rich text is auto-closed, so coloured hints type in instead of popping in.
+- **Notebook and Reserved lists:** they scroll instead of running off the screen.
+- **Click guard** (`Interaction/ClickGuard.cs`): for 0.25 s after a panel opens (`PlayerLock.Lock`), after choices appear, or after the interview hire and end pages show, button presses are swallowed, so one click can't also press a button that just appeared under the cursor. It's attached to the game UI, the PC overlay and the interview UI.
+- **Interview:** pay is discussed automatically after the questions ("Before you go, let's talk about pay."); it's no longer in the question menu.
+
+## Popular books, lean start and request icons
+- Popular today: `GameManager.PopularToday` holds 4 books for sale (`PopularPerDay`), picked at random each day (seeded by the day, so a reload keeps the same set). `BookRequest.Create` asks for them 6x as often, including when they're sold out. They glow gold with a "Popular" tag in the catalogue, the Shop, the end-of-day shop and on shelves (`PopularGlow`). Readers only ask for books that are in stock. On Day 1, in-stock books count double.
+- New game only (`!HasSave`): `GameManager.LeanStartingStock` cuts each book for sale to 1 copy, and to 0 for Best Sellers. Archive and Rare Books keep their stock.
+- Request icons: `Customer.UpdateRequestIcon` puts an icon to the left of the prompt at the desk. The classes (`req-card/buy/read/return/new/rare/collect`) are in `GameUI.uss` and `PC.uss`, and the PC tiles use the same ones. The kit has no book icon, so `RequestIcon` draws the "read" book in code.
+- Text overflow: in Play mode, open a screen and run Tools > Check UI Text Overflow (`UITextAudit`). It lists any text that doesn't fit its box.
+- Catalogue fix: a new search clears the ListView's old selection index, and each row has its own click handler, so clicking a single result always fills the details panel.
+- Drop-downs: `PickList.Open(button, options, current, pick, pcStyle)` shows a list under a button (it stays inside the panel around the button and closes on a click outside, or when its screen closes). It's used by the catalogue filters (Subject / Type / Show), the shop filters (`BookFilterBar`) and the Members birthday (Day / Month / Year). "Show: Reserved" lists books someone has reserved.
+- Visitors don't say "express" any more. The computer (Shop, notebook) still marks urgent orders as express.
+- Upgrades unlock by day: `GameManager.UpgradeUnlockDay` (in `UpgradeKind` order). Restoration kit, Cozy lamps and Reading nooks unlock on Day 2, Town flyers on Day 3, and the rest on Day 1. Locked rows show "Day N", and `BuyUpgrade` refuses them. Levels already bought in an old save are kept.
+- Glow for things you can do: affordable upgrades and staff rows (an interview you can afford, or a hire's upgrade) glow in the PC Shop and the Day Report. Their tabs and the computer's Shop tile glow too (`PopularGlow.Ready`, `GameManager.UpgradeReady` / `StaffReady`).
+
+## Play-test fixes (Days 1-5, scripted run)
+- Delivery cart: clicking it now hands you the book the visitor at the desk is waiting for first, then other reserved titles (it used to give the first reserved book in the list).
+- Pickups: if you say "it isn't here yet" for a book that was ordered and is already on the cart, they come back tomorrow. They're no longer told it was "never ordered", which made them leave angry and cost reputation.
+- Reader chat: "where would I find more like this?" no longer offers shelves in rooms that are still locked.
+- Archivist pay: 5 per repair plus 40% of the book's value, capped at `StaffWorker.maxRepairBonus` (20). Rare books used to pay up to 200 per repair (489 in one day).
+- Delivery cart page: clicking the cart opens the shelf screen in cart mode (`ShelfUI.OpenCart`). Each title shows how many copies came and who it's for (someone at the desk, a reservation, or which shelf it goes on), with a Take button. Put back returns copies that came off the cart (`DeliveryCart.Take`, `PutBack`, `CameFromCart`). An express delivery that arrives while it's open shows up straight away.
+
+## VIP income rebalance
+- From Day 3 money used to explode (156 to 1,938 coins in one play-tested day): VIP rare reads paid 73-198 each, and cards 80 + 20.
+- Now: card 50 + up to 10 tip. Rare reading fee 6% of the book's value (minimum 15), ×1.5 for VIPs. The "right shelf" chat bonus is capped at 10. A rare read pays about 43-77 with tip, still 3-6× a normal reader (about 13).
+- The numbers are constants at the top of `Customer.cs` (`VipCardFee`, `VipCardTip`, `VipFeeMultiplier`, `RareShare`, `RareMinFee`, `MaxChatBonus`). The table is in `TUNING_GUIDE.md`.
+
+## The Dean's goal, consequences and the ending
+- **Goal:** reach `GameManager.ReputationGoal` (Cozy 40 / Standard 60 / Busy 75) by the end of Day 5. The Dean sets it at the end of the new-game intro. It shows on the HUD bar (star, "37/60", gold once reached, with a +/- pop), in the morning banner and in the Day Report (how many to go and how many days left). After the ending the HUD shows just the reputation.
+- **Ending:** `GoalTier` (2 reached, 1 close at 60%+, 0 missed) changes the Dean's farewell: the board signs the library over, wants one more season, or is worried. The end page shows "Reputation X of Y" and the result. The game carries on either way.
+- **Consequences:** wrong book -1 reputation. Walked out -3, never ordered -3, said "we can't get that" when you could -2, waited for nothing -2. A member let down in those ways stays away the next day (`Member.awayUntil`, saved with the members). Pickups still come.
+- **Patience:** `PatienceDayFactor` cuts patience to 85% on Day 3 and 75% from Day 4 (all modes; Cozy visitors still never walk out).
+- **End page:** besides "Keep running the library" there's "Back to main menu" (`StaffInterview.EndingToMenu`). The new day is started and saved first (so the ending isn't replayed), then `GameManager.ReturnToMenu()`; Continue on the title screen picks up from there.
+- **Visitor tags** sit at 1.4 m above the visitor (was 1.75) so they don't hide the counter computer. Card applicants' name and birthday are highlighted in their line and in the notebook.
+
+## The first week's story and daily twists (`Day/DayStory.cs`)
+- Runs on Days 1 to 5 only (`GameManager.GoalActive`). After the ending, days are ordinary again. `GameManager` adds the component at runtime (no scene change).
+- **One twist a day**, in a random order per game (`GameManager.storySeed`, saved; never a power cut on Day 1): exam rush, book thief, leaky roof, inspection, book signing, power cut. Each has 4-5 beats (someone at the desk, a banner, a pointer, a popup) and a real effect:
+  - **Exam rush**: more students, mostly readers, after one subject, a bit less patient.
+  - **Thief**: a "Stranger in a long coat" browses, pockets a book and walks slowly to the door. Click them (`Customer.Caught`) to get it back; if they get out, the copy is lost.
+  - **Leaky roof**: a shelf gets a "Leak!" pointer; until you click it (`ShelfInteractable` → `DayStory.FixLeak`) copies on it turn Damaged.
+  - **Inspection**: Mr. Pryce looks around 1:00-2:30; mess on the floor and walk-outs decide the verdict.
+  - **Book signing**: one of the library's own authors; their two books are popular all day and asked for more during the signing; sales decide the thank-you.
+  - **Power cut**: 12:00-2:00 the PC won't open (`PCOverlayTrigger`), the library goes dark (`DayNightCycle` uses `DayStory.Darkness`), visitors are more patient.
+- **The week's own beats** (the same every game): Walter's first card (Day 1), the car-park rumour (Day 1), the Archive historian and the lost glasses (Day 2), the Board's letter and the Archive cat (Day 3), the writer and the man with the clicker (Day 4), the Dean's note and the regulars' card (Day 5).
+- **Story visitors** are normal `Customer`s with `story` set (`CustomerSpawner.SpawnStory`): they queue, wait without patience, and play a `DayStory.Visit` scene when clicked. Afterwards they can ask for a book like anyone else (`ContinueWithRequest`), sign up (`ContinueAsSignUp`), look round the shelves and come back for a second scene (`lingerUntil` + `next`), or leave. If their character is busy (working here, already inside) an alternative steps in.
+- **Letting the player know**: the morning banner names the day's twist, the notice board pins a notice for it first, banners and pointers mark each moment, and the Day Report has a row for it.
+- **Small talk**: the first time you talk to a visitor, some mention their day first (`DayStory.Opener`), often about the twist. Days 1 to 5 only: the 28 everyday lines are shared out across those days (5 or 6 each, no repeats), and after the ending there's no small talk.
+- **Pickups** no longer all come at opening: each gets its own time across the day (`CustomerSpawner.QueuePickups`).
+- To test a twist without playing to it: in Play mode set `GameManager.day`, pick a `storySeed` whose `DayStory.TwistFor` is the twist you want, call `SetUpDay` and move `GameManager.Hour` (nothing is saved until the next day starts).
+
+## Coin purse (HUD)
+- Coins have their own purse in the top right (`#hud-purse` in `GameUI.uxml`), out of the bottom bar.
+- Getting paid (`HUD.OnCoins`): 3 to 9 coins fly on a curve from the librarian up into the purse; each one that lands shakes the purse and updates the total; a big green "+12" floats up under it. Spending: a shake and a red "-40". The coin sound still comes from `GameAudio`.
+- Effects are skipped (just the number changes) until the HUD has been laid out, e.g. on the first frame.
+
+## Stuck visitors
+- Visitors heading to a shelf aim for a slightly random spot beside it (`Customer.ShelfSpot`), so two of them don't fight over one point.
+- `Customer.Watchdog()` runs every frame: a visitor who is walking but hasn't moved 20 cm in 3 s (game time) is freed. Within 1.5 m of where they're going, they count as arrived; after 6 s they hop (NavMeshAgent.Warp) to their destination. In the queue they hop to their place in line.
+
+## Small fixes (catalogue buying, freezing, VIP seats, reservations, staff help sound)
+- **Catalogue buying**: "Buy books" in the catalogue header opens the Shop's Books tab with the same search (`PCShopView.OpenOnBooks`); its Back returns to the catalogue. "Buy (price)" beside "Add to note" orders one copy (normal delivery, tomorrow). It's hidden for Rare Books and greyed out when you can't afford it.
+- **Nobody walks during a conversation**: while `GameManager.Paused` (dialogue), customers' and staff's NavMeshAgents are stopped (`Customer.Update`, `StaffWorker.Update`); staff resume, or stay put if on hold.
+- **VIPs read in Rare Books** whatever the book, and wait there for express orders; a main hall chair only if every rare seat is taken.
+- **Reserved panel** (right edge) lists only reservations still to order; once ordered (or in stock / on the cart) they leave it.
+- **Staff help** has its own sound (`GameAudio.staffHelp` = `Audio/SFX/staff help.mp3`), rung 3 times 0.7 s apart (`StaffHelp.Ring`), not the impatient counter bell.
+
+## Staff mood, problems and special jobs (`StaffHelp`, `StaffTalk`, `GameManager`, `Day/SpecialJobs.cs`)
+- **Problems**: 8 per role, no repeats in the same day (`StaffHelp.usedToday`).
+- **Mood** (`GameManager.staffMood`, 0-5, saved, 3 on hiring): speed x(0.7 + 0.1 x mood) via `StaffWorkFactor` (agent speed, cleaner timer, repair desk). Paid fix +0.5 and they come in **rested** tomorrow (x1.25 that day, `staffRestedDay`); free fix -0.3 (and slower for the rest of today, as before); coming over within 20 s +0.2; each 30 s reminder while you leave them waiting -0.15; first chat of the day +0.15; nobody talked to them all day -0.3 at the report. A banner says when their mood word changes (happy / content / grumpy / fed up). Shown in the Staff rows and in their end-of-day report.
+- **Special jobs** (once anyone is hired, from Day 2; one a day, offered at the desk around 10-11:45, can be turned down):
+  - Special order: a regular wants a title by tomorrow; becomes a "Requested" reservation with `Reservation.bonus` (15-40) paid on collection (+1 reputation).
+  - VIP request: a professor wants a rare book in your hands at 3:00 PM (+40 coins, +2 rep; not ready: -1 rep).
+  - Book club: 3 copies of a main-hall book on the shelves at 4:00 PM; they buy them all (+15 bonus, +2 rep; too few: -1 rep).
+  - Accepted VIP / book club jobs show in the Reserved panel with progress.
+
+## Feedback polish
+- **Patience**: bigger mood face with a draining bar beside it (`.mood-bar`), green / amber / red; the face throbs when they're about to give up. Angry exits (`Customer.StormOff`): a stomp on the spot with a shaking red face and red "Hmph!", the impatient bell, then they march out at 1.8x speed.
+- **Skill rewards** (`HUD.SkillPop`, gold text rising from the spot): right shelf in a reader chat (bonus paid on the spot, +1 rep), perfect repair (+5 coins, +1 rep), special order collected, VIP request done.
+- **Day Report Summary tab** (opens first each evening): income by source (`DayStats.Earn`: sales, reading fees, cards, VIP, staff, other), what went wrong (walk-outs, wrong books, people let down, mess, unordered reservations, unhappy staff) and one tip for tomorrow picked from the day's biggest problem.
+
+## Tutorial and first-time tips (`UI/Tutorial.cs`, added to the HUD at runtime)
+- **Guided Day 1** on a new game (Day 1, no save, `PlayerPrefs` "TutorialDone" unset; a new game / `DeleteSave` resets it and the tips). A card on the left says what to do, an arrow (`DayStory.Point`) shows where, and the camera zooms in (a temporary Cinemachine camera, 0.7x size) on the computer, the right shelf and the front door the first time each is needed.
+- Steps: talk to a buyer (asks for an author with a book in stock), look it up (catalogue, `PCOverlayTrigger.LastViewed`), take it from the shelf, hand it over, talk to a card sign-up, fill in the card (Members), talk to a seeker, order it (`GameManager.OrdersPlaced`). Then the day runs; at closing it shows how to lock up, and ends when the Day Report opens. "Skip tutorial" any time.
+- While guiding (`Tutorial.HoldsClock`): the clock waits (so the story's beats wait too), only the tutorial's own visitors come (`CustomerSpawner.SpawnTutorial`), patience x2 and nobody storms out, no staff problems, no small talk. A visitor who leaves early just moves it on to the next step.
+- The notebook folds away (`NotebookHUD.Tuck`, not saved) while the arrow points at something behind it.
+- **First-time tips** (`Tutorial.Show(key, text)`): once per game each, never while the tutorial guides you or a screen/conversation is open; queued and shown one at a time on the same card (10 s, or "Got it"). Keys: seeker, soldout, damaged, staffhelp, pickup, vip, delivery, mess, reader, checkout, returns, wrongbook, express.
+
+## Mouse cursor (`UI/GameCursor.cs`)
+- TravelBook `Cursor01c` normally, `Cursor01d` over something clickable (`InteractionController.HoveringSomething`, or a UI Toolkit button under the mouse on any panel) and while the left button is held.
+- The 14x16 art is scaled up in whole pixels for the screen (`Screen.height / 540`, 2x at 1080p) at runtime, so the two textures are imported Read/Write, uncompressed, point filter.
+- On its own root object `GameCursor` in MainGame; `DontDestroyOnLoad`, so it carries into the intro scene; a reloaded scene's copy destroys itself.

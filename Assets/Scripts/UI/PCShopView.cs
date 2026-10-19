@@ -9,6 +9,14 @@ public static class PCShopView
 {
     static int tab;
     static BookFilterBar filter;
+    static string pendingSearch;
+
+    /// <summary>The next time the Shop opens: on the Books tab, searching for this (from the catalogue).</summary>
+    public static void OpenOnBooks(string search)
+    {
+        tab = 0;
+        pendingSearch = search;
+    }
 
     public static void Wire(VisualElement root, Action back)
     {
@@ -17,6 +25,8 @@ public static class PCShopView
         var shopList = root.Q<ScrollView>("shop-list");
         filter = new BookFilterBar(() => Refresh(root), true);
         shopList.parent.Insert(shopList.parent.IndexOf(shopList), filter.Root);
+        if (!string.IsNullOrEmpty(pendingSearch)) filter.SetSearch(pendingSearch);
+        pendingSearch = null;
         string[] names = { "tab-books", "tab-upgrades", "tab-staff" };
         for (int i = 0; i < names.Length; i++)
         {
@@ -33,6 +43,8 @@ public static class PCShopView
         root.Q("tab-books")?.EnableInClassList("selected", tab == 0);
         root.Q("tab-upgrades")?.EnableInClassList("selected", tab == 1);
         root.Q("tab-staff")?.EnableInClassList("selected", tab == 2);
+        PopularGlow.Ready(root.Q("tab-upgrades"), gm.UpgradeReady && tab != 1);
+        PopularGlow.Ready(root.Q("tab-staff"), gm.StaffReady && tab != 2);
         root.Q<Label>("shop-coins").text = $"{gm.Coins} coins";
 
         var list = root.Q<ScrollView>("shop-list");
@@ -50,29 +62,37 @@ public static class PCShopView
                 list.Add(Header("Reservations"));
                 foreach (var r in gm.reservations)
                 {
-                    var rb = gm.Books.Find(x => x.Title == r.title);
+                    var rb = gm.FindTitle(r.title);
                     bool coming = rb != null && (gm.OnOrder(rb) > 0 || BookRequest.InStock(rb) || (DeliveryCart.Instance != null && DeliveryCart.Instance.Has(rb)));
-                    var l = new Label($"{r.name}: \"{r.title}\" - {(coming ? "ready or on its way" : "NOT ORDERED YET")}");
+                    string when = r.urgent ? $"needs it TODAY by {GameManager.FormatHour(r.dueHour)} (express!)" : "tomorrow";
+                    var l = new Label($"{r.name}: \"{r.title}\" ({when}) - {(coming ? "ready or on its way" : "NOT ORDERED YET")}");
                     l.AddToClassList("shop-reserve");
                     l.EnableInClassList("warn", !coming);
                     list.Add(l);
                 }
                 list.Add(Header("Order books"));
             }
-            foreach (var b in gm.Books)
+            // Everything you can order, including titles the library doesn't have yet (search for them by name).
+            var catalogue = new System.Collections.Generic.List<BookData>(gm.Books);
+            catalogue.AddRange(gm.NewTitles);
+            catalogue.Sort((x, y) => gm.IsPopular(x) != gm.IsPopular(y) ? (gm.IsPopular(x) ? -1 : 1) : string.Compare(x.Title, y.Title, System.StringComparison.Ordinal)); // what sells today first
+            foreach (var b in catalogue)
             {
                 if (BookRequest.IsRare(b) || !BookRequest.Available(b)) continue; // locked rooms can't be stocked yet
                 if (filter != null && !filter.Matches(b)) continue;
                 var book = b;
                 int price = GameManager.OrderPrice(book, false), express = GameManager.OrderPrice(book, true);
                 int onOrder = gm.OnOrder(book);
-                string sub = $"{book.FormatName} · {book.Subject} · {ShelfInteractable.NameOf(book.ShelfLocation)} · in stock {book.GoodCopies + book.WornCopies}";
+                string sub = gm.IsNewTitle(book)
+                    ? $"New to the library · {book.Subject} · by {book.Author} · goes on {ShelfInteractable.NameOf(book.ShelfLocation)}"
+                    : $"{book.FormatName} · {book.Subject} · {ShelfInteractable.NameOf(book.ShelfLocation)} · in stock {book.GoodCopies + book.WornCopies}";
                 if (onOrder > 0) sub += $" · on order {onOrder}";
-                if (gm.reservations.Exists(r => r.title == book.Title)) sub += " · RESERVED";
+                var req = gm.reservations.Find(r => r.title == book.Title);
                 Row(list, book.Title, sub, null, $"Order {price}", gm.Coins >= price,
                     () => { if (gm.OrderBook(book, false)) GameAudio.Play(a => a.buy); }, root,
                     gm.CurrentPhase == GameManager.Phase.Closed ? null : $"Express {express}", gm.Coins >= express,
-                    () => { if (gm.OrderBook(book, true)) GameAudio.Play(a => a.buy); });
+                    () => { if (gm.OrderBook(book, true)) GameAudio.Play(a => a.buy); },
+                    badge: req == null ? null : req.urgent ? "Requested · TODAY" : "Requested", popular: gm.IsPopular(book));
             }
         }
         else if (tab == 1)
@@ -84,23 +104,21 @@ public static class PCShopView
                 int lvl = gm.Upgrade(kind);
                 bool maxed = lvl >= GameManager.MaxUpgrade;
                 int cost = GameManager.UpgradeCost(lvl);
-                Row(list, GameManager.UpgradeNames[i], GameManager.UpgradeInfo[i], lvl,
-                    maxed ? "Max" : $"Buy {cost}", !maxed && gm.Coins >= cost,
-                    () => { if (gm.BuyUpgrade(kind)) GameAudio.Play(a => a.buy); }, root, icon: i);
+                bool unlocked = gm.UpgradeUnlocked(kind);
+                int unlockDay = GameManager.UpgradeUnlockDay[i];
+                bool canBuy = gm.CanBuyUpgrade(kind);
+                Row(list, GameManager.UpgradeNames[i], GameManager.UpgradeInfo[i] + (unlocked || maxed ? "" : $" Unlocks on Day {unlockDay}."), lvl,
+                    maxed ? "Max" : !unlocked ? $"Day {unlockDay}" : $"Buy {cost}", canBuy,
+                    () => { if (gm.BuyUpgrade(kind)) GameAudio.Play(a => a.buy); }, root, icon: i, glow: canBuy);
             }
         }
         else
         {
-            note.text = gm.DailyWages > 0 ? $"Wages are paid each morning: {gm.DailyWages} coins a day." : "Staff are paid each morning. If you can't pay, they quit.";
+            note.text = "Press Interview: two applicants come in tomorrow morning. Staff are paid once, when you hire them.";
             foreach (var role in GameManager.StaffOrder)
             {
-                int i = (int)role;
-                bool hired = gm.Hired(role), open = gm.StaffUnlocked(role);
-                Row(list, GameManager.StaffNames[i] + (hired ? "  (hired)" : ""),
-                    $"{GameManager.StaffInfo[i]}  Wage {GameManager.StaffWage[i]} a day.", null,
-                    hired ? "Let go" : open ? $"Hire {GameManager.StaffWage[i]}" : $"Day {GameManager.StaffUnlockDay[i]}",
-                    hired || (open && gm.Coins >= GameManager.StaffWage[i]),
-                    () => gm.ToggleStaff(role), root);
+                var (title, sub, button, enabled) = gm.StaffRow(role);
+                Row(list, title, sub, null, button, enabled, () => gm.ToggleStaff(role), root, glow: gm.StaffActionReady(role));
             }
         }
         list.schedule.Execute(() => list.scrollOffset = new Vector2(0, scroll));
@@ -114,10 +132,11 @@ public static class PCShopView
     }
 
     static void Row(ScrollView list, string title, string sub, int? level, string button, bool enabled, Action onClick, VisualElement root,
-                    string button2 = null, bool enabled2 = false, Action onClick2 = null, int icon = -1)
+                    string button2 = null, bool enabled2 = false, Action onClick2 = null, int icon = -1, string badge = null, bool popular = false, bool glow = false)
     {
         var row = new VisualElement();
         row.AddToClassList("shop-row");
+        if (popular || glow) PopularGlow.Mark(row);
         if (icon >= 0)
         {
             var ic = new VisualElement();
@@ -127,7 +146,22 @@ public static class PCShopView
         }
         var text = new VisualElement();
         text.AddToClassList("shop-row-text");
-        text.Add(new Label(title) { name = "book-title" });
+        if (badge != null || popular)
+        {
+            // Title with gold "Popular" / "Requested" boxes beside it.
+            var titleRow = new VisualElement();
+            titleRow.AddToClassList("title-row");
+            titleRow.Add(new Label(title) { name = "book-title" });
+            if (popular) titleRow.Add(PopularGlow.Badge());
+            if (badge != null)
+            {
+                var b0 = new Label(badge);
+                b0.AddToClassList("req-badge");
+                titleRow.Add(b0);
+            }
+            text.Add(titleRow);
+        }
+        else text.Add(new Label(title) { name = "book-title" });
         text.Add(new Label(sub) { name = "book-sub" });
         if (level.HasValue)
         {

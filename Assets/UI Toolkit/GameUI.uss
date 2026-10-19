@@ -39,7 +39,6 @@
 .prompt-label {
     color: var(--ink);
     font-size: 20px;
-    -unity-font-style: bold;
 }
 
 /* ---------- Inspect bubble ---------- */
@@ -78,15 +77,14 @@
     top: -26px; left: 34px;
     padding: 6px 18px 10px 18px;
     color: rgb(255, 245, 230);
-    font-size: 22px;
-    -unity-font-style: bold;
+    font-size: 26px;
     background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_FrameSelect01a.png");
     -unity-slice-left: 3; -unity-slice-right: 3; -unity-slice-top: 3; -unity-slice-bottom: 3;
     -unity-slice-scale: 4px;
 }
 .line {
     color: var(--ink);
-    font-size: 26px;
+    font-size: 34px;
     white-space: normal;
 }
 .continue {
@@ -109,7 +107,7 @@
     padding: 8px 20px 12px 20px;
     border-width: 0;
     color: var(--ink);
-    font-size: 22px;
+    font-size: 27px;
     -unity-text-align: middle-left;
     background-color: rgba(0, 0, 0, 0);
     background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Frame01a.png");
@@ -476,3 +474,175 @@
     transition-duration: 0.55s;
 }
 .screen-fade.on { opacity: 1; }
+
+/* Shelf rows: Take / Worn / Damaged stacked on the right; title keeps the room. */
+.take-col { flex-direction: column; align-items: stretch; flex-shrink: 0; width: 92px; }
+.take-col .kit-button { margin: 2px 0; -unity-text-align: middle-center; font-size: 19px; padding: 2px 6px 5px 6px; }
+.shelf-row .shelf-row-text { flex-basis: 0; flex-grow: 1; }
+
+/* The report sits on solid black so the night fade doesn't reveal the library behind it. */
+#report { background-color: rgb(12, 8, 6); }
+
+/* Opening-day notice pinned under the top of the screen until noon. */
+.hud-pin {
+    position: absolute; top: 18px; align-self: center;
+    padding: 4px 18px 8px 18px;
+    color: var(--ink);
+    font-size: 22px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Popup01a.png");
+    -unity-slice-left: 4; -unity-slice-right: 4; -unity-slice-top: 4; -unity-slice-bottom: 4;
+    -unity-slice-scale: 4px;
+}
+
+/* Same gap from the top as the HUD bar has from the bottom; drops below the pinned notice while it shows. */
+.hud-banner { top: 18px; }
+.hud-banner.below-pin { top: 70px; }
+
+/* ---------- Audit log rows (Day Report "Log" tab) ---------- */
+.log-row { padding: 6px 0 8px 0; border-bottom-width: 2px; border-bottom-color: rgba(128, 92, 70, 0.35); }
+.log-head { color: var(--accent); font-size: 18px; }
+.log-line { color: var(--ink); font-size: 19px; white-space: normal; }
+.log-outcome { color: var(--ink-soft); font-size: 17px; white-space: normal; margin-top: 2px; }
+.log-empty { color: var(--ink-soft); font-size: 20px; white-space: normal; -unity-text-align: middle-center; margin-top: 30px; }
+
+/* ---------- Staff calling for help / waiting to report ---------- */
+.staff-pointer {
+    position: absolute;
+    flex-direction: row;
+    align-items: center;
+    padding: 6px 12px 9px 10px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Popup01a.png");
+    -unity-slice-left: 4; -unity-slice-right: 4; -unity-slice-top: 4; -unity-slice-bottom: 4;
+    -unity-slice-scale: 4px;
+}
+.staff-pointer-icon {
+    width: 32px; height: 32px; margin-right: 6px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Alert01a.png");
+    -unity-background-scale-mode: scale-to-fit;
+}
+#staff-pointer-label { color: rgb(196, 110, 40); font-size: 28px; }
+.staff-pointer-arrow {
+    width: 22px; height: 22px; margin-left: 6px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconArrow01a.png");
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+/* Damaged copies on a shelf: red title and a red "Damaged" button */
+.shelf-row.has-damage #row-title { color: rgb(184, 50, 42); }
+.take-damaged { color: rgb(184, 50, 42); }
+/* Repair desk: heading for copies still out in the library */
+.repair-section { margin-top: 14px; color: rgb(196, 110, 40); }
+
+/* Request type icons (visitors' prompts and the computer's tiles use the same ones) */
+.req-icon { width: 30px; height: 30px; margin-right: 6px; flex-shrink: 0; -unity-background-scale-mode: scale-to-fit; display: none; }
+.req-icon.on { display: flex; }
+.req-card { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconHeart01a.png"); }
+.req-buy { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconCoin01a.png"); }
+.req-read { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_BookCover01a.png"); }
+.req-return { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconRestart01a.png"); }
+.req-new { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconStar01c.png"); }
+.req-rare { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconStar01a.png"); }
+.req-collect { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconTick01a.png"); }
+.req-settings { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconGear01a.png"); }
+.customer-say-row { flex-direction: row; align-items: center; }
+
+/* Popular today on the book pages (shelves, end-of-day shop) */
+.popular { border-left-width: 4px; border-left-color: rgb(214, 120, 64); background-color: rgba(235, 200, 120, 0.18);
+           transition-property: background-color, border-left-color; transition-duration: 0.8s; }
+.popular.glow-on { background-color: rgba(235, 200, 120, 0.45); border-left-color: rgb(235, 160, 90); }
+.popular-badge { color: rgb(74, 48, 38); background-color: rgb(235, 200, 120); font-size: 15px; padding: 0 6px 2px 6px; margin-left: 8px;
+                 border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; }
+.popular-title-row { flex-direction: row; align-items: center; flex-wrap: wrap; }
+.page-filters { flex-wrap: wrap; }
+.req-read { background-image: none; }
+
+/* Something to do behind this tab (affordable upgrade or hire): warm tint that breathes */
+.ready { color: rgb(214, 120, 64); transition-property: -unity-background-image-tint-color; transition-duration: 0.8s; }
+.ready.glow-on { -unity-background-image-tint-color: rgb(255, 214, 140); }
+
+/* Reputation (and the Dean's goal) on the HUD bar, with a pop when it changes. */
+.hud-rep { flex-direction: row; align-items: center; margin-left: 28px; }
+.hud-rep Label { color: var(--ink); font-size: 30px; margin-left: 8px; }
+.icon-rep { width: 32px; height: 32px; -unity-background-scale-mode: scale-to-fit;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconStar01a.png"); }
+#hud-rep-delta { position: absolute; top: -30px; right: 0; font-size: 26px; color: rgb(110, 215, 95);
+    -unity-text-outline-width: 1.5px; -unity-text-outline-color: rgb(40, 30, 20); }
+#hud-rep-delta.negative { color: rgb(235, 85, 70); }
+.hud-rep.goal-met Label { color: rgb(214, 120, 64); }
+
+/* ---------- Coins: their own purse in the top right, with a shake, flying coins and a "+12" when you're paid ---------- */
+.hud-purse {
+    position: absolute;
+    top: 18px; right: 24px;
+    padding: 8px 22px 12px 18px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Popup01a.png");
+    -unity-slice-left: 4; -unity-slice-right: 4; -unity-slice-top: 4; -unity-slice-bottom: 4;
+    -unity-slice-scale: 4px;
+    transform-origin: center;
+}
+.hud-purse .icon-coin { width: 44px; height: 48px; }
+.hud-purse Label { color: var(--ink); font-size: 40px; margin-left: 10px; min-width: 60px; }
+/* A coin flying up into the purse. */
+.coin-fly {
+    position: absolute;
+    width: 26px; height: 28px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconCoin01a.png");
+}
+/* The "+12" / "-40" that floats up beside the purse. */
+.hud Label.coin-pop {
+    position: absolute;
+    font-size: 72px;
+    color: rgb(110, 215, 95);
+    -unity-text-outline-width: 2px;
+    -unity-text-outline-color: rgb(40, 30, 20);
+}
+.hud Label.coin-pop.negative { color: rgb(235, 85, 70); }
+
+/* ---------- Clearer patience: a bigger face, a draining bar beside it, and an angry face when they storm out ---------- */
+.mood { width: 34px; height: 34px; overflow: visible; }
+.mood-bar {
+    position: absolute;
+    left: 40px; top: 12px;
+    width: 46px; height: 9px;
+    background-color: rgba(40, 30, 20, 0.7);
+    border-width: 1px; border-color: rgb(40, 30, 20);
+    border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;
+    overflow: hidden;
+}
+.mood-bar-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; background-color: rgb(120, 200, 90); }
+.mood-bar-fill.ok { background-color: rgb(240, 186, 92); }
+.mood-bar-fill.sad { background-color: rgb(225, 80, 60); }
+.mood.angry { -unity-background-image-tint-color: rgb(255, 110, 90); }
+.customer-speech.angry { color: rgb(200, 45, 35); }
+
+/* A reward for doing something well, rising from where it happened. */
+.hud Label.skill-pop {
+    position: absolute;
+    font-size: 40px;
+    color: rgb(255, 214, 110);
+    -unity-text-outline-width: 2px;
+    -unity-text-outline-color: rgb(40, 30, 20);
+    white-space: nowrap;
+}
+
+/* ---------- Day Report: Summary tab (income by source, what went wrong, a tip for tomorrow) ---------- */
+.plan-tab { margin: 0 3px; font-size: 20px; }
+.summary-head { color: var(--accent); font-size: 23px; margin: 12px 4px 4px 4px; }
+.summary-note { color: var(--ink); font-size: 20px; white-space: normal; margin: 2px 6px; }
+.summary-note.bad { color: rgb(190, 70, 50); }
+.summary-tip { color: var(--ink); font-size: 21px; white-space: normal; margin: 4px 6px; padding: 8px 10px; background-color: rgba(235, 200, 120, 0.35); }
+
+/* ---------- Tutorial card and first-time tips (left side) ---------- */
+.tut-card {
+    position: absolute;
+    left: 24px; top: 110px;
+    width: 420px;
+    padding: 14px 20px 16px 20px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Popup01a.png");
+    -unity-slice-left: 4; -unity-slice-right: 4; -unity-slice-top: 4; -unity-slice-bottom: 4;
+    -unity-slice-scale: 4px;
+}
+.tut-title { color: rgb(196, 110, 40); font-size: 20px; margin-bottom: 4px; }
+.tut-text { color: var(--ink); font-size: 23px; white-space: normal; }
+.tut-buttons { flex-direction: row; justify-content: flex-end; margin-top: 10px; }
+.tut-button { font-size: 18px; margin-left: 8px; }
