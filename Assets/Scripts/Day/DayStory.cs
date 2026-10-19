@@ -271,7 +271,7 @@ public class DayStory : MonoBehaviour
     }
 
     /// <summary>A floating label with an arrow that stays on screen (like a staff member calling for help).</summary>
-    static WorldPrompts.Follower Point(string text, Func<Vector3> at)
+    public static WorldPrompts.Follower Point(string text, Func<Vector3> at)
     {
         var wp = WorldPrompts.Instance;
         if (wp == null) return null;
@@ -284,7 +284,7 @@ public class DayStory : MonoBehaviour
         return wp.Pin(el, arrow, at);
     }
 
-    static void Unpoint(ref WorldPrompts.Follower f)
+    public static void Unpoint(ref WorldPrompts.Follower f)
     {
         if (f != null && WorldPrompts.Instance != null) WorldPrompts.Instance.Unfollow(f);
         f = null;
@@ -1105,7 +1105,7 @@ public class DayStory : MonoBehaviour
     public static string Opener(string profileKey)
     {
         var s = Instance;
-        if (s == null || s.today == null || GM == null) return null; // after the ending: no small talk
+        if (s == null || s.today == null || GM == null || Tutorial.HoldsClock) return null; // after the ending (or mid-tutorial): no small talk
         IEnumerable<string> pool = null;
         if (UnityEngine.Random.value < 0.5f)
         {

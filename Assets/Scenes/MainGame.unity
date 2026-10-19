@@ -11464,7 +11464,6 @@ MonoBehaviour:
   readerChance: 0.3
   returnerChance: 0.08
   signUpChance: 0.15
-  seekerChance: 0.12
   vipChance: 0.08
   busyness:
     serializedVersion: 2
@@ -16100,6 +16099,53 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7592987497418520407, guid: 9cc2e829f3c7fbb44a96c00fcceccff0, type: 3}
   m_PrefabInstance: {fileID: 873711401}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &874339561
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 874339563}
+  - component: {fileID: 874339562}
+  m_Layer: 0
+  m_Name: GameCursor
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &874339562
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 874339561}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1f59b81b83768a44b82d4214709fe6b7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameCursor
+  normal: {fileID: 2800000, guid: 76cc10d201d4acc4b83d864b6ed30ddc, type: 3}
+  hover: {fileID: 2800000, guid: 68ea7569b886850489238f9599b26a42, type: 3}
+  hotspot: {x: 1, y: 1}
+--- !u!4 &874339563
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 874339561}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &883040416
 GameObject:
   m_ObjectHideFlags: 0
@@ -42582,3 +42628,4 @@ SceneRoots:
   - {fileID: 1590856554}
   - {fileID: 357576412}
   - {fileID: 16821644}
+  - {fileID: 874339563}

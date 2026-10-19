@@ -132,7 +132,7 @@ public class StaffHelp : MonoBehaviour
             }
             return;
         }
-        if (Reporting || gm.CurrentPhase != GameManager.Phase.Open) return;
+        if (Reporting || gm.CurrentPhase != GameManager.Phase.Open || Tutorial.HoldsClock) return; // no problems mid-tutorial
         timer -= GameManager.Dt;
         if (timer <= 0f) Raise();
     }
@@ -150,6 +150,7 @@ public class StaffHelp : MonoBehaviour
         remind = 30f;
         worker.SetHold(true);
         ShowPointer("Help!");
+        Tutorial.Show("staffhelp", "A staff member needs help! Click them: a paid fix keeps them happy and faster; a free one slows them down.");
         if (talk != null && WorldPrompts.Instance != null) WorldPrompts.Instance.ShowBubble(talk, Open.line, 4f);
         StartCoroutine(Ring()); // its own sound, three rings (the counter bell means a visitor)
     }

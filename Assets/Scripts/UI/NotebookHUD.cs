@@ -63,6 +63,8 @@ public class NotebookHUD : MonoBehaviour
         reserves?.RegisterCallback<PointerLeaveEvent>(_ => { overReserves = false; PointerOver = overBook; });
         reserveSignature = null;
         GameAudio.HookClicks(root);
+        current = this;
+        tucked = false;
         book?.EnableInClassList("collapsed", PlayerPrefs.GetInt(CollapsedKey, 0) == 1);
         RequestLog.Changed += MarkDirty;
         dirty = true;
@@ -87,6 +89,19 @@ public class NotebookHUD : MonoBehaviour
     }
 
     void MarkDirty() => dirty = true;
+
+    static NotebookHUD current;
+    static bool tucked;
+
+    /// <summary>Folds the notebook away for a moment (the tutorial is pointing at something behind it), without
+    /// touching the player's own open/closed setting; false puts it back as they had it.</summary>
+    public static void Tuck(bool tuck)
+    {
+        if (tucked == tuck) return;
+        tucked = tuck;
+        if (current != null && current.book != null)
+            current.book.EnableInClassList("collapsed", tuck || PlayerPrefs.GetInt(CollapsedKey, 0) == 1);
+    }
 
     void SetCollapsed(bool collapsed)
     {

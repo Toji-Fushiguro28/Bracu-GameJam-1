@@ -185,7 +185,7 @@ public class GameManager : MonoBehaviour
     public float ModeWrongPenalty => Mode(0.5f, 1f, 1.5f);
     public int ModeExtraVisitors => difficulty == Difficulty.Busy ? 1 : 0;
     /// <summary>Cozy: visitors wait sadly instead of storming off.</summary>
-    public bool NoStormingOut => difficulty == Difficulty.Cozy;
+    public bool NoStormingOut => difficulty == Difficulty.Cozy || Tutorial.HoldsClock; // nobody walks out on a learner
     public bool FreeFirstHint => difficulty == Difficulty.Cozy;
     public bool NoHints => difficulty == Difficulty.Busy;
     public float OutOfStockChance => day < 2 ? 0f : Mode(0.1f, day == 2 ? 0.2f : 0.25f, 0.35f);
@@ -223,7 +223,7 @@ public class GameManager : MonoBehaviour
         CoinsChanged?.Invoke(Coins, 0);
     }
 
-    public float PatienceMultiplier => (1f + 0.15f * Upgrade(UpgradeKind.ComfyQueue)) * Mode(1.5f, 1f, 0.7f) * PatienceDayFactor * DayStory.PatienceFactor;
+    public float PatienceMultiplier => (1f + 0.15f * Upgrade(UpgradeKind.ComfyQueue)) * Mode(1.5f, 1f, 0.7f) * PatienceDayFactor * DayStory.PatienceFactor * (Tutorial.HoldsClock ? 2f : 1f);
     /// <summary>Visitors get less patient as the library gets known: full patience on Days 1-2, 85% on Day 3, 75% after.</summary>
     public float PatienceDayFactor => day <= 2 ? 1f : day == 3 ? 0.85f : 0.75f;
     public float TipMultiplier => 1f + 0.1f * Upgrade(UpgradeKind.CozyLamps);
@@ -285,9 +285,13 @@ public class GameManager : MonoBehaviour
     public int OnOrder(BookData b) { int n = 0; foreach (var o in orders) if (o.book == b) n++; return n; }
 
     /// <summary>Standard orders arrive next morning; express ones a couple of hours later today.</summary>
+    /// <summary>Orders placed since the game started (the tutorial watches for your first).</summary>
+    [NonSerialized] public int OrdersPlaced;
+
     public bool OrderBook(BookData b, bool express)
     {
         if (b == null || !TrySpend(OrderPrice(b, express))) return false;
+        OrdersPlaced++;
         AddToLibrary(b); // a requested new title becomes part of the library
         bool sameDay = express && CurrentPhase != Phase.Closed && Hour + ExpressHours < closeHour;
         orders.Add(new Order { book = b, arriveDay = sameDay ? day : day + 1, arriveHour = sameDay ? Hour + ExpressHours : openHour });
@@ -535,7 +539,7 @@ public class GameManager : MonoBehaviour
     }
 
     [ContextMenu("Delete Save")]
-    public void DeleteSave() { PlayerPrefs.DeleteKey(SaveKey); Debug.Log("[Game] Save deleted."); }
+    public void DeleteSave() { PlayerPrefs.DeleteKey(SaveKey); Tutorial.ResetProgress(); Debug.Log("[Game] Save deleted."); } // a new game: tutorial and tips again
 
     /// <summary>Wipes the save and starts again from day 1.</summary>
     public void NewGame()
@@ -721,6 +725,7 @@ public class GameManager : MonoBehaviour
     void Update()
     {
         if (CurrentPhase == Phase.Closed || Paused) return;
+        if (Tutorial.HoldsClock) return; // the guided first day: the clock waits for you
         if (orders.Count > 0) DeliverDue();
         float hoursPerSecond = (closeHour - openHour) / Mathf.Max(0.1f, realMinutesPerDay * 60f);
         Hour = Mathf.Min(closeHour, Hour + hoursPerSecond * Time.deltaTime);

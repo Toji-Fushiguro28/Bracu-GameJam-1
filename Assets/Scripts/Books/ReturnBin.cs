@@ -30,6 +30,8 @@ public class ReturnBin : ClickInteractable
     public void Add(BookData book, BookCondition condition)
     {
         if (book != null) pile.Add(new Copy { book = book, condition = condition });
+        if (book != null && condition == BookCondition.Damaged)
+            Tutorial.Show("damaged", "A damaged book went in the return bin. Take it to the Repair desk to mend it before it goes back on a shelf.");
     }
 
     /// <summary>Every copy in the bin (for saving).</summary>

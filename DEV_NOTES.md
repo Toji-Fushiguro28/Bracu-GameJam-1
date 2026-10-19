@@ -385,7 +385,7 @@ Small, contained edits. Please check them when merging:
   - `OrderBook` on one calls `AddToLibrary`, which moves it into `Books` with 0 copies until the delivery arrives. It's saved in SaveData `added`.
 - **Seeker visitors** (`Customer.Kind.Seeker`):
   - They pick a new title (or a sold-out book), check 1–2 shelves (the right one first), then queue and say they couldn't find it.
-  - Spawn chance is `CustomerSpawner.seekerChance` (0.12), with at least one per day after 10:15.
+  - Only on seeker days (`CustomerSpawner.SeekerDay`): Day 1 always, then about one day in three (20% a day, the same days for a given game via `storySeed`), never more than 3 days in a row without one. Just one that day, at a random time between 10:15 and 2:30.
 - **At the counter:** "When do you need it?" → they answer "As soon as possible" or "I'll come back tomorrow", and you pick "I'll order it for you" or "Sorry".
   - **ASAP** (`ReserveAndWait`): they sit in the library (`State.WaitingForBook`).
     - When the ordered copy arrives (in stock or on the cart), they come to the desk to collect it.
@@ -496,3 +496,15 @@ Small, contained edits. Please check them when merging:
 - **Patience**: bigger mood face with a draining bar beside it (`.mood-bar`), green / amber / red; the face throbs when they're about to give up. Angry exits (`Customer.StormOff`): a stomp on the spot with a shaking red face and red "Hmph!", the impatient bell, then they march out at 1.8x speed.
 - **Skill rewards** (`HUD.SkillPop`, gold text rising from the spot): right shelf in a reader chat (bonus paid on the spot, +1 rep), perfect repair (+5 coins, +1 rep), special order collected, VIP request done.
 - **Day Report Summary tab** (opens first each evening): income by source (`DayStats.Earn`: sales, reading fees, cards, VIP, staff, other), what went wrong (walk-outs, wrong books, people let down, mess, unordered reservations, unhappy staff) and one tip for tomorrow picked from the day's biggest problem.
+
+## Tutorial and first-time tips (`UI/Tutorial.cs`, added to the HUD at runtime)
+- **Guided Day 1** on a new game (Day 1, no save, `PlayerPrefs` "TutorialDone" unset; a new game / `DeleteSave` resets it and the tips). A card on the left says what to do, an arrow (`DayStory.Point`) shows where, and the camera zooms in (a temporary Cinemachine camera, 0.7x size) on the computer, the right shelf and the front door the first time each is needed.
+- Steps: talk to a buyer (asks for an author with a book in stock), look it up (catalogue, `PCOverlayTrigger.LastViewed`), take it from the shelf, hand it over, talk to a card sign-up, fill in the card (Members), talk to a seeker, order it (`GameManager.OrdersPlaced`). Then the day runs; at closing it shows how to lock up, and ends when the Day Report opens. "Skip tutorial" any time.
+- While guiding (`Tutorial.HoldsClock`): the clock waits (so the story's beats wait too), only the tutorial's own visitors come (`CustomerSpawner.SpawnTutorial`), patience x2 and nobody storms out, no staff problems, no small talk. A visitor who leaves early just moves it on to the next step.
+- The notebook folds away (`NotebookHUD.Tuck`, not saved) while the arrow points at something behind it.
+- **First-time tips** (`Tutorial.Show(key, text)`): once per game each, never while the tutorial guides you or a screen/conversation is open; queued and shown one at a time on the same card (10 s, or "Got it"). Keys: seeker, soldout, damaged, staffhelp, pickup, vip, delivery, mess, reader, checkout, returns, wrongbook, express.
+
+## Mouse cursor (`UI/GameCursor.cs`)
+- TravelBook `Cursor01c` normally, `Cursor01d` over something clickable (`InteractionController.HoveringSomething`, or a UI Toolkit button under the mouse on any panel) and while the left button is held.
+- The 14x16 art is scaled up in whole pixels for the screen (`Screen.height / 540`, 2x at 1080p) at runtime, so the two textures are imported Read/Write, uncompressed, point filter.
+- On its own root object `GameCursor` in MainGame; `DontDestroyOnLoad`, so it carries into the intro scene; a reloaded scene's copy destroys itself.

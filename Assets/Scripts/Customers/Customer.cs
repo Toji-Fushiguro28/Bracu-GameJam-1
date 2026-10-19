@@ -32,6 +32,8 @@ public class Customer : ClickInteractable
     [System.NonSerialized] public bool thief;
     /// <summary>Shown instead of their card name (the inspector, a visiting author, the thief), with a name tag.</summary>
     [System.NonSerialized] public string displayName;
+    /// <summary>Set before they wake: what they'll ask for at the desk (the tutorial's first visitor).</summary>
+    [System.NonSerialized] public BookRequest presetRequest;
     public Member Membership => Members.Find(profileKey);
     public float walkSpeed = 1.6f;
     [Tooltip("Share of patience lost for a wrong book.")]
@@ -73,6 +75,7 @@ public class Customer : ClickInteractable
 
     public BookRequest CurrentRequest => request;
     public bool IsWaiting => state == State.Waiting;
+    public bool IsLeaving => state == State.Leaving;
     public float PatienceLeft => maxPatience > 0f ? Mathf.Clamp01(patience / maxPatience) : 1f;
     static float Dt => GameManager.Dt;
     static GameManager GM => GameManager.Instance;
@@ -411,9 +414,14 @@ public class Customer : ClickInteractable
             Say(WaitingText);
             return;
         }
+        // First times at the desk: a one-line tip (once per game).
+        if (kind == Kind.Seeker) Tutorial.Show("seeker", "This visitor wants a book the library doesn't have. Ask when they need it, reserve it, then order it in the computer's Shop.");
+        if (kind == Kind.Pickup) Tutorial.Show("pickup", "Back for a reserved book: take it off the book cart (or its shelf) and hand it over.");
+        if (vip) Tutorial.Show("vip", "VIP scholars read in the Rare Books room. Give them a Rare Books card on the computer first; then they pay well to read.");
 
         if (kind == Kind.Browser && heldBook != null)
         {
+            Tutorial.Show("checkout", "They found a book themselves. Click them to stamp it out.");
             state = State.Checkout;
             StartPatience(60f);
             Say(CheckoutLine);
@@ -429,7 +437,7 @@ public class Customer : ClickInteractable
             return;
         }
         if (kind != Kind.Pickup && kind != Kind.Seeker)
-            request = BookRequest.Create(GM.Books, kind == Kind.Reader, vip);
+            request = presetRequest ?? BookRequest.Create(GM.Books, kind == Kind.Reader, vip);
         if (request == null) { Say("Oh... nothing I want today."); Leave(); return; }
         StartPatience(kind == Kind.Pickup ? 70f : request.Patience);
         state = State.Waiting;
@@ -554,6 +562,7 @@ public class Customer : ClickInteractable
 
         bool pickup = kind == Kind.Pickup;
         bool soldOut = !pickup && request.OutOfStock(GM.Books);
+        if (soldOut) Tutorial.Show("soldout", "Sold out! Ask when they need it: reserve it, then order more in the computer's Shop. Express gets here in 2 hours.");
         bool seeker = kind == Kind.Seeker;
         if (!pickup && !seeker && clue == null && !GM.NoHints) start.choices.Add(new DialogueAsset.Choice { text = "Could you give me a hint? (smaller tip)", next = "hint" });
         if (pickup)
@@ -645,6 +654,7 @@ public class Customer : ClickInteractable
             GameAudio.Play(a => a.wrongBook);
             GM.AddReputation(-1); // word gets around
             GM.Today.wrongBooks++;
+            Tutorial.Show("wrongbook", "Not what they asked for. Check their request in your Notes (right edge) and look it up on the computer.");
             Penalise(wrongBookPenalty);
             return;
         }
@@ -719,6 +729,7 @@ public class Customer : ClickInteractable
         Members.Satisfy(Membership, 0.2f);
         GameAudio.Play(a => a.cardIssued, 0.7f);
         RequestLog.Note(this, $"Waiting in the library for \"{request.Target.Title}\" (express)");
+        Tutorial.Show("express", "They're waiting in the library: order it with Express in the Shop (2 hours), or they'll leave unhappy.");
         StopImpatient(true);
         CounterQueue.Instance.Leave(this);
         state = State.WaitingForBook;
@@ -1118,6 +1129,7 @@ public class Customer : ClickInteractable
             return;
         }
         RequestLog.Finish(this, $"Reading \"{book.Title}\" here");
+        Tutorial.Show("reader", "Readers sit and read, then check the book back in at the counter. Click them while they read for a chat, and a bonus if you know your shelves.");
         Say(seat.rareBooksOnly ? "Wonderful. I'll read it in the Rare Books room." : "Lovely, I'll find a seat.", 2.5f);
         state = State.ToSeat;
         agent.SetDestination(NearestOnNavMesh(seat.ApproachPosition(seatIndex)));
@@ -1156,6 +1168,7 @@ public class Customer : ClickInteractable
 
     void BeginCheckIn()
     {
+        if (kind == Kind.Returner) Tutorial.Show("returns", "Returning a book: click them to check it in. Worn or damaged copies go in the return bin for repair.");
         state = State.CheckIn;
         StartPatience(45f);
         Say(CheckInLine);

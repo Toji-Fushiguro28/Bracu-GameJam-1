@@ -88,6 +88,8 @@ All of it is in `Core/GameManager.cs`, in the *Play mode* section:
 |---|---|
 | Upgrade names and descriptions | `Core/GameManager.cs` → `UpgradeNames`, `UpgradeInfo` |
 | Upgrade cost and max level | `Core/GameManager.cs` → `UpgradeCost()` (40 / 80 / 120), `MaxUpgrade` (3) |
+| Seeker days | `Customers/CustomerSpawner.cs` → `SeekerDay` (Day 1, then 20% a day, at most 3 days without), one seeker between 10:15 and 2:30 |
+| Tutorial | `UI/Tutorial.cs`: patience x2 and no walk-outs while guiding (`GameManager.PatienceMultiplier`, `NoStormingOut`), camera zoom 0.7x for 2.4 s |
 | Pickup times | `Customers/CustomerSpawner.cs` → `QueuePickups()`: 9:30 to 4:15 cut into one slot per pickup, random moment in each |
 | Daily twists (Days 1-5) | `Day/DayStory.cs`: exam rush 10:00-1:30 (visitors x1.6, +25% readers, patience x0.9, exam subject asked x4); thief at 11:00 and 2:30 (walks out at 60% speed; caught +1 rep, escaped -1 and the copy is lost); leak at 11:00 (first soak after 0.5 h, then every 0.35 h, max 4 books); inspection 1:00-2:30 (satisfactory +3 / adequate +1 / concerns -2); signing 2:00-3:30 (visitors x1.5, author's books x3 and popular all day; 3+ sold = +25 coins +2 rep); power cut 12:00-2:00 (no PC, patience x1.3) |
 | Story rewards | `Day/DayStory.cs`: exam whip-round +20 coins +1 rep, Archive historian +1 rep, regulars' card on Day 5 +2 rep |

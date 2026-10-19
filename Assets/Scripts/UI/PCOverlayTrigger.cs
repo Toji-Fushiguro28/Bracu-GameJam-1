@@ -282,6 +282,8 @@ public class PCOverlayTrigger : MonoBehaviour
     }
 
     BookData selectedBook, bought;
+    /// <summary>The last book looked at in the catalogue (the tutorial checks you found it).</summary>
+    public static BookData LastViewed;
 
     /// <summary>Copies of it can be bought in the Shop (not Rare Books, not rooms that are still locked).</summary>
     static bool CanOrder(BookData b) => b != null && !BookRequest.IsRare(b) && BookRequest.Available(b);
@@ -319,6 +321,7 @@ public class PCOverlayTrigger : MonoBehaviour
     void ShowDetails(BookData b)
     {
         selectedBook = b;
+        if (b != null) LastViewed = b;
         var root = overlayDoc.rootVisualElement;
         var empty = root.Q("detail-empty");
         var body = root.Q("detail-body");

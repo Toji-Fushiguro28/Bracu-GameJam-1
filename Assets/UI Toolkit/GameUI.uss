@@ -631,3 +631,18 @@
 .summary-note { color: var(--ink); font-size: 20px; white-space: normal; margin: 2px 6px; }
 .summary-note.bad { color: rgb(190, 70, 50); }
 .summary-tip { color: var(--ink); font-size: 21px; white-space: normal; margin: 4px 6px; padding: 8px 10px; background-color: rgba(235, 200, 120, 0.35); }
+
+/* ---------- Tutorial card and first-time tips (left side) ---------- */
+.tut-card {
+    position: absolute;
+    left: 24px; top: 110px;
+    width: 420px;
+    padding: 14px 20px 16px 20px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Popup01a.png");
+    -unity-slice-left: 4; -unity-slice-right: 4; -unity-slice-top: 4; -unity-slice-bottom: 4;
+    -unity-slice-scale: 4px;
+}
+.tut-title { color: rgb(196, 110, 40); font-size: 20px; margin-bottom: 4px; }
+.tut-text { color: var(--ink); font-size: 23px; white-space: normal; }
+.tut-buttons { flex-direction: row; justify-content: flex-end; margin-top: 10px; }
+.tut-button { font-size: 18px; margin-left: 8px; }

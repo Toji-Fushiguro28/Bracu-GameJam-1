@@ -23,8 +23,6 @@ public class CustomerSpawner : MonoBehaviour
     [Range(0f, 1f)] public float returnerChance = 0.08f;
     [Tooltip("Chance a visitor without a library card comes to sign up.")]
     [Range(0f, 1f)] public float signUpChance = 0.15f;
-    [Tooltip("Visitors who look for a book we don't have, then ask you to order it.")]
-    [Range(0f, 1f)] public float seekerChance = 0.12f;
     [Tooltip("Chance (from day 3) a professor visits as a VIP scholar.")]
     [Range(0f, 1f)] public float vipChance = 0.08f;
 
@@ -56,6 +54,36 @@ public class CustomerSpawner : MonoBehaviour
     }
 
     bool vipToday, seekerToday, deanToday;
+    /// <summary>When today's seeker comes in (on seeker days).</summary>
+    float seekerHour = 10.25f;
+
+    /// <summary>Someone after a book the library hasn't got (so you order it): Day 1 always (the tutorial teaches it),
+    /// then about one day in three (the same days for a given game), and never more than three days in a row without
+    /// one. Just one on those days, so it stays special.</summary>
+    public static bool SeekerDay(GameManager gm)
+    {
+        if (gm.day <= 1) return true;
+        int last = 1;
+        for (int d = 2; d <= gm.day; d++)
+        {
+            bool seeker = Roll(d, gm.storySeed) < 20 || d - last >= 4;
+            if (seeker) last = d;
+            if (d == gm.day) return seeker;
+        }
+        return false;
+    }
+
+    /// <summary>0-99 for a day of a game: well mixed, so neighbouring days don't clump together.</summary>
+    static int Roll(int day, int seed)
+    {
+        unchecked
+        {
+            uint h = (uint)(day * 374761393 + seed * 668265263);
+            h = (h ^ (h >> 13)) * 1274126177u;
+            h ^= h >> 16;
+            return (int)(h % 100u);
+        }
+    }
 
     /// <summary>Is this character already in the library? (No one is in two places at once.)</summary>
     static bool Present(string prefabName)
@@ -72,6 +100,7 @@ public class CustomerSpawner : MonoBehaviour
         pickups.Clear();
         pickupTimes.Clear();
         spawnTimer = firstDelay;
+        seekerHour = Random.Range(10.25f, 14.5f);
         var gm = GameManager.Instance;
         if (gm == null) return;
         // Everyone due today gets their own time: the day (9:30 to 4:15) is cut into one slot each, in a random
@@ -88,6 +117,7 @@ public class CustomerSpawner : MonoBehaviour
         var gm = GameManager.Instance;
         var queue = CounterQueue.Instance;
         if (gm == null || queue == null || gm.CurrentPhase != GameManager.Phase.Open) return;
+        if (Tutorial.HoldsClock) return; // the tutorial brings its own visitors
         if (gm.Hour < gm.openHour + 1f / 6f) return; // staff arrive at nine, visitors from ten past
         // "I need it today": they come back at the time they said.
         foreach (var r in gm.reservations)
@@ -150,8 +180,8 @@ public class CustomerSpawner : MonoBehaviour
         {
             float r = Random.value;
             float readers = readerChance + DayStory.ExtraReaders; // exam rush: more of them sit down to study
-            // At least one "can you order it?" visitor a day, from Day 1, keeps the shop in use.
-            bool seek = Random.value < seekerChance || (!seekerToday && gm.Hour >= 10.25f);
+            // A "can you order it?" visitor: one on seeker days only, so it stays special.
+            bool seek = !seekerToday && gm.Hour >= seekerHour && SeekerDay(gm);
             if (seek) { customer.kind = Customer.Kind.Seeker; seekerToday = true; }
             else customer.kind = r < browserChance ? Customer.Kind.Browser
                 : r < browserChance + readers ? Customer.Kind.Reader
@@ -204,6 +234,25 @@ public class CustomerSpawner : MonoBehaviour
         c.story = v;
         c.displayName = v.name;
         c.kind = Customer.Kind.Buyer;
+        c.gameObject.SetActive(true);
+        return c;
+    }
+
+    /// <summary>One of the tutorial's visitors: a buyer (with the request it gives), someone after a card (a
+    /// stranger with no card yet), or a seeker. Null if nobody suitable is free.</summary>
+    public Customer SpawnTutorial(Customer.Kind kind, BookRequest request = null)
+    {
+        if (CounterQueue.Instance == null || customerPrefabs == null) return null;
+        System.Func<GameObject, bool> only = p => !p.name.Contains("Dean");
+        if (kind == Customer.Kind.SignUp)
+            only = p => !p.name.Contains("Dean") && Members.Find(p.name) == null
+                        && Members.TryProfile(p.name, out var profile) && profile.access != AccessLevel.Rare;
+        var prefab = Pick(false, only);
+        if (prefab == null) return null;
+        var c = Bring(prefab);
+        c.kind = kind;
+        c.presetRequest = request;
+        if (kind == Customer.Kind.Seeker) seekerToday = true; // today's seeker
         c.gameObject.SetActive(true);
         return c;
     }

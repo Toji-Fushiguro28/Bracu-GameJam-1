@@ -95,6 +95,7 @@ public class HUD : MonoBehaviour
         banner.AddToClassList("hidden");
         root.Q("hud")?.Add(banner);
         purse = root.Q("hud-purse");
+        if (GetComponent<Tutorial>() == null) gameObject.AddComponent<Tutorial>(); // the guided first day and first-time tips
         hudLayer = root.Q("hud");
         repLabel = root.Q<Label>("hud-rep");
         repDelta = new Label { name = "hud-rep-delta", pickingMode = PickingMode.Ignore };
@@ -317,6 +318,7 @@ public class HUD : MonoBehaviour
             gm.DayStarted += () => ShowBanner(MorningText(gm), 6f);
             gm.Delivered += n =>
             {
+                Tutorial.Show("delivery", "Your order arrived on the book cart. Click the cart to take books, then shelve them or hand them over.");
                 GameAudio.Play(a => a.delivery);
                 ShowBanner(n == 1 ? "Delivery! A book is waiting at the book cart." : $"Delivery! {n} books are waiting at the book cart.", 6f);
             };

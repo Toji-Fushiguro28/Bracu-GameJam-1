@@ -45,6 +45,7 @@ public class MessSpot : ClickInteractable
     /// <summary>Someone left this here. A book can carry a real copy taken off the shelves.</summary>
     public void MakeMess(BookData copyOf = null, BookCondition copyCondition = BookCondition.Good)
     {
+        Tutorial.Show("mess", "Visitors leave cups and books lying about. Click them to tidy up: a spotless library earns reputation at closing.");
         book = copyOf;
         condition = copyCondition;
         SetDirty(true);
