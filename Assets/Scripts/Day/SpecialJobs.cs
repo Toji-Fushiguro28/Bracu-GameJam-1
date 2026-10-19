@@ -145,7 +145,7 @@ public class SpecialJobs : MonoBehaviour
                 GM.Reserve(c.profileKey, FirstNameOf(c), b, false, true);
                 var r = GM.ReservationFor(c.profileKey);
                 if (r != null) r.bonus = bonus;
-                FindAnyObjectByType<HUD>()?.ShowBanner($"Special order: get \"{b.Title}\" in by tomorrow (order it in the Shop). {FirstNameOf(c)} pays +{bonus} on top.", 7f);
+                FindAnyObjectByType<HUD>()?.ShowBanner($"Special order: get \"{b.Title}\" in by tomorrow (order it from the computer's Catalogue). {FirstNameOf(c)} pays +{bonus} on top.", 7f);
             },
         };
     }
@@ -212,6 +212,7 @@ public class SpecialJobs : MonoBehaviour
                     GM.NotifyBooksChanged();
                     GM.AddCoins(VipReward);
                     GM.Today.Earn(GameManager.DayStats.Source.Vip, VipReward);
+                    RequestLog.Money("VIP request", "Rare book ready on time", "VIP reward", VipReward);
                     GM.AddReputation(2);
                     HUD.SkillPop(c.transform.position + Vector3.up * 2.2f, $"VIP request done! +{VipReward} coins, +2 reputation");
                 }
@@ -277,13 +278,14 @@ public class SpecialJobs : MonoBehaviour
         {
             var cond = b.GoodCopies > 0 ? BookCondition.Good : BookCondition.Worn;
             if (!b.TakeCopy(cond)) break;
-            paid += Mathf.RoundToInt(b.BaseValue * (cond == BookCondition.Worn ? 0.8f : 1f));
+            paid += Mathf.RoundToInt(b.SaleValue * (cond == BookCondition.Worn ? 0.8f : 1f));
             GM.Today.booksSold++;
         }
         paid += ClubBonus;
         GM.NotifyBooksChanged();
         GM.AddCoins(paid);
         GM.Today.Earn(GameManager.DayStats.Source.Sales, paid);
+        RequestLog.Money("Book club", $"Bought {ClubCopies} copies of \"{b.Title}\"", "Book club", paid);
         GM.AddReputation(2);
         GameAudio.Play(a => a.served);
         hud?.ShowBanner($"The book club bought {ClubCopies} copies of \"{b.Title}\" (and left biscuits). +{paid} coins, +2 reputation.", 6f);

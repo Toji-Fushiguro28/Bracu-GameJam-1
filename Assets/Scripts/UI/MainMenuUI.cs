@@ -31,7 +31,7 @@ public class MainMenuUI : MonoBehaviour
     static readonly string[] Tips =
     {
         "Tip: the computer searches titles, authors and tags. Vague request? Read the abstracts!",
-        "Tip: sold out? Reserve it, then order it from the PC Shop.",
+        "Tip: sold out? Reserve it, then order it from the PC Catalogue.",
         "Tip: chat with readers - point them to the right shelf for a bigger tip.",
         "Tip: popular books get asked for most. Keep them in stock!",
         "Tip: a visitor who walks out costs 3 reputation, and a regular won't come back tomorrow.",
@@ -52,7 +52,7 @@ public class MainMenuUI : MonoBehaviour
         ("The counter", "Click visitors at the counter to talk. The icon by their words shows what they want.\n\nHappy visitors tip more. A hint helps, but shrinks the tip.\n\nWrong books and walk-outs cost reputation, and regulars you let down stay away the next day. Visitors get less patient after Day 2."),
         ("Finding books", "Look books up on the computer: search titles, authors or tags, and read the abstracts.\n\nTake a copy from its shelf and hand it over."),
         ("Your notebook", "Every request goes in your notebook. On the computer, Add to note writes a book and its shelf down."),
-        ("Ordering books", "Sold out, or a book you don't have? Order it in the computer Shop and hand it over when it arrives.\n\nPopular books get asked for most, so keep them in stock."),
+        ("Ordering books", "Sold out, or a book you don't have? Order it from the computer's Catalogue and hand it over when it arrives.\n\nPopular books get asked for most, so keep them in stock."),
         ("Cards & readers", "Library cards: type their name, pick their birthday and access on the computer (Members).\n\nChat with readers for tips."),
         ("Repairs & rooms", "Damaged books go to the repair desk.\n\nThe Archive opens on Day 2, Rare Books on Day 3."),
         ("Staff", "Hire help from the Shop or the Day Report. Interview them the next morning.\n\nWhen staff call for Help!, go and sort it out."),
@@ -221,7 +221,7 @@ public class MainMenuUI : MonoBehaviour
         "Left click", "Left Shift", "Shift", "WASD", "Esc", "Standard mode", "front ropes", "Day Report", "book cart",
         "Add to note", "To Shelve", "Audit Log", "Log tab", "notebook", "Reservations",
         "repair desk", "Rare Books", "Rare card", "VIP scholars", "Archive", "computer", "sold out", "reserve", "hint", "express", "today", "Requested",
-        "tips", "tip", "stamina", "Shop", "Members", "Books", "Staff", "Interview", "Day 1", "Day 2", "Day 3", "6 pm",
+        "tips", "tip", "stamina", "Shop", "Members", "Books", "Catalogue", "Staff", "Interview", "Day 1", "Day 2", "Day 3", "6 pm",
     };
     int lastHowtoPage;
 
@@ -325,14 +325,7 @@ public class MainMenuUI : MonoBehaviour
         settingsRows.Clear();
         Volume("Volume", GameSettings.Master, v => GameSettings.Master = v);
         Volume("Music", GameSettings.Music, v => GameSettings.Music = v);
-        var gm = GameManager.Instance;
-        if (gm != null && (hasSave || started))
-        {
-            var mode = Row("Mode");
-            mode.Add(Button("<", () => { gm.SetDifficulty((GameManager.Difficulty)(((int)gm.difficulty + 2) % 3)); BuildSettings(); }));
-            mode.Add(Value(gm.difficulty == GameManager.Difficulty.Standard ? "Standard ★" : GameManager.DifficultyNames[(int)gm.difficulty]));
-            mode.Add(Button(">", () => { gm.SetDifficulty((GameManager.Difficulty)(((int)gm.difficulty + 1) % 3)); BuildSettings(); }));
-        }
+        // The mode is only picked when a new game starts, never changed mid-game.
         var full = Row("Screen");
         full.Add(Value(Screen.fullScreen ? "Fullscreen" : "Window"));
         full.Add(Button("Toggle", () => { Screen.fullScreen = !Screen.fullScreen; settingsRows.schedule.Execute(BuildSettings).ExecuteLater(200); }));

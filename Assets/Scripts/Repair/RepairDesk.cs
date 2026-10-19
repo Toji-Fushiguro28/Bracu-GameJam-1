@@ -122,7 +122,9 @@ public class RepairDesk : ClickInteractable
     /// <summary>Pays and starts a repair. bonus = 0..1 minigame score.</summary>
     public bool StartRepair(Job job, float minigameScore)
     {
-        if (!Waiting.Contains(job) || GameManager.Instance == null || !GameManager.Instance.TrySpend(Cost(job))) return false;
+        int cost = Cost(job);
+        if (!Waiting.Contains(job) || GameManager.Instance == null || !GameManager.Instance.TrySpend(cost)) return false;
+        RequestLog.Money("Repair desk", $"Repaired \"{job.book.Title}\"", "Repair", -cost);
         Waiting.Remove(job);
         job.bonus = minigameBonus * Mathf.Clamp01(minigameScore);
         job.duration = repairSeconds[Tier(job.book)] / Mathf.Max(0.1f, speedMultiplier);
@@ -168,6 +170,7 @@ public class RepairDesk : ClickInteractable
                 // A perfect job gets noticed: a small donation from the Friends of the Whitmore, and the word gets round.
                 gm.AddCoins(PerfectBonus);
                 gm.Today.Earn(GameManager.DayStats.Source.Other, PerfectBonus);
+                RequestLog.Money("Friends of the Whitmore", $"Perfect repair of \"{job.book.Title}\"", "Donation", PerfectBonus);
                 gm.AddReputation(1);
                 HUD.SkillPop(transform.position + Vector3.up * 1.6f, $"Perfect repair! +{PerfectBonus} coins, +1 reputation");
             }

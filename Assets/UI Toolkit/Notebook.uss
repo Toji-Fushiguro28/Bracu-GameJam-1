@@ -56,9 +56,8 @@
 .reservations .notebook-title { font-size: 26px; margin-bottom: 2px; }
 /* New reservation: gold tab that pulses until you open the list. */
 .notebook-tab.new {
-    color: rgb(255, 245, 230);
-    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_FrameSelect01a.png");
-    -unity-background-image-tint-color: rgb(235, 200, 120);
+    color: rgb(255, 246, 232);
+    background-image: url("project://database/Assets/Art/UI/PC/T_PC_ButtonHot.png");
     transition-property: scale;
     transition-duration: 0.4s;
 }

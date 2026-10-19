@@ -281,8 +281,13 @@ public class GameManager : MonoBehaviour
 
     public const float ExpressHours = 2f;
     public static int OrderPrice(BookData b, bool express) =>
-        Mathf.Max(3, Mathf.RoundToInt(b.BaseValue * 0.6f * (express ? 1.5f : 1f) * (Instance != null ? Instance.ModePrices : 1f)));
+        Mathf.Max(3, Mathf.RoundToInt(b.SaleValue * 0.6f * (express ? 1.5f : 1f) * (Instance != null ? Instance.ModePrices : 1f)));
     public int OnOrder(BookData b) { int n = 0; foreach (var o in orders) if (o.book == b) n++; return n; }
+    /// <summary>Express copies still to arrive today, and when (the PC's day bar shows them).</summary>
+    public IEnumerable<(BookData book, float hour)> ArrivingToday
+    {
+        get { foreach (var o in orders) if (o.arriveDay == day && o.arriveHour > Hour) yield return (o.book, o.arriveHour); }
+    }
 
     /// <summary>Standard orders arrive next morning; express ones a couple of hours later today.</summary>
     /// <summary>Orders placed since the game started (the tutorial watches for your first).</summary>
@@ -290,7 +295,9 @@ public class GameManager : MonoBehaviour
 
     public bool OrderBook(BookData b, bool express)
     {
-        if (b == null || !TrySpend(OrderPrice(b, express))) return false;
+        int price = b != null ? OrderPrice(b, express) : 0;
+        if (b == null || !TrySpend(price)) return false;
+        RequestLog.Money("You", $"{(express ? "Express order" : "Ordered")} \"{b.Title}\" ({(express ? "arrives in 2 hours" : "arrives tomorrow")})", express ? "Express order" : "Book order", -price);
         OrdersPlaced++;
         AddToLibrary(b); // a requested new title becomes part of the library
         bool sameDay = express && CurrentPhase != Phase.Closed && Hour + ExpressHours < closeHour;
@@ -392,6 +399,7 @@ public class GameManager : MonoBehaviour
         int cost = StaffUpgradeCost(r);
         if (cost < 0 || !TrySpend(cost)) return false;
         staffLevel[(int)r]++;
+        RequestLog.Money(StaffPerson[(int)r], $"{StaffNames[(int)r]} trained to level {staffLevel[(int)r] + 1}", "Staff upgrade", -cost);
         ApplyUpgrades();
         var hud = FindAnyObjectByType<HUD>();
         if (hud != null) hud.ShowBanner($"{StaffPerson[(int)r]} is now level {staffLevel[(int)r] + 1}: faster, and needs less help.", 4f);
@@ -403,6 +411,7 @@ public class GameManager : MonoBehaviour
         int lvl = upgrades[(int)u];
         if (!UpgradeUnlocked(u) || lvl >= MaxUpgrade || !TrySpend(UpgradeCost(lvl))) return false;
         upgrades[(int)u]++;
+        RequestLog.Money("You", $"Bought {UpgradeNames[(int)u]} (level {upgrades[(int)u]})", "Upgrade", -UpgradeCost(lvl));
         ApplyUpgrades();
         return true;
     }
@@ -438,6 +447,7 @@ public class GameManager : MonoBehaviour
             if (Coins >= wages)
             {
                 AddCoins(-wages);
+                RequestLog.Money("Staff", "Morning wages", "Wages", -wages);
                 for (int i = 0; i < staff.Length; i++) if (staff[i]) wagePaidFor[i] = day;
             }
             else { for (int i = 0; i < staff.Length; i++) if (wagePaidFor[i] < day) staff[i] = false; } // can't pay: they quit
@@ -694,7 +704,11 @@ public class GameManager : MonoBehaviour
             // The price you agreed in the interview (or what they asked), paid once.
             var parts = PlayerPrefs.GetString("HiredStats_" + r, "").Split(',');
             int price = parts.Length == 4 && int.TryParse(parts[3], out int p) ? p : StaffHireFee[(int)r];
-            if (TrySpend(price)) { staff[(int)r] = true; staffLevel[(int)r] = 0; staffMood[(int)r] = 3f; staffRestedDay[(int)r] = 0; }
+            if (TrySpend(price))
+            {
+                staff[(int)r] = true; staffLevel[(int)r] = 0; staffMood[(int)r] = 3f; staffRestedDay[(int)r] = 0;
+                RequestLog.Money(StaffPerson[(int)r], $"Hired as {StaffNames[(int)r]}", "Staff hire", -price);
+            }
             else FindAnyObjectByType<HUD>()?.ShowBanner($"Not enough coins to hire the {StaffNames[(int)r]} ({price}).", 5f);
         }
         PlayerLock.Unlock(this);

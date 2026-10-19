@@ -95,6 +95,7 @@ public class StaffTalk : ClickInteractable
                 {
                     gm.AddCoins(worker.earnedToday);
                     gm.Today.Earn(GameManager.DayStats.Source.Staff, worker.earnedToday);
+                    RequestLog.Money(GameManager.StaffPerson[(int)role], "Handed over the day's earnings", "Staff report", worker.earnedToday);
                     GameAudio.Play(a => a.coin);
                     worker.earnedToday = 0;
                 }

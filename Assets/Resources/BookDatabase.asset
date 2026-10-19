@@ -17,6 +17,7 @@ MonoBehaviour:
     Format: 0
     Author: Nadia Rahman
     Subject: Science
+    Topic: Astronomy
     Tag: Best Seller
     Abstract: How stars are born, burn out, and guide sailors home.
     ShelfLocation: SCI
@@ -30,6 +31,7 @@ MonoBehaviour:
     Format: 0
     Author: Edmund Hale
     Subject: Science
+    Topic: Engineering
     Tag: Reference
     Abstract: A survey of mechanical navigation instruments and the maps they drew.
     ShelfLocation: SCI
@@ -43,6 +45,7 @@ MonoBehaviour:
     Format: 0
     Author: Leo Park
     Subject: Science
+    Topic: Biology
     Tag: Textbook
     Abstract: Everything a single cell does to keep you alive.
     ShelfLocation: SCI
@@ -56,6 +59,7 @@ MonoBehaviour:
     Format: 0
     Author: Clara Bell
     Subject: Science
+    Topic: Physics
     Tag: Textbook, New Arrival
     Abstract: Motion, energy and gravity, explained gently.
     ShelfLocation: SCI
@@ -69,6 +73,7 @@ MonoBehaviour:
     Format: 0
     Author: Ravi Menon
     Subject: Science
+    Topic: Biology
     Tag: New Arrival
     Abstract: Plants, soil and the chemistry of growing things.
     ShelfLocation: SCI
@@ -82,6 +87,7 @@ MonoBehaviour:
     Format: 0
     Author: Amara Diallo
     Subject: History
+    Topic: Trade
     Tag: Classic
     Abstract: Three centuries of trade, caravans, and the cities the salt road built.
     ShelfLocation: HIS
@@ -95,6 +101,7 @@ MonoBehaviour:
     Format: 0
     Author: Kai Hossain
     Subject: History
+    Topic: Geography
     Tag: Best Seller
     Abstract: How rivers shaped the cities, songs and trade of Bengal.
     ShelfLocation: HIS
@@ -108,6 +115,7 @@ MonoBehaviour:
     Format: 0
     Author: Omar Farouk
     Subject: History
+    Topic: Empires
     Tag: Reference
     Abstract: The printing presses that built empires, and toppled them.
     ShelfLocation: HIS
@@ -121,6 +129,7 @@ MonoBehaviour:
     Format: 0
     Author: Finn Archer
     Subject: History
+    Topic: Local history
     Tag: New Arrival
     Abstract: A coastal town's story, told through its lighthouse.
     ShelfLocation: HIS
@@ -134,6 +143,7 @@ MonoBehaviour:
     Format: 0
     Author: Hazel Grant
     Subject: History
+    Topic: Trade
     Tag: Classic
     Abstract: How a humble drink started trade wars.
     ShelfLocation: HIS
@@ -147,6 +157,7 @@ MonoBehaviour:
     Format: 0
     Author: Hazel Grant
     Subject: History
+    Topic: Culture
     Tag: English Literature
     Abstract: The streets, theatres and taverns behind the plays.
     ShelfLocation: HIS
@@ -160,6 +171,7 @@ MonoBehaviour:
     Format: 0
     Author: Mara Voss
     Subject: Philosophy
+    Topic: Reflection
     Tag: Classic
     Abstract: Essays on impermanence, archives, and what libraries choose to forget.
     ShelfLocation: PHI
@@ -173,6 +185,7 @@ MonoBehaviour:
     Format: 0
     Author: Arthur Lane
     Subject: Philosophy
+    Topic: Wellbeing
     Tag: Best Seller
     Abstract: Small daily habits for a calmer, kinder life.
     ShelfLocation: PHI
@@ -186,6 +199,7 @@ MonoBehaviour:
     Format: 0
     Author: Edmund Hale
     Subject: Philosophy
+    Topic: Big questions
     Tag: Textbook
     Abstract: A gentle tour of the big questions.
     ShelfLocation: PHI
@@ -199,6 +213,7 @@ MonoBehaviour:
     Format: 0
     Author: Rabindranath Tagore
     Subject: Philosophy
+    Topic: Poetry
     Tag: Classic, English Literature
     Abstract: Song offerings about devotion, nature and the soul.
     ShelfLocation: PHI
@@ -212,6 +227,7 @@ MonoBehaviour:
     Format: 0
     Author: Mara Voss
     Subject: Philosophy
+    Topic: Big questions
     Tag: New Arrival
     Abstract: Can you know the light without the dark?
     ShelfLocation: PHI
@@ -225,6 +241,7 @@ MonoBehaviour:
     Format: 0
     Author: Maya Chen
     Subject: Math
+    Topic: Arithmetic
     Tag: Best Seller, Textbook
     Abstract: Arithmetic tricks that make mental math fun.
     ShelfLocation: MATH
@@ -238,6 +255,7 @@ MonoBehaviour:
     Format: 0
     Author: Leo Park
     Subject: Math
+    Topic: Geometry
     Tag: Reference
     Abstract: Geometry, from triangles to the curve of the Earth.
     ShelfLocation: MATH
@@ -251,6 +269,7 @@ MonoBehaviour:
     Format: 0
     Author: Clara Bell
     Subject: Math
+    Topic: Paradoxes
     Tag: New Arrival
     Abstract: The paradoxes of infinity, explained over tea.
     ShelfLocation: MATH
@@ -264,6 +283,7 @@ MonoBehaviour:
     Format: 0
     Author: Ravi Menon
     Subject: Math
+    Topic: Probability
     Tag: Classic
     Abstract: Probability, learned through old card games.
     ShelfLocation: MATH
@@ -277,6 +297,7 @@ MonoBehaviour:
     Format: 0
     Author: Whitmore Library
     Subject: History
+    Topic: Town records
     Tag: Archive
     Abstract: Births, deeds and gossip from the year 1890.
     ShelfLocation: ARC-A
@@ -290,6 +311,7 @@ MonoBehaviour:
     Format: 0
     Author: Unknown
     Subject: Math
+    Topic: Old maths
     Tag: Archive
     Abstract: Proofs copied by a monk who got some of them wrong.
     ShelfLocation: ARC-B
@@ -303,6 +325,7 @@ MonoBehaviour:
     Format: 0
     Author: Anonymous
     Subject: Science
+    Topic: 'Maps & charts'
     Tag: Rare
     Abstract: A hand-painted star chart said to guide lost sailors home.
     ShelfLocation: RARE-I
@@ -316,6 +339,7 @@ MonoBehaviour:
     Format: 0
     Author: William Shakespeare
     Subject: Philosophy
+    Topic: Early prints
     Tag: Rare, English Literature
     Abstract: Six surviving pages of the very first printing.
     ShelfLocation: RARE-II
@@ -329,6 +353,7 @@ MonoBehaviour:
     Format: 0
     Author: Elias Whitmore
     Subject: History
+    Topic: 'Maps & charts'
     Tag: Rare
     Abstract: The library founder's own maps of the old city.
     ShelfLocation: RARE-I
@@ -342,6 +367,7 @@ MonoBehaviour:
     Format: 0
     Author: Capt. R. Sen
     Subject: History
+    Topic: 'Letters & logs'
     Tag: Archive
     Abstract: A riverboat captain's daily logs, storms and all.
     ShelfLocation: ARC-B
@@ -355,6 +381,7 @@ MonoBehaviour:
     Format: 0
     Author: Whitmore Library
     Subject: Science
+    Topic: Town records
     Tag: Archive
     Abstract: Tides, moon phases and weather guesses for 1923.
     ShelfLocation: ARC-B
@@ -368,6 +395,7 @@ MonoBehaviour:
     Format: 0
     Author: Various
     Subject: History
+    Topic: 'Letters & logs'
     Tag: Archive
     Abstract: Letters soldiers wrote home and never expected kept.
     ShelfLocation: ARC-B
@@ -381,6 +409,7 @@ MonoBehaviour:
     Format: 0
     Author: Lin Wei
     Subject: Math
+    Topic: Old maths
     Tag: Archive
     Abstract: How merchants counted fortunes on beads.
     ShelfLocation: ARC-B
@@ -394,6 +423,7 @@ MonoBehaviour:
     Format: 0
     Author: Brother Anselm
     Subject: Philosophy
+    Topic: Faith
     Tag: Archive
     Abstract: Reflections carved, then copied, from a monastery wall.
     ShelfLocation: ARC-C
@@ -407,6 +437,7 @@ MonoBehaviour:
     Format: 0
     Author: Elias Whitmore
     Subject: History
+    Topic: Maps
     Tag: Archive
     Abstract: Hand-drawn paths that no longer lead anywhere.
     ShelfLocation: ARC-D
@@ -420,6 +451,7 @@ MonoBehaviour:
     Format: 0
     Author: Unknown
     Subject: Philosophy
+    Topic: Manuscripts
     Tag: Rare
     Abstract: Silver-inked hymns, said to glow by candlelight.
     ShelfLocation: RARE-II
@@ -433,6 +465,7 @@ MonoBehaviour:
     Format: 1
     Author: Whitmore Press
     Subject: History
+    Topic: Local news
     Tag: Daily, New Arrival
     Abstract: Town news, the weather, and who won the pie contest.
     ShelfLocation: NEWS
@@ -446,6 +479,7 @@ MonoBehaviour:
     Format: 1
     Author: Morning Post Co.
     Subject: History
+    Topic: Regional news
     Tag: Daily
     Abstract: Headlines from across the delta, printed at dawn.
     ShelfLocation: NEWS
@@ -459,6 +493,7 @@ MonoBehaviour:
     Format: 1
     Author: Ledger House
     Subject: History
+    Topic: Weekend
     Tag: Weekly
     Abstract: A fat weekend paper full of long stories and crosswords.
     ShelfLocation: NEWS
@@ -472,6 +507,7 @@ MonoBehaviour:
     Format: 2
     Author: Hearth Media
     Subject: Philosophy
+    Topic: 'Home & leisure'
     Tag: New Arrival
     Abstract: Reading nooks, rainy days and the perfect cup of tea.
     ShelfLocation: MAG
@@ -485,6 +521,7 @@ MonoBehaviour:
     Format: 2
     Author: Orbit Press
     Subject: Science
+    Topic: 'Science & nature'
     Tag: Weekly
     Abstract: Comets, eclipses, and where to look up this week.
     ShelfLocation: MAG
@@ -498,6 +535,7 @@ MonoBehaviour:
     Format: 2
     Author: Brainteaser Ltd.
     Subject: Math
+    Topic: Puzzles
     Tag: Puzzles
     Abstract: Logic grids, number riddles and one very hard maze.
     ShelfLocation: MAG
@@ -511,6 +549,7 @@ MonoBehaviour:
     Format: 2
     Author: Quiet Hour Press
     Subject: Philosophy
+    Topic: Essays
     Tag: Weekly
     Abstract: Short essays you can finish before your tea goes cold.
     ShelfLocation: MAG
@@ -524,6 +563,7 @@ MonoBehaviour:
     Format: 3
     Author: Whitmore Science Society
     Subject: Science
+    Topic: Physics
     Tag: Reference
     Abstract: Peer-reviewed studies on very small, very polite particles.
     ShelfLocation: JRNL
@@ -537,6 +577,7 @@ MonoBehaviour:
     Format: 3
     Author: The Thinking Guild
     Subject: Philosophy
+    Topic: Philosophy
     Tag: Reference
     Abstract: Four times a year, scholars argue about everything.
     ShelfLocation: JRNL
@@ -550,6 +591,7 @@ MonoBehaviour:
     Format: 3
     Author: Historical Trust
     Subject: History
+    Topic: Archaeology
     Tag: Reference
     Abstract: Digs, maps and records from cities long gone.
     ShelfLocation: JRNL
@@ -563,6 +605,7 @@ MonoBehaviour:
     Format: 3
     Author: Numerical Society
     Subject: Math
+    Topic: Mathematics
     Tag: Reference
     Abstract: New proofs, old problems, and a lot of chalk.
     ShelfLocation: JRNL
@@ -576,6 +619,7 @@ MonoBehaviour:
     Format: 4
     Author: Dr. Nadia Rahman
     Subject: Science
+    Topic: Chemistry
     Tag: New Arrival
     Abstract: Why some old inks shine under candlelight.
     ShelfLocation: PAPR
@@ -589,6 +633,7 @@ MonoBehaviour:
     Format: 4
     Author: Prof. Maya Chen
     Subject: Math
+    Topic: Mathematics
     Tag: Classic
     Abstract: How ancient merchants did sums with no zero at all.
     ShelfLocation: PAPR
@@ -602,6 +647,7 @@ MonoBehaviour:
     Format: 4
     Author: Arthur Lane
     Subject: Philosophy
+    Topic: Ethics
     Tag: Best Seller
     Abstract: Is it ever fair to charge for a late book?
     ShelfLocation: PAPR
@@ -615,6 +661,7 @@ MonoBehaviour:
     Format: 4
     Author: Amara Diallo
     Subject: History
+    Topic: Trade
     Tag: Reference
     Abstract: Tracing old trade routes through postage stamps.
     ShelfLocation: PAPR
@@ -629,6 +676,7 @@ MonoBehaviour:
     Format: 0
     Author: Mira Solberg
     Subject: Science
+    Topic: Astronomy
     Tag: New Release
     Abstract: Tides, storms and the stars, as logged by three generations of lighthouse keepers.
     ShelfLocation: SCI
@@ -642,6 +690,7 @@ MonoBehaviour:
     Format: 0
     Author: Theo Abernathy
     Subject: Science
+    Topic: Engineering
     Tag: New Release, Best Seller
     Abstract: How clocks, looms and music boxes taught us to build computers.
     ShelfLocation: SCI
@@ -655,6 +704,7 @@ MonoBehaviour:
     Format: 0
     Author: Amina Yusuf
     Subject: History
+    Topic: Trade
     Tag: New Release
     Abstract: The traders, camels and cities of the great desert salt routes.
     ShelfLocation: HIS
@@ -668,6 +718,7 @@ MonoBehaviour:
     Format: 0
     Author: Elspeth Carrow
     Subject: History
+    Topic: Empires
     Tag: New Release, Best Seller
     Abstract: Five forgotten rulers who held river kingdoms together.
     ShelfLocation: HIS
@@ -681,6 +732,7 @@ MonoBehaviour:
     Format: 0
     Author: Jonas Petrov
     Subject: History
+    Topic: Local history
     Tag: New Release
     Abstract: Twelve months, twelve towns, and the ordinary people who changed them.
     ShelfLocation: HIS
@@ -694,6 +746,7 @@ MonoBehaviour:
     Format: 0
     Author: "Luc\xEDa Ortega"
     Subject: Math
+    Topic: Geometry
     Tag: New Release
     Abstract: Fractals, ripples and the hidden maths of weather.
     ShelfLocation: MATH
@@ -707,6 +760,7 @@ MonoBehaviour:
     Format: 0
     Author: Raymond Achebe
     Subject: Math
+    Topic: Arithmetic
     Tag: New Release, Best Seller
     Abstract: How nothing became the most useful number in the world.
     ShelfLocation: MATH
@@ -720,6 +774,7 @@ MonoBehaviour:
     Format: 0
     Author: Hana Kobayashi
     Subject: Philosophy
+    Topic: Ethics
     Tag: New Release
     Abstract: How to disagree well, from ancient debates to the dinner table.
     ShelfLocation: PHI
@@ -733,6 +788,7 @@ MonoBehaviour:
     Format: 0
     Author: Samuel Okoro
     Subject: Philosophy
+    Topic: Reflection
     Tag: New Release, Best Seller
     Abstract: Short essays on what really matters, and why small things count.
     ShelfLocation: PHI
@@ -746,6 +802,7 @@ MonoBehaviour:
     Format: 0
     Author: Edith Marlowe
     Subject: Philosophy
+    Topic: Wellbeing
     Tag: New Release
     Abstract: A retired librarian's warm advice on books, people and patience.
     ShelfLocation: PHI
@@ -759,6 +816,7 @@ MonoBehaviour:
     Format: 0
     Author: Oskar Lind
     Subject: History
+    Topic: Geography
     Tag: New Release
     Abstract: Every island that sailors swore was real, and the maps that drew them.
     ShelfLocation: HIS
@@ -772,6 +830,7 @@ MonoBehaviour:
     Format: 0
     Author: Priyanka Rao
     Subject: Math
+    Topic: Arithmetic
     Tag: New Release
     Abstract: 'From shepherds to satellites: the numbers behind the night sky.'
     ShelfLocation: MATH

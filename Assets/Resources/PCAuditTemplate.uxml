@@ -1,13 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
-    <Style src="../UI Toolkit/PC.uss" />
-    <ui:VisualElement name="container">
-        <ui:VisualElement name="audit-window" class="pc-window">
-            <ui:VisualElement class="pc-header">
-                <ui:Button name="back-button" text="&lt; Back" class="pc-button" />
-                <ui:Label text="AUDIT LOG" class="pc-title font-title" />
-            </ui:VisualElement>
-            <ui:VisualElement name="audit-days" class="audit-days" />
-            <ui:ScrollView name="audit-list" class="pc-scroll" />
-        </ui:VisualElement>
+    <ui:VisualElement class="audit">
+        <ui:VisualElement name="audit-days" class="audit-days" />
+        <ui:ScrollView name="audit-list" class="pc-scroll audit-list" />
     </ui:VisualElement>
 </ui:UXML>

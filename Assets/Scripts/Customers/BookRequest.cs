@@ -11,7 +11,7 @@ public enum HintType { Author, Subject, Tag, Abstract, Format, FormatSubject, Ti
 public class BookRequest
 {
     public HintType Hint;
-    public string Value;          // author, subject or tag
+    public string Value;          // author, subject (topic) or tag
     public BookFormat Format;     // for Format / FormatSubject
     public BookData Target;       // the item the hint was written from
     public string Line;           // what the customer says
@@ -46,14 +46,17 @@ public class BookRequest
         switch (Hint)
         {
             case HintType.Author: return item.Author == Value;
-            case HintType.Subject: return item.Format == BookFormat.Book && item.Subject == Value;
+            case HintType.Subject: return item.Format == BookFormat.Book && OnSubject(item);
             case HintType.Tag: return item.HasTag(Value);
             case HintType.Format: return item.Format == Format;
-            case HintType.FormatSubject: return item.Format == Format && item.Subject == Value;
+            case HintType.FormatSubject: return item.Format == Format && OnSubject(item);
             case HintType.Title: return item == Target;
             default: return item == Target;
         }
     }
+
+    /// <summary>Its subject (topic) is the one asked for. The old section still counts, for requests made with one (the exam rush).</summary>
+    bool OnSubject(BookData item) => item.SubjectName == Value || item.Subject == Value;
 
     // Tags a customer can ask for, with how they'd say it.
     static readonly Dictionary<string, string> TagLines = new Dictionary<string, string>
@@ -154,18 +157,18 @@ public class BookRequest
                         ? Pick("Got a magazine I could flip through here?", "I'd love a magazine to read for a bit.")
                         : Pick("I'd love a magazine for the bus.", "Can I buy a magazine?"));
                 case BookFormat.Journal:
-                    return Set(req, HintType.FormatSubject, item.Subject, $"I need a {item.Subject} journal.");
+                    return Set(req, HintType.FormatSubject, item.SubjectName, $"I need a journal on {item.SubjectName}.");
                 default:
-                    return Set(req, HintType.FormatSubject, item.Subject, $"I'm after a research paper on {item.Subject}.");
+                    return Set(req, HintType.FormatSubject, item.SubjectName, $"I'm after a research paper on {item.SubjectName}.");
             }
         }
 
         // Books
         if (simple) return r < 0.5f
             ? Set(req, HintType.Author, item.Author, $"Do you have anything by {item.Author}?")
-            : Set(req, HintType.Subject, item.Subject, $"I need a good {item.Subject} book.");
+            : Set(req, HintType.Subject, item.SubjectName, $"I need a good book on {item.SubjectName}.");
         if (r < 0.3f) return Set(req, HintType.Author, item.Author, $"Do you have anything by {item.Author}?");
-        if (r < 0.55f) return Set(req, HintType.Subject, item.Subject, $"I need a good {item.Subject} book.");
+        if (r < 0.55f) return Set(req, HintType.Subject, item.SubjectName, $"I need a good book on {item.SubjectName}.");
         if (r < 0.8f && tags.Count > 0) return Tag(req, tags);
         return About(req);
     }

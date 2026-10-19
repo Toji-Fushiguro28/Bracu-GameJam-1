@@ -195,10 +195,10 @@ public class Tutorial : MonoBehaviour
                 break;
             case Step.OrderBuy:
                 Say(head, seekerRes == null
-                    ? "Ordering is how you stock up: on the computer, open Shop and Order any book. It arrives on the book cart tomorrow morning."
+                    ? "Ordering is how you stock up: on the computer, open the Catalogue, pick a book and press Order. It arrives on the book cart tomorrow morning."
                     : seekerRes.urgent
-                    ? $"Now order \"{seekerRes.title}\": on the computer, open Shop and press Express. They're waiting in the library, and express gets here in 2 hours."
-                    : $"Now order \"{seekerRes.title}\": on the computer, open Shop and press Order. It arrives on the book cart tomorrow morning.");
+                    ? $"Now order \"{seekerRes.title}\": on the computer, find it in the Catalogue and press Express. They're waiting in the library, and express gets here in 2 hours."
+                    : $"Now order \"{seekerRes.title}\": on the computer, find it in the Catalogue and press Order. It arrives on the book cart tomorrow morning.");
                 break;
             case Step.FreePlay:
                 Say("Tutorial", "That's the basics! The clock is running now. Serve visitors, tidy up, and at closing time lock the front door. Good luck!");

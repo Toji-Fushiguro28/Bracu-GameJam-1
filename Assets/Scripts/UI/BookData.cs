@@ -20,8 +20,10 @@ public class BookData
     [Tooltip("Book, newspaper, magazine, journal or research paper.")]
     public BookFormat Format = BookFormat.Book;
     public string Author;
-    [Tooltip("Science, Philosophy, History or Math.")]
+    [Tooltip("Science, Philosophy, History or Math: the section it belongs to.")]
     public string Subject;
+    [Tooltip("What it's about, within its type: Astronomy, Local news, Town records... The PC's Subject filter and subject requests use it.")]
+    public string Topic;
     [Tooltip("Comma-separated tags, e.g. \"Best Seller, English Literature\".")]
     public string Tag;
     [TextArea(2, 4)] public string Abstract;
@@ -44,6 +46,20 @@ public class BookData
     public string FormatName => Format == BookFormat.ResearchPaper ? "Research paper" : Format.ToString();
     /// <summary>True if any copy on the shelf is damaged.</summary>
     public bool Damaged => DamagedCopies > 0;
+
+    /// <summary>The subject the PC shows: the topic, or the old section if a title has none.</summary>
+    public string SubjectName => string.IsNullOrEmpty(Topic) ? Subject : Topic;
+
+    /// <summary>The PC's Type: Archive and Rare Books come from the shelf, everything else from the format.</summary>
+    public string TypeName =>
+        ShelfLocation != null && ShelfLocation.StartsWith("ARC") ? "Archive" :
+        ShelfLocation != null && ShelfLocation.StartsWith("RARE") ? "Rare Books" : FormatName;
+
+    /// <summary>A brand-new release (from BookDatabase.newTitles): it costs more to order and sells for more.</summary>
+    [NonSerialized] public bool NewRelease;
+    public const float NewReleaseMarkup = 1.3f;
+    /// <summary>What a copy sells for (new releases fetch more).</summary>
+    public int SaleValue => Mathf.RoundToInt(BaseValue * (NewRelease ? NewReleaseMarkup : 1f));
 
     public int Count(BookCondition c) =>
         c == BookCondition.Good ? GoodCopies : c == BookCondition.Worn ? WornCopies : DamagedCopies;

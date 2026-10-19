@@ -327,7 +327,7 @@ public class DayReportUI : MonoBehaviour
             int price = Price(book);
             var req = gm.reservations.Find(r => r.title == book.Title);
             string who = req != null ? $"  ·  requested by {req.name}" : "";
-            AddRow(book.Title, (gm.IsNewTitle(book) ? $"New to the library  ·  {book.Subject}  ·  by {book.Author}" : $"{book.FormatName}  ·  {book.Subject}  ·  in stock {book.GoodCopies + book.WornCopies}")
+            AddRow(book.Title, (gm.IsNewTitle(book) ? $"New to the library  ·  {book.SubjectName}  ·  by {book.Author}" : $"{book.TypeName}  ·  {book.SubjectName}  ·  in stock {book.GoodCopies + book.WornCopies}")
                    + $"  ·  {price} coins · arrives tomorrow{who}",
                    "Buy", gm.Coins >= price,
                    () => gm.OrderBook(book, false), gm.IsPopular(book)); // arrives in the morning

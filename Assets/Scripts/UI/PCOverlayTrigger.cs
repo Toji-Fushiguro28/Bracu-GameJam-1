@@ -6,10 +6,9 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 
 /// <summary>
-/// Shows the user-owned PCOverlayUIDocument when the front-desk computer is clicked.
-/// This script never modifies the UIDocument or its UXML template — it only toggles
-/// the document's GameObject active state and freezes/unfreezes the player.
-/// Added at runtime by <see cref="PCOverlayBootstrap"/> — Mechanics scene only.
+/// The front-desk computer: shows PCOverlayUIDocument (a pixel monitor with tabs: Home, Catalogue, Members,
+/// Shop, Log, Settings) when the computer is clicked, and freezes/unfreezes the player.
+/// Each tab is a template from Resources cloned under the frame's #page and wired by its view (PCHomeView...).
 /// </summary>
 [RequireComponent(typeof(ComputerInteractable))]
 public class PCOverlayTrigger : MonoBehaviour
@@ -33,16 +32,31 @@ public class PCOverlayTrigger : MonoBehaviour
     UIDocument overlayDoc;
     VisualElement container;
 
-    VisualTreeAsset menuTemplate;
-    VisualTreeAsset booksTemplate;
-    VisualTreeAsset bookItemTemplate;
-    bool booksAvailable;
+    VisualTreeAsset frameTemplate;
+    VisualElement page;
+    string currentTab;
+    IVisualElementScheduledItem ticker;
+    bool starUp;
 
-    List<BookData> allBooks = new List<BookData>();
-    List<BookData> filteredBooks = new List<BookData>();
-    TextField searchField;
-    Label searchPlaceholder;
-    ListView booksList;
+    /// <summary>The open computer (views use it to switch tabs, e.g. Home's "Order" button).</summary>
+    public static PCOverlayTrigger Current { get; private set; }
+    /// <summary>The last book looked at in the catalogue (the tutorial checks you found it).</summary>
+    public static BookData LastViewed;
+    /// <summary>Minimised: the next open comes back to the same tab (and the catalogue keeps its search).</summary>
+    static bool resume;
+    static string lastTab = "home";
+    static bool maximised;
+
+    static readonly string[] Tabs = { "home", "catalogue", "members", "shop", "log", "settings" };
+    static readonly Dictionary<string, (string template, System.Action<VisualElement> wire)> Pages = new Dictionary<string, (string, System.Action<VisualElement>)>
+    {
+        { "home", ("PCHomeTemplate", PCHomeView.Wire) },
+        { "catalogue", ("PCBooksTemplate", PCCatalogueView.Wire) },
+        { "members", ("PCMembersTemplate", PCMembersView.Wire) },
+        { "shop", ("PCShopTemplate", PCShopView.Wire) },
+        { "log", ("PCAuditTemplate", PCAuditView.Wire) },
+        { "settings", ("PCSettingsTemplate", PCSettingsView.Wire) },
+    };
 
     InputAction attackAction;
     InputAction cancelAction;
@@ -58,7 +72,6 @@ public class PCOverlayTrigger : MonoBehaviour
         hover = GetComponent<HoverPrompt>();
         outline = GetComponent<RuntimeOutline>();
         cam = Camera.main;
-
 
         attackAction = InputSystem.actions?.FindAction("Attack");
         if (attackAction == null)
@@ -81,8 +94,8 @@ public class PCOverlayTrigger : MonoBehaviour
     }
 
     /// <summary>
-    /// Locates the user's overlay by GameObject name, falling back to a template-name
-    /// search. Starts it hidden and hooks the backdrop click — template untouched.
+    /// Locates the overlay by GameObject name, falling back to a template-name search, and starts it hidden.
+    /// Its template is the monitor frame (title bar, tabs, chin); each tab's page is cloned into #page.
     /// </summary>
     bool FindOverlay()
     {
@@ -91,7 +104,7 @@ public class PCOverlayTrigger : MonoBehaviour
 
         if (overlayDoc == null)
         {
-            foreach (var candidate in Object.FindObjectsByType<UIDocument>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (var candidate in Object.FindObjectsByType<UIDocument>(FindObjectsInactive.Include))
             {
                 if (candidate.visualTreeAsset != null && candidate.visualTreeAsset.name == OverlayTemplateName)
                 {
@@ -108,347 +121,103 @@ public class PCOverlayTrigger : MonoBehaviour
             return false;
         }
 
-        if (overlayDoc.rootVisualElement == null)
-        {
-            Debug.LogError("[PCUI] Overlay UIDocument has no rootVisualElement.", this);
-            return false;
-        }
-
-        // NOTE: don't Q elements or register callbacks here. UIDocument rebuilds
-        // its whole tree on every SetActive toggle, so wiring happens fresh in Show().
-        menuTemplate = overlayDoc.visualTreeAsset;
-        booksTemplate = Resources.Load<VisualTreeAsset>("PCBooksTemplate");
-        bookItemTemplate = Resources.Load<VisualTreeAsset>("PCBookItem");
-        booksAvailable = menuTemplate != null && booksTemplate != null && bookItemTemplate != null;
-        if (!booksAvailable)
-            Debug.LogWarning("[PCUI] Books templates missing in Resources — Books button disabled.", this);
-        allBooks = BookData.Samples();
-
-        // Overlays start hidden; show only on PC click.
+        // NOTE: don't Q elements here. UIDocument rebuilds its whole tree on every SetActive toggle,
+        // so wiring happens fresh in Show().
+        frameTemplate = overlayDoc.visualTreeAsset;
         overlayObject.SetActive(false);
         return true;
     }
 
-    /// <summary>Re-queries the backdrop after a visual-tree swap (old callbacks die with the old tree).</summary>
+    /// <summary>Backdrop click, click guard and click sounds on a freshly built tree.</summary>
     void RehookBackdrop()
     {
         if (overlayDoc == null || overlayDoc.rootVisualElement == null)
             return;
         container = overlayDoc.rootVisualElement.Q(ContainerElementName);
         ClickGuard.Attach(overlayDoc.rootVisualElement);
-        overlayDoc.rootVisualElement.Query(className: "req-icon").ForEach(RequestIcon.Attach); // the drawn book icon
         if (container == null)
         {
-            Debug.LogError("[PCUI] '" + ContainerElementName + "' element missing after view swap.", this);
+            Debug.LogError("[PCUI] '" + ContainerElementName + "' element missing.", this);
             return;
         }
         container.RegisterCallback<ClickEvent>(OnBackdropClick);
-        GameAudio.HookClicks(container); // the tree is rebuilt on every swap, so re-hook each time
+        GameAudio.HookClicks(container);
     }
 
-    void WireMenuView()
+    /// <summary>Title bar buttons, the tab row and the ticker that keeps the clock, coins and tab counts live.</summary>
+    void WireFrame()
     {
         RehookBackdrop();
-        overlayDoc.rootVisualElement.Q<Button>("members-button")?.RegisterCallback<ClickEvent>(_ => { if (JustOpened) return; ShowMembers(); });
-        var shopTile = overlayDoc.rootVisualElement.Q<Button>("upgrades-button");
-        var gmNow = GameManager.Instance;
-        if (shopTile != null)
-        {
-            bool ready = gmNow != null && gmNow.UpgradeReady;
-            var shopLabel = shopTile.Q<Label>("tile-label");
-            if (shopLabel != null) shopLabel.text = "Shop";
-            // "Upgrade ready!" sits under the tile's icon + name, so the coin stays beside "Shop".
-            var note = shopTile.Q<Label>("tile-note");
-            if (note == null)
-            {
-                note = new Label { name = "tile-note", pickingMode = PickingMode.Ignore };
-                note.AddToClassList("pc-tile-note");
-                shopTile.Add(note);
-            }
-            bool hire = gmNow != null && gmNow.StaffReady;
-            note.text = ready ? "★ Upgrade ready!" : "★ Staff to hire or upgrade!";
-            note.EnableInClassList("hidden", !ready && !hire);
-            PopularGlow.Ready(shopTile, ready || hire);
-            shopTile.EnableInClassList("upgrade-ready", ready);
-        }
-        overlayDoc.rootVisualElement.Q<Button>("upgrades-button")?.RegisterCallback<ClickEvent>(_ => { if (JustOpened) return; ShowView("PCShopTemplate", PCShopView.Wire); });
-        overlayDoc.rootVisualElement.Q<Button>("settings-button")?.RegisterCallback<ClickEvent>(_ => { if (JustOpened) return; ShowView("PCSettingsTemplate", PCSettingsView.Wire); });
-        overlayDoc.rootVisualElement.Q<Button>("audit-button")?.RegisterCallback<ClickEvent>(_ => { if (JustOpened) return; ShowView("PCAuditTemplate", PCAuditView.Wire); });
-
-        var books = overlayDoc.rootVisualElement.Q<Button>("books-button");
-        if (books == null)
-        {
-            Debug.LogWarning("[PCUI] Menu button 'books-button' missing in overlay template.", this);
-            return;
-        }
-        if (booksAvailable)
-            books.RegisterCallback<ClickEvent>(_ => { if (JustOpened) return; ShowBooks(); });
-        else
-            books.RegisterCallback<ClickEvent>(_ => Debug.Log("[PCUI] Books clicked (templates missing)"));
-    }
-
-    void ShowBooks()
-    {
-        if (!booksAvailable || overlayDoc == null)
-            return;
-        overlayDoc.visualTreeAsset = booksTemplate;
-        RehookBackdrop();
-        WireBooksView();
-        Debug.Log("[PCUI] Books opened");
-    }
-
-    void ShowMembers() => ShowView("PCMembersTemplate", PCMembersView.Wire);
-
-    /// <summary>Swaps the screen to a Resources template and lets its view wire itself up.
-    /// back: where its Back button goes (the menu unless said otherwise).</summary>
-    void ShowView(string templateName, System.Action<VisualElement, System.Action> wire, System.Action back = null)
-    {
-        var template = Resources.Load<VisualTreeAsset>(templateName);
-        if (template == null || overlayDoc == null) return;
-        overlayDoc.visualTreeAsset = template;
-        RehookBackdrop();
-        wire(overlayDoc.rootVisualElement, back ?? ShowMenu);
-    }
-
-    /// <summary>The Shop's Books tab straight from the catalogue (with the same search); Back comes back here.</summary>
-    void ShowShopBooks(string search)
-    {
-        PCShopView.OpenOnBooks(search);
-        ShowView("PCShopTemplate", PCShopView.Wire, ShowBooks);
-    }
-
-    void ShowMenu()
-    {
-        if (overlayDoc == null || menuTemplate == null)
-            return;
-        overlayDoc.visualTreeAsset = menuTemplate;
-        WireMenuView();
-    }
-
-    void WireBooksView()
-    {
         var root = overlayDoc.rootVisualElement;
-        var back = root.Q<Button>("back-button");
-        if (back != null)
-            back.RegisterCallback<ClickEvent>(_ => ShowMenu());
-        else
-            Debug.LogWarning("[PCUI] 'back-button' missing in books template.", this);
-
-        searchField = root.Q<TextField>("book-search");
-        searchPlaceholder = root.Q<Label>("search-placeholder");
-        booksList = root.Q<ListView>("books-list");
-
-        if (searchField != null)
+        page = root.Q("page");
+        root.Q<Button>("win-close")?.RegisterCallback<ClickEvent>(_ => { if (!JustOpened) Hide(); });
+        root.Q<Button>("win-min")?.RegisterCallback<ClickEvent>(_ => { if (JustOpened) return; resume = true; Hide(); });
+        root.Q<Button>("win-max")?.RegisterCallback<ClickEvent>(_ => { maximised = !maximised; root.Q("monitor")?.EnableInClassList("max", maximised); });
+        root.Q("monitor")?.EnableInClassList("max", maximised);
+        foreach (var t in Tabs)
         {
-            searchField.RegisterValueChangedCallback(_ => { ApplySearchFilter(); UpdateSearchPlaceholder(); });
-            searchField.RegisterCallback<FocusInEvent>(_ => UpdateSearchPlaceholder());
-            searchField.RegisterCallback<FocusOutEvent>(_ => UpdateSearchPlaceholder());
+            string tab = t;
+            root.Q<Button>("tab-" + tab)?.RegisterCallback<ClickEvent>(_ => { if (!JustOpened) ShowTab(tab); });
         }
-        if (booksList != null)
-        {
-            booksList.makeItem = () =>
-            {
-                var row = bookItemTemplate.CloneTree();
-                // Clicking a row always shows it, even if the list thinks it's already selected.
-                row.RegisterCallback<ClickEvent>(_ => { if (row.userData is BookData rb) ShowDetails(rb); });
-                PopularGlow.Pulse(row); // rows are reused, so the pulse runs on every row and only shows on popular ones
-                return row;
-            };
-            booksList.bindItem = BindBookItem;
-            booksList.fixedItemHeight = 100;
-            booksList.selectionType = SelectionType.Single;
-            booksList.selectionChanged += sel => ShowDetails(sel.OfType<BookData>().FirstOrDefault());
-        }
-
-        WireFilters(root);
-        // "Add to note": the picked book (and its shelf) goes in the notebook.
-        root.Q<Button>("detail-select")?.RegisterCallback<ClickEvent>(_ =>
-        {
-            RequestLog.AddToNote(selectedBook);
-            UpdateSelectButton();
-        });
-        // "Buy": order one more copy of the selected book (normal delivery, tomorrow morning).
-        root.Q<Button>("detail-buy")?.RegisterCallback<ClickEvent>(_ =>
-        {
-            var gm = GameManager.Instance;
-            if (gm == null || selectedBook == null || !CanOrder(selectedBook)) return;
-            if (gm.OrderBook(selectedBook, false)) { GameAudio.Play(a => a.buy); bought = selectedBook; }
-            UpdateSelectButton();
-        });
-        root.Q<Button>("buy-books-button")?.RegisterCallback<ClickEvent>(_ => ShowShopBooks(searchField != null ? searchField.value : null));
-        ApplySearchFilter();
-        UpdateSearchPlaceholder();
-        ShowDetails(null);
+        ticker = root.schedule.Execute(RefreshFrame).Every(450);
     }
 
-    BookData selectedBook, bought;
-    /// <summary>The last book looked at in the catalogue (the tutorial checks you found it).</summary>
-    public static BookData LastViewed;
-
-    /// <summary>Copies of it can be bought in the Shop (not Rare Books, not rooms that are still locked).</summary>
-    static bool CanOrder(BookData b) => b != null && !BookRequest.IsRare(b) && BookRequest.Available(b);
-
-    /// <summary>"Add to note" goes under the open book request, or on the "To Shelve" page.</summary>
-    void UpdateSelectButton()
+    /// <summary>Swaps the page under the tabs. fresh: the catalogue opens with empty search and filters.</summary>
+    public void ShowTab(string tab, bool fresh = false)
     {
-        var root = overlayDoc.rootVisualElement;
-        var button = root.Q<Button>("detail-select");
-        var note = root.Q<Label>("detail-select-note");
-        bool noted = RequestLog.IsNoted(selectedBook);
-        button?.SetEnabled(selectedBook != null && !noted);
+        if (page == null || !Pages.TryGetValue(tab, out var p)) return;
+        var template = Resources.Load<VisualTreeAsset>(p.template);
+        if (template == null) { Debug.LogWarning("[PCUI] Missing template " + p.template, this); return; }
+        PickList.Close();
+        if (fresh && tab == "catalogue") PCCatalogueView.ResetFilters();
+        page.Clear();
+        template.CloneTree(page);
+        currentTab = lastTab = tab;
+        p.wire(page);
+        foreach (var t in Tabs) overlayDoc.rootVisualElement.Q("tab-" + t)?.EnableInClassList("selected", t == tab);
+        RefreshFrame();
+    }
+
+    /// <summary>Opens the Shop on Upgrades (0) or Staff (1).</summary>
+    public void ShowShop(int subTab)
+    {
+        PCShopView.OpenOn(subTab);
+        ShowTab("shop");
+    }
+
+    /// <summary>Clock, coins and the little counts on the tabs.</summary>
+    void RefreshFrame()
+    {
         var gm = GameManager.Instance;
-        var buy = root.Q<Button>("detail-buy");
-        bool orderable = gm != null && CanOrder(selectedBook);
-        int price = orderable ? GameManager.OrderPrice(selectedBook, false) : 0;
-        if (buy != null)
+        var root = overlayDoc != null ? overlayDoc.rootVisualElement : null;
+        if (gm == null || root == null || !isOpen) return;
+        SetText(root, "stat-day", "Day " + gm.day);
+        SetText(root, "stat-clock", GameManager.FormatHour(gm.Hour));
+        SetText(root, "stat-coins", gm.Coins + " coins");
+
+        int toOrder = gm.reservations.Count(PCHomeView.NeedsOrder);
+        bool urgent = gm.reservations.Any(r => PCHomeView.NeedsOrder(r) && r.urgent && r.day == gm.day);
+        var cat = root.Q<Label>("count-catalogue");
+        if (cat != null) { cat.text = toOrder.ToString(); cat.EnableInClassList("hidden", toOrder == 0); cat.EnableInClassList("urgent", urgent); }
+        var mem = root.Q<Label>("count-members");
+        if (mem != null) { mem.text = "1"; mem.EnableInClassList("hidden", Customer.WaitingForCard == null); }
+
+        // Shop: the star shows on every tab while there's an upgrade or a hire you can afford; the name glows elsewhere.
+        bool ready = gm.UpgradeReady || gm.StaffReady;
+        var star = root.Q("shop-star");
+        if (star != null)
         {
-            buy.style.display = orderable ? DisplayStyle.Flex : DisplayStyle.None; // Rare Books can't be bought
-            buy.text = $"Buy ({price})";
-            buy.SetEnabled(orderable && gm.Coins >= price);
+            star.EnableInClassList("hidden", !ready);
+            starUp = !starUp;
+            star.EnableInClassList("pop", ready && starUp);
         }
-        if (note != null)
-        {
-            int onOrder = gm != null && selectedBook != null ? gm.OnOrder(selectedBook) : 0;
-            note.text = bought != null && bought == selectedBook ? $"Ordered! It arrives on the book cart tomorrow morning ({onOrder} on order)."
-                      : noted ? "Already in your notebook."
-                      : RequestLog.Current != null ? "Adds it to the visitor's request in your notebook."
-                      : "Nobody's asking: adds it to your To Shelve list.";
-            if (orderable && gm.Coins < price && bought != selectedBook) note.text += $" Buying needs {price} coins.";
-        }
+        PopularGlow.Ready(root.Q("tab-shop"), ready && currentTab != "shop");
     }
 
-    /// <summary>Right-hand pane: where the selected book lives and its state.</summary>
-    void ShowDetails(BookData b)
+    static void SetText(VisualElement root, string name, string text)
     {
-        selectedBook = b;
-        if (b != null) LastViewed = b;
-        var root = overlayDoc.rootVisualElement;
-        var empty = root.Q("detail-empty");
-        var body = root.Q("detail-body");
-        if (empty == null || body == null)
-            return;
-        empty.style.display = b == null ? DisplayStyle.Flex : DisplayStyle.None;
-        body.style.display = b == null ? DisplayStyle.None : DisplayStyle.Flex;
-        if (b == null)
-            return;
-
-        void Set(string name, string text, string state = null)
-        {
-            var l = root.Q<Label>(name);
-            if (l == null) return;
-            l.text = text;
-            l.EnableInClassList("warn", state == "warn");
-            l.EnableInClassList("bad", state == "bad");
-        }
-        Set("detail-title", b.Title);
-        Set("detail-author", "by " + b.Author);
-        Set("detail-shelf", ShelfInteractable.NameOf(b.ShelfLocation));
-        Set("detail-stock", b.Quantity > 0 ? b.Quantity + " on shelf" : "none left", b.Quantity > 0 ? null : "bad");
-        Set("detail-type", b.FormatName);
-        Set("detail-subject", b.Subject);
-        Set("detail-tags", string.IsNullOrEmpty(b.Tag) ? "-" : b.Tag);
-        bool popular = GameManager.Instance != null && GameManager.Instance.IsPopular(b);
-        var detailTitle = overlayDoc.rootVisualElement.Q<Label>("detail-title");
-        detailTitle?.EnableInClassList("popular-title", popular);
-        if (detailTitle != null && popular) detailTitle.text = b.Title + "  <color=#EBC878>(Popular today)</color>";
-        Set("detail-tier", b.Rarity, b.Tier != BookTier.Normal ? "warn" : null);
-        Set("detail-condition", b.Quantity > 0 ? b.ConditionSummary : "-", b.DamagedCopies > 0 ? "bad" : b.WornCopies > 0 ? "warn" : null);
-        Set("detail-sale", b.Sellable ? "can be sold" : "read in library only", b.Sellable ? null : "warn");
-        Set("detail-abstract", b.Abstract);
-        UpdateSelectButton();
-    }
-
-    // Search only knows titles and authors; subject and type are filters. Abstracts and tags
-    // are read in the details pane, so vague requests take a little detective work.
-    static readonly string[] SubjectFilters = { "All", "Science", "History", "Philosophy", "Math" };
-    static int subjectFilter, typeFilter, showFilter;
-
-    void ApplySearchFilter()
-    {
-        string query = searchField != null ? searchField.value : "";
-        string needle = (query ?? "").Trim().ToLowerInvariant();
-        string subject = SubjectFilters[subjectFilter];
-        filteredBooks = allBooks.Where(b =>
-            (needle.Length == 0 || (b.Title ?? "").ToLowerInvariant().Contains(needle) || (b.Author ?? "").ToLowerInvariant().Contains(needle) || (b.Tag ?? "").ToLowerInvariant().Contains(needle)) &&
-            (subjectFilter == 0 || b.Subject == subject) &&
-            (typeFilter == 0 || (int)b.Format == typeFilter - 1) &&
-            BookFilterBar.ShowMatches(showFilter, b)).ToList();
-        RefreshBooksList();
-    }
-
-    void WireFilters(VisualElement root)
-    {
-        var subjectButton = root.Q<Button>("filter-subject");
-        var typeButton = root.Q<Button>("filter-type");
-        var types = System.Enum.GetValues(typeof(BookFormat)).Cast<BookFormat>().ToArray();
-        string TypeName(int i) => i == 0 ? "All" : new BookData { Format = types[i - 1] }.FormatName;
-        var typeNames = Enumerable.Range(0, types.Length + 1).Select(TypeName).ToArray();
-        // "Show: Reserved" etc., next to the other two (same look).
-        Button showButton = null;
-        if (typeButton != null)
-        {
-            showButton = new Button { name = "filter-show" };
-            foreach (var c in typeButton.GetClasses()) showButton.AddToClassList(c);
-            typeButton.parent.Insert(typeButton.parent.IndexOf(typeButton) + 1, showButton);
-        }
-        void UpdateLabels()
-        {
-            if (subjectButton != null) subjectButton.text = "Subject: " + SubjectFilters[subjectFilter];
-            if (typeButton != null) typeButton.text = "Type: " + TypeName(typeFilter);
-            if (showButton != null) showButton.text = "Show: " + BookFilterBar.Shows[showFilter];
-        }
-        subjectButton?.RegisterCallback<ClickEvent>(_ => PickList.Open(subjectButton, SubjectFilters, subjectFilter, i => { subjectFilter = i; UpdateLabels(); ApplySearchFilter(); }, true));
-        typeButton?.RegisterCallback<ClickEvent>(_ => PickList.Open(typeButton, typeNames, typeFilter, i => { typeFilter = i; UpdateLabels(); ApplySearchFilter(); }, true));
-        showButton?.RegisterCallback<ClickEvent>(_ => PickList.Open(showButton, BookFilterBar.Shows, showFilter, i => { showFilter = i; UpdateLabels(); ApplySearchFilter(); }, true));
-        UpdateLabels();
-    }
-
-    void RefreshBooksList()
-    {
-        if (booksList == null)
-            return;
-        // A new search: drop the old row index (it pointed at a different book) but keep the selected
-        // book highlighted if it's still in the results.
-        booksList.SetSelectionWithoutNotify(System.Array.Empty<int>());
-        booksList.itemsSource = filteredBooks;
-        booksList.Rebuild();
-        int keep = selectedBook != null ? filteredBooks.IndexOf(selectedBook) : -1;
-        if (keep >= 0) booksList.SetSelectionWithoutNotify(new[] { keep });
-    }
-
-    /// <summary>Minimal row: title, author/subject, tag/qty/shelf/rarity (+ damaged flag).</summary>
-    void BindBookItem(VisualElement el, int i)
-    {
-        if (i < 0 || i >= filteredBooks.Count)
-            return;
-        BookData b = filteredBooks[i];
-        el.userData = b;
-        bool popular = GameManager.Instance != null && GameManager.Instance.IsPopular(b);
-        el.EnableInClassList("popular", popular);
-        var title = el.Q<Label>("book-title");
-        var sub = el.Q<Label>("book-sub");
-        var meta = el.Q<Label>("book-meta");
-        if (title != null)
-            title.text = b.Title;
-        if (sub != null)
-            sub.text = (b.Format == BookFormat.Book ? "" : b.FormatName + "  ·  ") + b.Author + "  ·  " + b.Subject + "  ·  " + ShelfInteractable.NameOf(b.ShelfLocation);
-        if (meta != null)
-        {
-            string m = (popular ? "<color=#EBC878>Popular</color>  ·  " : "") + "x" + b.Quantity + "  ·  " + ShelfInteractable.NameOf(b.ShelfLocation);
-            if (b.Tier != BookTier.Normal)
-                m += "  ·  " + b.Rarity;
-            if (b.DamagedCopies > 0)
-                m += "  ·  " + b.DamagedCopies + " damaged";
-            meta.text = m;
-        }
-    }
-
-    void UpdateSearchPlaceholder()
-    {
-        if (searchPlaceholder == null || searchField == null)
-            return;
-        searchPlaceholder.style.display =
-            string.IsNullOrEmpty(searchField.value) ? DisplayStyle.Flex : DisplayStyle.None;
+        var l = root.Q<Label>(name);
+        if (l != null && l.text != text) l.text = text;
     }
 
     void Update()
@@ -500,16 +269,19 @@ public class PCOverlayTrigger : MonoBehaviour
             return;
         }
         isOpen = true;
-        subjectFilter = typeFilter = showFilter = 0; // the catalogue opens on All books every time
+        Current = this;
         PlayerLock.Lock(this);
         openedAt = Time.unscaledTime;
         overlayObject.SetActive(true);
         GameAudio.Play(a => a.pcOpen, 0.7f);
 
-        // Fresh tree after every activation — reset to menu and (re)wire it.
-        if (menuTemplate != null)
-            overlayDoc.visualTreeAsset = menuTemplate;
-        WireMenuView();
+        // Fresh tree after every activation: build the frame, then Home (or where you were, after a minimise).
+        if (frameTemplate != null)
+            overlayDoc.visualTreeAsset = frameTemplate;
+        WireFrame();
+        bool back = resume;
+        resume = false;
+        ShowTab(back ? lastTab : "home", !back); // a normal open: the catalogue starts on All books
 
         prevCursorVisible = UnityEngine.Cursor.visible;
         prevLock = UnityEngine.Cursor.lockState;
@@ -531,6 +303,9 @@ public class PCOverlayTrigger : MonoBehaviour
         if (!isOpen)
             return;
         isOpen = false;
+        ticker?.Pause();
+        PickList.Close();
+        PCHomeView.HideTip();
         GameAudio.Play(a => a.pcClose, 0.7f);
         PlayerLock.Unlock(this);
         if (overlayObject != null)
@@ -557,20 +332,6 @@ public class PCOverlayTrigger : MonoBehaviour
         var icon = doc.rootVisualElement.Q("prompt-icon");
         if (icon != null)
             icon.style.display = DisplayStyle.None;
-    }
-
-    /// <summary>Stub menu handler: logs clicks until real functionality lands.</summary>
-    void RegisterMenuButton(string elementName, string label)
-    {
-        if (overlayDoc == null || overlayDoc.rootVisualElement == null)
-            return;
-        var button = overlayDoc.rootVisualElement.Q<Button>(elementName);
-        if (button == null)
-        {
-            Debug.LogWarning("[PCUI] Menu button '" + elementName + "' missing in overlay template.", this);
-            return;
-        }
-        button.RegisterCallback<ClickEvent>(_ => { if (JustOpened) return; Debug.Log("[PCUI] " + label + " clicked"); });
     }
 
     /// <summary>Click-outside-to-close: only clicks whose target IS the backdrop close.</summary>
@@ -606,7 +367,7 @@ public static class PCOverlayBootstrap
     {
         if (!scene.IsValid() || scene.name != TargetScene)
             return;
-        var computer = Object.FindFirstObjectByType<ComputerInteractable>();
+        var computer = Object.FindAnyObjectByType<ComputerInteractable>();
         if (computer == null)
         {
             Debug.LogWarning("[PCUI] No ComputerInteractable in Mechanics — overlay not attached.");

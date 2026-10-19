@@ -60,7 +60,7 @@
     transition-property: scale, translate;
     transition-duration: 0.12s;
 }
-.menu-button:hover { scale: 1.05 1.05; translate: 0 -2px; color: var(--accent); }
+.menu-button:hover { scale: 1.05 1.05; translate: 0 -2px; color: rgb(255, 246, 232); }
 .menu-button:active { scale: 0.97 0.97; }
 .menu-button.small-gap { margin-top: 14px; font-size: 26px; }
 .menu-text { color: var(--ink); font-size: 22px; white-space: normal; -unity-text-align: middle-center; margin: 6px 14px 18px 14px; }
@@ -69,7 +69,7 @@
 .menu-setting { flex-direction: row; align-items: center; margin: 8px 0; }
 .menu-setting-name { color: var(--ink); font-size: 22px; width: 104px; }
 .menu-setting-value { color: var(--ink); font-size: 21px; flex-grow: 1; -unity-text-align: middle-center; }
-.menu-setting .kit-button { font-size: 20px; padding: 0 10px 4px 10px; min-width: 34px; -unity-text-align: middle-center; }
+.menu-setting .kit-button { font-size: 20px; padding: 4px 10px 6px 10px; min-width: 34px; -unity-text-align: middle-center; -unity-slice-scale: 2px; }
 .menu-pips { flex-direction: row; flex-grow: 1; justify-content: center; }
 .menu-pip {
     width: 15px; height: 18px; margin: 0 2px;
@@ -110,7 +110,7 @@
 .mode-card:hover { scale: 1.04 1.04; translate: 0 -2px; }
 .mode-card:active { scale: 0.97 0.97; }
 .mode-card.recommended {
-    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_FrameSelect01a.png");
+    background-image: url("project://database/Assets/Art/UI/PC/T_PC_Button.png");
     padding-top: 6px;
     margin-bottom: 12px;
 }
@@ -154,9 +154,9 @@
 }
 .howto-dot.on { background-color: var(--accent); border-color: var(--accent); scale: 1.3 1.3; }
 .howto-arrow { transition-property: scale, translate; transition-duration: 0.12s; }
-.howto-arrow:hover { scale: 1.15 1.15; color: var(--accent); }
+.howto-arrow:hover { scale: 1.15 1.15; color: rgb(255, 246, 232); }
 .howto-arrow:active { scale: 0.92 0.92; }
-.howto-arrow:disabled { opacity: 0.35; }
+.howto-arrow:disabled { opacity: 1; }
 .howto-icon.p0 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconStar01a.png"); }
 .howto-icon.p1 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconHeart01a.png"); }
 .howto-icon.p2 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_BookCover01a.png"); }
@@ -185,3 +185,6 @@
 .mode-name { font-size: 26px; }
 .mode-card.recommended .mode-name { font-size: 30px; }
 .mode-info { font-size: 16px; }
+
+/* Mode cards use the pixel button too: on hover (orange) every line turns light so it stays readable */
+.mode-card:hover .mode-name, .mode-card:hover .mode-badge, .mode-card:hover .mode-info { color: rgb(255, 246, 232); }

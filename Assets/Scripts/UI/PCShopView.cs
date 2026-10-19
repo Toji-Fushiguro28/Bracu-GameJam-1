@@ -3,36 +3,23 @@ using UnityEngine;
 using UnityEngine.UIElements;
 
 /// <summary>
-/// PC "Shop" screen: buy book copies, buy upgrades, hire staff. Same terminal look as the catalogue.
+/// PC "Shop": Upgrades (cards with a pixel icon, level pips and price) and Staff (one row per role).
+/// Books are ordered from the Catalogue now.
 /// </summary>
 public static class PCShopView
 {
     static int tab;
-    static BookFilterBar filter;
-    static string pendingSearch;
 
-    /// <summary>The next time the Shop opens: on the Books tab, searching for this (from the catalogue).</summary>
-    public static void OpenOnBooks(string search)
-    {
-        tab = 0;
-        pendingSearch = search;
-    }
+    /// <summary>Upgrade icon classes in PC.uss, in GameManager.UpgradeKind order (kit icons and ones drawn to match).</summary>
+    static readonly string[] UpgradeIcons = { "hammer", "glue", "heart", "shoe", "lamp", "armchair", "flyer", "bag", "energy" };
 
-    public static void Wire(VisualElement root, Action back)
+    /// <summary>The next time the Shop opens, start on Upgrades (0) or Staff (1).</summary>
+    public static void OpenOn(int subTab) => tab = subTab;
+
+    public static void Wire(VisualElement root)
     {
-        root.Q<Button>("back-button")?.RegisterCallback<ClickEvent>(_ => back());
-        // Same search and filters as the catalogue, above the list (Books tab only).
-        var shopList = root.Q<ScrollView>("shop-list");
-        filter = new BookFilterBar(() => Refresh(root), true);
-        shopList.parent.Insert(shopList.parent.IndexOf(shopList), filter.Root);
-        if (!string.IsNullOrEmpty(pendingSearch)) filter.SetSearch(pendingSearch);
-        pendingSearch = null;
-        string[] names = { "tab-books", "tab-upgrades", "tab-staff" };
-        for (int i = 0; i < names.Length; i++)
-        {
-            int t = i;
-            root.Q<Button>(names[i])?.RegisterCallback<ClickEvent>(_ => { tab = t; Refresh(root); });
-        }
+        root.Q<Button>("tab-upgrades")?.RegisterCallback<ClickEvent>(_ => { tab = 0; Refresh(root); });
+        root.Q<Button>("tab-staff")?.RegisterCallback<ClickEvent>(_ => { tab = 1; Refresh(root); });
         Refresh(root);
     }
 
@@ -40,155 +27,151 @@ public static class PCShopView
     {
         var gm = GameManager.Instance;
         if (gm == null) return;
-        root.Q("tab-books")?.EnableInClassList("selected", tab == 0);
-        root.Q("tab-upgrades")?.EnableInClassList("selected", tab == 1);
-        root.Q("tab-staff")?.EnableInClassList("selected", tab == 2);
-        PopularGlow.Ready(root.Q("tab-upgrades"), gm.UpgradeReady && tab != 1);
-        PopularGlow.Ready(root.Q("tab-staff"), gm.StaffReady && tab != 2);
-        root.Q<Label>("shop-coins").text = $"{gm.Coins} coins";
+        var up = root.Q("tab-upgrades");
+        var st = root.Q("tab-staff");
+        up?.EnableInClassList("selected", tab == 0);
+        st?.EnableInClassList("selected", tab == 1);
+        up?.EnableInClassList("ready", gm.UpgradeReady && tab != 0);
+        st?.EnableInClassList("ready", gm.StaffReady && tab != 1);
 
         var list = root.Q<ScrollView>("shop-list");
         float scroll = list.scrollOffset.y;
-        filter?.Root.EnableInClassList("hidden", tab != 0);
-        if (tab == 1) gm.upgradesSeenDay = gm.day; // the reminder glow can rest for today
         list.Clear();
         var note = root.Q<Label>("shop-note");
         if (tab == 0)
         {
-            note.text = $"Order: arrives tomorrow morning. Express (+50%): arrives in {GameManager.ExpressHours:0} hours. Deliveries go to the book cart.";
-            // Reservations first: these people are counting on you.
-            if (gm.reservations.Count > 0)
-            {
-                list.Add(Header("Reservations"));
-                foreach (var r in gm.reservations)
-                {
-                    var rb = gm.FindTitle(r.title);
-                    bool coming = rb != null && (gm.OnOrder(rb) > 0 || BookRequest.InStock(rb) || (DeliveryCart.Instance != null && DeliveryCart.Instance.Has(rb)));
-                    string when = r.urgent ? $"needs it TODAY by {GameManager.FormatHour(r.dueHour)} (express!)" : "tomorrow";
-                    var l = new Label($"{r.name}: \"{r.title}\" ({when}) - {(coming ? "ready or on its way" : "NOT ORDERED YET")}");
-                    l.AddToClassList("shop-reserve");
-                    l.EnableInClassList("warn", !coming);
-                    list.Add(l);
-                }
-                list.Add(Header("Order books"));
-            }
-            // Everything you can order, including titles the library doesn't have yet (search for them by name).
-            var catalogue = new System.Collections.Generic.List<BookData>(gm.Books);
-            catalogue.AddRange(gm.NewTitles);
-            catalogue.Sort((x, y) => gm.IsPopular(x) != gm.IsPopular(y) ? (gm.IsPopular(x) ? -1 : 1) : string.Compare(x.Title, y.Title, System.StringComparison.Ordinal)); // what sells today first
-            foreach (var b in catalogue)
-            {
-                if (BookRequest.IsRare(b) || !BookRequest.Available(b)) continue; // locked rooms can't be stocked yet
-                if (filter != null && !filter.Matches(b)) continue;
-                var book = b;
-                int price = GameManager.OrderPrice(book, false), express = GameManager.OrderPrice(book, true);
-                int onOrder = gm.OnOrder(book);
-                string sub = gm.IsNewTitle(book)
-                    ? $"New to the library · {book.Subject} · by {book.Author} · goes on {ShelfInteractable.NameOf(book.ShelfLocation)}"
-                    : $"{book.FormatName} · {book.Subject} · {ShelfInteractable.NameOf(book.ShelfLocation)} · in stock {book.GoodCopies + book.WornCopies}";
-                if (onOrder > 0) sub += $" · on order {onOrder}";
-                var req = gm.reservations.Find(r => r.title == book.Title);
-                Row(list, book.Title, sub, null, $"Order {price}", gm.Coins >= price,
-                    () => { if (gm.OrderBook(book, false)) GameAudio.Play(a => a.buy); }, root,
-                    gm.CurrentPhase == GameManager.Phase.Closed ? null : $"Express {express}", gm.Coins >= express,
-                    () => { if (gm.OrderBook(book, true)) GameAudio.Play(a => a.buy); },
-                    badge: req == null ? null : req.urgent ? "Requested · TODAY" : "Requested", popular: gm.IsPopular(book));
-            }
-        }
-        else if (tab == 1)
-        {
+            gm.upgradesSeenDay = gm.day; // the reminder glow can rest for today
             note.text = "Upgrades last forever and are saved with your library.";
-            for (int i = 0; i < GameManager.UpgradeNames.Length; i++)
-            {
-                var kind = (GameManager.UpgradeKind)i;
-                int lvl = gm.Upgrade(kind);
-                bool maxed = lvl >= GameManager.MaxUpgrade;
-                int cost = GameManager.UpgradeCost(lvl);
-                bool unlocked = gm.UpgradeUnlocked(kind);
-                int unlockDay = GameManager.UpgradeUnlockDay[i];
-                bool canBuy = gm.CanBuyUpgrade(kind);
-                Row(list, GameManager.UpgradeNames[i], GameManager.UpgradeInfo[i] + (unlocked || maxed ? "" : $" Unlocks on Day {unlockDay}."), lvl,
-                    maxed ? "Max" : !unlocked ? $"Day {unlockDay}" : $"Buy {cost}", canBuy,
-                    () => { if (gm.BuyUpgrade(kind)) GameAudio.Play(a => a.buy); }, root, icon: i, glow: canBuy);
-            }
+            var grid = new VisualElement();
+            grid.AddToClassList("ugrid");
+            for (int i = 0; i < GameManager.UpgradeNames.Length; i++) grid.Add(UpgradeCard(root, gm, (GameManager.UpgradeKind)i));
+            list.Add(grid);
         }
         else
         {
             note.text = "Press Interview: two applicants come in tomorrow morning. Staff are paid once, when you hire them.";
-            foreach (var role in GameManager.StaffOrder)
-            {
-                var (title, sub, button, enabled) = gm.StaffRow(role);
-                Row(list, title, sub, null, button, enabled, () => gm.ToggleStaff(role), root, glow: gm.StaffActionReady(role));
-            }
+            foreach (var role in GameManager.StaffOrder) list.Add(StaffRow(root, gm, role));
         }
         list.schedule.Execute(() => list.scrollOffset = new Vector2(0, scroll));
     }
 
-    static Label Header(string text)
+    static VisualElement UpgradeCard(VisualElement root, GameManager gm, GameManager.UpgradeKind kind)
+    {
+        int i = (int)kind;
+        int lvl = gm.Upgrade(kind);
+        bool maxed = lvl >= GameManager.MaxUpgrade;
+        bool unlocked = gm.UpgradeUnlocked(kind);
+        int cost = GameManager.UpgradeCost(lvl);
+        bool canBuy = gm.CanBuyUpgrade(kind);
+
+        var card = new VisualElement();
+        card.AddToClassList("ucard");
+        card.EnableInClassList("locked", !unlocked && !maxed);
+        card.EnableInClassList("ready", canBuy);
+        var top = new VisualElement();
+        top.AddToClassList("ucard-top");
+        top.Add(Icon(UpgradeIcons[i]));
+        var text = new VisualElement();
+        text.AddToClassList("ucard-text");
+        text.Add(Text(GameManager.UpgradeNames[i], "ucard-name", true));
+        text.Add(Text(GameManager.UpgradeInfo[i] + (unlocked || maxed ? "" : $" Unlocks on Day {GameManager.UpgradeUnlockDay[i]}."), "ucard-info"));
+        top.Add(text);
+        card.Add(top);
+
+        var foot = new VisualElement();
+        foot.AddToClassList("ucard-foot");
+        var pips = new VisualElement();
+        pips.AddToClassList("pips");
+        for (int p = 0; p < GameManager.MaxUpgrade; p++)
+        {
+            var pip = new VisualElement();
+            pip.AddToClassList("pip");
+            pip.EnableInClassList("on", p < lvl);
+            pips.Add(pip);
+        }
+        foot.Add(pips);
+        var b = maxed ? PlainButton("Max") : !unlocked ? PlainButton($"Day {GameManager.UpgradeUnlockDay[i]}")
+                      : PriceButton("Buy", cost, () => { if (gm.BuyUpgrade(kind)) GameAudio.Play(a => a.buy); Refresh(root); });
+        b.SetEnabled(canBuy);
+        foot.Add(b);
+        card.Add(foot);
+        return card;
+    }
+
+    static VisualElement StaffRow(VisualElement root, GameManager gm, GameManager.StaffRole role)
+    {
+        var (title, sub, _, enabled) = gm.StaffRow(role);
+        var row = new VisualElement();
+        row.AddToClassList("srow");
+        row.EnableInClassList("ready", gm.StaffActionReady(role));
+        string icon = role == GameManager.StaffRole.Cleaner ? "broom" : role == GameManager.StaffRole.Repairer ? "books" : "key";
+        row.Add(Icon(icon));
+        var text = new VisualElement();
+        text.AddToClassList("srow-text");
+        text.Add(Text(title, "srow-title", true));
+        text.Add(Text(sub, "srow-sub"));
+        row.Add(text);
+
+        Action click = () => { gm.ToggleStaff(role); Refresh(root); };
+        Button b;
+        if (gm.Hired(role))
+        {
+            int cost = gm.StaffUpgradeCost(role);
+            b = cost < 0 ? PlainButton("Max level") : PriceButton("Upgrade", cost, click);
+        }
+        else if (gm.InterviewBooked(role)) b = PlainButton("Cancel", click);
+        else if (!gm.StaffUnlocked(role)) b = PlainButton($"Day {GameManager.StaffUnlockDay[(int)role]}");
+        else b = PlainButton("Interview", click);
+        b.SetEnabled(enabled);
+        row.Add(b);
+        return row;
+    }
+
+    // ---------------- Pieces ----------------
+
+    /// <summary>A framed pixel icon; the picture and its 3x size come from .uicon-NAME in PC.uss.</summary>
+    static VisualElement Icon(string name)
+    {
+        var box = new VisualElement();
+        box.AddToClassList("uico");
+        var img = new VisualElement();
+        img.AddToClassList("uico-img");
+        img.AddToClassList("uicon-" + name);
+        box.Add(img);
+        return box;
+    }
+
+    static Label Text(string text, string cls, bool title = false)
     {
         var l = new Label(text);
-        l.AddToClassList("shop-header");
+        l.AddToClassList(cls);
+        if (title) l.AddToClassList("font-title");
         return l;
     }
 
-    static void Row(ScrollView list, string title, string sub, int? level, string button, bool enabled, Action onClick, VisualElement root,
-                    string button2 = null, bool enabled2 = false, Action onClick2 = null, int icon = -1, string badge = null, bool popular = false, bool glow = false)
+    static Button PlainButton(string text, Action onClick = null)
     {
-        var row = new VisualElement();
-        row.AddToClassList("shop-row");
-        if (popular || glow) PopularGlow.Mark(row);
-        if (icon >= 0)
-        {
-            var ic = new VisualElement();
-            ic.AddToClassList("upgrade-icon");
-            ic.AddToClassList("upg-" + icon); // kit icon set in PC.uss
-            row.Add(ic);
-        }
-        var text = new VisualElement();
-        text.AddToClassList("shop-row-text");
-        if (badge != null || popular)
-        {
-            // Title with gold "Popular" / "Requested" boxes beside it.
-            var titleRow = new VisualElement();
-            titleRow.AddToClassList("title-row");
-            titleRow.Add(new Label(title) { name = "book-title" });
-            if (popular) titleRow.Add(PopularGlow.Badge());
-            if (badge != null)
-            {
-                var b0 = new Label(badge);
-                b0.AddToClassList("req-badge");
-                titleRow.Add(b0);
-            }
-            text.Add(titleRow);
-        }
-        else text.Add(new Label(title) { name = "book-title" });
-        text.Add(new Label(sub) { name = "book-sub" });
-        if (level.HasValue)
-        {
-            var pips = new VisualElement();
-            pips.AddToClassList("shop-level");
-            for (int i = 0; i < GameManager.MaxUpgrade; i++)
-            {
-                var pip = new VisualElement();
-                pip.AddToClassList("shop-pip");
-                pip.EnableInClassList("on", i < level.Value);
-                pips.Add(pip);
-            }
-            text.Add(pips);
-        }
-        row.Add(text);
-        var b = new Button(() => { onClick(); Refresh(root); }) { text = button };
+        var b = new Button(() => onClick?.Invoke()) { text = text };
         b.AddToClassList("pc-button");
-        b.SetEnabled(enabled);
-        row.Add(b);
-        if (button2 != null)
-        {
-            var b2 = new Button(() => { onClick2?.Invoke(); Refresh(root); }) { text = button2 };
-            b2.AddToClassList("pc-button");
-            b2.AddToClassList("second");
-            b2.SetEnabled(enabled2);
-            row.Add(b2);
-        }
-        list.Add(row);
+        b.AddToClassList("small");
+        return b;
+    }
+
+    /// <summary>"Buy -(coin)80": the price with the kit coin.</summary>
+    public static Button PriceButton(string verb, int cost, Action onClick)
+    {
+        var b = new Button(() => onClick?.Invoke());
+        b.AddToClassList("pc-button");
+        b.AddToClassList("small");
+        b.Add(Text(verb, "btn-text"));
+        var minus = Text("-", "btn-text");
+        minus.AddToClassList("cost-minus");
+        b.Add(minus);
+        var coin = new VisualElement();
+        coin.AddToClassList("coin-icon");
+        b.Add(coin);
+        b.Add(Text(cost.ToString(), "btn-text"));
+        foreach (var child in b.Children()) child.pickingMode = PickingMode.Ignore;
+        return b;
     }
 }

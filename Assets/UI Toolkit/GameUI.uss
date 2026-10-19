@@ -101,44 +101,58 @@
     align-items: flex-end;
     margin-bottom: 12px;
 }
+/* Dialogue choices: the computer's pixel button */
 .choice {
     min-width: 280px;
     margin: 4px 0;
     padding: 8px 20px 12px 20px;
     border-width: 0;
+    border-radius: 0;
     color: var(--ink);
     font-size: 27px;
     -unity-text-align: middle-left;
     background-color: rgba(0, 0, 0, 0);
-    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Frame01a.png");
-    -unity-slice-left: 3; -unity-slice-right: 3; -unity-slice-top: 3; -unity-slice-bottom: 3;
-    -unity-slice-scale: 4px;
+    background-image: url("project://database/Assets/Art/UI/PC/T_PC_Button.png");
+    -unity-slice-left: 1; -unity-slice-right: 1; -unity-slice-top: 2; -unity-slice-bottom: 3;
+    -unity-slice-scale: 3px;
 }
 .choice:hover {
-    color: rgb(255, 245, 230);
-    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_FrameSelect01a.png");
+    color: rgb(255, 246, 232);
+    background-color: rgba(0, 0, 0, 0);
+    background-image: url("project://database/Assets/Art/UI/PC/T_PC_ButtonHot.png");
 }
+.choice:active { translate: 0 2px; }
 
 /* Menus (later): Jersey 15 */
 .font-title { -unity-font-definition: url("project://database/Assets/UI%20Toolkit/Fonts/FA_Jersey15.asset?fileID=11400000&guid=09d0977d6e9c37c46bccdc3269737834&type=2#FA_Jersey15"); }
 
 /* ---------- Shared kit pieces ---------- */
+/* Every button uses the computer's pixel button (Art/UI/PC): cream with a dark outline and a bevel,
+   orange on hover, a flat greyed one when disabled (solid, never see-through). */
 .kit-button {
-    padding: 4px 14px 8px 14px;
+    padding: 6px 14px 10px 14px;
     margin: 0;
     border-width: 0;
-    color: var(--ink);
+    border-radius: 0;
+    color: rgb(59, 42, 29);
     font-size: 22px;
     background-color: rgba(0, 0, 0, 0);
-    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Frame01a.png");
-    -unity-slice-left: 3; -unity-slice-right: 3; -unity-slice-top: 3; -unity-slice-bottom: 3;
-    -unity-slice-scale: 4px;
+    background-image: url("project://database/Assets/Art/UI/PC/T_PC_Button.png");
+    -unity-slice-left: 1; -unity-slice-right: 1; -unity-slice-top: 2; -unity-slice-bottom: 3;
+    -unity-slice-scale: 3px;
 }
 .kit-button:hover {
-    color: rgb(255, 245, 230);
-    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_FrameSelect01a.png");
+    color: rgb(255, 246, 232);
+    background-color: rgba(0, 0, 0, 0);
+    background-image: url("project://database/Assets/Art/UI/PC/T_PC_ButtonHot.png");
 }
-.kit-button:disabled { opacity: 0.45; }
+.kit-button:active { translate: 0 2px; }
+.kit-button:disabled, .kit-button:disabled:hover {
+    opacity: 1;
+    color: rgb(127, 106, 72);
+    translate: 0 0;
+    background-image: url("project://database/Assets/Art/UI/PC/T_PC_ButtonOff.png");
+}
 .kit-button.wide { align-self: stretch; margin-top: 10px; -unity-text-align: middle-center; }
 .icon-coin {
     width: 33px; height: 36px;
@@ -223,7 +237,7 @@
     background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconCross01a.png");
 }
 .close-button:hover { scale: 1.1 1.1; }
-.kit-button.small { font-size: 17px; padding: 2px 8px 6px 8px; margin-left: 4px; }
+.kit-button.small { font-size: 17px; padding: 4px 8px 6px 8px; margin-left: 4px; -unity-slice-scale: 2px; }
 
 /* ---------- Kit scrollbar (shelf list) ---------- */
 .shelf-list .unity-scroll-view__content-container { padding-right: 14px; }
@@ -322,7 +336,7 @@
 .report-rep { color: var(--ink-soft); font-size: 21px; white-space: normal; -unity-text-align: middle-center; }
 .plan-tabs { flex-direction: row; justify-content: center; margin-bottom: 4px; }
 .plan-tab { margin: 0 4px; font-size: 22px; }
-.plan-tab.selected { color: rgb(196, 110, 40); scale: 1.08 1.08; }
+.plan-tab.selected { color: rgb(255, 246, 232); background-image: url("project://database/Assets/Art/UI/PC/T_PC_ButtonHot.png"); translate: 0 2px; }
 
 /* ---------- HUD polish ---------- */
 .hud-banner {
@@ -477,7 +491,7 @@
 
 /* Shelf rows: Take / Worn / Damaged stacked on the right; title keeps the room. */
 .take-col { flex-direction: column; align-items: stretch; flex-shrink: 0; width: 92px; }
-.take-col .kit-button { margin: 2px 0; -unity-text-align: middle-center; font-size: 19px; padding: 2px 6px 5px 6px; }
+.take-col .kit-button { margin: 2px 0; -unity-text-align: middle-center; font-size: 19px; padding: 4px 6px 6px 6px; -unity-slice-scale: 2px; }
 .shelf-row .shelf-row-text { flex-basis: 0; flex-grow: 1; }
 
 /* The report sits on solid black so the night fade doesn't reveal the library behind it. */

@@ -266,7 +266,7 @@ public class DayStory : MonoBehaviour
 
     static void Reward(int coins, int reputation)
     {
-        if (coins > 0) { GM.AddCoins(coins); GM.Today.Earn(GameManager.DayStats.Source.Other, coins); }
+        if (coins > 0) { GM.AddCoins(coins); GM.Today.Earn(GameManager.DayStats.Source.Other, coins); RequestLog.Money("Today's event", "A thank-you for today's event", "Reward", coins); }
         if (reputation != 0) GM.AddReputation(reputation);
     }
 
@@ -923,7 +923,7 @@ public class DayStory : MonoBehaviour
                 .Choose("First I've heard of it, but you're welcome.", "kind", "He did not tell me, no.", "no")
                 .Say($"You're very kind. Have you got copies of {TitlesText}? People like to buy one to get it signed.", "kind", "stock")
                 .Say($"Classic Edgar. Have you at least got copies of {TitlesText}? People like to buy one to get it signed.", "no")
-                .Me($"On the shelves: {StockText}. Order more in the Shop: express gets here in 2 hours", "stock")
+                .Me($"On the shelves: {StockText}. Order more from the Catalogue: express gets here in 2 hours", "stock")
                 .d,
             after = (c, _) => Banner($"Book signing at 2:00 PM! {author}'s fans will want {TitlesText}.", 7f),
         });

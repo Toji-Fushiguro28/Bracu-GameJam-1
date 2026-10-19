@@ -1,44 +1,46 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
-    <Style src="../UI Toolkit/PC.uss" />
-    <ui:VisualElement name="container">
-        <ui:VisualElement name="books-window" class="pc-window">
-            <ui:VisualElement class="pc-header">
-                <ui:Button name="back-button" text="&lt; Back" class="pc-button" />
-                <ui:Label text="CATALOGUE" class="pc-title font-title" />
-                <ui:Button name="buy-books-button" text="Buy books" class="pc-button pc-header-button" />
+    <ui:VisualElement name="catalogue" class="cat">
+        <ui:VisualElement class="cat-col">
+            <ui:VisualElement name="search-wrap" class="pc-search">
+                <ui:TextField name="book-search" class="pc-input" />
+                <ui:Label name="search-placeholder" text="search title, author or tag" picking-mode="Ignore" class="pc-placeholder" />
             </ui:VisualElement>
-            <ui:VisualElement class="pc-columns">
-                <ui:VisualElement class="pc-left">
-                    <ui:VisualElement name="search-wrap" class="pc-search">
-                        <ui:TextField name="book-search" />
-                        <ui:Label name="search-placeholder" text="search title, author or tag" picking-mode="Ignore" />
-                    </ui:VisualElement>
-                    <ui:VisualElement class="pc-filters">
-                        <ui:Button name="filter-subject" text="Subject: All" class="pc-button pc-filter" />
-                        <ui:Button name="filter-type" text="Type: All" class="pc-button pc-filter" />
-                    </ui:VisualElement>
-                    <ui:ListView name="books-list" selection-type="Single" fixed-item-height="96" />
+            <ui:VisualElement class="pc-filters">
+                <ui:Button name="filter-type" text="Type: All" class="pc-button small" />
+                <ui:Button name="filter-subject" text="Subject: pick a type first" class="pc-button small" />
+                <ui:Button name="filter-show" text="Show: All" class="pc-button small" />
+            </ui:VisualElement>
+            <ui:Label name="book-count" class="count-line" />
+            <ui:ListView name="books-list" selection-type="Single" fixed-item-height="104" class="book-list" />
+        </ui:VisualElement>
+        <ui:VisualElement name="book-details" class="cardpane">
+            <ui:Label name="detail-empty" text="Select a book to see where it lives, read its abstract, or order more." class="detail-empty" />
+            <ui:VisualElement name="detail-body" class="detail-body">
+                <ui:Label name="detail-callno" class="callno font-title" />
+                <ui:Label name="detail-stamp" class="stamp font-title" picking-mode="Ignore" />
+                <ui:VisualElement name="detail-top" class="cardtop">
+                    <ui:Label name="detail-title" class="detail-title font-title" />
+                    <ui:Label name="detail-author" class="detail-author" />
+                    <ui:VisualElement name="detail-tags" class="detail-tags" />
                 </ui:VisualElement>
-                <ui:VisualElement name="book-details" class="pc-right">
-                    <ui:Label name="detail-empty" text="Select a book to see where it lives." class="detail-empty" />
-                    <ui:VisualElement name="detail-body">
-                        <ui:Label name="detail-title" class="detail-title" />
-                        <ui:Label name="detail-author" class="detail-author" />
-                        <ui:VisualElement class="detail-row"><ui:Label text="Shelf" class="detail-key" /><ui:Label name="detail-shelf" class="detail-value" /></ui:VisualElement>
-                        <ui:VisualElement class="detail-row"><ui:Label text="In stock" class="detail-key" /><ui:Label name="detail-stock" class="detail-value" /></ui:VisualElement>
-                        <ui:VisualElement class="detail-row"><ui:Label text="Type" class="detail-key" /><ui:Label name="detail-type" class="detail-value" /></ui:VisualElement>
-                        <ui:VisualElement class="detail-row"><ui:Label text="Subject" class="detail-key" /><ui:Label name="detail-subject" class="detail-value" /></ui:VisualElement>
-                        <ui:VisualElement class="detail-row"><ui:Label text="Tags" class="detail-key" /><ui:Label name="detail-tags" class="detail-value" /></ui:VisualElement>
-                        <ui:VisualElement class="detail-row"><ui:Label text="Tier" class="detail-key" /><ui:Label name="detail-tier" class="detail-value" /></ui:VisualElement>
-                        <ui:VisualElement class="detail-row"><ui:Label text="Condition" class="detail-key" /><ui:Label name="detail-condition" class="detail-value" /></ui:VisualElement>
-                        <ui:VisualElement class="detail-row"><ui:Label text="Sale" class="detail-key" /><ui:Label name="detail-sale" class="detail-value" /></ui:VisualElement>
-                        <ui:Label name="detail-abstract" class="detail-abstract" />
-                        <ui:VisualElement class="detail-actions">
-                            <ui:Button name="detail-select" text="Add to note" class="pc-button detail-select" />
-                            <ui:Button name="detail-buy" text="Buy" class="pc-button detail-select detail-buy" />
-                        </ui:VisualElement>
-                        <ui:Label name="detail-select-note" class="detail-select-note" />
+                <ui:ScrollView name="detail-scroll" class="pc-scroll detail-scroll">
+                    <ui:VisualElement class="facts">
+                        <ui:VisualElement class="fact"><ui:Label text="Shelf" class="fact-key" /><ui:Label name="detail-shelf" class="fact-value" /></ui:VisualElement>
+                        <ui:VisualElement class="fact"><ui:Label text="Stock" class="fact-key" /><ui:Label name="detail-stock" class="fact-value" /></ui:VisualElement>
+                        <ui:VisualElement class="fact"><ui:Label text="Copies" class="fact-key" /><ui:Label name="detail-condition" class="fact-value" /></ui:VisualElement>
+                        <ui:VisualElement class="fact"><ui:Label text="Sells for" class="fact-key" /><ui:Label name="detail-sale" class="fact-value" /></ui:VisualElement>
                     </ui:VisualElement>
+                    <ui:Label text="ABSTRACT" class="abstract-label" />
+                    <ui:Label name="detail-abstract" class="detail-abstract" />
+                    <ui:Label name="detail-reserve" class="reserve" />
+                </ui:ScrollView>
+                <ui:VisualElement class="detail-actions">
+                    <ui:VisualElement class="detail-btns">
+                        <ui:Button name="detail-select" text="Add to note" class="pc-button" />
+                        <ui:Button name="detail-buy" class="pc-button"><ui:Label text="Order" class="btn-text" picking-mode="Ignore" /><ui:Label text="-" class="btn-text cost-minus" picking-mode="Ignore" /><ui:VisualElement class="coin-icon small" picking-mode="Ignore" /><ui:Label name="buy-price" class="btn-text" picking-mode="Ignore" /></ui:Button>
+                        <ui:Button name="detail-express" class="pc-button"><ui:Label text="Express" class="btn-text" picking-mode="Ignore" /><ui:Label text="-" class="btn-text cost-minus" picking-mode="Ignore" /><ui:VisualElement class="coin-icon small" picking-mode="Ignore" /><ui:Label name="express-price" class="btn-text" picking-mode="Ignore" /></ui:Button>
+                    </ui:VisualElement>
+                    <ui:Label name="detail-select-note" class="detail-msg" />
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>

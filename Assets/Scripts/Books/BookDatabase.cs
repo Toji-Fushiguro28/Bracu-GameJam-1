@@ -16,5 +16,5 @@ public class BookDatabase : ScriptableObject
 
     [Tooltip("Books the library doesn't own yet. Visitors ask for these; ordering one adds it to the library.")]
     public List<BookData> newTitles = new List<BookData>();
-    public List<BookData> CreateNewTitlesCopy() => newTitles.Select(b => b.Clone()).ToList();
+    public List<BookData> CreateNewTitlesCopy() => newTitles.Select(b => { var c = b.Clone(); c.NewRelease = true; return c; }).ToList();
 }

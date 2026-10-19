@@ -10,7 +10,7 @@ using UnityEngine.UIElements;
 /// </summary>
 public static class RequestLog
 {
-    public enum Kind { Book, Pickup, Card, Shelve }
+    public enum Kind { Book, Pickup, Card, Shelve, Money }
 
     [Serializable]
     public class Guess
@@ -32,6 +32,8 @@ public static class RequestLog
         public bool usedHint;
         public List<Guess> guesses = new List<Guess>();
         public List<string> notes = new List<string>();
+        /// <summary>Coins this entry brought in (+) or cost (-). 0 = no money changed hands.</summary>
+        public int coins;
     }
 
     /// <summary>Every entry in this save, oldest first.</summary>
@@ -166,6 +168,26 @@ public static class RequestLog
         Changed?.Invoke();
     }
 
+    /// <summary>A visitor paid (a sale, a fee, a tip): the amount goes on their entry, or on a line of its own if they have none.</summary>
+    public static void Paid(Customer c, int amount, string who, string what)
+    {
+        if (amount == 0) return;
+        if (c != null && live.TryGetValue(c, out var e)) { e.coins += amount; Changed?.Invoke(); }
+        else Money(who, what, what, amount);
+    }
+
+    /// <summary>Money in or out that isn't a visitor's request: orders, upgrades, staff, rewards.
+    /// It goes straight into the log (never the notebook).</summary>
+    public static void Money(string who, string line, string outcome, int amount)
+    {
+        if (amount == 0) return;
+        All.Add(new Entry { day = GM != null ? GM.day : 1, hour = GM != null ? GM.Hour : 9f, who = who, kind = Kind.Money, line = line, outcome = outcome, coins = amount });
+        Changed?.Invoke();
+    }
+
+    /// <summary>"+25" / "-15" for a log row.</summary>
+    public static string CoinText(int coins) => coins > 0 ? "+" + coins : "-" + (-coins);
+
     /// <summary>The notebook's Clear button: off the page, still in the log.</summary>
     public static void Clear(Entry e)
     {
@@ -173,7 +195,7 @@ public static class RequestLog
         if (Open.Remove(e)) Changed?.Invoke();
     }
 
-    public static string KindName(Kind k) => k == Kind.Book ? "Book Request" : k == Kind.Pickup ? "Pickup" : k == Kind.Card ? "Library Card" : "To Shelve";
+    public static string KindName(Kind k) => k == Kind.Book ? "Book Request" : k == Kind.Pickup ? "Pickup" : k == Kind.Card ? "Library Card" : k == Kind.Money ? "Coins" : "To Shelve";
 
     /// <summary>Guess lines as rich text: wrong ones struck through.</summary>
     public static string GuessText(Guess g) => g.wrong
@@ -186,7 +208,9 @@ public static class RequestLog
         var row = new VisualElement();
         row.AddToClassList("log-row");
         string who = string.IsNullOrEmpty(e.who) ? "" : $"  ·  {e.who}";
-        Add(row, "log-head", $"{GameManager.FormatHour(e.hour)}{who}  ·  {KindName(e.kind)}");
+        string coins = e.coins == 0 ? "" : $"  ·  <color={(e.coins > 0 ? "#4F6B3A" : "#8E3B32")}>{CoinText(e.coins)} coins</color>";
+        Add(row, "log-head", $"{GameManager.FormatHour(e.hour)}{who}  ·  {KindName(e.kind)}{coins}");
+        if (e.kind == Kind.Money) { Add(row, "log-line", e.line); return row; }
         Add(row, "log-line", $"\"{e.line}\"");
         if (e.kind == Kind.Book)
             Add(row, "log-line", e.hint != null ? $"<color=#D67840>Hint: {e.hint}</color>" + (e.usedHint ? "  (asked for)" : "  (free)") : "No hint used");

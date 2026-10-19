@@ -1,19 +1,43 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
     <Style src="PC.uss" />
     <ui:VisualElement name="container">
-        <ui:VisualElement name="menu-window" class="pc-window">
-            <ui:VisualElement class="pc-header">
-                <ui:Label name="welcome-label" text="WHITMORE OS" class="pc-title font-title" />
-                <ui:Label text="front desk terminal" class="pc-subtitle" />
+        <ui:VisualElement name="monitor" class="pc-monitor">
+            <ui:VisualElement name="screen" class="pc-screen">
+                <ui:VisualElement class="pc-titlebar">
+                    <ui:VisualElement class="pc-winbtns">
+                        <ui:Button name="win-close" tooltip="Log off (Esc)" class="pc-winbtn close"><ui:Label text="x" class="win-glyph" picking-mode="Ignore" /></ui:Button>
+                        <ui:Button name="win-min" tooltip="Minimise" class="pc-winbtn"><ui:VisualElement class="glyph-min" picking-mode="Ignore" /></ui:Button>
+                        <ui:Button name="win-max" tooltip="Maximise" class="pc-winbtn"><ui:VisualElement class="glyph-max" picking-mode="Ignore" /></ui:Button>
+                    </ui:VisualElement>
+                    <ui:Label text="WHITMORE OS" class="pc-os font-title" />
+                    <ui:VisualElement class="pc-stats">
+                        <ui:Label name="stat-day" text="Day 1" class="pc-stat" />
+                        <ui:Label text="·" class="pc-dot" />
+                        <ui:Label name="stat-clock" text="9:00 AM" class="pc-stat" />
+                        <ui:Label text="·" class="pc-dot" />
+                        <ui:VisualElement class="coin-icon" />
+                        <ui:Label name="stat-coins" text="0" class="pc-stat coins" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="tabs" class="pc-tabs-row">
+                    <ui:Button name="tab-home" class="pc-navtab"><ui:Label text="Home" class="navtab-label font-title" picking-mode="Ignore" /></ui:Button>
+                    <ui:Button name="tab-catalogue" class="pc-navtab"><ui:Label text="Catalogue" class="navtab-label font-title" picking-mode="Ignore" /><ui:Label name="count-catalogue" class="navtab-count hidden" picking-mode="Ignore" /></ui:Button>
+                    <ui:Button name="tab-members" class="pc-navtab"><ui:Label text="Members" class="navtab-label font-title" picking-mode="Ignore" /><ui:Label name="count-members" class="navtab-count hidden" picking-mode="Ignore" /></ui:Button>
+                    <ui:Button name="tab-shop" class="pc-navtab"><ui:Label text="Shop" class="navtab-label font-title" picking-mode="Ignore" /><ui:VisualElement name="shop-star" class="navtab-star hidden" picking-mode="Ignore" /></ui:Button>
+                    <ui:Button name="tab-log" class="pc-navtab"><ui:Label text="Log" class="navtab-label font-title" picking-mode="Ignore" /></ui:Button>
+                    <ui:Button name="tab-settings" class="pc-navtab"><ui:Label text="Settings" class="navtab-label font-title" picking-mode="Ignore" /></ui:Button>
+                    <ui:Label text="Esc to log off" class="pc-esc" />
+                </ui:VisualElement>
+                <ui:VisualElement name="page" class="pc-page" />
             </ui:VisualElement>
-            <ui:VisualElement class="pc-grid">
-                <ui:Button name="books-button" class="pc-tile"><ui:VisualElement class="req-icon pc-tile-icon req-read" picking-mode="Ignore" /><ui:Label name="tile-label" text="Books" class="pc-tile-label" picking-mode="Ignore" /></ui:Button>
-                <ui:Button name="members-button" class="pc-tile"><ui:VisualElement class="req-icon pc-tile-icon req-card" picking-mode="Ignore" /><ui:Label name="tile-label" text="Members" class="pc-tile-label" picking-mode="Ignore" /></ui:Button>
-                <ui:Button name="upgrades-button" class="pc-tile"><ui:VisualElement class="req-icon pc-tile-icon req-buy" picking-mode="Ignore" /><ui:Label name="tile-label" text="Shop" class="pc-tile-label" picking-mode="Ignore" /></ui:Button>
-                <ui:Button name="settings-button" class="pc-tile"><ui:VisualElement class="req-icon pc-tile-icon req-settings" picking-mode="Ignore" /><ui:Label name="tile-label" text="Settings" class="pc-tile-label" picking-mode="Ignore" /></ui:Button>
-                <ui:Button name="audit-button" class="pc-tile wide"><ui:VisualElement class="req-icon pc-tile-icon req-collect" picking-mode="Ignore" /><ui:Label name="tile-label" text="Audit Log" class="pc-tile-label" picking-mode="Ignore" /></ui:Button>
+            <ui:VisualElement class="pc-chin">
+                <ui:Label text="WHITMORE" class="pc-plate font-title" />
+                <ui:VisualElement class="pc-ctrls">
+                    <ui:VisualElement class="pc-knob" />
+                    <ui:VisualElement class="pc-knob" />
+                    <ui:VisualElement class="pc-led" />
+                </ui:VisualElement>
             </ui:VisualElement>
-            <ui:Label text="click outside the screen or press Esc to log off" class="pc-footer" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

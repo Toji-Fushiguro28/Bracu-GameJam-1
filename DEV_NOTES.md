@@ -15,12 +15,12 @@ What changed in `MainGame.unity` and `Assets/Scripts`, and where. Nothing here c
   - **New Game** (asks for confirmation if a save exists; wipes it and reloads straight into Day 1).
   - **Start** (when there's no save).
   - **How to Play** (9 short pages: controls and stamina, counter, finding books, your notebook, sold out and reservations, cards and readers, repairs and rooms, staff, end of day and the audit log).
-  - **Settings** (volume, music, fullscreen; same values as the PC Settings screen).
+  - **Settings** (volume, music, fullscreen; same values as the PC Settings tab).
   - **Credits**.
   - **Quit** (hidden on WebGL).
 - Pressing play fades the book out and Cinemachine blends down to the follow camera. A glockenspiel sweep plays, and buttons pop softly on hover.
 - **Esc during play** opens it again as a pause screen (Continue becomes **Resume**; Esc again resumes). Esc that closes the PC, a shelf or a dialogue doesn't also open it.
-- **PC → Settings → Main menu** returns to the title screen (asks first; progress since the morning save is lost).
+- **PC → Settings tab → Main menu** returns to the title screen (asks first; progress since the morning save is lost).
 - The title and subtitle are fields on `MainMenuUI` (`gameTitle`, `subtitle`). Team credits are in `MainMenu.uxml` (Credits page).
 - **Build Settings:** `MainGame.unity` is now first; `SampleScene` is unchecked.
 
@@ -39,7 +39,7 @@ What changed in `MainGame.unity` and `Assets/Scripts`, and where. Nothing here c
 | Wrong-book penalty | x0.5 | x1 | x1.5 |
 
 - Code: `GameManager.Difficulty`; all the numbers come from `Mode(...)` in `GameManager`.
-- The mode is saved, shown in the menu and the Day Report title, and can be changed in **Settings** (PC or menu).
+- The mode is saved and shown in the menu and the Day Report title. It is only picked when a new game starts: neither the PC nor the main menu Settings can change it.
 - **Return bin glow:** `ReturnBinGlow` on `SM_ReturnBin` (material `M_BinGlow`) gives the bin a pulsing gold outline whenever it has books in it.
 
 ## 1. How a day plays now
@@ -509,3 +509,36 @@ Small, contained edits. Please check them when merging:
 - The 14x16 art is scaled up in whole pixels for the screen (`Screen.height / 540`, 2x at 1080p) at runtime, so the two textures are imported Read/Write, uncompressed, point filter.
 - Each click plays `MouseCursorClick01a` frames 1-3 (`GameCursor.click`, 0.06 s a frame, hotspot (8,6) so the tip doesn't jump), then back to the arrow. Those frames are imported Read/Write, uncompressed, point filter too.
 - On its own root object `GameCursor` in MainGame; `DontDestroyOnLoad`, so it carries into the intro scene; a reloaded scene's copy destroys itself.
+
+## PC redesign (tabs, pixel monitor, catalogue buying)
+- **Size:** the monitor is 1040 x 782 (the old PC size), so it stays clear of the notebook on the right edge; maximise makes it 1460 x 1040 but keeps it left of the notebook.
+- **Colours (oxblood leather + brass):** the screen is leather (`--page` rgb(94,43,38)) with light text on it (`--desk-ink`, `--desk-dim`) and a gold line under the tabs. Everything else sits on brass: cards and the sheets behind the book list, members table, log and settings (`T_PC_Card`, rgb(227,201,143)). Inputs, dropdowns and tooltips are lighter (`--input`, `T_PC_Input`, `T_PC_Menu`), buttons are cream (`T_PC_Button`), and the picked book is cream with a 3px orange outline. Disabled buttons are solid (`T_PC_ButtonOff`), never transparent, so they don't show the leather through; locked upgrades use `T_PC_CardLocked` and affordable ones `T_PC_CardReady` (orange edge). The tabs are pixel buttons; the open one is the orange `T_PC_ButtonHot`.
+- **Look:** a cream pixel monitor (WHITMORE plate, two knobs and a power light on the chin) with a parchment screen. The pixel corners come from small 9-sliced sprites in `Assets/Art/UI/PC` (`T_PC_Button`, `T_PC_ButtonHot`, `T_PC_Card` + Epic / Legendary / Warm, `T_PC_Input`, `T_PC_Menu`, `T_PC_Badge` (tinted), `T_PC_Chip`, `T_PC_Stamp` (tinted), `T_PC_Case`), drawn at 1 pixel per unit and scaled with `-unity-slice-scale`. All are Point filter, uncompressed, no mips. Styles are in `PC.uss`.
+- **Frame:** `PCOverlayTemplate.uxml` is now the monitor: title bar (close = log off, minimise = log off but come back to the same tab, maximise = a bigger monitor), "WHITMORE OS", and Day · clock · coins. Under it are the tabs **Home, Catalogue, Members, Shop, Log, Settings**; there's no hub and no Back buttons. `PCOverlayTrigger.ShowTab(name)` clones the tab's template from `Resources` into `#page` and calls its view's `Wire(page)`. A 0.45 s ticker keeps the clock, coins and tab counts live.
+- **Tab counts:** Catalogue shows reservations nobody has ordered yet (red if one is due today), Members shows 1 while someone waits for a card. The Shop tab shows the kit star (it pops) on **every** tab while an upgrade or a hire is affordable, and its name glows gold unless you're on it.
+- **Home (`PCHomeView`):** six numbers (titles, copies on shelf, sold out, visitors served, coins earned today, members); **Needs you** (max 3, only things you can fix on the PC: unordered reservations → *Order* opens a fresh Catalogue so you search for it yourself, a card waiting → Members, an affordable upgrade or staff action → Shop); the day bar (9:00 to closing, a "now" marker, and dots for urgent pickups, today's pickups (`CustomerSpawner.PickupTimes`), Express deliveries (`GameManager.ArrivingToday`) and closing; hover a dot for a tooltip, things in the same 10 minutes share one dot); reputation toward the goal; today's popular books; and the Today / Collection / Library ledgers. It rebuilds only when its numbers change.
+- **Catalogue (`PCCatalogueView`, moved out of `PCOverlayTrigger`):** lists every title, including new titles you don't own yet (at the bottom, "New title"). Filters: **Type** (Book, Newspaper, Magazine, Journal, Research paper, Archive, Rare Books) → **Subject** (greyed out until a type is picked; books are grouped by shelf) → **Show** (adds "Not in library"). Rows: title + badges, "author · subject", then shelf icon, coin + order price, and the damaged icon if any; stock on the right. Epic and Legendary rows/cards get an indigo / plum edge and badge. The card has **Add to note**, **Order** and **Express** (greyed out after closing); the old Shop "Books" tab and "Buy books" are gone.
+- **Shop (`PCShopView`):** Upgrades (cards with pixel icons and level pips) and Staff (one row per role, icons: broom, books, key). Price buttons read "Buy - (coin) 80".
+- **Members:** a table (name, born, access, kit hearts, visits, spent) and the library card form; Day / Month / Year lists show 6 rows (`PickList` `maxVisible`), Issue card is full width at the bottom.
+- **Log (`PCAuditView`):** time, a dot for how it went (a coin for money lines), what happened, the outcome and +/- coins.
+- **Settings:** volume and music are pixel staircases; **Mode is gone** (see Play modes).
+- `PickList` now has group headings and a row cap, and the parchment look on the PC.
+
+## Subjects by type (`BookData.Topic`)
+- Every title has a **Topic** (shown as "Subject" on the PC): finer subjects for books (Astronomy, Biology, Trade, Poetry, Probability...), and their own for newspapers (Local news...), magazines, journals, research papers, the Archive (Town records, Letters & logs...) and Rare Books (Manuscripts, Maps & charts...). `Subject` (Science / History / Philosophy / Math) is still the section and shelf, and the exam rush still uses it.
+- `BookData.TypeName` is the PC's type: Archive / Rare Books come from the shelf prefix (like `BookRequest.IsArchive` / `IsRare`), the rest from the format. `SubjectName` is the topic, falling back to the section.
+- Visitor subject requests use the topic ("I need a good book on Astronomy.", "I need a journal on Physics."); a request made with a section name (the exam rush) still matches.
+- `BookFilterBar` (also used by the Day Report shop) has the same Type → Subject filters.
+
+## New titles cost more, sell for more
+- Titles from `BookDatabase.newTitles` are flagged `NewRelease` at runtime; `SaleValue` = BaseValue × 1.3 (`BookData.NewReleaseMarkup`). Order prices and sale prices (counter sales, browsers, the book club) use `SaleValue`, so a new release costs about 30% more to order and sells for about 30% more. Rare books are still far above both.
+
+## Money in the Audit Log
+- `RequestLog.Entry.coins` (+ earned, - spent) and a new `Kind.Money` for lines that aren't a visitor's request. `RequestLog.Paid(customer, amount, ...)` adds to the visitor's entry (sales, fees, cards, chat bonus, special orders), or makes its own line if they have none. `RequestLog.Money(who, line, outcome, amount)` logs everything else: book orders and Express, upgrades, staff hires and training, wages, paid staff fixes, repairs, perfect-repair donations, tidy rewards, staff reports, VIP and book-club rewards, story rewards.
+- Outcome strings no longer end in "+N"; the amount is its own column on the PC and in the Day Report log.
+
+## One button style everywhere
+- Every button in the game uses the computer's pixel button (`Assets/Art/UI/PC`): `T_PC_Button` (cream, dark outline, bevel), `T_PC_ButtonHot` (orange) on hover and for the selected one, `T_PC_ButtonOff` (flat, greyed) when disabled. They're 9-sliced at 3 px per art pixel (2 px for small buttons) and pressing moves them down 2 px.
+- That's `.kit-button` and the dialogue `.choice` in `GameUI.uss`, so it covers the main menu, How to Play, mode cards, settings, Day Report (its tabs: the selected one is orange), shelves, repair desk, notebook tabs (a new reservation turns the tab orange), tutorial and the interview scene. The PC uses the same sprites through `.pc-button` in `PC.uss`.
+- Hover text turns light (rgb 255,246,232) so it reads on orange; `MainMenu.uss` no longer turns hovered text orange.
+- The round cross close buttons (`.close-button`) and the hover prompt / speaker name tag (not buttons) keep their TravelBook art.

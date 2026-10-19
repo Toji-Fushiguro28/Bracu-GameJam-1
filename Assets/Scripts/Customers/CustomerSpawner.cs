@@ -38,6 +38,8 @@ public class CustomerSpawner : MonoBehaviour
     readonly Queue<GameManager.Reservation> pickups = new Queue<GameManager.Reservation>();
     /// <summary>Today's pickups that haven't come yet, with the hour each one turns up.</summary>
     readonly List<(GameManager.Reservation r, float hour)> pickupTimes = new List<(GameManager.Reservation, float)>();
+    /// <summary>Today's pickups still to come and when (the PC's day bar shows them).</summary>
+    public IReadOnlyList<(GameManager.Reservation r, float hour)> PickupTimes => pickupTimes;
 
     void Awake() => Instance = this;
 

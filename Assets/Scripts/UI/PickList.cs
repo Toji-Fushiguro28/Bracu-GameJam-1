@@ -11,8 +11,13 @@ public static class PickList
 {
     static VisualElement open;
 
-    /// <summary>Opens the list under <paramref name="button"/>. <paramref name="enabled"/> greys out options that can't be picked.</summary>
-    public static void Open(Button button, string[] options, int current, Action<int> pick, bool pcStyle, Func<int, bool> enabled = null, int scrollTo = -1)
+    const float ItemHeight = 38f;
+
+    /// <summary>Opens the list under <paramref name="button"/>. <paramref name="enabled"/> greys out options that can't be picked,
+    /// <paramref name="header"/> turns options into group headings (not pickable), and
+    /// <paramref name="maxVisible"/> caps how many rows show before it scrolls (0 = as many as fit).</summary>
+    public static void Open(Button button, string[] options, int current, Action<int> pick, bool pcStyle, Func<int, bool> enabled = null, int scrollTo = -1,
+                            Func<int, bool> header = null, int maxVisible = 0)
     {
         Close();
         if (button?.panel == null || options == null || options.Length == 0) return;
@@ -38,25 +43,35 @@ public static class PickList
         while (area != null && area != top && area.layout.height < 300f) area = area.parent;
         Rect bounds = area != null ? top.WorldToLocal(area.worldBound) : new Rect(0f, 0f, top.layout.width, top.layout.height);
         float width = Mathf.Max(b.width, 130f);
-        float natural = options.Length * 38f + 12f;
+        int rows = maxVisible > 0 ? Mathf.Min(options.Length, maxVisible) : options.Length;
+        float natural = rows * ItemHeight + 12f;
         float below = bounds.yMax - b.yMax - 6f, above = b.yMin - bounds.yMin - 6f;
         // Below the button if it fits, otherwise whichever side has more room (it scrolls if needed).
         bool down = natural <= below || below >= above;
-        float height = Mathf.Max(80f, Mathf.Min(natural, down ? below : above));
+        float height = maxVisible > 0 ? natural : Mathf.Max(80f, Mathf.Min(natural, down ? below : above));
         list.style.left = Mathf.Clamp(b.xMin, bounds.xMin + 4f, Mathf.Max(bounds.xMin + 4f, bounds.xMax - width - 4f));
         list.style.top = down ? b.yMax + 2f : b.yMin - 2f - height;
         list.style.width = width;
         list.style.height = height;
-        list.style.backgroundColor = (Color)(pcStyle ? new Color32(38, 52, 62, 250) : new Color32(244, 228, 193, 252));
-        var edge = pcStyle ? new Color32(99, 210, 181, 255) : new Color32(120, 80, 50, 255);
+        // The PC is parchment with a dark pixel outline; the book pages keep their own colours.
+        list.style.backgroundColor = (Color)(pcStyle ? new Color32(248, 237, 207, 252) : new Color32(244, 228, 193, 252));
+        var edge = pcStyle ? new Color32(110, 76, 48, 255) : new Color32(120, 80, 50, 255);
         list.style.borderTopColor = list.style.borderBottomColor = list.style.borderLeftColor = list.style.borderRightColor = (Color)edge;
-        list.style.borderTopWidth = list.style.borderBottomWidth = list.style.borderLeftWidth = list.style.borderRightWidth = 2f;
+        list.style.borderTopWidth = list.style.borderBottomWidth = list.style.borderLeftWidth = list.style.borderRightWidth = pcStyle ? 3f : 2f;
         list.style.paddingTop = list.style.paddingBottom = list.style.paddingLeft = list.style.paddingRight = 4f;
 
         Button picked = null, scrollTarget = null;
         for (int i = 0; i < options.Length; i++)
         {
             int index = i;
+            if (header != null && header(i))
+            {
+                var head = new Label(options[i]) { pickingMode = PickingMode.Ignore };
+                head.AddToClassList("picklist-header");
+                head.style.height = ItemHeight - 2f;
+                list.Add(head);
+                continue;
+            }
             var item = new Button(() => { Close(); pick(index); }) { text = options[i] };
             item.AddToClassList(pcStyle ? "pc-button" : "kit-button");
             item.AddToClassList("picklist-item");
@@ -64,12 +79,13 @@ public static class PickList
             item.style.marginLeft = item.style.marginRight = 0f;
             item.style.unityTextAlign = TextAnchor.MiddleLeft;
             item.style.whiteSpace = WhiteSpace.NoWrap;
+            item.style.height = ItemHeight - 2f;
             if (i == current)
             {
                 picked = item;
                 item.AddToClassList("picked");
-                item.style.backgroundColor = (Color)(pcStyle ? new Color32(99, 210, 181, 255) : new Color32(214, 120, 64, 255));
-                item.style.color = pcStyle ? (Color)new Color32(38, 52, 62, 255) : Color.white;
+                item.style.backgroundColor = (Color)new Color32(214, 120, 64, 255);
+                item.style.color = Color.white;
             }
             if (i == scrollTo) scrollTarget = item;
             if (enabled != null && !enabled(i)) { item.SetEnabled(false); item.style.opacity = 0.3f; }

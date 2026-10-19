@@ -25,14 +25,13 @@ public static class GameSettings
     }
 }
 
-/// <summary>PC "Settings" screen: volume, music, day length, fullscreen, new game.</summary>
+/// <summary>PC "Settings" screen: volume, music, fullscreen, main menu, new game. (The mode is only picked when a new game starts.)</summary>
 public static class PCSettingsView
 {
     static float confirmUntil, menuConfirmUntil;
 
-    public static void Wire(VisualElement root, Action back)
+    public static void Wire(VisualElement root)
     {
-        root.Q<Button>("back-button")?.RegisterCallback<ClickEvent>(_ => back());
         Refresh(root);
     }
 
@@ -43,15 +42,6 @@ public static class PCSettingsView
         Volume(list, root, "Volume", GameSettings.Master, v => GameSettings.Master = v);
         Volume(list, root, "Music", GameSettings.Music, v => GameSettings.Music = v);
 
-
-        var gm = GameManager.Instance;
-        if (gm != null)
-        {
-            var mode = Row(list, "Mode");
-            mode.Add(Value(gm.difficulty == GameManager.Difficulty.Standard ? "Standard (recommended)" : GameManager.DifficultyNames[(int)gm.difficulty]));
-            mode.Add(Button("<", () => { gm.SetDifficulty((GameManager.Difficulty)(((int)gm.difficulty + 2) % 3)); Refresh(root); }));
-            mode.Add(Button(">", () => { gm.SetDifficulty((GameManager.Difficulty)(((int)gm.difficulty + 1) % 3)); Refresh(root); }));
-        }
 
         var full = Row(list, "Fullscreen");
         full.Add(Value(Screen.fullScreen ? "On" : "Off"));
@@ -93,6 +83,7 @@ public static class PCSettingsView
             int v = i + 1;
             var pip = new VisualElement();
             pip.AddToClassList("setting-pip");
+            pip.style.height = 16 + i * 4; // a pixel staircase, like a volume meter
             pip.EnableInClassList("on", i < value);
             pip.RegisterCallback<ClickEvent>(_ => { set(v == value ? 0 : v); Refresh(root); });
             bar.Add(pip);
@@ -123,6 +114,7 @@ public static class PCSettingsView
     {
         var b = new Button(onClick) { text = text };
         b.AddToClassList("pc-button");
+        b.AddToClassList("small");
         return b;
     }
 }

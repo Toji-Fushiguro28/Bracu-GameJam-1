@@ -378,11 +378,12 @@ public class Customer : ClickInteractable
         var playerAnim = player.GetComponent<CharacterAnimator>();
         if (playerAnim) playerAnim.PlayStamp();
         bool worn = heldCondition == BookCondition.Worn;
-        int price = Mathf.RoundToInt(heldBook.BaseValue * (worn ? 0.8f : 1f));
+        int price = Mathf.RoundToInt(heldBook.SaleValue * (worn ? 0.8f : 1f));
         int tip = Mathf.RoundToInt(heldBook.BaseValue * 0.15f * PatienceLeft * Members.TipFactor(Membership));
         Members.Satisfy(Membership, PatienceLeft > 0.5f ? 0.4f : 0.15f, price + tip);
         GM.AddCoins(price + tip);
         GM.Today.served++; GM.Today.booksSold++; GM.Today.Earn(GameManager.DayStats.Source.Sales, price + tip); GM.Today.tips += tip;
+        RequestLog.Paid(this, price + tip, FirstName, $"Stamped out \"{heldBook.Title}\"");
         GM.AddReputation(1);
         DayStory.Instance?.Sold(heldBook);
         heldBook = null; // it leaves with them
@@ -415,7 +416,7 @@ public class Customer : ClickInteractable
             return;
         }
         // First times at the desk: a one-line tip (once per game).
-        if (kind == Kind.Seeker) Tutorial.Show("seeker", "This visitor wants a book the library doesn't have. Ask when they need it, reserve it, then order it in the computer's Shop.");
+        if (kind == Kind.Seeker) Tutorial.Show("seeker", "This visitor wants a book the library doesn't have. Ask when they need it, reserve it, then order it from the computer's Catalogue.");
         if (kind == Kind.Pickup) Tutorial.Show("pickup", "Back for a reserved book: take it off the book cart (or its shelf) and hand it over.");
         if (vip) Tutorial.Show("vip", "VIP scholars read in the Rare Books room. Give them a Rare Books card on the computer first; then they pay well to read.");
 
@@ -562,7 +563,7 @@ public class Customer : ClickInteractable
 
         bool pickup = kind == Kind.Pickup;
         bool soldOut = !pickup && request.OutOfStock(GM.Books);
-        if (soldOut) Tutorial.Show("soldout", "Sold out! Ask when they need it: reserve it, then order more in the computer's Shop. Express gets here in 2 hours.");
+        if (soldOut) Tutorial.Show("soldout", "Sold out! Ask when they need it: reserve it, then order more from the computer's Catalogue. Express gets here in 2 hours.");
         bool seeker = kind == Kind.Seeker;
         if (!pickup && !seeker && clue == null && !GM.NoHints) start.choices.Add(new DialogueAsset.Choice { text = "Could you give me a hint? (smaller tip)", next = "hint" });
         if (pickup)
@@ -729,7 +730,7 @@ public class Customer : ClickInteractable
         Members.Satisfy(Membership, 0.2f);
         GameAudio.Play(a => a.cardIssued, 0.7f);
         RequestLog.Note(this, $"Waiting in the library for \"{request.Target.Title}\" (express)");
-        Tutorial.Show("express", "They're waiting in the library: order it with Express in the Shop (2 hours), or they'll leave unhappy.");
+        Tutorial.Show("express", "They're waiting in the library: order it with Express from the Catalogue (2 hours), or they'll leave unhappy.");
         StopImpatient(true);
         CounterQueue.Instance.Leave(this);
         state = State.WaitingForBook;
@@ -899,6 +900,7 @@ public class Customer : ClickInteractable
                 // Knowing your shelves pays, right now and where you can see it.
                 int bonus = Mathf.Clamp(Mathf.RoundToInt(heldBook != null ? heldBook.BaseValue * 0.1f : 3), 3, MaxChatBonus);
                 GM.AddCoins(bonus);
+                RequestLog.Paid(this, bonus, FirstName, "Knew the right shelf: chat bonus");
                 GM.Today.Earn(vip ? GameManager.DayStats.Source.Vip : GameManager.DayStats.Source.Reading, bonus);
                 GM.Today.tips += bonus;
                 GM.AddReputation(1);
@@ -1017,6 +1019,7 @@ public class Customer : ClickInteractable
         int fee = vip ? VipCardFee : 10, tip = Mathf.RoundToInt((vip ? VipCardTip : 6) * PatienceLeft); // VIP cards: their own room, attendant and all
         Members.Satisfy(member, PatienceLeft > 0.5f ? 0.5f : 0f, fee + tip);
         GM.AddCoins(fee + tip);
+        RequestLog.Paid(this, fee + tip, FirstName, "Library card");
         GM.Today.Earn(vip ? GameManager.DayStats.Source.Vip : GameManager.DayStats.Source.Cards, fee + tip); GM.Today.tips += tip; GM.Today.served++; GM.Today.signups++;
         GM.AddReputation(1);
         if (WaitingForCard == this) WaitingForCard = null;
@@ -1024,7 +1027,7 @@ public class Customer : ClickInteractable
         RefreshNameplate();
         // Most new members have a book in mind straight away.
         var wish = !vip && Random.value < 0.6f ? PickWish() : null;
-        RequestLog.Finish(this, $"Card issued ({access} access)  +{fee + tip}");
+        RequestLog.Finish(this, $"Card issued ({access} access)");
         if (vip)
         {
             // A scholar with a fresh Rare card goes straight to reading.
@@ -1079,19 +1082,21 @@ public class Customer : ClickInteractable
     {
         bool worn = condition == BookCondition.Worn;
         float speed = PatienceLeft;
-        int price = Mathf.RoundToInt(book.BaseValue * (worn ? 0.8f : 1f));
+        int price = Mathf.RoundToInt(book.SaleValue * (worn ? 0.8f : 1f));
         // Reserved books: they were happy to wait, and grateful you remembered.
         float tipShare = kind == Kind.Pickup ? 0.5f : 0.4f * request.TipBonus;
         int tip = worn ? 0 : Mathf.RoundToInt(book.BaseValue * tipShare * Mathf.Max(speed, kind == Kind.Pickup ? 0.8f : 0f) * Members.TipFactor(Membership) * HintTipFactor);
         Members.Satisfy(Membership, speed > 0.5f || kind == Kind.Pickup ? 0.5f : 0.2f, price + tip);
         GM.AddCoins(price + tip);
         GM.Today.served++; GM.Today.booksSold++; GM.Today.Earn(GameManager.DayStats.Source.Sales, price + tip); GM.Today.tips += tip;
+        RequestLog.Paid(this, price + tip, FirstName, $"Sold \"{book.Title}\"");
         GM.AddReputation(worn ? 0 : 1);
         DayStory.Instance?.Sold(book);
         if (reservation != null && reservation.bonus > 0)
         {
             // A special order (SpecialJobs): the extra they promised for getting it in.
             GM.AddCoins(reservation.bonus);
+            RequestLog.Paid(this, reservation.bonus, FirstName, "Special order bonus");
             GM.Today.Earn(GameManager.DayStats.Source.Other, reservation.bonus);
             GM.AddReputation(1);
             HUD.SkillPop(transform.position + Vector3.up * 2.2f, $"Special order! +{reservation.bonus} coins, +1 reputation");
@@ -1101,7 +1106,7 @@ public class Customer : ClickInteractable
         var playerAnim = GameObject.FindWithTag("Player")?.GetComponent<CharacterAnimator>();
         if (playerAnim) playerAnim.PlayStamp();
         GameAudio.Play(a => a.served);
-        RequestLog.Finish(this, (kind == Kind.Pickup ? "Collected" : $"Sold \"{book.Title}\"") + $"  +{price + tip}");
+        RequestLog.Finish(this, kind == Kind.Pickup ? "Collected" : $"Sold \"{book.Title}\"");
         Say(tip > 0 ? $"Perfect, thank you!  +{price + tip}" : $"Thanks.  +{price}", 2.5f);
         Leave();
     }
@@ -1202,6 +1207,7 @@ public class Customer : ClickInteractable
         else if (fee + tip > 0)
         {
             GM.AddCoins(fee + tip);
+            RequestLog.Paid(this, fee + tip, FirstName, kind == Kind.Reader ? $"Read \"{heldBook.Title}\": reading fee" : $"Returned \"{heldBook.Title}\" late: late fee");
             GM.Today.Earn(vip || BookRequest.IsRare(heldBook) ? GameManager.DayStats.Source.Vip : GameManager.DayStats.Source.Reading, fee + tip);
             GM.Today.tips += tip;
         }
