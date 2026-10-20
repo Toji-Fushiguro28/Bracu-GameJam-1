@@ -95,6 +95,20 @@ public class NotebookHUD : MonoBehaviour
         root.Add(el);
     }
 
+    float fittedHeight = -1f;
+
+    /// <summary>Both lists as tall as the screen allows (under the coin purse, down to the bottom edge):
+    /// Notes and Reserved get half each, minus their titles and padding.</summary>
+    void FitLists()
+    {
+        float h = layer.layout.height;
+        if (float.IsNaN(h) || h <= 0f || Mathf.Abs(h - fittedHeight) < 1f) return;
+        fittedHeight = h;
+        float half = (h - 104f - 24f - 10f) * 0.5f; // the purse above, a margin at the bottom, the gap between
+        if (list != null) list.style.maxHeight = Mathf.Max(140f, half - 100f);
+        if (reserveList != null) reserveList.style.maxHeight = Mathf.Max(100f, half - 80f);
+    }
+
     /// <summary>Is the mouse on the notebook or the reservations box?</summary>
     bool MouseOver()
     {
@@ -132,6 +146,7 @@ public class NotebookHUD : MonoBehaviour
         bool show = !MainMenuUI.Active && (DayReportUI.Instance == null || !DayReportUI.Instance.IsOpen);
         layer.EnableInClassList("hidden", !show);
         PointerOver = show && MouseOver();
+        FitLists();
         if (dirty) Rebuild();
         // Orders and deliveries change a reservation's status, so look again now and then.
         if (Time.unscaledTime >= nextReserveCheck) { nextReserveCheck = Time.unscaledTime + 0.5f; RebuildReserves(); }

@@ -656,3 +656,5 @@ Small, contained edits. Please check them when merging:
 - Notebook: talking to a visitor again after you cleared their note puts the same note back, never twice (`RequestLog.Begin`).
 - "In your hands" box moves onto the notebook's panel (sort 25) at runtime (`NotebookHUD.Adopt`), so it shows above the PC, shelf and repair backdrops. Books are listed one per row: slot icon, name on the right (24px).
 - Notes and Reserved sit top right, stacked under the coin purse (`Notebook.uss`).
+- With Notes collapsed, the notebook is only the tab's height (`#notebook.collapsed { max-height: 80px; }`), so Reserved moves up right under it; opening Notes pushes Reserved down.
+- Notes and Reserved pages are 430px wide. `NotebookHUD.FitLists` sizes the lists from the screen height: Notes and Reserved get half each of the space below the coin purse. A folded box takes only its tab's height.
