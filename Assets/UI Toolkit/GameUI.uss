@@ -817,3 +817,33 @@
     background-size: 20px 20px; background-repeat: no-repeat no-repeat; background-position-x: left 0; background-position-y: center; }
 .tut-check.done { color: rgb(79, 107, 58);
     background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconTick01a.png"); }
+
+/* ---------- Day Report, left page: today's twist, nine tiles, the coins ---------- */
+.report-twist { flex-shrink: 0; color: var(--ink); font-size: 18px; white-space: normal; margin: 2px 6px 6px 6px; padding: 4px 10px 6px 10px;
+    background-color: rgba(235, 200, 120, 0.6); }
+.report-tiles { flex-shrink: 0; flex-direction: row; flex-wrap: wrap; justify-content: space-between; margin: 0 4px; }
+/* A tile: icon and number on top, the name under them. */
+.report-tile { width: 32%; flex-direction: column; align-items: center; padding: 3px 4px 4px 4px; margin-bottom: 4px;
+    background-color: rgba(255, 248, 232, 0.55); border-width: 2px; border-color: rgba(128, 92, 70, 0.45); }
+.report-tile.zero { opacity: 0.45; }
+.report-tile.bad .rt-val { color: rgb(190, 70, 50); }
+.rt-top { flex-direction: row; align-items: center; }
+.rt-icon { width: 26px; height: 26px; margin-right: 6px; flex-shrink: 0; -unity-background-scale-mode: scale-to-fit; }
+.rt-val { color: var(--ink); font-size: 24px; margin: 0; padding: 0; }
+.rt-key { color: var(--ink-soft); font-size: 15px; margin: 0; padding: 0; white-space: nowrap; -unity-text-align: middle-center; }
+.rt-served { background-image: url("project://database/Assets/Art/UI/Mood/T_Mood_Happy.png"); }
+.rt-unhappy { background-image: url("project://database/Assets/Art/UI/Mood/T_Mood_Sad.png"); }
+.rt-sold { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconCoin01a.png"); }
+.rt-read { background-image: url("project://database/Assets/Art/UI/PC/T_IconArmchair.png"); }
+.rt-returns { background-image: url("project://database/Assets/Art/UI/PC/T_IconBooks.png"); }
+.rt-repairs { background-image: url("project://database/Assets/Art/UI/PC/T_IconHammer.png"); }
+.rt-tidied { background-image: url("project://database/Assets/Art/UI/PC/T_IconBroom.png"); }
+.rt-members { background-image: url("project://database/Assets/Art/UI/PC/T_IconKey.png"); }
+.rt-tips { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconHeart01a.png"); }
+.report-coins { flex-shrink: 0; margin: 2px 4px 4px 4px; padding: 4px 8px 6px 8px; border-width: 2px; border-color: rgba(128, 92, 70, 0.45); background-color: rgba(255, 248, 232, 0.45); }
+.report-row.in .report-val { color: rgb(79, 107, 58); }
+.report-row.out .report-val { color: rgb(190, 70, 50); }
+.report-row.total { border-bottom-width: 0; border-top-width: 2px; border-top-color: rgba(128, 92, 70, 0.6); margin-top: 2px; }
+.report-row.total .report-val { font-size: 24px; }
+.report-coins .report-key, .report-coins .report-val { font-size: 18px; }
+.report-coins .report-row.total .report-key { font-size: 21px; }

@@ -1,9 +1,10 @@
 using System;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 /// <summary>
-/// PC "Shop": Upgrades (cards with a pixel icon, level pips and price) and Staff (one row per role).
+/// PC "Shop": Upgrades (cards with a pixel icon, level pips and price) and Staff (one card per role).
 /// Books are ordered from the Catalogue now.
 /// </summary>
 public static class PCShopView
@@ -49,8 +50,11 @@ public static class PCShopView
         }
         else
         {
-            note.text = "Press Interview: two applicants come in tomorrow morning. Staff are paid once, when you hire them.";
-            foreach (var role in GameManager.StaffOrder) list.Add(StaffRow(root, gm, role));
+            note.text = "Booking an interview pays the hire price now. Two applicants come the next morning; whatever you save by haggling comes back.";
+            var grid = new VisualElement();
+            grid.AddToClassList("ugrid");
+            foreach (var role in GameManager.StaffOrder) grid.Add(StaffCard(root, gm, role));
+            list.Add(grid);
         }
         list.schedule.Execute(() => list.scrollOffset = new Vector2(0, scroll));
     }
@@ -98,32 +102,117 @@ public static class PCShopView
         return card;
     }
 
-    static VisualElement StaffRow(VisualElement root, GameManager gm, GameManager.StaffRole role)
-    {
-        var (title, sub, _, enabled) = gm.StaffRow(role);
-        var row = new VisualElement();
-        row.AddToClassList("srow");
-        row.EnableInClassList("ready", gm.StaffActionReady(role));
-        string icon = role == GameManager.StaffRole.Cleaner ? "broom" : role == GameManager.StaffRole.Repairer ? "books" : "key";
-        row.Add(Icon(icon));
-        var text = new VisualElement();
-        text.AddToClassList("srow-text");
-        text.Add(Text(title, "srow-title", true));
-        text.Add(Text(sub, "srow-sub"));
-        row.Add(text);
+    /// <summary>Staff icons in GameManager.StaffRole order (Archivist, Cleaner, attendant).</summary>
+    static readonly string[] StaffIcons = { "books", "broom", "key" };
 
+    /// <summary>One staff member's card: who they are, what they do, what the next level brings, and the button
+    /// (Interview with the hire price, Upgrade, or why not yet).</summary>
+    static VisualElement StaffCard(VisualElement root, GameManager gm, GameManager.StaffRole role)
+    {
+        int i = (int)role;
+        bool hired = gm.Hired(role), booked = gm.InterviewBooked(role), unlocked = gm.StaffUnlocked(role);
+        int lvl = gm.StaffLevel(role), cost = gm.StaffUpgradeCost(role), fee = GameManager.StaffHireFee[i];
+
+        var card = new VisualElement();
+        card.AddToClassList("ucard");
+        card.AddToClassList("scard");
+        card.EnableInClassList("locked", !unlocked && !hired);
+        card.EnableInClassList("ready", gm.StaffActionReady(role));
+
+        var top = new VisualElement();
+        top.AddToClassList("ucard-top");
+        top.Add(Icon(StaffIcons[i]));
+        var text = new VisualElement();
+        text.AddToClassList("ucard-text");
+        text.Add(Text(hired ? GameManager.StaffPerson[i] : GameManager.StaffNames[i], "ucard-name", true));
+        text.Add(Text(hired ? GameManager.StaffNames[i] : booked ? "Interview tomorrow morning" : unlocked ? "Not hired yet" : $"Opens on Day {GameManager.StaffUnlockDay[i]}", "ucard-info"));
+        top.Add(text);
+        card.Add(top);
+
+        if (hired)
+        {
+            var row = new VisualElement();
+            row.AddToClassList("scard-level");
+            var pips = new VisualElement();
+            pips.AddToClassList("pips");
+            for (int p = 0; p <= GameManager.StaffUpgradeCosts[i].Length; p++)
+            {
+                var pip = new VisualElement();
+                pip.AddToClassList("pip");
+                pip.EnableInClassList("on", p <= lvl);
+                pips.Add(pip);
+            }
+            row.Add(pips);
+            row.Add(Text($"Mood: {GameManager.MoodWord(gm.staffMood[i])}" + (gm.StaffRested(role) ? ", rested" : ""), "scard-mood"));
+            card.Add(row);
+        }
+        else
+        {
+            // The price, up top where it's easy to see.
+            var price = new VisualElement();
+            price.AddToClassList("scard-price");
+            var coin = new VisualElement();
+            coin.AddToClassList("coin-icon");
+            price.Add(coin);
+            price.Add(Text(booked ? $"{gm.hirePaid[i]} set aside" : $"Hire: {fee}", "scard-price-text"));
+            card.Add(price);
+        }
+
+        card.Add(Text("What they do", "scard-head"));
+        foreach (var line in GameManager.StaffDoes[i]) card.Add(Line(line));
+        if (GameManager.StaffCarries(role)) card.Add(Line($"bag|Carries {Books(gm.StaffCarry(role))} per trip"));
+
+        if (hired && cost >= 0)
+        {
+            var next = new VisualElement();
+            next.AddToClassList("scard-next");
+            next.Add(Text($"Next: Level {lvl + 2}", "scard-head"));
+            next.Add(Line("energy|Works 35% faster"));
+            next.Add(Line("ask|Needs your help less often"));
+            if (GameManager.StaffCarries(role)) next.Add(Line($"bag|Carries {Books(gm.StaffCarry(role) + 1)} per trip"));
+            card.Add(next);
+        }
+        else if (!hired)
+        {
+            var later = new VisualElement();
+            later.AddToClassList("scard-next");
+            later.AddToClassList("later");
+            later.Add(Text("Upgrades later", "scard-head"));
+            later.Add(Text(string.Join("  ·  ", GameManager.StaffUpgradeCosts[i].Select((c, n) => $"Level {n + 2}: {c}")), "scard-text"));
+            later.Add(Text("Each: faster, needs less help" + (GameManager.StaffCarries(role) ? ", +1 book per trip" : ""), "scard-text"));
+            card.Add(later);
+        }
+
+        var spacer = new VisualElement();
+        spacer.AddToClassList("scard-spacer");
+        card.Add(spacer);
+        var foot = new VisualElement();
+        foot.AddToClassList("ucard-foot");
         Action click = () => { gm.ToggleStaff(role); Refresh(root); };
         Button b;
-        if (gm.Hired(role))
-        {
-            int cost = gm.StaffUpgradeCost(role);
-            b = cost < 0 ? PlainButton("Max level") : PriceButton("Upgrade", cost, click);
-        }
-        else if (gm.InterviewBooked(role)) b = PlainButton("Cancel", click);
-        else if (!gm.StaffUnlocked(role)) b = PlainButton($"Day {GameManager.StaffUnlockDay[(int)role]}");
-        else b = PlainButton("Interview", click);
-        b.SetEnabled(enabled);
-        row.Add(b);
+        if (hired) b = cost < 0 ? PlainButton("Max level") : PriceButton("Upgrade", cost, click);
+        else if (booked) b = PlainButton("Booked");
+        else if (!unlocked) b = PlainButton($"Day {GameManager.StaffUnlockDay[i]}");
+        else b = PriceButton("Interview", fee, click);
+        b.SetEnabled(hired ? cost >= 0 && gm.Coins >= cost : !booked && unlocked && gm.Coins >= fee);
+        foot.Add(b);
+        card.Add(foot);
+        return card;
+    }
+
+    static string Books(int n) => n == 1 ? "1 book" : $"{n} books";
+
+    /// <summary>"icon|text": a small pixel icon (.si-NAME) and a line of text.</summary>
+    static VisualElement Line(string iconAndText)
+    {
+        int bar = iconAndText.IndexOf('|');
+        var row = new VisualElement();
+        row.AddToClassList("scard-line");
+        var icon = new VisualElement();
+        icon.AddToClassList("si");
+        icon.AddToClassList("si-" + iconAndText.Substring(0, bar));
+        row.Add(icon);
+        row.Add(Text(iconAndText.Substring(bar + 1), "scard-text"));
         return row;
     }
 

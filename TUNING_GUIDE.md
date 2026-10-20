@@ -107,7 +107,7 @@ All of it is in `Core/GameManager.cs`, in the *Play mode* section:
 | What each upgrade does | Search the upgrade name in `GameManager.cs`: `PatienceMultiplier`, `TipMultiplier`, `ReadingFeeMultiplier`, `VisitorMultiplier`, `BagCapacity`, `ApplyUpgrades()` (shoes, repair speed and chance). Stamina: `Player/PlayerMover.cs` → `MaxSeconds`, `Recovery` |
 | Upgrade icons | `Assets/UI Toolkit/PC.uss` → `.upg-0` … `.upg-8` |
 | Staff names, wages, unlock days, order | `Core/GameManager.cs` → `StaffNames`, `StaffInfo`, `StaffWage`, `StaffUnlockDay`, `StaffOrder` |
-| Staff hire fees and upgrade prices | `Core/GameManager.cs` → `StaffHireFee` (usual one-time price: Archive 250, Main hall 70, Rare 450; candidates ± `dPrice`×5%), `StaffUpgradeCosts`; speed per level in `StaffWorkFactor` (+35%) |
+| Staff hire fees and upgrade prices | `Core/GameManager.cs` → `StaffHireFee` (usual one-time price: Archive 250, Main hall 70, Rare 450; candidates ± `dPrice`×5%), `StaffUpgradeCosts` (Archivist 150/300, Cleaner 50/100, Rare 450); speed per level in `StaffWorkFactor` (+35%); books per trip in `StaffCarry` (1 + level, archivist and cleaner). The full hire fee is paid when the interview is booked; the difference comes back after it (`MorningInterviews`) |
 | How often staff need help, and their problems | `Day/StaffHelp.cs` → `ResetTimer` (80–150 s × (1 + level)), `Problems` |
 | Interview pay talk | `Day/StaffInterview.cs` → `PayTalk` (offers 60% / 80% / full) and the `floor` range in `CandidatesFor` |
 | Which character is which staff, their chairs, typing sound | Inspector → `GameManager` → `StaffManager` |

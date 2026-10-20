@@ -658,3 +658,11 @@ Small, contained edits. Please check them when merging:
 - Notes and Reserved sit top right, stacked under the coin purse (`Notebook.uss`).
 - With Notes collapsed, the notebook is only the tab's height (`#notebook.collapsed { max-height: 80px; }`), so Reserved moves up right under it; opening Notes pushes Reserved down.
 - Notes and Reserved pages are 430px wide. `NotebookHUD.FitLists` sizes the lists from the screen height: Notes and Reserved get half each of the space below the coin purse. A folded box takes only its tab's height.
+
+## Staff page, hiring, Day Report, birthday (playtest round 2)
+- PC Shop > Staff: one card per role (`PCShopView.StaffCard`): icon, name/role, level pips and mood (hired) or the hire price tag (not hired), "What they do" (`GameManager.StaffDoes`, icon|text, icons `.si-*` in PC.uss), "Next: Level N" (35% faster, needs less help, +1 book per trip), or "Upgrades later" with the prices; button Interview (price) / Upgrade (price) / Booked / Day N / Max level.
+- Hiring is paid up front: `ToggleStaff` takes the full `StaffHireFee` when the interview is booked (`hirePaid[]`, saved; it can't be cancelled). After the morning interview, `MorningInterviews` hands back the difference (hired for less) or the whole budget (nobody hired), logged as "Hire refund" with a feed notice. The interview's Hire buttons see coins + the budgets. Old saves with an unpaid booking still pay at hire time.
+- Archivist and cleaner carry `GameManager.StaffCarry` books per trip (1 + level): the cleaner takes that many good returns and shelves them one by one; the archivist takes that many worn/damaged copies (bin or shelf) and leaves them on the repair desk to mend one by one. At closing, a problem or going home, everything in their arms goes back to the return bin (`StaffWorker.DropAll`).
+- Cleaner upgrades cost 50 / 100 (were 35 / 70).
+- Day Report left page: today's twist in a gold box, then nine tiles (icon, number, name; zero = faded). The coins ledger (start, in, out, coins now, wages) is the first block of the Summary tab.
+- Library card birthday: Day / Month / Year buttons show the kit's drop-down arrow (`.dd-arrow`, fixed 44px height) so they read as pick lists, not text boxes.
