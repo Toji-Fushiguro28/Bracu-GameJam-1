@@ -146,7 +146,7 @@ public class GameManager : MonoBehaviour
         "Run longer and catch your breath faster.",
     };
     public const int MaxUpgrade = 3;
-    public static int UpgradeCost(int level) => 40 + level * 40;
+    public static int UpgradeCost(int level) => 60 + level * 40; // 60 / 100 / 140: the first one is just out of reach of the starting coins
 
     [NonSerialized] public List<Member> members = new List<Member>();
     [NonSerialized] public bool[] staff = new bool[3];
@@ -261,7 +261,14 @@ public class GameManager : MonoBehaviour
     /// <summary>The clock (and patience, reading, repairs...) stands still while a menu or chat is open.</summary>
     public bool Paused => PlayerLock.FreezesTime;
     /// <summary>Game-time delta: 0 while paused.</summary>
-    public static float Dt => Instance != null && Instance.Paused ? 0f : Time.deltaTime;
+    public static float Dt => Time.deltaTime * (Instance != null ? Instance.TimeScale : 1f);
+
+    /// <summary>How fast game time runs: 0 while paused (dialogue, menus, reports), slower while a work screen is open
+    /// (computer, shelf, repair desk) so looking things up costs a little time but isn't punishing, else 1.</summary>
+    public float TimeScale => Paused ? 0f : PlayerLock.SlowsTime ? ScreenTimeScale : 1f;
+    /// <summary>Game-time speed with a work screen open, by mode (Cozy is gentlest).</summary>
+    public float ScreenTimeScale => Mode(0.3f, 0.4f, 1f); // Busy: no slow-down
+    public bool Slowed => !Paused && PlayerLock.SlowsTime && ScreenTimeScale < 1f;
 
     // ---------------- Orders, deliveries, reservations ----------------
 
@@ -792,7 +799,7 @@ public class GameManager : MonoBehaviour
         if (Tutorial.HoldsClock) return; // the guided first day: the clock waits for you
         if (orders.Count > 0) DeliverDue();
         float hoursPerSecond = (closeHour - openHour) / Mathf.Max(0.1f, realMinutesPerDay * 60f);
-        Hour = Mathf.Min(closeHour, Hour + hoursPerSecond * Time.deltaTime);
+        Hour = Mathf.Min(closeHour, Hour + hoursPerSecond * Time.deltaTime * TimeScale); // slower while a work screen is open
 
         if (CurrentPhase == Phase.Open && Hour >= closingHour) SetPhase(Phase.Closing);
         else if (CurrentPhase == Phase.Closing && Hour >= closeHour) SetPhase(Phase.Closed);

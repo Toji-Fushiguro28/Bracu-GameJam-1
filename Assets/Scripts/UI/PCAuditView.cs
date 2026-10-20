@@ -57,7 +57,7 @@ public static class PCAuditView
 
         var what = new VisualElement();
         what.AddToClassList("log-what");
-        what.Add(Text(money || e.kind == RequestLog.Kind.Card || e.kind == RequestLog.Kind.Task ? e.line : $"\"{e.line}\"", "log-line"));
+        what.Add(Text(money || e.kind == RequestLog.Kind.Card || e.kind == RequestLog.Kind.Task || e.kind == RequestLog.Kind.News ? e.line : $"\"{e.line}\"", "log-line"));
         string sub = string.IsNullOrEmpty(e.who) ? RequestLog.KindName(e.kind) : $"{e.who}  ·  {RequestLog.KindName(e.kind)}";
         if (e.kind == RequestLog.Kind.Book && e.hint != null) sub += e.usedHint ? "  ·  asked for a hint" : "  ·  free hint";
         what.Add(Text(sub, "log-sub"));
