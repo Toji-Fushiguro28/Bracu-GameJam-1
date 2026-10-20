@@ -324,11 +324,24 @@
 .detail-tags { flex-direction: row; flex-wrap: wrap; margin-top: 8px; }
 .detail-tags .badge { margin: 0 6px 6px 0; }
 .detail-scroll { flex-grow: 1; padding: 10px 16px 0 16px; }
-.facts { flex-direction: row; flex-wrap: wrap; margin-bottom: 8px; }
-.fact { width: 50%; flex-direction: row; margin-bottom: 4px; }
-.fact-key { width: 90px; font-size: 20px; color: var(--ink-dim); margin: 0; padding: 0; }
-.fact-value { flex-grow: 1; flex-shrink: 1; font-size: 20px; margin: 0; padding: 0; white-space: normal; }
-.abstract-label { font-size: 17px; letter-spacing: 1px; color: var(--ink-dim); margin: 6px 0 2px 0; padding: 0; }
+/* Book facts: one row each, pixel icon -> name -> value, faint stripes so the eye can follow a row. */
+.facts { flex-direction: column; margin-bottom: 10px; border-top-width: 2px; border-bottom-width: 2px; border-color: var(--rule); }
+.fact { flex-direction: row; align-items: center; padding: 5px 8px 6px 6px; }
+.fact.alt { background-color: rgba(207, 176, 113, 0.28); }
+.fact-icon { width: 30px; height: 30px; margin-right: 10px; flex-shrink: 0; -unity-background-scale-mode: scale-to-fit; }
+.fi-shelf { background-image: url("project://database/Assets/Art/UI/PC/T_IconShelf.png"); }
+.fi-stock { background-image: url("project://database/Assets/Art/UI/PC/T_IconBooks.png"); }
+.fi-condition { background-image: url("project://database/Assets/Art/UI/PC/T_IconMagnifier.png"); }
+.fi-condition.damaged { background-image: url("project://database/Assets/Art/UI/PC/T_IconDamaged.png"); }
+.fi-coin { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconCoin01a.png"); width: 26px; margin-left: 2px; margin-right: 12px; }
+.fi-status { background-image: url("project://database/Assets/Art/UI/PC/T_IconClock.png"); }
+.fi-about { background-image: url("project://database/Assets/Art/UI/PC/T_IconScroll.png"); width: 26px; height: 26px; margin-right: 8px; }
+.fact-key { width: 110px; font-size: 20px; color: var(--ink-dim); margin: 0; padding: 0; }
+.fact-value { flex-grow: 1; flex-shrink: 1; font-size: 20px; margin: 0; padding: 0; white-space: normal; -unity-text-align: middle-right; }
+/* The abstract on its own framed note, filling the page. */
+.about-box { flex-grow: 1; min-height: 170px; padding: 8px 12px 12px 12px; margin-bottom: 4px; background-color: rgba(207, 176, 113, 0.22); border-width: 2px; border-color: var(--rule); }
+.about-head { flex-direction: row; align-items: center; margin-bottom: 6px; }
+.abstract-label { font-size: 17px; letter-spacing: 1px; color: var(--ink-dim); margin: 0; padding: 0; }
 .detail-abstract { font-size: 22px; margin: 0; padding: 0; white-space: normal; }
 .reserve { margin: 12px 0 8px 0; padding: 8px 10px 10px 10px; font-size: 19px; color: var(--bad); white-space: normal; border-width: 2px; border-color: var(--bad); }
 .reserve.done { color: var(--ok); border-color: var(--ok); }

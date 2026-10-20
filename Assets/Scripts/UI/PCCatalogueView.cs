@@ -279,6 +279,18 @@ public static class PCCatalogueView
         Set("detail-stock", notOwned ? "not in library" : b.Quantity > 0 ? b.Quantity + " on shelf" : "none left", soldOut ? "bad" : null);
         Set("detail-condition", b.Quantity > 0 ? b.ConditionSummary : "-", b.DamagedCopies > 0 ? "bad" : b.WornCopies > 0 ? "warn" : null);
         Set("detail-sale", !b.Sellable ? "read here only" : b.SaleValue + " coins" + (b.NewRelease ? " (new title +30%)" : ""), !b.Sellable ? "warn" : b.NewRelease ? "ok" : null);
+        root.Q("detail-condition-icon")?.EnableInClassList("damaged", b.DamagedCopies > 0);
+        // Status row (only when there's something to say): who's waiting for it, what's on its way, if it's in demand.
+        var status = new List<string>();
+        var who = gm != null ? gm.reservations.Find(r => r.title == b.Title) : null;
+        if (who != null) status.Add($"reserved for {who.name}");
+        int arriving = gm != null ? gm.OnOrder(b) : 0;
+        if (arriving > 0) status.Add($"{arriving} on order");
+        if (dealer) status.Add("VIP request");
+        if (popular) status.Add("popular today");
+        var statusRow = root.Q("detail-status-row");
+        if (statusRow != null) statusRow.style.display = status.Count > 0 ? DisplayStyle.Flex : DisplayStyle.None;
+        Set("detail-status", string.Join(", ", status), who != null && arriving == 0 && !BookRequest.InStock(b) ? "bad" : null);
         Set("detail-abstract", b.Abstract);
 
         // Someone's waiting for it: who, by when, and whether it's on its way.

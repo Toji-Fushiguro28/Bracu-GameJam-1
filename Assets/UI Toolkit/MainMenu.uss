@@ -188,3 +188,5 @@
 
 /* Mode cards use the pixel button too: on hover (orange) every line turns light so it stays readable */
 .mode-card:hover .mode-name, .mode-card:hover .mode-badge, .mode-card:hover .mode-info { color: rgb(255, 246, 232); }
+/* ...on the orange "hot" button (the recommended card's own cream background would otherwise stay, hiding the white text). */
+.mode-card:hover, .mode-card.recommended:hover { background-image: url("project://database/Assets/Art/UI/PC/T_PC_ButtonHot.png"); }

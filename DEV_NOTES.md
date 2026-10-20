@@ -609,3 +609,10 @@ Small, contained edits. Please check them when merging:
 - The pixel "?" is only for story visitors waiting around the library. Ordinary visitors at the desk show just their request icon until you talk to them (`Customer.WaitingText`). The screen-edge "?" arrow is edge-only (`WorldPrompts.Pin(..., edgeOnly)`), so on screen there is one "?", not two.
 - A roaming story visitor whose chat turns into a book request or a library card (`ContinueWithRequest` / `ContinueAsSignUp`) says "I'll see you at the desk!", gets up, queues, and asks at the desk (`Customer.ComeToDesk`, via `presetRequest`). Nobody asks for a book or a card from a chair any more.
 - Book signing: the author pays the library 30 coins for her table when she arrives at 2:00 PM (`DayStory.SigningFee`), shown in her line, a pop and the Log.
+
+## Book pages overhaul (Catalogue, shelf, hands)
+- New 12x12 pixel icons in `Art/UI/PC`: `T_IconBook` / `T_IconBookWorn` / `T_IconBookDamaged`, `T_IconMagnifier`, `T_IconClock`, `T_IconScroll` (Point filter, uncompressed). Reused: `T_IconBooks` (stock), `T_IconShelf`, `T_IconDamaged`, the kit coin, `T_IconKey`.
+- Catalogue details (`PCBooksTemplate.uxml`, `PC.uss` `.fact*`, `.about-box`): one row per fact, icon -> name -> value (Shelf, Stock, Condition (magnifier, or the damaged icon), Sells for, and a Status row only when reserved / on order / VIP request / popular), striped; the abstract sits in an "About this book" box.
+- Shelf rows (`ShelfUI.BookRow`): title (+ Popular, + "Reserved for X" tag), author + subject, then one dot per copy (green good, amber worn, red damaged), the price (or a key + "read here"), and "+N coming" with a clock. Left edge shows the tier (Epic / Legendary). When only damaged copies are left the main button says "Damaged".
+- Right page: your hands as slots (one per book you can carry, pixel book coloured by condition, empty outline), then the "back cover" of the book you clicked (abstract + type, subject, tags, tier, read-here-only chips).
+- HUD carry slot shows the same pixel book for the top book in your hands.

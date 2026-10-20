@@ -62,7 +62,7 @@ public class HUD : MonoBehaviour
         }).ExecuteLater(600);
     }
     Label dayLabel, clockLabel, coinLabel, carryLabel;
-    VisualElement carrySlot;
+    VisualElement carrySlot, carryBook;
     PlayerCarry carry;
     string lastClock;
     Label banner, repLabel, repDelta;
@@ -376,6 +376,15 @@ public class HUD : MonoBehaviour
     void ShowCarry(BookData book)
     {
         carrySlot?.EnableInClassList("hidden", book == null);
+        // The top book as a pixel book in the slot, coloured by its condition.
+        var slotIcon = carrySlot?.Q(className: "hud-carry-icon");
+        if (slotIcon != null)
+        {
+            if (carryBook == null) { carryBook = new VisualElement(); carryBook.AddToClassList("carry-book"); carryBook.pickingMode = PickingMode.Ignore; slotIcon.Add(carryBook); }
+            var cond = carry != null ? carry.CarriedCondition : BookCondition.Good;
+            carryBook.EnableInClassList("worn", cond == BookCondition.Worn);
+            carryBook.EnableInClassList("damaged", cond == BookCondition.Damaged);
+        }
         if (carryLabel == null) return;
         // Top book first; the bag count shows once you can carry more than one.
         string text = "";

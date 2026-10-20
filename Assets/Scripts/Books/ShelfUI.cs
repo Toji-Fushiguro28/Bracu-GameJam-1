@@ -54,10 +54,31 @@ public class ShelfUI : MonoBehaviour
         handTitle = doc.Q<Label>("hand-title");
         handSub = doc.Q<Label>("hand-sub");
         note = doc.Q<Label>("shelf-note");
-        // What the book you picked out is about (click a row).
+        // Your hands as slots (replaces the single empty frame).
+        slots = new VisualElement();
+        slots.AddToClassList("hand-slots");
+        var frame = handInfo.Q(className: "hand-book");
+        if (frame != null) frame.style.display = DisplayStyle.None;
+        handInfo.Insert(0, slots);
+        // The back cover of the book you picked out (click a row).
+        aboutBox = new VisualElement();
+        aboutBox.AddToClassList("about-box");
+        var head = new VisualElement();
+        head.AddToClassList("about-head");
+        var scroll = new VisualElement();
+        scroll.AddToClassList("about-icon");
+        head.Add(scroll);
+        aboutTitle = new Label();
+        aboutTitle.AddToClassList("about-title");
+        head.Add(aboutTitle);
+        aboutBox.Add(head);
         about = new Label { name = "shelf-about" };
         about.AddToClassList("shelf-about");
-        note.parent.Insert(note.parent.IndexOf(note), about);
+        aboutBox.Add(about);
+        aboutTags = new VisualElement();
+        aboutTags.AddToClassList("about-tags");
+        aboutBox.Add(aboutTags);
+        note.parent.Insert(note.parent.IndexOf(note), aboutBox);
         putBack = doc.Q<Button>("put-back");
         doc.Q<Button>("shelf-close")?.RegisterCallback<ClickEvent>(_ => Close());
         putBack?.RegisterCallback<ClickEvent>(_ => PutBack());
@@ -116,12 +137,7 @@ public class ShelfUI : MonoBehaviour
         foreach (var b in books)
         {
             var book = b;
-            string sub = $"{book.Author}  ·  x{book.Quantity}";
-            if (book.WornCopies > 0) sub += $"  ·  {book.WornCopies} worn";
-            if (book.DamagedCopies > 0) sub += $"  ·  <color=#B8322A>{book.DamagedCopies} damaged</color>";
-            if (book.Tier != BookTier.Normal) sub += "  ·  " + book.Tier;
-            var row = Row(book.Title, sub, GameManager.Instance != null && GameManager.Instance.IsPopular(book));
-            row.EnableInClassList("has-damage", book.DamagedCopies > 0);
+            var row = BookRow(book);
             Pickable(row, book);
 
             // Main Take grabs the best copy; extra buttons let you pick a worn/damaged one on purpose.
@@ -130,7 +146,9 @@ public class ShelfUI : MonoBehaviour
             // Buttons stacked in one column so the title keeps its width.
             var buttons = new VisualElement();
             buttons.AddToClassList("take-col");
-            buttons.Add(TakeButton("Take", best.HasValue, () => { if (book.BestCopy.HasValue) Take(book, book.BestCopy.Value); }));
+            // Only damaged copies left: the button says so.
+            bool onlyDamaged = best == BookCondition.Damaged;
+            buttons.Add(TakeButton(onlyDamaged ? "Damaged" : "Take", best.HasValue, () => { if (book.BestCopy.HasValue) Take(book, book.BestCopy.Value); }, onlyDamaged ? "take-damaged" : null));
             if (book.GoodCopies > 0 && book.WornCopies > 0)
                 buttons.Add(TakeButton("Worn", true, () => Take(book, BookCondition.Worn)));
             if (book.DamagedCopies > 0 && (book.GoodCopies > 0 || book.WornCopies > 0))
@@ -199,17 +217,37 @@ public class ShelfUI : MonoBehaviour
     {
         var held = carry.Carried;
         handInfo.EnableInClassList("empty", held == null);
+        // One slot per book you can carry: a pixel book (its colour shows the condition) or an empty outline.
+        slots.Clear();
+        for (int i = 0; i < Mathf.Max(1, carry.Capacity); i++)
+        {
+            var slot = new VisualElement();
+            slot.AddToClassList("hand-slot");
+            var icon = new VisualElement();
+            icon.AddToClassList("hand-slot-book");
+            if (i < carry.Count)
+            {
+                var (b, c) = carry.Items[carry.Count - 1 - i]; // top book first
+                icon.EnableInClassList("worn", c == BookCondition.Worn);
+                icon.EnableInClassList("damaged", c == BookCondition.Damaged);
+                slot.tooltip = b.Title;
+            }
+            else icon.AddToClassList("empty");
+            slot.Add(icon);
+            slots.Add(slot);
+        }
         handTitle.text = held != null ? held.Title : "Hands empty";
         string more = "";
         for (int i = carry.Count - 2; i >= 0; i--) more += $"\n+ {carry.Items[i].book.Title}";
         handSub.text = held != null
-            ? $"{held.Author}  ·  {carry.CarriedCondition} copy{more}\n({carry.Count}/{carry.Capacity} in your bag)"
+            ? $"{held.Author}  ·  {carry.CarriedCondition} copy{more}"
             : carry.Capacity > 1 ? $"Take books from the left page. You can carry {carry.Capacity}." : "Take a book from the left page.";
         putBack.text = belongs > 1 ? $"Put back ({belongs})" : "Put back";
         putBack.SetEnabled(belongs > 0);
     }
 
-    Label about;
+    Label about, aboutTitle;
+    VisualElement aboutBox, aboutTags, slots;
     BookData picked;
 
     /// <summary>Clicking a row (not its buttons) shows what the book is about on the right page.</summary>
@@ -225,12 +263,86 @@ public class ShelfUI : MonoBehaviour
         });
     }
 
+    /// <summary>The back cover of the book you clicked: what it's about, its tags and type, and whether it's for sale.</summary>
     void ShowAbout()
     {
-        if (about == null) return;
-        about.text = picked == null ? "" : string.IsNullOrEmpty(picked.Abstract)
-            ? $"{BookRequest.H(picked.Title)}: no description."
-            : $"{BookRequest.H(picked.Title)}: {picked.Abstract}";
+        if (aboutBox == null) return;
+        aboutTags.Clear();
+        if (picked == null)
+        {
+            aboutTitle.text = "Back cover";
+            about.text = "Click a book on the left to read about it.";
+            about.AddToClassList("dim");
+            return;
+        }
+        about.RemoveFromClassList("dim");
+        aboutTitle.text = picked.Title;
+        about.text = string.IsNullOrEmpty(picked.Abstract) ? "No description." : picked.Abstract;
+        void Chip(string text, string cls = null)
+        {
+            var l = new Label(text);
+            l.AddToClassList("about-chip");
+            if (cls != null) l.AddToClassList(cls);
+            aboutTags.Add(l);
+        }
+        Chip(picked.TypeName);
+        if (!string.IsNullOrEmpty(picked.SubjectName)) Chip(picked.SubjectName);
+        foreach (var t in (picked.Tag ?? "").Split(',').Select(t => t.Trim()).Where(t => t.Length > 0)) Chip(t);
+        if (picked.Tier != BookTier.Normal) Chip(picked.Tier.ToString(), picked.Tier == BookTier.Epic ? "epic" : "legendary");
+        if (!picked.Sellable) Chip("Read here only", "warn");
+    }
+
+    /// <summary>A shelf row: the title (with Popular / Reserved), author and subject, then one dot per copy
+    /// (green good, amber worn, red damaged), the price and anything on order. The left edge shows the tier.</summary>
+    VisualElement BookRow(BookData book)
+    {
+        var gm = GameManager.Instance;
+        var res = gm != null ? gm.reservations.Find(r => r.title == book.Title) : null;
+        var row = Row(book.Title, $"{book.Author}  ·  {book.SubjectName}", gm != null && gm.IsPopular(book));
+        row.AddToClassList("book-spine");
+        row.EnableInClassList("epic", book.Tier == BookTier.Epic);
+        row.EnableInClassList("legendary", book.Tier == BookTier.Legendary);
+        row.EnableInClassList("has-damage", book.DamagedCopies > 0);
+        var text = row.Q(className: "shelf-row-text");
+        if (res != null)
+        {
+            var tag = new Label($"Reserved for {res.name}");
+            tag.AddToClassList("row-tag");
+            text.Insert(1, tag);
+        }
+        var meta = new VisualElement();
+        meta.AddToClassList("row-meta");
+        // Copies, one dot each (capped, with the rest as a number).
+        var pips = new VisualElement();
+        pips.AddToClassList("row-pips");
+        int shown = 0;
+        void Pips(int n, string cls) { for (int i = 0; i < n && shown < 8; i++, shown++) { var p = new VisualElement(); p.AddToClassList("cpip"); if (cls != null) p.AddToClassList(cls); pips.Add(p); } }
+        Pips(book.GoodCopies, null);
+        Pips(book.WornCopies, "worn");
+        Pips(book.DamagedCopies, "damaged");
+        meta.Add(pips);
+        var count = new Label(book.Quantity == 0 ? "none left" : book.Quantity > shown ? $"x{book.Quantity}" : "");
+        count.AddToClassList("row-meta-text");
+        count.EnableInClassList("bad", book.Quantity == 0);
+        meta.Add(count);
+        var coin = new VisualElement();
+        coin.AddToClassList(book.Sellable ? "row-coin" : "row-lock");
+        meta.Add(coin);
+        var price = new Label(book.Sellable ? book.SaleValue.ToString() : "read here");
+        price.AddToClassList("row-meta-text");
+        meta.Add(price);
+        int coming = gm != null ? gm.OnOrder(book) : 0;
+        if (coming > 0)
+        {
+            var clock = new VisualElement();
+            clock.AddToClassList("row-clock");
+            meta.Add(clock);
+            var c = new Label($"+{coming} coming");
+            c.AddToClassList("row-meta-text");
+            meta.Add(c);
+        }
+        text.Add(meta);
+        return row;
     }
 
     VisualElement Row(string main, string sub, bool popular = false)

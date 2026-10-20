@@ -694,3 +694,52 @@
     background-color: rgba(0, 0, 0, 0);
     -unity-slice-left: 0; -unity-slice-right: 0; -unity-slice-top: 0; -unity-slice-bottom: 0;
 }
+
+/* ---------- Shelf book (overhaul): book rows, hands as slots, back cover ---------- */
+/* Rows: a spine strip on the left (gold Epic, purple Legendary), then title / author + subject / copies, price, orders. */
+.shelf-row.book-spine { border-left-width: 5px; border-left-color: rgba(128, 92, 70, 0.35); padding-left: 8px; }
+.shelf-row.book-spine.epic { border-left-color: rgb(61, 52, 139); }
+.shelf-row.book-spine.legendary { border-left-color: rgb(95, 15, 64); }
+.row-tag { align-self: flex-start; color: rgb(184, 50, 42); font-size: 15px; padding: 0 6px 2px 6px; margin: 2px 0; border-width: 2px; border-color: rgb(184, 50, 42); }
+.row-meta { flex-direction: row; align-items: center; margin-top: 3px; }
+.row-pips { flex-direction: row; align-items: center; margin-right: 6px; }
+.cpip { width: 13px; height: 13px; margin-right: 3px; border-width: 2px; border-color: rgb(73, 51, 51); background-color: rgb(98, 168, 84); }
+.cpip.worn { background-color: rgb(225, 196, 50); }
+.cpip.damaged { background-color: rgb(212, 62, 62); }
+.row-meta-text { color: var(--ink-soft); font-size: 16px; margin: 0 10px 0 0; padding: 0; }
+.row-meta-text.bad { color: rgb(184, 50, 42); }
+.row-coin, .row-lock, .row-clock { width: 18px; height: 18px; margin-right: 4px; flex-shrink: 0; -unity-background-scale-mode: scale-to-fit; }
+.row-coin { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconCoin01a.png"); width: 16px; }
+.row-lock { background-image: url("project://database/Assets/Art/UI/PC/T_IconKey.png"); }
+.row-clock { background-image: url("project://database/Assets/Art/UI/PC/T_IconClock.png"); }
+
+/* Hands: one slot per book you can carry. */
+.hand-info { flex-grow: 0; margin-top: 4px; }
+.hand-slots { flex-direction: row; justify-content: center; margin-bottom: 8px; }
+.hand-slot {
+    width: 74px; height: 74px; margin: 0 4px; align-items: center; justify-content: center;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Slot01a.png");
+}
+.hand-slot-book, .carry-book { width: 42px; height: 42px; -unity-background-scale-mode: scale-to-fit; background-image: url("project://database/Assets/Art/UI/PC/T_IconBook.png"); }
+.hand-slot-book.worn, .carry-book.worn { background-image: url("project://database/Assets/Art/UI/PC/T_IconBookWorn.png"); }
+.hand-slot-book.damaged, .carry-book.damaged { background-image: url("project://database/Assets/Art/UI/PC/T_IconBookDamaged.png"); }
+.hand-slot-book.empty { opacity: 0.22; }
+.hand-title { font-size: 24px; }
+.hand-sub { font-size: 17px; margin-top: 2px; }
+
+/* The back cover of the book you clicked. */
+.about-box { flex-grow: 1; margin: 10px 4px 6px 4px; padding: 8px 10px 10px 10px; background-color: rgba(207, 176, 113, 0.25); border-width: 2px; border-color: rgba(128, 92, 70, 0.55); }
+.about-head { flex-direction: row; align-items: center; margin-bottom: 4px; }
+.about-icon { width: 24px; height: 24px; margin-right: 8px; flex-shrink: 0; -unity-background-scale-mode: scale-to-fit; background-image: url("project://database/Assets/Art/UI/PC/T_IconScroll.png"); }
+.about-title { color: var(--accent); font-size: 20px; white-space: normal; flex-shrink: 1; margin: 0; padding: 0; }
+.shelf-about { margin: 0 0 6px 0; }
+.shelf-about.dim { color: var(--ink-soft); }
+.about-tags { flex-direction: row; flex-wrap: wrap; }
+.about-chip { font-size: 15px; color: var(--ink-soft); margin: 0 5px 5px 0; padding: 1px 6px 3px 6px; border-width: 2px; border-color: rgba(128, 92, 70, 0.55); }
+.about-chip.epic { color: rgb(61, 52, 139); border-color: rgb(61, 52, 139); }
+.about-chip.legendary { color: rgb(95, 15, 64); border-color: rgb(95, 15, 64); }
+.about-chip.warn { color: rgb(184, 50, 42); border-color: rgb(184, 50, 42); }
+
+/* HUD: the book in your hands, inside its slot. */
+.hud-carry-icon { align-items: center; justify-content: center; }
+.carry-book { width: 34px; height: 34px; }
