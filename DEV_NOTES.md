@@ -444,7 +444,7 @@ Small, contained edits. Please check them when merging:
 - The numbers are constants at the top of `Customer.cs` (`VipCardFee`, `VipCardTip`, `VipFeeMultiplier`, `RareShare`, `RareMinFee`, `MaxChatBonus`). The table is in `TUNING_GUIDE.md`.
 
 ## The Dean's goal, consequences and the ending
-- **Goal:** reach `GameManager.ReputationGoal` (Cozy 40 / Standard 60 / Busy 75) by the end of Day 5. The Dean sets it at the end of the new-game intro. It shows on the HUD bar (star, "37/60", gold once reached, with a +/- pop), in the morning banner and in the Day Report (how many to go and how many days left). After the ending the HUD shows just the reputation.
+- **Goal:** reach `GameManager.ReputationGoal` (Cozy 60 / Standard 100 / Busy 125) by the end of Day 5. The Dean sets it at the end of the new-game intro. It shows on the HUD bar (star, "37/60", gold once reached, with a +/- pop), in the morning banner and in the Day Report (how many to go and how many days left). After the ending the HUD shows just the reputation.
 - **Ending:** `GoalTier` (2 reached, 1 close at 60%+, 0 missed) changes the Dean's farewell: the board signs the library over, wants one more season, or is worried. The end page shows "Reputation X of Y" and the result. The game carries on either way.
 - **Consequences:** wrong book -1 reputation. Walked out -3, never ordered -3, said "we can't get that" when you could -2, waited for nothing -2. A member let down in those ways stays away the next day (`Member.awayUntil`, saved with the members). Pickups still come.
 - **Patience:** `PatienceDayFactor` cuts patience to 85% on Day 3 and 75% from Day 4 (all modes; Cozy visitors still never walk out).
@@ -623,3 +623,12 @@ Small, contained edits. Please check them when merging:
 ## Notification feed
 - `HUD.ShowBanner(text, seconds)` no longer shows one big banner: it feeds the top-left notification list. Each line is its own card (pixel icon + text, newest on top, up to 6); lines over ~60 letters split at a sentence break. Icons are picked from the text (`HUD.IconFor`: clock, key, coin, star, books, broom, scroll). Messages of 7 s or more are urgent: orange edge, stay 25 s, click to dismiss; others fade after 14 s. Staff notes (`HUD.StaffNote`) join the feed for 4 s with their role icon. Every banner card is also kept in the Log as a "Notice" (`RequestLog.News`, `Kind.News`); staff notes are not (too frequent). Clicks on a card do not reach the library (`HUD.PointerOverFeed`). Cards are queued and appear one every 3 s, and wait while a tutorial card or hint is on screen (`Tutorial.CardShowing`); they go in the Log at once.
 - Tips (`Tutorial.Show` hints) now appear in the feed (`HUD.Tip`): lamp icon, gold edge, "TIP · click to close", and they stay until clicked (never pushed out by other cards). The guided Day 1 tutorial keeps its own card.
+
+## Queue, leaving, second requests, return bin
+- Queue: someone already standing in the line overtakes the person ahead if that person is still more than 3 m from their spot (`CounterQueue.MoveUp`), so nobody walking in from afar holds up the desk.
+- Leaving from the desk area: walk to `CounterQueue.LeaveVia` (front spot + `leaveViaOffset`, left of the desk) first, then the exit, so they do not walk back down the L-shaped line. Nobody leaves with a "?" over their head.
+- Talking to a story visitor waiting with a "?": +1 reputation (once).
+- Second requests (a new member right after their card, a VIP after a Rare card): they stay at the desk and ask after their thank-you (2.5 s) with another bell ring (`Customer.AskAgainAtDesk`), instead of going round the line again. Clicks during that pause are ignored.
+- Return bin: clicking it opens the book screen (like the cart): one row per returned copy, its condition and where it goes (its shelf, or the repair desk), a Take button per copy, and Put back for copies you took out (`ReturnBin.Take/PutBack/CameFromBin`). Refreshes when staff or visitors change the bin while it is open.
+- Goals: Cozy 60, Standard 100, Busy 125 (about what a strong player can earn by Day 5 in Busy).
+- Ending: the Dean no longer says "it was eleven, nine of them my bridge club"; he says there were far fewer when he left (or a gentler line for 3 or fewer members).

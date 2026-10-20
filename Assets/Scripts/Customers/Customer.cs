@@ -261,6 +261,7 @@ public class Customer : ClickInteractable
                 break;
             case State.Leaving:
                 if (!Arrived()) break;
+                if (leavingVia) { leavingVia = false; agent.SetDestination(CounterQueue.Instance.exit.position); break; }
                 if (sneaking) { sneaking = false; DayStory.Instance?.ThiefGotAway(this, heldBook); heldBook = null; }
                 Destroy(gameObject);
                 break;
@@ -415,7 +416,14 @@ public class Customer : ClickInteractable
         int index = queue.IndexOf(this);
         agent.SetDestination(queue.SlotPosition(index));
         // Further back in the line: face the person ahead (the line bends along the wall).
-        if (index > 0 && Arrived()) { FaceTowards(queue.SlotPosition(index - 1)); return; }
+        if (index > 0 && Arrived())
+        {
+            // The one ahead is still far off (walking in from the door or a shelf): this one is here, so goes first.
+            var ahead = queue.At(index - 1);
+            if (ahead != null && (ahead.transform.position - queue.SlotPosition(index - 1)).sqrMagnitude > 3f * 3f) { queue.MoveUp(this); return; }
+            FaceTowards(queue.SlotPosition(index - 1));
+            return;
+        }
         if (index != 0 || !Arrived()) return;
         transform.rotation = queue.FacingDesk;
         GameAudio.Play(a => a.customerArrives);
@@ -532,6 +540,7 @@ public class Customer : ClickInteractable
             case State.Waiting: break;
             default: return;
         }
+        if (request == null && kind != Kind.SignUp && kind != Kind.Pickup) return; // about to ask (their second request): a moment
         if (kind == Kind.SignUp)
         {
             introduced = true;
@@ -925,11 +934,10 @@ public class Customer : ClickInteractable
                 GM.AddCoins(bonus);
                 RequestLog.Paid(this, bonus, FirstName, "Knew the right shelf: chat bonus");
                 GM.Today.Earn(vip ? GameManager.DayStats.Source.Vip : GameManager.DayStats.Source.Reading, bonus);
-                GM.Today.tips += bonus;
-                GM.AddReputation(1);
+                GM.Today.tips += bonus; // a tip, as before (reputation comes from hearing out "?" visitors)
                 Members.Satisfy(Membership, 0.5f);
                 GameAudio.Play(a => a.cardIssued, 0.7f);
-                HUD.SkillPop(transform.position + Vector3.up * 2.2f, $"Right shelf! +{bonus} coins, +1 reputation");
+                HUD.SkillPop(transform.position + Vector3.up * 2.2f, $"Right shelf! +{bonus} coins");
             }
             else if (outcome == "wrong") { Members.Satisfy(Membership, -0.25f); GameAudio.Play(a => a.wrongBook, 0.6f); }
             else Members.Satisfy(Membership, 0.15f);
@@ -1055,10 +1063,10 @@ public class Customer : ClickInteractable
         {
             // A scholar with a fresh Rare card goes straight to reading.
             Say($"Splendid. Now, to the Rare Books room!  +{fee + tip}", 3f);
-            CounterQueue.Instance.Leave(this);
             request = null; clue = null; heard = false; usedHint = false; introduced = false;
             kind = Kind.Reader;
-            if (!AttendantServes()) JoinQueue();
+            CounterQueue.Instance.Leave(this);
+            if (!AttendantServes()) { CounterQueue.Instance.Join(this); AskAgainAtDesk(); } // ask for their book right here
             return null;
         }
         if (wish != null)
@@ -1081,12 +1089,27 @@ public class Customer : ClickInteractable
     /// <summary>A fresh member tries out their card: browse the shelves, or ask for something to read.</summary>
     void StayAsMember()
     {
-        CounterQueue.Instance.Leave(this);
         request = null; clue = null; heard = false; usedHint = false; introduced = false;
         kind = Random.value < 0.5f ? Kind.Browser : Kind.Reader;
-        if (kind == Kind.Browser && GoBrowse()) return;
-        if (kind == Kind.Browser) kind = Kind.Buyer;
-        JoinQueue();
+        if (kind == Kind.Browser) { CounterQueue.Instance.Leave(this); if (GoBrowse()) return; CounterQueue.Instance.Join(this); kind = Kind.Buyer; }
+        AskAgainAtDesk();
+    }
+
+    /// <summary>A second request straight after the first: they stay at the desk and ask (another ring of the bell)
+    /// once their thank-you has been seen, instead of going round the line again.</summary>
+    void AskAgainAtDesk()
+    {
+        state = State.Waiting;
+        StartCoroutine(AskAgainSoon());
+    }
+
+    System.Collections.IEnumerator AskAgainSoon()
+    {
+        yield return new WaitForSeconds(2.5f);
+        if (state != State.Waiting || request != null || this == null) yield break;
+        if (CounterQueue.Instance.IndexOf(this) < 0) CounterQueue.Instance.Join(this);
+        GameAudio.Play(a => a.customerArrives);
+        BeginRequest();
     }
 
     /// <summary>A book a new member wants the library to get in: preferably one it hasn't got.</summary>
@@ -1384,6 +1407,7 @@ public class Customer : ClickInteractable
 
     // ---------------- Story visits and the book thief (DayStory) ----------------
 
+    bool chatReward;           // walked over to a story visitor's "?": +1 reputation when the chat ends
     bool openerSaid;           // said their opening small talk already
     bool sneaking;           // the thief, heading out with a book under their coat
     bool lingering;          // a story visitor looking round the shelves before coming back to the desk
@@ -1395,6 +1419,7 @@ public class Customer : ClickInteractable
         var ui = DialogueUI.Instance;
         if (ui == null || ui.IsOpen) return;
         var visit = story;
+        chatReward = roaming && !heard; // went over to hear them out: +1 reputation once the chat ends
         heard = true; // the "?" goes
         SetSpeech(""); // ...right away, not when their next line comes
         DayStory.Unpoint(ref askPointer);
@@ -1416,6 +1441,12 @@ public class Customer : ClickInteractable
     {
         if (story != visit || state != State.Waiting) return;
         story = null;
+        if (chatReward)
+        {
+            chatReward = false;
+            GM.AddReputation(1); // the HUD plays the reputation chime
+            HUD.SkillPop(transform.position + Vector3.up * 2.2f, "+1 reputation"); // floats up over their head and fades
+        }
         visit.after?.Invoke(this, last);
         if (request != null || kind == Kind.SignUp || state != State.Waiting) return; // now asking for something like anyone else
         if (visit.next != null)
@@ -1502,7 +1533,7 @@ public class Customer : ClickInteractable
         state = State.Leaving;
         agent.speed = walkSpeed * 0.6f;
         agent.SetDestination(CounterQueue.Instance.exit.position);
-        Say("*slips a book into their coat*");
+        Say("*slips a book into their bag*");
         DayStory.Instance?.ThiefPocketed(this);
     }
 
@@ -1588,9 +1619,15 @@ public class Customer : ClickInteractable
         StopImpatient(true);
         CounterQueue.Instance.Leave(this);
         mood.AddToClassList("hidden");
+        if (speech.ClassListContains("ask")) SetSpeech(""); // nobody leaves with a "?" over their head
         if (!agent.enabled) agent.enabled = true;
-        agent.SetDestination(CounterQueue.Instance.exit.position);
+        // From near the desk: round its left side first, so they don't walk back down the line.
+        var q = CounterQueue.Instance;
+        leavingVia = (transform.position - q.SlotPosition(0)).sqrMagnitude < 6f * 6f;
+        agent.SetDestination(leavingVia ? NearestOnNavMesh(q.LeaveVia) : q.exit.position);
     }
+
+    bool leavingVia;
 
     /// <summary>A spot by the shelf, a little different for everyone, so two visitors don't fight over one point.</summary>
     static Vector3 ShelfSpot(ShelfInteractable shelf)

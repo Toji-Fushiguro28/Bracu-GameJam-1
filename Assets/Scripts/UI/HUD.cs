@@ -272,9 +272,23 @@ public class HUD : MonoBehaviour
         repLabel.parent.EnableInClassList("goal-met", gm.GoalActive && gm.Reputation >= gm.ReputationGoal);
     }
 
+    float nextRepSound, repFlushAt;
+    int repGained;
+
+    void FlushReputation()
+    {
+        if (repFlushAt <= 0f || Time.unscaledTime < repFlushAt) return;
+        int n = repGained;
+        repGained = 0; repFlushAt = 0f;
+        if (n <= 0) return;
+        if (Time.unscaledTime >= nextRepSound) { GameAudio.Play(a => a.reputationUp, 0.7f); nextRepSound = Time.unscaledTime + 1f; }
+    }
+
     void OnReputation(int total, int delta)
     {
         ShowReputation();
+        // Reputation up: gather gains that come together, then one green "+N reputation" and one chime (see FlushReputation).
+        if (delta > 0) { repGained += delta; if (repFlushAt <= 0f) repFlushAt = Time.unscaledTime + 0.25f; }
         if (repDelta == null) return;
         repDelta.text = delta > 0 ? $"+{delta}" : delta.ToString();
         repDelta.EnableInClassList("negative", delta < 0);
@@ -621,6 +635,7 @@ public class HUD : MonoBehaviour
         }
         if (bannerUntil > 0f && Time.time > bannerUntil) { bannerUntil = 0f; banner.AddToClassList("hidden"); }
         UpdateFeed();
+        FlushReputation();
         if (gm != null && !lunchShown && gm.Hour >= 12f && gm.Hour < 13f)
         {
             lunchShown = true;

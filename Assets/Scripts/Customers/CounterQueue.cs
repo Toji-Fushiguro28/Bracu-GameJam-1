@@ -36,7 +36,20 @@ public class CounterQueue : MonoBehaviour
 
     public void Leave(Customer c) => line.Remove(c);
 
+    /// <summary>Swaps this customer with the one just ahead (they're still on their way; this one is already here).</summary>
+    public void MoveUp(Customer c)
+    {
+        int i = line.IndexOf(c);
+        if (i <= 0) return;
+        (line[i - 1], line[i]) = (line[i], line[i - 1]);
+    }
+
+    [Tooltip("From the front spot: where people leaving the desk walk first, so they go round the left side, not back along the line.")]
+    public Vector3 leaveViaOffset = new Vector3(-3f, 0f, -2.5f);
+    public Vector3 LeaveVia => SlotPosition(0) + leaveViaOffset;
+
     public int IndexOf(Customer c) => line.IndexOf(c);
+    public Customer At(int i) => i >= 0 && i < line.Count ? line[i] : null;
 
     /// <summary>Spot number index (0 = at the desk), spacing apart along the path.</summary>
     public Vector3 SlotPosition(int index)

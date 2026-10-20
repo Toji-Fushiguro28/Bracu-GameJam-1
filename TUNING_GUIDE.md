@@ -97,8 +97,8 @@ All of it is in `Core/GameManager.cs`, in the *Play mode* section:
 | Special jobs | `Day/SpecialJobs.cs`: order bonus 15-40, VIP reward 40 (+2 rep; a dealer book is repaid on top, back next day 1:30-3:30; never ordered -3 rep, not in hands -1), book club 3 copies + 15 bonus (+2 rep), due 3:00 / 4:00 PM. Dealer price: `GameManager.RarePrice` (value / 3) |
 | Time on work screens | `Core/GameManager.cs` -> `ScreenTimeScale` (Cozy 0.3, Standard 0.4, Busy 1 (no slow-down)): game-time speed while the PC, a shelf/cart or the repair desk is open |
 | Staff cut | `Day/StaffTalk.cs` → `CutPercent` (25, never 0): what staff keep of their day's earnings at the end-of-day report |
-| Skill rewards | Right shelf: 10% of the book's value (3-10) + 1 rep, paid at once (`Customer.Chat`); perfect repair +5 coins + 1 rep (`RepairDesk.PerfectBonus`) |
-| The Dean's reputation goal | `Core/GameManager.cs` → `ReputationGoals` (Cozy 40 / Standard 60 / Busy 75), checked at the end of `EndingDay` (5). `GoalTier`: reached, close (60%+), missed |
+| Skill rewards | Right shelf: 10% of the book's value (3-10) as a tip, paid at once (no reputation); talking to a "?" story visitor: +1 rep (`Customer.Chat`); perfect repair +5 coins + 1 rep (`RepairDesk.PerfectBonus`) |
+| The Dean's reputation goal | `Core/GameManager.cs` → `ReputationGoals` (Cozy 60 / Standard 100 / Busy 125), checked at the end of `EndingDay` (5). `GoalTier`: reached, close (60%+), missed |
 | Patience by day | `Core/GameManager.cs` → `PatienceDayFactor` (100% Days 1-2, 85% Day 3, 75% after) |
 | Reputation changes | `Customers/Customer.cs`: +1 per served visitor, read or card. Wrong book -1, walked out -3, never ordered -3, "we can't get that" when you could -2, waited for nothing -2 |
 | Regulars staying away | `Customers/Members.cs` → `LetDown()`: a let-down member skips the next day (`awayUntil`, checked in `CustomerSpawner.Pick`) |

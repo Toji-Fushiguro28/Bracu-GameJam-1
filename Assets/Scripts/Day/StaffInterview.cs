@@ -344,7 +344,8 @@ public class StaffInterview : MonoBehaviour
 
         yield return Say(Dean, "Don't get up! Ha, look at us. You in my old chair, and me in the visitor's seat.");
         yield return Say(Dean, "I've been coming in every day, you know. Sitting in the corner with a book I wasn't really reading. Watching.");
-        yield return Say(Dean, $"<color=#D67840>{EndingMembers} members</color> carry a Whitmore card now. When I left, it was eleven, and nine of them were my bridge club.");
+        yield return Say(Dean, $"<color=#D67840>{EndingMembers} members</color> carry a Whitmore card now. " +
+                               (EndingMembers > 3 ? "When I left there were far fewer, and most of those were my bridge club." : "A small start. My bridge club started smaller."));
         yield return Say(Dean, staffLine);
         // How the week went against the goal he set.
         if (EndingTier >= 2)

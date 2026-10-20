@@ -269,7 +269,7 @@ public class CustomerSpawner : MonoBehaviour
     public Customer SpawnThief(string name)
     {
         if (CounterQueue.Instance == null || customerPrefabs == null) return null;
-        // The rumours say "he", "long coat, collar up": one of the men, a stranger with no card if possible.
+        // The rumours say "he", "a nervous stranger": one of the men, a stranger with no card if possible.
         var prefab = Pick(false, p => ThiefLooks.Contains(p.name) && Members.Find(p.name) == null)
                   ?? Pick(false, p => ThiefLooks.Contains(p.name));
         if (prefab == null) return null;

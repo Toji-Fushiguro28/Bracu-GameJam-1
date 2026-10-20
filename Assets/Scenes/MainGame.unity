@@ -23560,6 +23560,7 @@ MonoBehaviour:
   path:
   - {fileID: 663697351}
   - {fileID: 1766805566}
+  leaveViaOffset: {x: -3, y: 0, z: -2.5}
 --- !u!1 &1311985633
 GameObject:
   m_ObjectHideFlags: 0
@@ -30952,6 +30953,7 @@ MonoBehaviour:
   newDay: {fileID: 8300000, guid: ce181ad83cbc1534cbf0f06ba8561538, type: 3}
   unlock: {fileID: 8300000, guid: 3592bfe5a2977b94398c7696ced0474a, type: 3}
   delivery: {fileID: 8300000, guid: 5c4961c0bc1b21242a79728a76977b0e, type: 3}
+  reputationUp: {fileID: 8300000, guid: f662cda4653fc58479e6aef866636ea3, type: 3}
   uiClick: {fileID: 8300000, guid: aa2396911d0ed5d43b702f77bb5fb00e, type: 3}
   panelOpen: {fileID: 8300000, guid: b9ab410bd9803644caae0e98f00563e7, type: 3}
   panelClose: {fileID: 8300000, guid: 59d7681bcc0089e4bacd07b8c8a361f4, type: 3}

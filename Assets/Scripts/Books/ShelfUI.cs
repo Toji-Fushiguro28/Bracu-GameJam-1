@@ -24,10 +24,12 @@ public class ShelfUI : MonoBehaviour
 
     ShelfInteractable shelf;
     DeliveryCart cart;
+    ReturnBin bin;
+    int binCount;
     int cartCount = -1;
     PlayerCarry carry;
 
-    public bool IsOpen => shelf != null || cart != null;
+    public bool IsOpen => shelf != null || cart != null || bin != null;
 
     void Awake()
     {
@@ -110,11 +112,25 @@ public class ShelfUI : MonoBehaviour
         Refresh();
     }
 
+    /// <summary>The return bin's page: every copy that came back, its condition, and where it goes next.</summary>
+    public void OpenBin(ReturnBin target, PlayerCarry playerCarry)
+    {
+        if (target == null || playerCarry == null || root == null || IsOpen) return;
+        bin = target;
+        carry = playerCarry;
+        PlayerLock.Lock(this);
+        root.RemoveFromClassList("hidden");
+        GameAudio.Play(a => a.panelOpen, 0.6f);
+        note.text = ""; picked = null; ShowAbout();
+        Refresh();
+    }
+
     public void Close()
     {
         if (!IsOpen) return;
         shelf = null;
         cart = null;
+        bin = null;
         GameAudio.Play(a => a.panelClose, 0.6f);
         root.AddToClassList("hidden");
         PlayerLock.Unlock(this);
@@ -125,11 +141,14 @@ public class ShelfUI : MonoBehaviour
         if (IsOpen && cancelAction != null && cancelAction.WasPressedThisFrame()) Close();
         // An express order can arrive while the cart is open.
         else if (cart != null && cart.Count != cartCount) Refresh();
+        // Staff take returns, and visitors bring them, while the bin is open.
+        else if (bin != null && bin.Count != binCount) Refresh();
     }
 
     void Refresh()
     {
         if (cart != null) { RefreshCart(); return; }
+        if (bin != null) { RefreshBin(); return; }
         title.text = shelf.displayName;
         list.Clear();
         var books = shelf.Books.ToList();
@@ -200,6 +219,44 @@ public class ShelfUI : MonoBehaviour
         int back = 0;
         foreach (var (b, c) in carry.Items) if (c == BookCondition.Good && cart.CameFromCart(b)) back++;
         HandPage(back);
+    }
+
+    /// <summary>Returns, newest first: one row per copy with its condition and where it goes next (its shelf, or the repair desk).</summary>
+    void RefreshBin()
+    {
+        binCount = bin.Count;
+        title.text = "Return bin";
+        list.Clear();
+        var copies = bin.Copies.Reverse().ToList();
+        if (copies.Count == 0) list.Add(Row("The bin is empty.", "Visitors drop books here when they're done."));
+        foreach (var (b, c) in copies)
+        {
+            var book = b; var cond = c;
+            string where = cond == BookCondition.Good ? $"Goes on {ShelfInteractable.NameOf(book.ShelfLocation)}"
+                         : cond == BookCondition.Worn ? $"Worn: shelve it, or mend it at the repair desk"
+                         : "<color=#B8322A>Damaged: take it to the repair desk</color>";
+            var row = Row(book.Title, $"{book.Author}  ·  {where}");
+            row.EnableInClassList("has-damage", cond == BookCondition.Damaged);
+            Pickable(row, book);
+            var buttons = new VisualElement();
+            buttons.AddToClassList("take-col");
+            buttons.Add(TakeButton(cond == BookCondition.Good ? "Take" : cond.ToString(), true, () => TakeFromBin(book, cond), cond == BookCondition.Damaged ? "take-damaged" : null));
+            row.Add(buttons);
+            list.Add(row);
+        }
+        int back = 0;
+        foreach (var (b, c) in carry.Items) if (bin.CameFromBin(b, c)) back++;
+        HandPage(back);
+    }
+
+    void TakeFromBin(BookData book, BookCondition condition)
+    {
+        if (carry.IsFull) { note.text = "Your hands are full. Hand a book over or shelve it first."; Refresh(); return; }
+        if (!bin.Take(book, condition)) { note.text = "Someone already took that one."; Refresh(); return; }
+        carry.PickUp(book, condition);
+        Play(takeSound);
+        note.text = "";
+        Refresh();
     }
 
     void TakeFromCart(BookData book)
@@ -401,6 +458,21 @@ public class ShelfUI : MonoBehaviour
     void PutBack()
     {
         if (carry.IsEmpty) return;
+        if (bin != null)
+        {
+            // Copies that came out of the bin go back in, as they were.
+            int k, back = 0;
+            while ((k = carry.Find((b, c) => bin.CameFromBin(b, c))) >= 0)
+            {
+                var (b, c) = carry.TakeAt(k);
+                bin.PutBack(b, c);
+                back++;
+            }
+            if (back > 0) { Play(putSound); note.text = ""; }
+            else note.text = "Only books from the bin can go back in it.";
+            Refresh();
+            return;
+        }
         if (cart != null)
         {
             // Copies that came off the cart go back on it.
