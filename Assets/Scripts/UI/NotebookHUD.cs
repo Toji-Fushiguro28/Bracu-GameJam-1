@@ -86,6 +86,15 @@ public class NotebookHUD : MonoBehaviour
 
     void MarkDirty() => dirty = true;
 
+    /// <summary>Moves the HUD's "in your hands" box onto this panel (above the PC, shelf and repair backdrops).</summary>
+    public static void Adopt(VisualElement el)
+    {
+        var root = current != null ? current.GetComponent<UIDocument>().rootVisualElement : null;
+        if (el == null || root == null || el.parent == root) return;
+        el.AddToClassList("carry-float");
+        root.Add(el);
+    }
+
     /// <summary>Is the mouse on the notebook or the reservations box?</summary>
     bool MouseOver()
     {

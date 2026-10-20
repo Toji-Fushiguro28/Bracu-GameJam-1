@@ -563,6 +563,7 @@ public class HUD : MonoBehaviour
 
     void ShowCarry(BookData book)
     {
+        NotebookHUD.Adopt(carrySlot); // above the screens' dark backdrops
         carrySlot?.EnableInClassList("hidden", book == null);
         // One slot per book in your hands (top book first): a pixel book coloured by its condition, its name underneath.
         if (carrySlot != null && carry != null)

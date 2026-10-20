@@ -63,10 +63,16 @@ public static class RequestLog
 
     public static bool Has(Customer c) => c != null && live.ContainsKey(c);
 
-    /// <summary>Writes a new entry the first time you hear a visitor's request.</summary>
+    /// <summary>Writes a new entry the first time you hear a visitor's request. Heard again after you cleared it:
+    /// the same entry goes back in the notebook (never twice).</summary>
     public static void Begin(Customer c, Kind kind, string who, string line, string hint = null, bool usedHint = false)
     {
-        if (c == null || live.ContainsKey(c)) return;
+        if (c == null) return;
+        if (live.TryGetValue(c, out var old))
+        {
+            if (!Open.Contains(old)) { Open.Add(old); Changed?.Invoke(); }
+            return;
+        }
         var e = new Entry { day = GM != null ? GM.day : 1, hour = GM != null ? GM.Hour : 9f, who = who, kind = kind, line = line, hint = hint, usedHint = usedHint };
         All.Add(e);
         Open.Add(e);

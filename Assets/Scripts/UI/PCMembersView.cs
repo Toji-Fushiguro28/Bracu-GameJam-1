@@ -236,5 +236,6 @@ public static class PCMembersView
         else root.Q<Label>("card-feedback").text = $"\"{wrong}\"";
         BuildList(root);
         BuildForm(root);
+        if (wrong == null) UnityEngine.Object.FindAnyObjectByType<PCOverlayTrigger>()?.ForceClose(); // done here: back to the library
     }
 }

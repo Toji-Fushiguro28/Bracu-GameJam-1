@@ -749,11 +749,13 @@
 .hand-cell { width: 80px; align-items: center; margin: 0 2px; }
 .hand-slot { margin: 0 0 4px 0; }
 .hand-slot-name { color: var(--ink); font-size: 15px; white-space: normal; -unity-text-align: upper-center; margin: 0; padding: 0; max-width: 80px; }
-/* HUD: one slot per book you're carrying, names under. */
-.hud-carry-books { flex-direction: row; align-items: flex-start; }
-.hud-carry-cell { width: 96px; align-items: center; margin: 0 4px; }
-.hud-carry-cell .hud-carry-icon { margin: 0 0 4px 0; }
-.hud-carry-name { color: var(--ink); font-size: 16px; white-space: normal; -unity-text-align: upper-center; margin: 0; padding: 0; max-width: 96px; }
+/* HUD: one row per book you're carrying: the slot, its name on the right. */
+.hud-carry-books { flex-direction: column; align-items: flex-start; }
+.hud-carry-cell { flex-direction: row; align-items: center; margin: 2px 0; }
+.hud-carry-cell .hud-carry-icon { width: 52px; height: 52px; margin: 0 12px 0 0; }
+.hud-carry-name { color: var(--ink); font-size: 24px; white-space: normal; -unity-text-align: middle-left; margin: 0; padding: 0; max-width: 340px; }
+/* On the notebook's panel: bottom left, as before. */
+.hud-carry.carry-float { position: absolute; left: 0; bottom: 0; }
 
 /* ---------- Notification feed (top-left): newest on top, icon + short text ---------- */
 .hud-feed { position: absolute; left: 20px; top: 20px; width: 460px; flex-direction: column; align-items: flex-start; }

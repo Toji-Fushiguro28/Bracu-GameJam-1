@@ -849,7 +849,7 @@ public class Customer : ClickInteractable
     /// <summary>Into the notebook the first time you hear what they want.</summary>
     void LogRequest()
     {
-        if (request == null || RequestLog.Has(this)) return;
+        if (request == null) return; // already noted: Begin only puts a cleared note back
         bool pickup = kind == Kind.Pickup;
         RequestLog.Begin(this, pickup ? RequestLog.Kind.Pickup : RequestLog.Kind.Book, FirstName, pickup ? RequestText : request.Line, clue, usedHint);
     }

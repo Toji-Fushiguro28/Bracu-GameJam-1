@@ -1,13 +1,14 @@
 /* Notebook on the right edge of the screen: same paper popup as the dialogue box. */
 .notebook-layer {
-    flex-direction: row;
-    justify-content: flex-end;
-    align-items: center;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-end;
+    padding-top: 104px; /* under the coin purse */
 }
 .notebook {
     flex-direction: row;
     align-items: flex-start;
-    max-height: 62%;
+    max-height: 58%;
     transition-property: translate;
     transition-duration: 0.2s;
     transition-timing-function: ease-out;
@@ -46,9 +47,7 @@
 
 /* Reservations: same look, pinned bottom right, starts collapsed. */
 .reservations {
-    position: absolute;
-    right: 0;
-    bottom: 16px;
+    margin-top: 10px;
     max-height: 22%;
 }
 .reservations .notebook-tab { margin-top: 14px; }
