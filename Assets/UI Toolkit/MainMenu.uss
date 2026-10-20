@@ -159,7 +159,7 @@
 .howto-arrow:disabled { opacity: 1; }
 .howto-icon.p0 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconStar01a.png"); }
 .howto-icon.p1 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconHeart01a.png"); }
-.howto-icon.p2 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_BookCover01a.png"); }
+.howto-icon.p2 { background-image: url("project://database/Assets/Art/UI/PC/T_IconBooks.png"); } /* Finding books: the book-stack pixel icon */
 /* Notebook: the kit's paper page, tinted, with a dark outline and spine so it reads on the cream page. */
 .howto-icon.p3 {
     width: 30px; height: 38px;

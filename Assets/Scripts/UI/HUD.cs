@@ -95,6 +95,9 @@ public class HUD : MonoBehaviour
         banner.AddToClassList("hud-banner");
         banner.AddToClassList("hidden");
         root.Q("hud")?.Add(banner);
+        feed = new VisualElement { name = "hud-feed", pickingMode = PickingMode.Ignore };
+        feed.AddToClassList("hud-feed");
+        root.Q("hud")?.Add(feed);
         purse = root.Q("hud-purse");
         if (GetComponent<Tutorial>() == null) gameObject.AddComponent<Tutorial>(); // the guided first day and first-time tips
         hudLayer = root.Q("hud");
@@ -104,11 +107,160 @@ public class HUD : MonoBehaviour
         root.Q(className: "hud-rep")?.Add(repDelta);
     }
 
+    /// <summary>Puts a message in the notification feed (top-left). Each line becomes its own short card; long ones
+    /// are split. Long-lived messages (7 s or more: jobs, VIPs, events) count as urgent: they stay longer, with an
+    /// orange edge, until clicked. Every card is also written to the Log.</summary>
     public void ShowBanner(string text, float seconds = 4f)
     {
-        banner.text = text;
-        banner.RemoveFromClassList("hidden");
-        bannerUntil = Time.time + seconds;
+        bannerUntil = Time.time + seconds; // still used to space out reminders
+        var parts = SplitForFeed(text);
+        for (int i = parts.Count - 1; i >= 0; i--) Notify(parts[i], IconFor(parts[i]), seconds >= 7f, true); // first line ends up on top
+    }
+
+    // ---------------- Notification feed ----------------
+
+    class Note { public VisualElement el; public float until, born; public bool urgent, tip; }
+    readonly List<Note> notes = new List<Note>();
+    VisualElement feed;
+    const int MaxNotes = 6; // room for the whole morning summary
+    const float NoteSeconds = 14f, UrgentSeconds = 30f, StaffSeconds = 6f;
+    /// <summary>True while the pointer is over a notification (so the click doesn't also reach the library).</summary>
+    public static bool PointerOverFeed { get; private set; }
+
+    // Waiting to be shown: one card every FeedGap seconds, and none while a tutorial card is up.
+    readonly List<(string text, string icon, bool urgent, float seconds)> pending = new List<(string, string, bool, float)>();
+    float nextCardAt;
+    const float FeedGap = 3f; // one new card every 3 s, so each can be read
+    const int MaxPending = 10;
+
+    void Notify(string text, string icon, bool urgent, bool log, float seconds = NoteSeconds)
+    {
+        if (feed == null || string.IsNullOrEmpty(text)) return;
+        // The same message already showing or waiting: once is enough.
+        if (pending.Exists(p => p.text == text) || notes.Exists(n => !n.tip && n.el.Q<Label>(className: "feed-text")?.text == text)) return;
+        if (log) RequestLog.News(text); // in the Log straight away, even if the card waits
+        pending.Add((text, icon, urgent, seconds));
+        // A long wait (a tutorial step): drop the oldest ordinary ones; they're in the Log.
+        while (pending.Count > MaxPending)
+        {
+            int i = pending.FindIndex(p => !p.urgent && p.icon != "tip");
+            pending.RemoveAt(i >= 0 ? i : 0);
+        }
+    }
+
+    /// <summary>A tip (the first time something happens): in the feed with a lamp, until you click it away.</summary>
+    public static void Tip(string text)
+    {
+        if (instance != null) instance.Notify(text, "tip", false, false);
+    }
+
+    void ShowCard(string text, string icon, bool urgent, float seconds)
+    {
+        bool tip = icon == "tip";
+        var card = new VisualElement();
+        card.AddToClassList("feed-card");
+        card.EnableInClassList("urgent", urgent);
+        card.EnableInClassList("tip", tip);
+        var pic = new VisualElement { pickingMode = PickingMode.Ignore };
+        pic.AddToClassList("feed-icon");
+        pic.AddToClassList("nf-" + icon);
+        card.Add(pic);
+        var label = new Label(text) { pickingMode = PickingMode.Ignore };
+        label.AddToClassList("feed-text");
+        if (tip)
+        {
+            // "TIP" heading over the text.
+            var col = new VisualElement { pickingMode = PickingMode.Ignore };
+            col.AddToClassList("feed-col");
+            var head = new Label("TIP  ·  click to close") { pickingMode = PickingMode.Ignore };
+            head.AddToClassList("feed-tip-head");
+            col.Add(head);
+            col.Add(label);
+            card.Add(col);
+        }
+        else card.Add(label);
+        var note = new Note { el = card, urgent = urgent, tip = tip, born = Time.unscaledTime + notes.Count * 0.0001f,
+                              until = tip ? float.MaxValue : Time.unscaledTime + (urgent ? UrgentSeconds : seconds) };
+        card.RegisterCallback<ClickEvent>(_ => Dismiss(note));
+        card.RegisterCallback<PointerEnterEvent>(_ => PointerOverFeed = true);
+        card.RegisterCallback<PointerLeaveEvent>(_ => PointerOverFeed = false);
+        feed.Insert(0, card);
+        notes.Insert(0, note);
+        card.schedule.Execute(() => card.AddToClassList("in")).ExecuteLater(16); // slide in
+        // Too many: the oldest ordinary one goes first; urgent ones only if there's nothing else.
+        while (notes.Count > MaxNotes)
+        {
+            // The oldest ordinary message goes (an earlier line of a multi-line message counts as older).
+            Note old = null;
+            foreach (var n in notes) if (!n.urgent && !n.tip && (old == null || n.born < old.born)) old = n; // tips stay until clicked
+            if (old == null) old = notes[notes.Count - 1];
+            Remove(old);
+        }
+    }
+
+    void Dismiss(Note n) { if (notes.Contains(n)) Remove(n); }
+
+    void Remove(Note n)
+    {
+        notes.Remove(n);
+        n.el.RemoveFromClassList("in");
+        n.el.schedule.Execute(() => n.el.RemoveFromHierarchy()).ExecuteLater(250); // fade out
+        if (notes.Count == 0) PointerOverFeed = false;
+    }
+
+    void UpdateFeed()
+    {
+        // A tutorial card or tip is up (same corner): hide the feed and hold its timers until it's gone.
+        bool tip = Tutorial.CardShowing;
+        feed.style.display = tip ? DisplayStyle.None : DisplayStyle.Flex;
+        if (tip) { foreach (var n in notes) n.until += Time.unscaledDeltaTime; return; }
+        for (int i = notes.Count - 1; i >= 0; i--) if (Time.unscaledTime > notes[i].until) Remove(notes[i]);
+        // After the tutorial card, and one at a time so the panel has room to breathe.
+        if (pending.Count == 0 || Time.unscaledTime < nextCardAt) return;
+        var (text, icon, urgent, seconds) = pending[0];
+        pending.RemoveAt(0);
+        ShowCard(text, icon, urgent, seconds);
+        nextCardAt = Time.unscaledTime + FeedGap;
+    }
+
+    /// <summary>One card per line; a line over ~60 letters is split at a sentence break near its middle.</summary>
+    static List<string> SplitForFeed(string text)
+    {
+        var parts = new List<string>();
+        foreach (var raw in (text ?? "").Split('\n'))
+        {
+            string line = raw.Trim();
+            if (line.Length == 0) continue;
+            string plain = System.Text.RegularExpressions.Regex.Replace(line, "<[^>]*>", "");
+            if (plain.Length > 60 && !line.Contains("<"))
+            {
+                int best = -1;
+                for (int i = 1; i < line.Length - 2; i++)
+                    if ((line[i] == '.' || line[i] == '!' || line[i] == '?') && line[i + 1] == ' '
+                        && (best < 0 || Mathf.Abs(i - line.Length / 2) < Mathf.Abs(best - line.Length / 2))) best = i;
+                if (best > 10 && best < line.Length - 10)
+                {
+                    parts.Add(line.Substring(0, best + 1).Trim());
+                    parts.Add(line.Substring(best + 1).Trim());
+                    continue;
+                }
+            }
+            parts.Add(line);
+        }
+        return parts;
+    }
+
+    /// <summary>A pixel icon for what a message is about.</summary>
+    static string IconFor(string text)
+    {
+        string s = text.ToLowerInvariant();
+        if (s.StartsWith("day ") || s.Contains("closing") || s.Contains("closed") || s.Contains("lunch") || s.Contains("o'clock")) return "clock";
+        if (s.Contains("vip") || s.Contains("rare") || s.Contains("archive")) return "key";
+        if (s.Contains("coin") || s.Contains("afford")) return "coin";
+        if (s.Contains("reputation") || s.Contains("goal")) return "star";
+        if (s.Contains("reserv") || s.Contains("order") || s.Contains("book club") || s.Contains("copies")) return "books";
+        if (s.Contains("staff") || s.Contains("interview") || s.Contains("hire")) return "broom";
+        return "news";
     }
 
     /// <summary>"37/60" while the Dean's goal is on (gold once reached), just the reputation after the ending.</summary>
@@ -239,7 +391,11 @@ public class HUD : MonoBehaviour
     public static void StaffNote(string text)
     {
         if (instance == null || instance.hudLayer == null || !instance.isActiveAndEnabled) return;
-        instance.StartCoroutine(instance.ShowStaffNote(text));
+        string icon = "broom";
+        for (int i = 0; i < GameManager.StaffPerson.Length; i++)
+            if (!string.IsNullOrEmpty(GameManager.StaffPerson[i]) && text.StartsWith(GameManager.StaffPerson[i]))
+                icon = i == (int)GameManager.StaffRole.Repairer ? "hammer" : i == (int)GameManager.StaffRole.Cleaner ? "broom" : "key";
+        instance.Notify(text, icon, false, false, StaffSeconds);
     }
 
     IEnumerator ShowStaffNote(string text)
@@ -359,7 +515,7 @@ public class HUD : MonoBehaviour
             gm.DayStarted += () => upgradeBannerShown = false;
             gm.ReputationChanged += OnReputation;
             gm.DayStarted += ShowReputation;
-            ShowBanner(MorningText(gm), 6f);
+            if (!MainMenuUI.Active) ShowBanner(MorningText(gm), 6f); // with the title menu up, Play/Continue shows it
             coinLabel.text = gm.Coins.ToString();
             dayLabel.text = "Day " + gm.day;
             ShowReputation();
@@ -464,6 +620,7 @@ public class HUD : MonoBehaviour
             if (show && pin.text != text) pin.text = text;
         }
         if (bannerUntil > 0f && Time.time > bannerUntil) { bannerUntil = 0f; banner.AddToClassList("hidden"); }
+        UpdateFeed();
         if (gm != null && !lunchShown && gm.Hour >= 12f && gm.Hour < 13f)
         {
             lunchShown = true;

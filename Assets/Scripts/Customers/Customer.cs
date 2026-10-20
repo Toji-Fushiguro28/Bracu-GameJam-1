@@ -1396,6 +1396,8 @@ public class Customer : ClickInteractable
         if (ui == null || ui.IsOpen) return;
         var visit = story;
         heard = true; // the "?" goes
+        SetSpeech(""); // ...right away, not when their next line comes
+        DayStory.Unpoint(ref askPointer);
         var d = visit.talk != null ? visit.talk(this) : null;
         if (d == null) { FinishStory(visit, null); return; }
         if (string.IsNullOrEmpty(d.speaker)) d.speaker = FullName;

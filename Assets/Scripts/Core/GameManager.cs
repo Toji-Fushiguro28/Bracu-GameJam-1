@@ -146,7 +146,7 @@ public class GameManager : MonoBehaviour
         "Run longer and catch your breath faster.",
     };
     public const int MaxUpgrade = 3;
-    public static int UpgradeCost(int level) => 40 + level * 40;
+    public static int UpgradeCost(int level) => 60 + level * 40; // 60 / 100 / 140: the first one is just out of reach of the starting coins
 
     [NonSerialized] public List<Member> members = new List<Member>();
     [NonSerialized] public bool[] staff = new bool[3];

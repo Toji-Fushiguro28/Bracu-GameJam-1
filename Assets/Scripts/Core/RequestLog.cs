@@ -10,7 +10,7 @@ using UnityEngine.UIElements;
 /// </summary>
 public static class RequestLog
 {
-    public enum Kind { Book, Pickup, Card, Shelve, Money, Task }
+    public enum Kind { Book, Pickup, Card, Shelve, Money, Task, News }
 
     [Serializable]
     public class Guess
@@ -187,6 +187,14 @@ public static class RequestLog
         Changed?.Invoke();
     }
 
+    /// <summary>A notification from the feed, kept in the Log so it can be read again later.</summary>
+    public static void News(string line)
+    {
+        if (string.IsNullOrEmpty(line)) return;
+        All.Add(new Entry { day = GM != null ? GM.day : 1, hour = GM != null ? GM.Hour : 9f, kind = Kind.News, line = line, outcome = "Notice" });
+        Changed?.Invoke();
+    }
+
     /// <summary>"+25" / "-15" for a log row.</summary>
     public static string CoinText(int coins) => coins > 0 ? "+" + coins : "-" + (-coins);
 
@@ -197,7 +205,7 @@ public static class RequestLog
         if (Open.Remove(e)) Changed?.Invoke();
     }
 
-    public static string KindName(Kind k) => k == Kind.Book ? "Book Request" : k == Kind.Pickup ? "Pickup" : k == Kind.Card ? "Library Card" : k == Kind.Money ? "Coins" : k == Kind.Task ? "To do" : "To Shelve";
+    public static string KindName(Kind k) => k == Kind.Book ? "Book Request" : k == Kind.Pickup ? "Pickup" : k == Kind.Card ? "Library Card" : k == Kind.Money ? "Coins" : k == Kind.Task ? "To do" : k == Kind.News ? "Notice" : "To Shelve";
 
     /// <summary>Today's events and jobs (the leak, the inspection, a VIP's request...): in the notebook as a
     /// "To do" until it's done (or the day ends). The same key twice is ignored.</summary>
@@ -241,7 +249,7 @@ public static class RequestLog
         string who = string.IsNullOrEmpty(e.who) ? "" : $"  ·  {e.who}";
         string coins = e.coins == 0 ? "" : $"  ·  <color={(e.coins > 0 ? "#4F6B3A" : "#8E3B32")}>{CoinText(e.coins)} coins</color>";
         Add(row, "log-head", $"{GameManager.FormatHour(e.hour)}{who}  ·  {KindName(e.kind)}{coins}");
-        if (e.kind == Kind.Money) { Add(row, "log-line", e.line); return row; }
+        if (e.kind == Kind.Money || e.kind == Kind.News) { Add(row, "log-line", e.line); return row; }
         Add(row, "log-line", e.kind == Kind.Task ? e.line : $"\"{e.line}\""); // a to-do is an instruction, not a quote
         if (e.kind == Kind.Book)
             Add(row, "log-line", e.hint != null ? $"<color=#D67840>Hint: {e.hint}</color>" + (e.usedHint ? "  (asked for)" : "  (free)") : "No hint used");

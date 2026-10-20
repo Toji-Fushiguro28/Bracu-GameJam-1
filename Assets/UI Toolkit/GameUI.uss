@@ -754,3 +754,31 @@
 .hud-carry-cell { width: 96px; align-items: center; margin: 0 4px; }
 .hud-carry-cell .hud-carry-icon { margin: 0 0 4px 0; }
 .hud-carry-name { color: var(--ink); font-size: 16px; white-space: normal; -unity-text-align: upper-center; margin: 0; padding: 0; max-width: 96px; }
+
+/* ---------- Notification feed (top-left): newest on top, icon + short text ---------- */
+.hud-feed { position: absolute; left: 20px; top: 20px; width: 460px; flex-direction: column; align-items: flex-start; }
+.feed-card {
+    flex-direction: row; align-items: center; max-width: 460px; margin-bottom: 6px; padding: 6px 14px 9px 10px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Popup01a.png");
+    -unity-slice-left: 4; -unity-slice-right: 4; -unity-slice-top: 4; -unity-slice-bottom: 4; -unity-slice-scale: 3px;
+    opacity: 0; translate: -24px 0;
+    transition-property: opacity, translate; transition-duration: 0.25s;
+}
+.feed-card.in { opacity: 1; translate: 0 0; }
+.feed-card.urgent { border-left-width: 5px; border-left-color: var(--accent); }
+.feed-icon { width: 28px; height: 28px; margin-right: 10px; flex-shrink: 0; -unity-background-scale-mode: scale-to-fit; }
+.feed-text { color: var(--ink); font-size: 21px; white-space: normal; flex-shrink: 1; margin: 0; padding: 0; }
+.nf-clock { background-image: url("project://database/Assets/Art/UI/PC/T_IconClock.png"); }
+.nf-coin { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconCoin01a.png"); }
+.nf-key { background-image: url("project://database/Assets/Art/UI/PC/T_IconKey.png"); }
+.nf-star { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconStar01a.png"); }
+.nf-books { background-image: url("project://database/Assets/Art/UI/PC/T_IconBooks.png"); }
+.nf-broom { background-image: url("project://database/Assets/Art/UI/PC/T_IconBroom.png"); }
+.nf-hammer { background-image: url("project://database/Assets/Art/UI/PC/T_IconHammer.png"); }
+.nf-news { background-image: url("project://database/Assets/Art/UI/PC/T_IconScroll.png"); }
+
+/* Tips in the feed: lamp icon, gold edge, a small TIP heading; they stay until clicked. */
+.feed-card.tip { border-left-width: 5px; border-left-color: rgb(225, 196, 50); }
+.feed-col { flex-shrink: 1; }
+.feed-tip-head { color: var(--accent); font-size: 16px; letter-spacing: 1px; margin: 0 0 2px 0; padding: 0; }
+.nf-tip { background-image: url("project://database/Assets/Art/UI/PC/T_IconLamp.png"); }

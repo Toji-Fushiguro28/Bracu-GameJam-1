@@ -25,6 +25,9 @@ public class Tutorial : MonoBehaviour
     Step step = Step.Waiting;
 
     /// <summary>The tutorial is guiding you: the clock holds and only its visitors come in.</summary>
+    /// <summary>A tutorial card or hint is on screen (the notification feed waits until it's gone).</summary>
+    public static bool CardShowing => Instance != null && Instance.card != null && !Instance.card.ClassListContains("hidden");
+
     public static bool HoldsClock => Instance != null && Instance.step >= Step.Talk && Instance.step <= Step.OrderBuy;
 
     static GameManager GM => GameManager.Instance;
@@ -368,10 +371,6 @@ public class Tutorial : MonoBehaviour
         var (key, body) = hints.Dequeue();
         if (PlayerPrefs.GetInt(HintPrefix + key, 0) == 1) return;
         PlayerPrefs.SetInt(HintPrefix + key, 1);
-        Say("Tip", body);
-        card.AddToClassList("hint");
-        skip.style.display = DisplayStyle.None;
-        ok.style.display = DisplayStyle.Flex;
-        hideAt = Time.unscaledTime + 10f;
+        HUD.Tip(body); // in the notification feed, until clicked
     }
 }
