@@ -95,6 +95,7 @@ All of it is in `Core/GameManager.cs`, in the *Play mode* section:
 | Story rewards | `Day/DayStory.cs`: exam whip-round +20 coins +1 rep, Archive historian +1 rep, regulars' card on Day 5 +2 rep |
 | Staff mood | `Core/GameManager.cs` → `StaffMoodFactor` (0.7 + 0.1 x mood), rested day x1.25; changes in `Day/StaffHelp.cs` (paid +0.5, free -0.3, quick +0.2, reminder -0.15) and `Day/StaffTalk.cs` (chat +0.15, ignored -0.3) |
 | Special jobs | `Day/SpecialJobs.cs`: order bonus 15-40, VIP reward 40 (+2 rep; a dealer book is repaid on top, back next day 1:30-3:30; never ordered -3 rep, not in hands -1), book club 3 copies + 15 bonus (+2 rep), due 3:00 / 4:00 PM. Dealer price: `GameManager.RarePrice` (value / 3) |
+| Time on work screens | `Core/GameManager.cs` -> `ScreenTimeScale` (Cozy 0.3, Standard 0.4, Busy 1 (no slow-down)): game-time speed while the PC, a shelf/cart or the repair desk is open |
 | Staff cut | `Day/StaffTalk.cs` → `CutPercent` (25, never 0): what staff keep of their day's earnings at the end-of-day report |
 | Skill rewards | Right shelf: 10% of the book's value (3-10) + 1 rep, paid at once (`Customer.Chat`); perfect repair +5 coins + 1 rep (`RepairDesk.PerfectBonus`) |
 | The Dean's reputation goal | `Core/GameManager.cs` → `ReputationGoals` (Cozy 40 / Standard 60 / Busy 75), checked at the end of `EndingDay` (5). `GoalTier`: reached, close (60%+), missed |

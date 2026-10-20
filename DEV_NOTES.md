@@ -616,3 +616,6 @@ Small, contained edits. Please check them when merging:
 - Shelf rows (`ShelfUI.BookRow`): title (+ Popular, + "Reserved for X" tag), author + subject, then one dot per copy (green good, amber worn, red damaged), the price (or a key + "read here"), and "+N coming" with a clock. Left edge shows the tier (Epic / Legendary). When only damaged copies are left the main button says "Damaged".
 - Right page: your hands as slots (one per book you can carry, pixel book coloured by condition, empty outline), then the "back cover" of the book you clicked (abstract + type, subject, tags, tier, read-here-only chips).
 - HUD carry slot shows the same pixel book for the top book in your hands.
+
+## Slowed time on work screens
+- With the computer, a shelf / the delivery cart, or the repair desk open, game time runs slower instead of full speed: the clock, visitor patience, spawns, staff timers and story timers all use `GameManager.Dt` / `TimeScale`. Speed = `ScreenTimeScale`: Cozy 0.3, Standard 0.4, Busy 1 (no slow-down). Dialogue, menus and the Day Report still pause (`PlayerLock.FreezesTime` wins over `SlowsTime`). The HUD clock shows "(slowed)". Minimising/closing the PC returns to full speed. Walking speed is unchanged (only timers slow). Repairs you watch at the desk still run at real speed, as before.

@@ -62,7 +62,7 @@ public class HUD : MonoBehaviour
         }).ExecuteLater(600);
     }
     Label dayLabel, clockLabel, coinLabel, carryLabel;
-    VisualElement carrySlot, carryBook;
+    VisualElement carrySlot, carryBooks;
     PlayerCarry carry;
     string lastClock;
     Label banner, repLabel, repDelta;
@@ -376,14 +376,38 @@ public class HUD : MonoBehaviour
     void ShowCarry(BookData book)
     {
         carrySlot?.EnableInClassList("hidden", book == null);
-        // The top book as a pixel book in the slot, coloured by its condition.
-        var slotIcon = carrySlot?.Q(className: "hud-carry-icon");
-        if (slotIcon != null)
+        // One slot per book in your hands (top book first): a pixel book coloured by its condition, its name underneath.
+        if (carrySlot != null && carry != null)
         {
-            if (carryBook == null) { carryBook = new VisualElement(); carryBook.AddToClassList("carry-book"); carryBook.pickingMode = PickingMode.Ignore; slotIcon.Add(carryBook); }
-            var cond = carry != null ? carry.CarriedCondition : BookCondition.Good;
-            carryBook.EnableInClassList("worn", cond == BookCondition.Worn);
-            carryBook.EnableInClassList("damaged", cond == BookCondition.Damaged);
+            if (carryBooks == null)
+            {
+                carryBooks = new VisualElement { pickingMode = PickingMode.Ignore };
+                carryBooks.AddToClassList("hud-carry-books");
+                carrySlot.Insert(0, carryBooks);
+                var oldIcon = carrySlot.Q(className: "hud-carry-icon");
+                if (oldIcon != null) oldIcon.style.display = DisplayStyle.None;
+                if (carryLabel != null) carryLabel.style.display = DisplayStyle.None;
+            }
+            carryBooks.Clear();
+            for (int i = carry.Count - 1; i >= 0; i--)
+            {
+                var (b, c) = carry.Items[i];
+                var cell = new VisualElement { pickingMode = PickingMode.Ignore };
+                cell.AddToClassList("hud-carry-cell");
+                var slot = new VisualElement { pickingMode = PickingMode.Ignore };
+                slot.AddToClassList("hud-carry-icon");
+                var icon = new VisualElement { pickingMode = PickingMode.Ignore };
+                icon.AddToClassList("carry-book");
+                icon.EnableInClassList("worn", c == BookCondition.Worn);
+                icon.EnableInClassList("damaged", c == BookCondition.Damaged);
+                slot.Add(icon);
+                var name = new Label(c == BookCondition.Good ? b.Title : $"{b.Title} ({c.ToString().ToLowerInvariant()})") { pickingMode = PickingMode.Ignore };
+                name.AddToClassList("hud-carry-name");
+                cell.Add(slot);
+                cell.Add(name);
+                carryBooks.Add(cell);
+            }
+            return;
         }
         if (carryLabel == null) return;
         // Top book first; the bag count shows once you can carry more than one.
@@ -454,7 +478,7 @@ public class HUD : MonoBehaviour
         }
         if (repDeltaUntil > 0f && Time.time > repDeltaUntil) { repDeltaUntil = 0f; repDelta.AddToClassList("hidden"); }
         if (gm == null || clockLabel == null) return;
-        string clock = gm.CurrentPhase == GameManager.Phase.Closed ? "Closed - tidy up, then click the front ropes" : gm.Paused ? gm.ClockText + "  (paused)" : gm.ClockText;
+        string clock = gm.CurrentPhase == GameManager.Phase.Closed ? "Closed - tidy up, then click the front ropes" : gm.Paused ? gm.ClockText + "  (paused)" : gm.Slowed ? gm.ClockText + "  (slowed)" : gm.ClockText;
         string day = $"Day {gm.day}";
         if (dayLabel != null && dayLabel.text != day) dayLabel.text = day;
         if (clock != lastClock) clockLabel.text = lastClock = clock;

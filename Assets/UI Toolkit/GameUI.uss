@@ -723,7 +723,7 @@
 .hand-slot-book, .carry-book { width: 42px; height: 42px; -unity-background-scale-mode: scale-to-fit; background-image: url("project://database/Assets/Art/UI/PC/T_IconBook.png"); }
 .hand-slot-book.worn, .carry-book.worn { background-image: url("project://database/Assets/Art/UI/PC/T_IconBookWorn.png"); }
 .hand-slot-book.damaged, .carry-book.damaged { background-image: url("project://database/Assets/Art/UI/PC/T_IconBookDamaged.png"); }
-.hand-slot-book.empty { opacity: 0.22; }
+.hand-slot-book.empty { opacity: 0.1; }
 .hand-title { font-size: 24px; }
 .hand-sub { font-size: 17px; margin-top: 2px; }
 
@@ -743,3 +743,14 @@
 /* HUD: the book in your hands, inside its slot. */
 .hud-carry-icon { align-items: center; justify-content: center; }
 .carry-book { width: 34px; height: 34px; }
+
+/* Hands: each slot with the book's name under it (up to 4). */
+.hand-slots { align-items: flex-start; }
+.hand-cell { width: 80px; align-items: center; margin: 0 2px; }
+.hand-slot { margin: 0 0 4px 0; }
+.hand-slot-name { color: var(--ink); font-size: 15px; white-space: normal; -unity-text-align: upper-center; margin: 0; padding: 0; max-width: 80px; }
+/* HUD: one slot per book you're carrying, names under. */
+.hud-carry-books { flex-direction: row; align-items: flex-start; }
+.hud-carry-cell { width: 96px; align-items: center; margin: 0 4px; }
+.hud-carry-cell .hud-carry-icon { margin: 0 0 4px 0; }
+.hud-carry-name { color: var(--ink); font-size: 16px; white-space: normal; -unity-text-align: upper-center; margin: 0; padding: 0; max-width: 96px; }

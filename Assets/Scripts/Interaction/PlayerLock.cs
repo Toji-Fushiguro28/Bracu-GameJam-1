@@ -13,6 +13,18 @@ public static class PlayerLock
 
     public static bool IsLocked => owners.Count > 0;
 
+    /// <summary>A work screen is open (computer, shelf or cart, repair desk) and nothing freezes time:
+    /// the clock and patience run slower, not stopped (see GameManager.TimeScale).</summary>
+    public static bool SlowsTime
+    {
+        get
+        {
+            if (FreezesTime) return false;
+            foreach (var o in owners) if (o is ShelfUI || o is RepairUI || o is PCOverlayTrigger) return true;
+            return false;
+        }
+    }
+
     /// <summary>True when the game clock should stop: talking, cutscenes, menus. Browsing the PC, shelves or repair desk lets time run.</summary>
     public static bool FreezesTime
     {

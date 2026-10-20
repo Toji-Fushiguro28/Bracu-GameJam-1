@@ -221,26 +221,33 @@ public class ShelfUI : MonoBehaviour
         slots.Clear();
         for (int i = 0; i < Mathf.Max(1, carry.Capacity); i++)
         {
+            // Each slot: the box with the book, and the book's name under it.
+            var cell = new VisualElement();
+            cell.AddToClassList("hand-cell");
             var slot = new VisualElement();
             slot.AddToClassList("hand-slot");
             var icon = new VisualElement();
             icon.AddToClassList("hand-slot-book");
+            var name = new Label();
+            name.AddToClassList("hand-slot-name");
             if (i < carry.Count)
             {
                 var (b, c) = carry.Items[carry.Count - 1 - i]; // top book first
                 icon.EnableInClassList("worn", c == BookCondition.Worn);
                 icon.EnableInClassList("damaged", c == BookCondition.Damaged);
-                slot.tooltip = b.Title;
+                name.text = c == BookCondition.Good ? b.Title : $"{b.Title} ({c.ToString().ToLowerInvariant()})";
             }
             else icon.AddToClassList("empty");
             slot.Add(icon);
-            slots.Add(slot);
+            cell.Add(slot);
+            cell.Add(name);
+            slots.Add(cell);
         }
-        handTitle.text = held != null ? held.Title : "Hands empty";
-        string more = "";
-        for (int i = carry.Count - 2; i >= 0; i--) more += $"\n+ {carry.Items[i].book.Title}";
+        // The names are under the slots: the lines below only explain empty hands, or the bag count.
+        handTitle.text = held != null ? "" : "Hands empty";
+        handTitle.EnableInClassList("hidden", held != null);
         handSub.text = held != null
-            ? $"{held.Author}  ·  {carry.CarriedCondition} copy{more}"
+            ? (carry.Capacity > 1 ? $"{carry.Count}/{carry.Capacity} in your hands" : "")
             : carry.Capacity > 1 ? $"Take books from the left page. You can carry {carry.Capacity}." : "Take a book from the left page.";
         putBack.text = belongs > 1 ? $"Put back ({belongs})" : "Put back";
         putBack.SetEnabled(belongs > 0);

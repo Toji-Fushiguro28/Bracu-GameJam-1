@@ -296,6 +296,8 @@
 .book-list .unity-collection-view__item { background-color: rgba(0, 0, 0, 0); }
 .book-list .unity-collection-view__item:hover { background-color: var(--hover); }
 .book-list .unity-collection-view__item--selected { background-color: var(--btn); border-width: 3px; border-color: var(--accent); }
+/* Unity turns selected list text white: keep the title dark on the light row. */
+.book-list .unity-collection-view__item--selected .book-title { color: var(--ink); }
 .book-row { min-height: 104px; flex-direction: row; align-items: center; padding: 6px 10px 6px 12px; border-bottom-width: 2px; border-bottom-color: var(--rule); border-left-width: 5px; border-left-color: rgba(0, 0, 0, 0); }
 .book-row.popular { border-left-color: var(--pop-bar); }
 .book-row.epic { border-left-color: var(--epic); }
@@ -356,13 +358,16 @@
 .shop, .audit, .settings { flex-grow: 1; }
 .sub-tabs { flex-direction: row; margin-bottom: 10px; }
 .sub-tab {
-    font-size: 26px; color: var(--desk-dim); margin: 0 14px 0 0; padding: 2px 4px 6px 4px;
-    background-color: rgba(0, 0, 0, 0); background-image: none; border-width: 0; border-radius: 0;
-    border-bottom-width: 4px; border-bottom-color: rgba(0, 0, 0, 0);
+    font-size: 24px; color: var(--ink); margin: 0 8px 0 0; padding: 4px 16px 9px 16px;
+    background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0;
+    background-image: url("project://database/Assets/Art/UI/PC/T_PC_Button.png");
+    -unity-slice-left: 1; -unity-slice-right: 1; -unity-slice-top: 2; -unity-slice-bottom: 3; -unity-slice-scale: 3px;
 }
-.sub-tab:hover { background-color: rgba(0, 0, 0, 0); color: var(--desk-ink); }
-.sub-tab.selected { color: var(--desk-ink); border-bottom-color: var(--accent); }
-.sub-tab.ready { color: rgb(240, 196, 110); }
+/* Shop sub-tabs are pixel buttons like the main tabs: orange with light text when picked or hovered. */
+.sub-tab:hover, .sub-tab.selected { background-color: rgba(0, 0, 0, 0); color: rgb(255, 246, 232); background-image: url("project://database/Assets/Art/UI/PC/T_PC_ButtonHot.png"); }
+.sub-tab.selected { translate: 0 2px; }
+.sub-tab.ready { color: var(--accent); } /* something to buy or do there */
+.sub-tab.ready:hover { color: rgb(255, 246, 232); }
 .shop-list { flex-grow: 1; }
 .ugrid { flex-direction: row; flex-wrap: wrap; justify-content: space-between; }
 .ucard { width: 32.6%; padding: 10px 10px 12px 10px; margin-bottom: 8px; }
