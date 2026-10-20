@@ -782,3 +782,36 @@
 .feed-col { flex-shrink: 1; }
 .feed-tip-head { color: var(--accent); font-size: 16px; letter-spacing: 1px; margin: 0 0 2px 0; padding: 0; }
 .nf-tip { background-image: url("project://database/Assets/Art/UI/PC/T_IconLamp.png"); }
+
+/* Patience: one pixel bar in the mood faces' style: dark-brown outline, flat fill with a light top edge and a
+   darker bottom edge; green, then the faces' yellow, then red. Drains in tenths (Customer.SetMood). */
+.mood-bar { flex-direction: row; overflow: hidden; width: 48px; height: 12px;
+    background-color: rgb(58, 40, 32); border-width: 2px; border-color: rgb(74, 48, 38);
+    border-top-left-radius: 0; border-top-right-radius: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+.mood-bar-fill { position: absolute; left: 0; top: 0; bottom: 0; background-color: rgb(120, 200, 90);
+    border-top-width: 2px; border-top-color: rgb(180, 235, 150); border-bottom-width: 2px; border-bottom-color: rgb(80, 150, 60); }
+.mood-bar.ok .mood-bar-fill { background-color: rgb(250, 214, 96); border-top-color: rgb(255, 240, 170); border-bottom-color: rgb(205, 160, 60); }
+.mood-bar.sad .mood-bar-fill { background-color: rgb(232, 128, 96); border-top-color: rgb(245, 175, 150); border-bottom-color: rgb(185, 80, 60); }
+
+/* ---------- Tutorial: animated pixel frame (UI_TravelBook_SlotCursor01a, 4 frames), its label, the checklist ---------- */
+.tut-spot {
+    position: absolute;
+    -unity-slice-left: 6; -unity-slice-right: 6; -unity-slice-top: 6; -unity-slice-bottom: 6; -unity-slice-scale: 5px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites%20Animated/UI_TravelBook_SlotCursor01a_1.png");
+}
+.tut-spot.f2 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites%20Animated/UI_TravelBook_SlotCursor01a_2.png"); }
+.tut-spot.f3 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites%20Animated/UI_TravelBook_SlotCursor01a_3.png"); }
+.tut-spot.f4 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites%20Animated/UI_TravelBook_SlotCursor01a_4.png"); }
+.tut-spot-label {
+    position: absolute; max-width: 380px; padding: 6px 12px 9px 12px;
+    color: var(--ink); font-size: 20px; white-space: normal; -unity-text-align: middle-center;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Popup01a.png");
+    -unity-slice-left: 4; -unity-slice-right: 4; -unity-slice-top: 4; -unity-slice-bottom: 4; -unity-slice-scale: 3px;
+}
+.tut-checklist { margin: 6px 0 4px 0; }
+/* A pixel box on the left of each line; ticked when done. */
+.tut-check { color: var(--ink-soft); font-size: 18px; margin: 2px 0; padding: 0 0 0 28px; min-height: 22px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Slot01a.png");
+    background-size: 20px 20px; background-repeat: no-repeat no-repeat; background-position-x: left 0; background-position-y: center; }
+.tut-check.done { color: rgb(79, 107, 58);
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconTick01a.png"); }

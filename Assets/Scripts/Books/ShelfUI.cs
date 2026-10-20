@@ -167,10 +167,11 @@ public class ShelfUI : MonoBehaviour
             buttons.AddToClassList("take-col");
             // Only damaged copies left: the button says so.
             bool onlyDamaged = best == BookCondition.Damaged;
-            buttons.Add(TakeButton(onlyDamaged ? "Damaged" : "Take", best.HasValue, () => { if (book.BestCopy.HasValue) Take(book, book.BestCopy.Value); }, onlyDamaged ? "take-damaged" : null));
-            if (book.GoodCopies > 0 && book.WornCopies > 0)
+            bool allowed = Tutorial.AllowsBook(book); // the tutorial: only its one book
+            buttons.Add(TakeButton(onlyDamaged ? "Damaged" : "Take", best.HasValue && allowed, () => { if (book.BestCopy.HasValue) Take(book, book.BestCopy.Value); }, onlyDamaged ? "take-damaged" : null));
+            if (book.GoodCopies > 0 && book.WornCopies > 0 && !Tutorial.HoldsClock)
                 buttons.Add(TakeButton("Worn", true, () => Take(book, BookCondition.Worn)));
-            if (book.DamagedCopies > 0 && (book.GoodCopies > 0 || book.WornCopies > 0))
+            if (book.DamagedCopies > 0 && (book.GoodCopies > 0 || book.WornCopies > 0) && !Tutorial.HoldsClock)
                 buttons.Add(TakeButton("Damaged", true, () => Take(book, BookCondition.Damaged), "take-damaged"));
             row.Add(buttons);
             list.Add(row);
@@ -212,7 +213,7 @@ public class ShelfUI : MonoBehaviour
             Pickable(row, book);
             var buttons = new VisualElement();
             buttons.AddToClassList("take-col");
-            buttons.Add(TakeButton("Take", true, () => TakeFromCart(book)));
+            buttons.Add(TakeButton("Take", Tutorial.AllowsBook(book), () => TakeFromCart(book)));
             row.Add(buttons);
             list.Add(row);
         }

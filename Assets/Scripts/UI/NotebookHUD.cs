@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 
 /// <summary>
@@ -20,7 +21,6 @@ public class NotebookHUD : MonoBehaviour
     ScrollView list, reserveList;
     Button tab, reserveTab;
     bool dirty = true;
-    bool overBook, overReserves;
     string reserveSignature;
     float nextReserveCheck, nextPulse;
     /// <summary>The first new reservation of a session opens the list by itself; later ones just light the tab.</summary>
@@ -52,15 +52,11 @@ public class NotebookHUD : MonoBehaviour
         list = root.Q<ScrollView>("notebook-list");
         tab = root.Q<Button>("notebook-tab");
         tab?.RegisterCallback<ClickEvent>(_ => SetCollapsed(!book.ClassListContains("collapsed")));
-        book?.RegisterCallback<PointerEnterEvent>(_ => { overBook = true; PointerOver = true; });
-        book?.RegisterCallback<PointerLeaveEvent>(_ => { overBook = false; PointerOver = overReserves; });
 
         reserves = root.Q("reservations");
         reserveList = root.Q<ScrollView>("reservations-list");
         reserveTab = root.Q<Button>("reservations-tab");
         reserveTab?.RegisterCallback<ClickEvent>(_ => SetReservesOpen(reserves.ClassListContains("collapsed")));
-        reserves?.RegisterCallback<PointerEnterEvent>(_ => { overReserves = true; PointerOver = true; });
-        reserves?.RegisterCallback<PointerLeaveEvent>(_ => { overReserves = false; PointerOver = overBook; });
         reserveSignature = null;
         GameAudio.HookClicks(root);
         current = this;
@@ -73,7 +69,7 @@ public class NotebookHUD : MonoBehaviour
     void OnDisable()
     {
         RequestLog.Changed -= MarkDirty;
-        PointerOver = overBook = overReserves = false;
+        PointerOver = false;
     }
 
     void Start()
@@ -89,6 +85,17 @@ public class NotebookHUD : MonoBehaviour
     }
 
     void MarkDirty() => dirty = true;
+
+    /// <summary>Is the mouse on the notebook or the reservations box?</summary>
+    bool MouseOver()
+    {
+        var panel = book?.panel;
+        if (panel == null || Mouse.current == null) return false;
+        Vector2 screen = Mouse.current.position.ReadValue();
+        screen.y = Screen.height - screen.y;
+        Vector2 p = RuntimePanelUtils.ScreenToPanel(panel, screen);
+        return book.worldBound.Contains(p) || (reserves != null && reserves.worldBound.Contains(p));
+    }
 
     static NotebookHUD current;
     static bool tucked;
@@ -115,7 +122,7 @@ public class NotebookHUD : MonoBehaviour
         // Out of the way on the title screen and behind the Day Report.
         bool show = !MainMenuUI.Active && (DayReportUI.Instance == null || !DayReportUI.Instance.IsOpen);
         layer.EnableInClassList("hidden", !show);
-        if (!show) PointerOver = overBook = overReserves = false;
+        PointerOver = show && MouseOver();
         if (dirty) Rebuild();
         // Orders and deliveries change a reservation's status, so look again now and then.
         if (Time.unscaledTime >= nextReserveCheck) { nextReserveCheck = Time.unscaledTime + 0.5f; RebuildReserves(); }

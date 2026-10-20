@@ -80,6 +80,20 @@ public class RoomReveal : MonoBehaviour
             : "The Rare Books room is open! Watch out for VIP scholars.", 6f);
         yield return new WaitForSecondsRealtime(lookSeconds);
 
+        // The Archive brings the repair desk: glide over and show what it's for.
+        if (room == RoomGate.Room.Archive && RepairDesk.Instance != null)
+        {
+            Vector3 deskFocus = RepairDesk.Instance.transform.position, start = go.transform.position, goal = deskFocus + offset * closeness;
+            for (float t = 0f; t < 1f; t += Time.unscaledDeltaTime / 1.4f)
+            {
+                go.transform.position = Vector3.Lerp(start, goal, Mathf.SmoothStep(0f, 1f, t));
+                yield return null;
+            }
+            Tutorial.Spotlight(RepairDesk.Instance, "Mend <color=#D67840>damaged</color> books at the <color=#D67840>repair desk</color>.");
+            yield return new WaitForSecondsRealtime(3.2f);
+            Tutorial.ClearSpotlight();
+        }
+
         // Back to the librarian.
         cam.Priority = 0;
         yield return new WaitForSecondsRealtime(1.8f);

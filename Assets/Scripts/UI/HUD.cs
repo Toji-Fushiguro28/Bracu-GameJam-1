@@ -136,6 +136,7 @@ public class HUD : MonoBehaviour
     void Notify(string text, string icon, bool urgent, bool log, float seconds = NoteSeconds)
     {
         if (feed == null || string.IsNullOrEmpty(text)) return;
+        if (Tutorial.HoldsClock) return; // the tutorial's practice day: its card says it all (no delivery/upgrade cards after)
         // The same message already showing or waiting: once is enough.
         if (pending.Exists(p => p.text == text) || notes.Exists(n => !n.tip && n.el.Q<Label>(className: "feed-text")?.text == text)) return;
         if (log) RequestLog.News(text); // in the Log straight away, even if the card waits
@@ -151,7 +152,20 @@ public class HUD : MonoBehaviour
     /// <summary>A tip (the first time something happens): in the feed with a lamp, until you click it away.</summary>
     public static void Tip(string text)
     {
-        if (instance != null) instance.Notify(text, "tip", false, false);
+        if (instance != null) instance.Notify(Highlight(text), "tip", false, false);
+    }
+
+    // Words worth spotting at a glance in a tip: where to go and what to press.
+    static readonly string[] TipWords = { "computer", "Catalogue", "Members", "Shop", "Notes", "return bin", "repair desk", "Repair desk",
+        "book cart", "cart", "shelf", "shelves", "reserve", "Order", "Express", "Rare Books", "Archive", "Day Report", "library card",
+        "card", "hint", "click", "front ropes", "VIP", "reputation", "tidy" };
+
+    /// <summary>Highlights the key words of a tip (unless it's already coloured).</summary>
+    static string Highlight(string text)
+    {
+        if (string.IsNullOrEmpty(text) || text.Contains("<")) return text;
+        string pattern = @"\b(" + string.Join("|", System.Linq.Enumerable.Select(TipWords, System.Text.RegularExpressions.Regex.Escape)) + @")\b";
+        return System.Text.RegularExpressions.Regex.Replace(text, pattern, m => $"<color=#D67840>{m.Value}</color>", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
     }
 
     void ShowCard(string text, string icon, bool urgent, float seconds)
@@ -508,7 +522,11 @@ public class HUD : MonoBehaviour
 
     void OnPhase(GameManager.Phase phase)
     {
-        if (phase == GameManager.Phase.Closing) ShowBanner("Closing time! No new visitors.");
+        if (phase == GameManager.Phase.Closing)
+        {
+            ShowBanner("Closing time! No new visitors.");
+            Tutorial.Show("lockup", "Closing time: tidy any cups and books left out (it earns reputation), then click the front ropes to lock up.");
+        }
         else if (phase == GameManager.Phase.Closed) ShowBanner("The library is closed. Tidy up, then click the front ropes to lock up.", 6f);
     }
 
@@ -651,7 +669,7 @@ public class HUD : MonoBehaviour
         if (repDeltaUntil > 0f && Time.time > repDeltaUntil) { repDeltaUntil = 0f; repDelta.AddToClassList("hidden"); }
         if (gm == null || clockLabel == null) return;
         string clock = gm.CurrentPhase == GameManager.Phase.Closed ? "Closed - tidy up, then click the front ropes" : gm.Paused ? gm.ClockText + "  (paused)" : gm.Slowed ? gm.ClockText + "  (slowed)" : gm.ClockText;
-        string day = $"Day {gm.day}";
+        string day = Tutorial.HoldsClock ? "Day 0 - Training day" : $"Day {gm.day}";
         if (dayLabel != null && dayLabel.text != day) dayLabel.text = day;
         if (clock != lastClock) clockLabel.text = lastClock = clock;
     }

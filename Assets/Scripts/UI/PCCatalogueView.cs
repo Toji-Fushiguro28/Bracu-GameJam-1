@@ -308,7 +308,7 @@ public static class PCCatalogueView
 
         // Buttons
         bool closed = gm != null && gm.CurrentPhase == GameManager.Phase.Closed;
-        bool orderable = gm != null && (CanOrder(b) || dealer); // the dealer delivers tomorrow, so any time today
+        bool orderable = gm != null && (CanOrder(b) || dealer) && Tutorial.AllowsOrder(b); // the dealer delivers tomorrow, so any time today
         int price = dealer ? GameManager.RarePrice(b) : orderable ? GameManager.OrderPrice(b, false) : 0, express = orderable && !dealer ? GameManager.OrderPrice(b, true) : 0;
         var note = root.Q<Button>("detail-select");
         note.SetEnabled(!notOwned && !RequestLog.IsNoted(b));

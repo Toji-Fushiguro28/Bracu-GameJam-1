@@ -40,8 +40,17 @@ public class GameManager : MonoBehaviour
         /// coinsAtStart + coinsIn - coinsOut is always what you have now.</summary>
         public int coinsAtStart, coinsIn, coinsOut, staffKept;
         /// <summary>Where the money went, by kind (book orders, upgrades, wages...), in the order it was first spent.</summary>
-        public readonly List<string> spentOn = new List<string>();
-        public readonly List<int> spentAmount = new List<int>();
+        public List<string> spentOn = new List<string>();
+        public List<int> spentAmount = new List<int>();
+
+        /// <summary>A copy (the tutorial keeps one to put back afterwards).</summary>
+        public DayStats Copy()
+        {
+            var c = (DayStats)MemberwiseClone();
+            c.spentOn = new List<string>(spentOn); // its own lists, not shared
+            c.spentAmount = new List<int>(spentAmount);
+            return c;
+        }
 
         public void Spend(string what, int amount)
         {
@@ -73,6 +82,24 @@ public class GameManager : MonoBehaviour
     public int Reputation { get; private set; }
     /// <summary>Reputation when this day opened (for the report).</summary>
     public int ReputationAtStart { get; private set; }
+    /// <summary>After the tutorial's practice steps: coins and reputation go back to what they were, and today's
+    /// numbers start from here (practice doesn't count).</summary>
+    public void ResetAfterTutorial(int coins, int reputation, DayStats today)
+    {
+        int dc = coins - Coins, dr = reputation - Reputation;
+        Coins = coins; Reputation = reputation;
+        if (dc != 0) CoinsChanged?.Invoke(Coins, dc);
+        if (dr != 0) ReputationChanged?.Invoke(Reputation, dr);
+        Today = today ?? new DayStats { coinsAtStart = Coins };
+    }
+
+    /// <summary>The tutorial only: every order on its way arrives now (on the book cart).</summary>
+    public void DeliverOrdersNow()
+    {
+        foreach (var o in orders) { o.arriveDay = day; o.arriveHour = Hour; }
+        DeliverDue();
+    }
+
     public void AddReputation(int amount)
     {
         int before = Reputation;

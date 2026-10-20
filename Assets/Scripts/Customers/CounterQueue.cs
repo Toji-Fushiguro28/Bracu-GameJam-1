@@ -44,9 +44,6 @@ public class CounterQueue : MonoBehaviour
         (line[i - 1], line[i]) = (line[i], line[i - 1]);
     }
 
-    [Tooltip("From the front spot: where people leaving the desk walk first, so they go round the left side, not back along the line.")]
-    public Vector3 leaveViaOffset = new Vector3(-3f, 0f, -2.5f);
-    public Vector3 LeaveVia => SlotPosition(0) + leaveViaOffset;
 
     public int IndexOf(Customer c) => line.IndexOf(c);
     public Customer At(int i) => i >= 0 && i < line.Count ? line[i] : null;
