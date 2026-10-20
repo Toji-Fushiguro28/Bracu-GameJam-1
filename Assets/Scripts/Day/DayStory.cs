@@ -274,7 +274,7 @@ public class DayStory : MonoBehaviour
     }
 
     /// <summary>A floating label with an arrow that stays on screen (like a staff member calling for help).</summary>
-    public static WorldPrompts.Follower Point(string text, Func<Vector3> at)
+    public static WorldPrompts.Follower Point(string text, Func<Vector3> at, bool edgeOnly = false)
     {
         var wp = WorldPrompts.Instance;
         if (wp == null) return null;
@@ -286,7 +286,7 @@ public class DayStory : MonoBehaviour
         var arrow = new VisualElement();
         arrow.AddToClassList("staff-pointer-arrow");
         el.Add(arrow);
-        return wp.Pin(el, arrow, at);
+        return wp.Pin(el, arrow, at, edgeOnly);
     }
 
     public static void Unpoint(ref WorldPrompts.Follower f)
@@ -919,6 +919,9 @@ public class DayStory : MonoBehaviour
         return $"{BookRequest.H($"\"{t}\"")} {(n > 0 ? "x" + n : "none")}";
     }));
 
+    /// <summary>What the author pays for her signing table.</summary>
+    const int SigningFee = 30;
+
     void SetUpSigning()
     {
         // An author with books on the main hall shelves (the visiting writer is one of the library's own authors).
@@ -994,9 +997,18 @@ public class DayStory : MonoBehaviour
             prefabs = who, name = author, teaser = "Right! Where do you want me?", atDesk = true,
             talk = c => new Script()
                 .Say("Right! Where do you want me? Near the door so people see me, but not so near they feel trapped.")
+                .Say($"And here's {BookRequest.H($"{SigningFee} coins")} for the table. I always pay my way. Mostly in coins, once in jam.")
                 .Say("I've brought my own pen. Last time somebody lent me one and it was a crayon.")
                 .d,
-            after = (c, _) => Banner($"The book signing has started! {author}'s fans are on their way."),
+            after = (c, _) =>
+            {
+                // The author pays the library for her table.
+                GM.AddCoins(SigningFee);
+                GM.Today.Earn(GameManager.DayStats.Source.Other, SigningFee);
+                RequestLog.Money(author, "Paid for the signing table", "Signing fee", SigningFee);
+                HUD.SkillPop(c.transform.position + Vector3.up * 2.2f, $"Signing table fee  +{SigningFee}");
+                Banner($"The book signing has started! {author}'s fans are on their way.");
+            },
             lingerUntil = SignEnd,
             next = farewell,
         });

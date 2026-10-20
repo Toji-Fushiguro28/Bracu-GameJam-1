@@ -38,7 +38,7 @@
 }
 .prompt-label {
     color: var(--ink);
-    font-size: 24px;
+    font-size: 20px;
 }
 
 /* ---------- Inspect bubble ---------- */
@@ -52,7 +52,7 @@
 }
 .bubble-text {
     color: var(--ink);
-    font-size: 24px;
+    font-size: 20px;
     white-space: normal;
     -unity-text-align: middle-center;
 }
@@ -135,7 +135,7 @@
     border-width: 0;
     border-radius: 0;
     color: rgb(59, 42, 29);
-    font-size: 26px;
+    font-size: 22px;
     background-color: rgba(0, 0, 0, 0);
     background-image: url("project://database/Assets/Art/UI/PC/T_PC_Button.png");
     -unity-slice-left: 1; -unity-slice-right: 1; -unity-slice-top: 2; -unity-slice-bottom: 3;
@@ -172,7 +172,7 @@
     -unity-slice-left: 4; -unity-slice-right: 4; -unity-slice-top: 4; -unity-slice-bottom: 4;
     -unity-slice-scale: 4px;
 }
-.hud-day, .hud-clock, .hud-coins Label { color: var(--ink); font-size: 32px; }
+.hud-day, .hud-clock, .hud-coins Label { color: var(--ink); font-size: 30px; }
 .hud-clock { margin: 0 28px; }
 .hud-coins { flex-direction: row; align-items: center; }
 .hud-coins Label { margin-left: 8px; }
@@ -190,7 +190,7 @@
     width: 60px; height: 60px; margin-right: 12px;
     background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Slot01a.png");
 }
-.hud-carry-label { color: var(--ink); font-size: 28px; max-width: 360px; white-space: normal; }
+.hud-carry-label { color: var(--ink); font-size: 24px; max-width: 360px; white-space: normal; }
 
 /* ---------- Shelf (open book) ---------- */
 .modal {
@@ -217,17 +217,17 @@
     border-bottom-color: rgba(128, 92, 70, 0.35);
 }
 .shelf-row-text { flex-grow: 1; flex-shrink: 1; margin-right: 8px; }
-#row-title { color: var(--ink); font-size: 26px; white-space: normal; }
-#row-sub { color: var(--ink-soft); font-size: 21px; white-space: normal; }
+#row-title { color: var(--ink); font-size: 22px; white-space: normal; }
+#row-sub { color: var(--ink-soft); font-size: 17px; white-space: normal; }
 .hand-info { align-items: center; flex-grow: 1; justify-content: center; }
 .hand-book {
     width: 120px; height: 120px; margin-bottom: 14px;
     background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Slot01a.png");
 }
 .hand-info.empty .hand-book { opacity: 0.4; }
-.hand-title { color: var(--ink); font-size: 30px; white-space: normal; -unity-text-align: middle-center; }
-.hand-sub { color: var(--ink-soft); font-size: 24px; white-space: normal; -unity-text-align: middle-center; margin-top: 6px; }
-.shelf-note { color: rgb(170, 60, 40); font-size: 24px; -unity-text-align: middle-center; min-height: 26px; }
+.hand-title { color: var(--ink); font-size: 28px; white-space: normal; -unity-text-align: middle-center; }
+.hand-sub { color: var(--ink-soft); font-size: 20px; white-space: normal; -unity-text-align: middle-center; margin-top: 6px; }
+.shelf-note { color: rgb(170, 60, 40); font-size: 20px; -unity-text-align: middle-center; min-height: 26px; }
 .close-button {
     position: absolute;
     top: -14px; right: -14px;
@@ -237,7 +237,7 @@
     background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconCross01a.png");
 }
 .close-button:hover { scale: 1.1 1.1; }
-.kit-button.small { font-size: 21px; padding: 4px 8px 6px 8px; margin-left: 4px; -unity-slice-scale: 2px; }
+.kit-button.small { font-size: 17px; padding: 4px 8px 6px 8px; margin-left: 4px; -unity-slice-scale: 2px; }
 
 /* ---------- Kit scrollbar (shelf list) ---------- */
 .shelf-list .unity-scroll-view__content-container { padding-right: 14px; }
@@ -277,7 +277,7 @@
     margin-bottom: 6px;
     padding: 10px 16px 14px 16px;
     color: var(--ink);
-    font-size: 24px;
+    font-size: 20px;
     white-space: normal;
     -unity-text-align: middle-center;
     background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Popup01a.png");
@@ -301,14 +301,14 @@
 .patience-fill.low { background-color: rgb(225, 85, 65); }
 
 /* ---------- Repair desk ---------- */
-.repair-total { color: var(--ink-soft); font-size: 24px; -unity-text-align: middle-center; margin-top: 8px; }
+.repair-total { color: var(--ink-soft); font-size: 20px; -unity-text-align: middle-center; margin-top: 8px; }
 .repair-status, .repair-game { flex-grow: 1; }
 .repair-work { flex-grow: 1; }
 .work-item { margin-bottom: 12px; }
 .work-bar { width: 100%; margin-top: 4px; }
-.repair-result { color: var(--ink); font-size: 28px; white-space: normal; -unity-text-align: middle-center; }
+.repair-result { color: var(--ink); font-size: 24px; white-space: normal; -unity-text-align: middle-center; }
 .repair-result.perfect { color: rgb(196, 110, 40); }
-.rg-hint { color: var(--ink-soft); font-size: 25px; white-space: normal; -unity-text-align: middle-center; margin-bottom: 26px; }
+.rg-hint { color: var(--ink-soft); font-size: 21px; white-space: normal; -unity-text-align: middle-center; margin-bottom: 26px; }
 .rg-track {
     height: 44px;
     margin: 0 6px;
@@ -328,15 +328,15 @@
     border-color: rgb(74, 48, 38);
 }
 .rg-feedback { color: rgb(196, 110, 40); font-size: 34px; -unity-text-align: middle-center; min-height: 52px; margin-top: 18px; }
-.rg-action { font-size: 32px; padding: 10px 14px 14px 14px; }
+.rg-action { font-size: 30px; padding: 10px 14px 14px 14px; }
 .rg-skip { align-self: center; margin-top: 10px; }
 
 /* ---------- Day report ---------- */
 .report-stars { color: rgb(196, 110, 40); font-size: 44px; -unity-text-align: middle-center; letter-spacing: 6px; }
-.report-stats { color: var(--ink); font-size: 26px; white-space: pre; margin: 8px 12px; flex-grow: 1; }
-.report-rep { color: var(--ink-soft); font-size: 25px; white-space: normal; -unity-text-align: middle-center; }
+.report-stats { color: var(--ink); font-size: 22px; white-space: pre; margin: 8px 12px; flex-grow: 1; }
+.report-rep { color: var(--ink-soft); font-size: 21px; white-space: normal; -unity-text-align: middle-center; }
 .plan-tabs { flex-direction: row; flex-wrap: wrap; justify-content: center; margin-bottom: 4px; }
-.plan-tab { margin: 0 4px; font-size: 26px; }
+.plan-tab { margin: 0 4px; font-size: 22px; }
 .plan-tab.selected { color: rgb(255, 246, 232); background-image: url("project://database/Assets/Art/UI/PC/T_PC_ButtonHot.png"); translate: 0 2px; }
 
 /* ---------- HUD polish ---------- */
@@ -346,19 +346,19 @@
     align-self: center;
     padding: 10px 28px 14px 28px;
     color: var(--ink);
-    font-size: 32px;
+    font-size: 30px;
     -unity-text-align: middle-center;
     background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Popup01a.png");
     -unity-slice-left: 4; -unity-slice-right: 4; -unity-slice-top: 4; -unity-slice-bottom: 4;
     -unity-slice-scale: 4px;
 }
-.hud-coin-delta { position: absolute; top: -30px; right: 0; color: rgb(120, 200, 100); font-size: 28px; -unity-text-outline-width: 1px; -unity-text-outline-color: rgb(40, 30, 20); }
+.hud-coin-delta { position: absolute; top: -30px; right: 0; color: rgb(120, 200, 100); font-size: 26px; -unity-text-outline-width: 1px; -unity-text-outline-color: rgb(40, 30, 20); }
 .hud-coin-delta.negative { color: rgb(240, 120, 100); }
 
 /* ---------- Customer name plate, VIP, mood face ---------- */
 .customer-name {
     color: rgb(250, 240, 220);
-    font-size: 22px;
+    font-size: 18px;
     -unity-text-outline-width: 1px;
     -unity-text-outline-color: rgb(40, 30, 20);
     margin-bottom: 2px;
@@ -372,7 +372,7 @@
     border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;
     padding: 0 10px 3px 10px;
     -unity-text-outline-width: 0;
-    font-size: 23px;
+    font-size: 19px;
 }
 .customer-speech.vip { border-width: 3px; border-color: rgb(220, 170, 60); }
 
@@ -468,9 +468,9 @@
 /* ---------- Day report rows ---------- */
 .report-rows { margin: 6px 14px; flex-grow: 1; }
 .report-row { flex-direction: row; justify-content: space-between; padding: 2px 4px; border-bottom-width: 1px; border-bottom-color: rgba(128, 92, 70, 0.25); }
-.report-key { color: var(--ink-soft); font-size: 24px; }
-.report-val { color: var(--ink); font-size: 24px; -unity-text-align: middle-right; }
-.report-row.total .report-key, .report-row.total .report-val { color: var(--accent); font-size: 27px; }
+.report-key { color: var(--ink-soft); font-size: 20px; }
+.report-val { color: var(--ink); font-size: 20px; -unity-text-align: middle-right; }
+.report-row.total .report-key, .report-row.total .report-val { color: var(--accent); font-size: 23px; }
 
 /* ---------- Book-page search bar (end-of-day shop) ---------- */
 .page-filter-bar { margin: 0 6px 6px 6px; }
@@ -481,10 +481,10 @@
     border-width: 2px; border-color: var(--ink-soft);
     border-top-left-radius: 4px; border-top-right-radius: 4px;
     border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;
-    color: var(--ink); font-size: 23px; padding: 2px 8px;
+    color: var(--ink); font-size: 19px; padding: 2px 8px;
 }
 .page-filters { flex-direction: row; justify-content: center; }
-.page-filter { font-size: 21px; padding: 2px 10px 6px 10px; margin: 0 4px; }
+.page-filter { font-size: 17px; padding: 2px 10px 6px 10px; margin: 0 4px; }
 
 /* ---------- Screen fade between days ---------- */
 .screen-fade {
@@ -498,7 +498,7 @@
 
 /* Shelf rows: Take / Worn / Damaged stacked on the right; title keeps the room. */
 .take-col { flex-direction: column; align-items: stretch; flex-shrink: 0; width: 92px; }
-.take-col .kit-button { margin: 2px 0; -unity-text-align: middle-center; font-size: 23px; padding: 4px 6px 6px 6px; -unity-slice-scale: 2px; }
+.take-col .kit-button { margin: 2px 0; -unity-text-align: middle-center; font-size: 19px; padding: 4px 6px 6px 6px; -unity-slice-scale: 2px; }
 .shelf-row .shelf-row-text { flex-basis: 0; flex-grow: 1; }
 
 /* The report sits on solid black so the night fade doesn't reveal the library behind it. */
@@ -509,7 +509,7 @@
     position: absolute; top: 18px; align-self: center;
     padding: 4px 18px 8px 18px;
     color: var(--ink);
-    font-size: 26px;
+    font-size: 22px;
     background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Popup01a.png");
     -unity-slice-left: 4; -unity-slice-right: 4; -unity-slice-top: 4; -unity-slice-bottom: 4;
     -unity-slice-scale: 4px;
@@ -521,10 +521,10 @@
 
 /* ---------- Audit log rows (Day Report "Log" tab) ---------- */
 .log-row { padding: 6px 0 8px 0; border-bottom-width: 2px; border-bottom-color: rgba(128, 92, 70, 0.35); }
-.log-head { color: var(--accent); font-size: 22px; white-space: normal; }
-.log-line { color: var(--ink); font-size: 23px; white-space: normal; }
-.log-outcome { color: var(--ink-soft); font-size: 21px; white-space: normal; margin-top: 2px; }
-.log-empty { color: var(--ink-soft); font-size: 24px; white-space: normal; -unity-text-align: middle-center; margin-top: 30px; }
+.log-head { color: var(--accent); font-size: 18px; white-space: normal; }
+.log-line { color: var(--ink); font-size: 19px; white-space: normal; }
+.log-outcome { color: var(--ink-soft); font-size: 17px; white-space: normal; margin-top: 2px; }
+.log-empty { color: var(--ink-soft); font-size: 20px; white-space: normal; -unity-text-align: middle-center; margin-top: 30px; }
 
 /* ---------- Staff calling for help / waiting to report ---------- */
 .staff-pointer {
@@ -541,7 +541,7 @@
     background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Alert01a.png");
     -unity-background-scale-mode: scale-to-fit;
 }
-#staff-pointer-label { color: rgb(196, 110, 40); font-size: 30px; }
+#staff-pointer-label { color: rgb(196, 110, 40); font-size: 28px; }
 .staff-pointer-arrow {
     width: 22px; height: 22px; margin-left: 6px;
     background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconArrow01a.png");
@@ -571,7 +571,7 @@
 .popular { border-left-width: 4px; border-left-color: rgb(214, 120, 64); background-color: rgba(235, 200, 120, 0.18);
            transition-property: background-color, border-left-color; transition-duration: 0.8s; }
 .popular.glow-on { background-color: rgba(235, 200, 120, 0.45); border-left-color: rgb(235, 160, 90); }
-.popular-badge { color: rgb(74, 48, 38); background-color: rgb(235, 200, 120); font-size: 19px; padding: 0 6px 2px 6px; margin-left: 8px;
+.popular-badge { color: rgb(74, 48, 38); background-color: rgb(235, 200, 120); font-size: 15px; padding: 0 6px 2px 6px; margin-left: 8px;
                  border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; }
 .popular-title-row { flex-direction: row; align-items: center; flex-wrap: wrap; }
 .page-filters { flex-wrap: wrap; }
@@ -583,10 +583,10 @@
 
 /* Reputation (and the Dean's goal) on the HUD bar, with a pop when it changes. */
 .hud-rep { flex-direction: row; align-items: center; margin-left: 28px; }
-.hud-rep Label { color: var(--ink); font-size: 32px; margin-left: 8px; }
+.hud-rep Label { color: var(--ink); font-size: 30px; margin-left: 8px; }
 .icon-rep { width: 32px; height: 32px; -unity-background-scale-mode: scale-to-fit;
     background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconStar01a.png"); }
-#hud-rep-delta { position: absolute; top: -30px; right: 0; font-size: 28px; color: rgb(110, 215, 95);
+#hud-rep-delta { position: absolute; top: -30px; right: 0; font-size: 26px; color: rgb(110, 215, 95);
     -unity-text-outline-width: 1.5px; -unity-text-outline-color: rgb(40, 30, 20); }
 #hud-rep-delta.negative { color: rgb(235, 85, 70); }
 .hud-rep.goal-met Label { color: rgb(214, 120, 64); }
@@ -647,11 +647,11 @@
 }
 
 /* ---------- Day Report: Summary tab (income by source, what went wrong, a tip for tomorrow) ---------- */
-.plan-tab { margin: 0 2px 4px 2px; font-size: 22px; padding-left: 10px; padding-right: 10px; } /* five tabs fit on one row */
-.summary-head { color: var(--accent); font-size: 27px; margin: 12px 4px 4px 4px; }
-.summary-note { color: var(--ink); font-size: 24px; white-space: normal; margin: 2px 6px; }
+.plan-tab { margin: 0 3px; font-size: 20px; }
+.summary-head { color: var(--accent); font-size: 23px; margin: 12px 4px 4px 4px; }
+.summary-note { color: var(--ink); font-size: 20px; white-space: normal; margin: 2px 6px; }
 .summary-note.bad { color: rgb(190, 70, 50); }
-.summary-tip { color: var(--ink); font-size: 25px; white-space: normal; margin: 4px 6px; padding: 8px 10px; background-color: rgba(235, 200, 120, 0.35); }
+.summary-tip { color: var(--ink); font-size: 21px; white-space: normal; margin: 4px 6px; padding: 8px 10px; background-color: rgba(235, 200, 120, 0.35); }
 
 /* ---------- Tutorial card and first-time tips (left side) ---------- */
 .tut-card {
@@ -663,10 +663,10 @@
     -unity-slice-left: 4; -unity-slice-right: 4; -unity-slice-top: 4; -unity-slice-bottom: 4;
     -unity-slice-scale: 4px;
 }
-.tut-title { color: rgb(196, 110, 40); font-size: 24px; margin-bottom: 4px; }
-.tut-text { color: var(--ink); font-size: 27px; white-space: normal; }
+.tut-title { color: rgb(196, 110, 40); font-size: 20px; margin-bottom: 4px; }
+.tut-text { color: var(--ink); font-size: 23px; white-space: normal; }
 .tut-buttons { flex-direction: row; justify-content: flex-end; margin-top: 10px; }
-.tut-button { font-size: 22px; margin-left: 8px; }
+.tut-button { font-size: 18px; margin-left: 8px; }
 
 /* A staff member did something: a short line on the left, a little above the middle. */
 .hud Label.staff-note {
@@ -674,7 +674,7 @@
     left: 24px;
     top: 36%;
     padding: 4px 14px 7px 12px;
-    font-size: 26px;
+    font-size: 22px;
     color: var(--ink);
     background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Popup01a.png");
     -unity-slice-left: 4; -unity-slice-right: 4; -unity-slice-top: 4; -unity-slice-bottom: 4;
@@ -683,7 +683,7 @@
 }
 
 /* Shelf: what the picked book is about. */
-.shelf-about { color: var(--ink); font-size: 23px; white-space: normal; margin: 6px 14px 4px 14px; -unity-text-align: upper-left; }
+.shelf-about { color: var(--ink); font-size: 19px; white-space: normal; margin: 6px 14px 4px 14px; -unity-text-align: upper-left; }
 .shelf-row.picked { background-color: rgba(214, 120, 64, 0.18); }
 
 /* The edge arrow to a visitor waiting with a "?": the same pixel question mark. */

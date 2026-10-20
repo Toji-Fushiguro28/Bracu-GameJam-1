@@ -277,7 +277,7 @@ public class Customer : ClickInteractable
 
     /// <summary>Until you talk to them, a waiting visitor only shows a small "?" bubble.</summary>
     bool heard;
-    string WaitingText => story != null ? (roaming && !heard ? AskMark : story.teaser) : heard ? RequestText : AskMark;
+    string WaitingText => story != null ? (roaming && !heard ? AskMark : story.teaser) : heard ? RequestText : "";
     const string AskMark = "?";
 
     void ShowIdleLine()
@@ -1360,7 +1360,7 @@ public class Customer : ClickInteractable
         if (state == State.Waiting && !heard)
         {
             var t = transform;
-            askPointer = DayStory.Point("?", () => t != null ? t.position + Vector3.up * 2.3f : Vector3.zero);
+            askPointer = DayStory.Point("?", () => t != null ? t.position + Vector3.up * 2.3f : Vector3.zero, true); // only at the screen edge
         }
     }
 
@@ -1442,6 +1442,13 @@ public class Customer : ClickInteractable
         if (r == null || r.Target == null) return;
         story = null;
         kind = reading ? Kind.Reader : Kind.Buyer;
+        if (roaming)
+        {
+            // Chatted where they were sitting or browsing: they ask for the book at the desk.
+            presetRequest = r;
+            ComeToDesk();
+            return;
+        }
         request = r;
         heard = true;
         StartPatience(request.Patience);
@@ -1462,12 +1469,24 @@ public class Customer : ClickInteractable
         StartReading(book, condition);
     }
 
+    /// <summary>A roaming story visitor who now wants something from the desk: up from their chair and into the line.
+    /// At the front they ask for it like anyone else.</summary>
+    void ComeToDesk()
+    {
+        StopRoaming();
+        GetUp();
+        heard = false;
+        Say("I'll see you at the desk!", 2.5f);
+        JoinQueue();
+    }
+
     /// <summary>A story visitor who wants a library card (filled in on the PC as usual).</summary>
     public void ContinueAsSignUp()
     {
         story = null;
         kind = Kind.SignUp;
         introduced = false;
+        if (roaming) { ComeToDesk(); return; } // cards are filled in at the desk
         heard = false;
         StartPatience(70f);
         state = State.Waiting;
@@ -1620,8 +1639,7 @@ public class Customer : ClickInteractable
     /// <summary>Show a line overhead. seconds = 0 keeps it until replaced.</summary>
     void Say(string text, float seconds = 0f)
     {
-        SetSpeech(text);
-        speech.RemoveFromClassList("hidden");
+        SetSpeech(text); // an empty line hides the bubble
         reactionLeft = seconds;
     }
 
@@ -1637,7 +1655,8 @@ public class Customer : ClickInteractable
     void RefreshNameplate()
     {
         var m = Membership;
-        nameplate.text = vip ? $"VIP  {FullName}" : !string.IsNullOrEmpty(displayName) || story != null ? FullName : "";
+        // A name over their head only once they have a library card (story visitors, the VIP badge and named visits too).
+        nameplate.text = m == null ? "" : vip ? $"VIP  {FullName}" : !string.IsNullOrEmpty(displayName) || story != null ? FullName : "";
         nameplate.EnableInClassList("vip", vip);
         nameplate.EnableInClassList("hidden", string.IsNullOrEmpty(nameplate.text));
     }

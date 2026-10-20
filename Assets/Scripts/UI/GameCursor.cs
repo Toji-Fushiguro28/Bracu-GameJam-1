@@ -114,15 +114,26 @@ public class GameCursor : MonoBehaviour
         if (src == null || !src.isReadable) return null;
         var pixels = src.GetPixels32();
         int w = src.width, h = src.height;
-        var big = new Texture2D(w * s, h * s, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point, name = src.name + "_x" + s };
+        // linear: the pixels are copied as-is; an sRGB texture here looks washed out (whitish) as an OS cursor in a Linear project.
+        var big = new Texture2D(w * s, h * s, TextureFormat.RGBA32, false, true) { filterMode = FilterMode.Point, name = src.name + "_x" + s };
         var outPixels = new Color32[w * s * h * s];
         for (int y = 0; y < h * s; y++)
             for (int x = 0; x < w * s; x++)
                 outPixels[y * w * s + x] = pixels[(y / s) * w + (x / s)];
+        // In a Linear project the OS cursor comes out brightened (whitish). Darken by the same curve so it shows the
+        // art's real colours.
+        if (QualitySettings.activeColorSpace == ColorSpace.Linear)
+            for (int i = 0; i < outPixels.Length; i++)
+            {
+                var c = outPixels[i];
+                outPixels[i] = new Color32(ToLinear(c.r), ToLinear(c.g), ToLinear(c.b), c.a);
+            }
         big.SetPixels32(outPixels);
         big.Apply(false, false);
         return big;
     }
+
+    static byte ToLinear(byte v) => (byte)Mathf.RoundToInt(Mathf.GammaToLinearSpace(v / 255f) * 255f);
 
     /// <summary>Over something you can click: a library object in reach of the click system, or a UI button.</summary>
     bool OverClickable()

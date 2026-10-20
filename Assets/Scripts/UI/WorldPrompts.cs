@@ -17,7 +17,7 @@ public class WorldPrompts : MonoBehaviour
     class Bubble { public VisualElement el; public ClickInteractable target; public float until; }
 
     /// <summary>A UI element kept above a moving world point (e.g. a customer's patience bar).</summary>
-    public class Follower { public VisualElement el, arrow; public System.Func<Vector3> anchor; }
+    public class Follower { public VisualElement el, arrow; public System.Func<Vector3> anchor; public bool edgeOnly; }
     readonly List<Follower> followers = new List<Follower>();
 
     public Follower Follow(VisualElement el, System.Func<Vector3> anchor)
@@ -32,10 +32,11 @@ public class WorldPrompts : MonoBehaviour
 
     /// <summary>Like Follow, but kept on screen: off-screen it sits at the edge and shows its arrow
     /// pointing the way (e.g. a staff member calling for help).</summary>
-    public Follower Pin(VisualElement el, VisualElement arrow, System.Func<Vector3> anchor)
+    /// <param name="edgeOnly">Only shown at the screen edge (hidden while the target is on screen, where it shows its own mark).</param>
+    public Follower Pin(VisualElement el, VisualElement arrow, System.Func<Vector3> anchor, bool edgeOnly = false)
     {
         var f = Follow(el, anchor);
-        if (f != null) f.arrow = arrow;
+        if (f != null) { f.arrow = arrow; f.edgeOnly = edgeOnly; }
         return f;
     }
 
@@ -138,6 +139,7 @@ public class WorldPrompts : MonoBehaviour
         const float left = 0.07f, right = 0.93f, bottom = 0.17f, top = 0.9f;
         bool onScreen = vp.z > 0f && vp.x > left && vp.x < right && vp.y > bottom && vp.y < top;
         f.arrow.style.display = onScreen ? DisplayStyle.None : DisplayStyle.Flex;
+        if (onScreen && f.edgeOnly) { f.el.style.visibility = Visibility.Hidden; return; }
         if (onScreen) { Place(f.el, f.anchor() - Vector3.up * heightOffset); return; }
         float w = layer.resolvedStyle.width, h = layer.resolvedStyle.height;
         if (w <= 0f || h <= 0f) return;
