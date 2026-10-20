@@ -392,7 +392,7 @@ public class GameManager : MonoBehaviour
     public bool EndingDue => day >= EndingDay && !endingSeen;
 
     /// <summary>The Dean's goal for the first week: this reputation by the end of Day 5 (Cozy / Standard / Busy).</summary>
-    public static readonly int[] ReputationGoals = { 40, 60, 75 };
+    public static readonly int[] ReputationGoals = { 60, 100, 125 }; // Cozy, Standard, Busy (Busy: about the most a strong player can earn by Day 5)
     public int ReputationGoal => ReputationGoals[(int)difficulty];
     /// <summary>Still working towards the Dean's goal (the ending hasn't played yet).</summary>
     public bool GoalActive => !endingSeen && day <= EndingDay;

@@ -106,7 +106,7 @@ public class DayStory : MonoBehaviour
     public string Notice => today switch
     {
         Twist.ExamRush => $"QUIET PLEASE. Second-year {examSubject} exam tomorrow. Panic in a whisper.",
-        Twist.Thief => "Have you seen this coat? Long, dark, collar up. Tell the desk.",
+        Twist.Thief => "Watch for a nervous stranger near the shelves. Tell the desk.",
         Twist.Leak => "If the ceiling drips on you, it is not crying. Tell the desk.",
         Twist.Inspection => "Inspection today at 1:00 PM. Please look studious.",
         Twist.Signing => $"Book signing with {author}, 2:00 PM today! Bring a pen. Not a crayon.",
@@ -546,7 +546,7 @@ public class DayStory : MonoBehaviour
     Customer thief;
     WorldPrompts.Follower thiefPointer;
     int thievesSeen, thievesCaught, thievesEscaped;
-    const string ThiefName = "Stranger in a long coat";
+    const string ThiefName = "Nervous stranger";
 
     void SetUpThief()
     {
@@ -557,14 +557,14 @@ public class DayStory : MonoBehaviour
                 .Say("Keep your eyes peeled today. Somebody's been pinching books. Did the charity shop on Fenn Street on Tuesday and the dentist's waiting room yesterday.")
                 .Say("Who nicks from a dentist? Those magazines are from 2009.")
                 .Choose("What do they look like?", "look", "Thanks for the warning.", "thanks")
-                .Say("Long coat, collar up. Looks at the shelves like they're casing a bank. You'll know them when you see them.", "look", "tip")
-                .Say("Long coat, collar up, if you see them. Don't be a hero. Well. Be a little bit of a hero.", "thanks")
-                .Me("If a stranger in a long coat heads for the door with a book they haven't checked out, click them before they get out", "tip")
+                .Say("A stranger who keeps glancing at the door. Looks at the shelves like they're casing a bank. You'll know them when you see them.", "look", "tip")
+                .Say("A nervous stranger, if you see one. Don't be a hero. Well. Be a little bit of a hero.", "thanks")
+                .Me("If a stranger heads for the door with a book they haven't checked out, click them before they get out", "tip")
                 .d,
             after = (c, _) =>
             {
-                Banner("Book thief about! Stop the stranger in a long coat before they reach the door.", 7f);
-                RequestLog.Task("thief", "Book thief", "Watch for a stranger in a long coat leaving with a book. Click them before they reach the door.");
+                Banner("Book thief about! Stop the nervous stranger before they reach the door.", 7f);
+                RequestLog.Task("thief", "Book thief", "Watch for a stranger leaving with a book they haven't checked out. Click them before they reach the door.");
             },
         });
         Try(11f, () => SpawnThief(11f));
@@ -598,7 +598,7 @@ public class DayStory : MonoBehaviour
                     s.Say("Caught one and lost one, I heard. Better than the dentist. The dentist didn't notice for a week.");
                 else
                     s.Say("Got away from you, did they? Same as the dentist. Never mind.")
-                     .Say("They'll be back. And next time you'll know the coat.");
+                     .Say("They'll be back. And next time you'll know the face.");
                 return s.d;
             },
             after = (c, _) =>
@@ -626,7 +626,7 @@ public class DayStory : MonoBehaviour
         thievesSeen++;
         Unpoint(ref thiefPointer);
         thiefPointer = Point("Thief!", () => c != null ? c.transform.position + Vector3.up * 2.1f : Vector3.zero);
-        Banner("The stranger in the long coat just pocketed a book! Catch them before the door!", 6f);
+        Banner("The nervous stranger just pocketed a book! Catch them before the door!", 6f);
     }
 
     /// <summary>Clicked in time: the book goes back on the shelf.</summary>

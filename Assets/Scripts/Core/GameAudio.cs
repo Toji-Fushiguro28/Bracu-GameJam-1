@@ -33,6 +33,8 @@ public class GameAudio : MonoBehaviour
     public AudioClip newDay;
     public AudioClip unlock;
     public AudioClip delivery;
+    [Tooltip("Reputation went up (a rising chime).")]
+    public AudioClip reputationUp;
     [Header("UI")]
     public AudioClip uiClick;
     public AudioClip panelOpen;

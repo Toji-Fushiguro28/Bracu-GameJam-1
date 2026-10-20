@@ -319,7 +319,9 @@ public class StaffInterview : MonoBehaviour
         yield return Say(Dean, "It's yours to look after now. Don't worry, I'll still pop in as a visitor. I'll even pay my fees.");
         yield return Say(Dean, "When it gets busy, hire some help on the computer. Applicants come in the next morning, before the doors open, and you'll interview them right here.");
         yield return Say(Dean, "Ask good questions, and talk about pay kindly. People remember how they were treated.");
-        int goal = GameManager.Instance != null ? GameManager.Instance.ReputationGoal : 60;
+        // The new-game intro runs before the library loads: use the mode picked on the title screen.
+        int goal = GameManager.Instance != null ? GameManager.Instance.ReputationGoal
+                 : GameManager.ReputationGoals[(int)(GameManager.PendingDifficulty ?? GameManager.Difficulty.Standard)];
         yield return Say(Dean, $"One more thing. The university board wants to see the town loves this place again. Get the library's <color=#D67840>reputation to {goal}</color> by the end of <color=#D67840>Day {GameManager.EndingDay}</color>, and they'll stop asking questions.");
         yield return Say(Dean, "Serve people well and they'll talk. Hand them the wrong book, or let them walk out, and they'll talk too.");
         yield return Say(Dean, "Now go on. The library opens at nine, and the books won't shelve themselves.");
@@ -344,7 +346,8 @@ public class StaffInterview : MonoBehaviour
 
         yield return Say(Dean, "Don't get up! Ha, look at us. You in my old chair, and me in the visitor's seat.");
         yield return Say(Dean, "I've been coming in every day, you know. Sitting in the corner with a book I wasn't really reading. Watching.");
-        yield return Say(Dean, $"<color=#D67840>{EndingMembers} members</color> carry a Whitmore card now. When I left, it was eleven, and nine of them were my bridge club.");
+        yield return Say(Dean, $"<color=#D67840>{EndingMembers} members</color> carry a Whitmore card now. " +
+                               (EndingMembers > 3 ? "When I left there were far fewer, and most of those were my bridge club." : "A small start. My bridge club started smaller."));
         yield return Say(Dean, staffLine);
         // How the week went against the goal he set.
         if (EndingTier >= 2)
