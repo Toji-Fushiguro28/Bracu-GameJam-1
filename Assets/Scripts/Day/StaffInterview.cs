@@ -319,7 +319,9 @@ public class StaffInterview : MonoBehaviour
         yield return Say(Dean, "It's yours to look after now. Don't worry, I'll still pop in as a visitor. I'll even pay my fees.");
         yield return Say(Dean, "When it gets busy, hire some help on the computer. Applicants come in the next morning, before the doors open, and you'll interview them right here.");
         yield return Say(Dean, "Ask good questions, and talk about pay kindly. People remember how they were treated.");
-        int goal = GameManager.Instance != null ? GameManager.Instance.ReputationGoal : 60;
+        // The new-game intro runs before the library loads: use the mode picked on the title screen.
+        int goal = GameManager.Instance != null ? GameManager.Instance.ReputationGoal
+                 : GameManager.ReputationGoals[(int)(GameManager.PendingDifficulty ?? GameManager.Difficulty.Standard)];
         yield return Say(Dean, $"One more thing. The university board wants to see the town loves this place again. Get the library's <color=#D67840>reputation to {goal}</color> by the end of <color=#D67840>Day {GameManager.EndingDay}</color>, and they'll stop asking questions.");
         yield return Say(Dean, "Serve people well and they'll talk. Hand them the wrong book, or let them walk out, and they'll talk too.");
         yield return Say(Dean, "Now go on. The library opens at nine, and the books won't shelve themselves.");
