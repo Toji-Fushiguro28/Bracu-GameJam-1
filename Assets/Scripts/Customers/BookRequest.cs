@@ -111,6 +111,22 @@ public class BookRequest
         return Pick($"I think it's {kind}.", $"I'm fairly sure it's {kind}.", $"It's {kind}, if that helps.");
     }
 
+    /// <summary>Why a handed-over item doesn't fit, in the visitor's words (so a near miss teaches the rule:
+    /// a Science book isn't automatically a "Textbook").</summary>
+    public string WrongLine(BookData given)
+    {
+        switch (Hint)
+        {
+            case HintType.Author: return $"Hmm, that's not by {H(Value)}.";
+            case HintType.Subject: return $"Hmm, that's not about {H(Value)}.";
+            case HintType.Tag: return $"Hmm, that's not tagged {H($"\"{Value}\"")}, though.";
+            case HintType.Format: return $"Hmm, I wanted a {H(Target.FormatName.ToLowerInvariant())}.";
+            case HintType.FormatSubject: return given.Format != Format
+                ? $"Hmm, I wanted a {H(Target.FormatName.ToLowerInvariant())}." : $"Hmm, that's not on {H(Value)}.";
+            default: return "Hmm, that's not the one I meant.";
+        }
+    }
+
     /// <summary>Asking by topic, worded for where it lives (Archive and Rare Books say so).</summary>
     static string SubjectLine(BookData b) =>
         IsArchive(b) ? $"Could I look at something from the {H("Archive")} on {H(b.SubjectName)}?"

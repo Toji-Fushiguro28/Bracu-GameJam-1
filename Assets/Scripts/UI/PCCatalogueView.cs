@@ -67,6 +67,8 @@ public static class PCCatalogueView
                 return row;
             };
             list.bindItem = BindRow;
+            // Rows grow when a long title wraps onto a second line.
+            list.virtualizationMethod = CollectionVirtualizationMethod.DynamicHeight;
             list.fixedItemHeight = 104;
             list.selectionType = SelectionType.Single;
         }

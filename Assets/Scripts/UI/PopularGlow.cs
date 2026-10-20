@@ -52,7 +52,10 @@ public static class PopularGlow
         var line = new VisualElement();
         line.AddToClassList("popular-title-row");
         line.AddToClassList("title-row");
+        // The title takes whatever the badge leaves and wraps inside it (a second line rather than cut short).
+        title.style.flexGrow = 1;
         title.style.flexShrink = 1;
+        title.style.flexBasis = 0;
         line.Add(title);
         line.Add(Badge());
         return line;

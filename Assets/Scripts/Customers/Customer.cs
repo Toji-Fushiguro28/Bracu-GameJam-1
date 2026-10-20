@@ -282,10 +282,9 @@ public class Customer : ClickInteractable
 
     void ShowIdleLine()
     {
-        speech.text = state == State.Waiting ? WaitingText
-                    : state == State.CheckIn ? CheckInLine
-                    : state == State.Checkout ? CheckoutLine : "";
-        speech.EnableInClassList("hidden", string.IsNullOrEmpty(speech.text));
+        SetSpeech(state == State.Waiting ? WaitingText
+                : state == State.CheckIn ? CheckInLine
+                : state == State.Checkout ? CheckoutLine : "");
     }
 
     void FaceTowards(Vector3 p)
@@ -671,7 +670,7 @@ public class Customer : ClickInteractable
         if (!request.Matches(book))
         {
             RequestLog.Rejected(this, book);
-            Say("Hmm, that's not what I asked for.", 2.5f);
+            Say(request.WrongLine(book), 3f); // says why, so you know what to look for
             GameAudio.Play(a => a.wrongBook);
             GM.AddReputation(-1); // word gets around
             GM.Today.wrongBooks++;
@@ -858,6 +857,8 @@ public class Customer : ClickInteractable
             HintType.Subject => who.Length > 0 ? $"Maybe something by an author whose name starts with \"{who[0]}\"?" : $"It's {BookRequest.Kind(b)}.",
             HintType.Format or HintType.FormatSubject => $"They keep those on the {ShelfInteractable.NameOf(b.ShelfLocation)} shelf, I think.",
             HintType.Title => who.Length > 0 ? $"It's by {who}. Is it in the catalogue?" : $"It's {BookRequest.Kind(b)}. Is it in the catalogue?",
+            // Any item with the tag will do; the hint names the tag so a merely "Science" book isn't mistaken for it.
+            HintType.Tag => $"It's tagged \"{request.Value}\" on the computer. {BookRequest.KindHint(b)}",
             _ => BookRequest.KindHint(b), // author, tag and description requests
         };
     }
@@ -1619,10 +1620,18 @@ public class Customer : ClickInteractable
     /// <summary>Show a line overhead. seconds = 0 keeps it until replaced.</summary>
     void Say(string text, float seconds = 0f)
     {
-        speech.EnableInClassList("ask", text == AskMark);
-        speech.text = text;
+        SetSpeech(text);
         speech.RemoveFromClassList("hidden");
         reactionLeft = seconds;
+    }
+
+    /// <summary>Their bubble. A "?" shows as the pixel question mark (an icon, no text).</summary>
+    void SetSpeech(string text)
+    {
+        bool ask = text == AskMark;
+        speech.EnableInClassList("ask", ask);
+        speech.text = ask ? "" : text;
+        speech.EnableInClassList("hidden", !ask && string.IsNullOrEmpty(text));
     }
 
     void RefreshNameplate()

@@ -280,7 +280,9 @@ public class DayStory : MonoBehaviour
         if (wp == null) return null;
         var el = new VisualElement();
         el.AddToClassList("staff-pointer");
-        el.Add(new Label(text) { name = "staff-pointer-label" });
+        var label = new Label(text == "?" ? "" : text) { name = "staff-pointer-label" };
+        label.EnableInClassList("ask", text == "?"); // the pixel question mark, as over their head
+        el.Add(label);
         var arrow = new VisualElement();
         arrow.AddToClassList("staff-pointer-arrow");
         el.Add(arrow);
