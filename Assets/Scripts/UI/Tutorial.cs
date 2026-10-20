@@ -12,7 +12,7 @@ using UnityEngine.UIElements;
 ///    says what it does (Next / Enter to go on).
 /// 2. Three visitors only: a book by an author (computer, shelf, hand over), a library card (Members), and a book
 ///    the library doesn't have (reserve, order; in the tutorial it arrives on the cart at once, then hand it over).
-///    A checklist ticks off each one. The clock holds, patience doesn't drain and nobody else comes in.
+///    Three step cards (book, card, order) tick off each one. The clock holds, patience doesn't drain and nobody else comes in.
 /// 3. "You're ready!", then a fade into Day 1 proper: the practice coins and reputation are put back (and today's
 ///    numbers start from there); finishing it the first time leaves a small welcome gift.
 /// Skip any time: same fade, no gift. Its card and frame sit on their own panel, above the computer and shelves.
@@ -51,7 +51,7 @@ public class Tutorial : MonoBehaviour
 
     VisualElement root, card, checklist, spot;
     Label title, text, spotLabel;
-    Label[] checks;
+    VisualElement[] checks; // the three step cards
     Button skip, ok;
     WorldPrompts.Follower pointer;
     Object pointedAt;
@@ -107,10 +107,16 @@ public class Tutorial : MonoBehaviour
         card.AddToClassList("hidden");
         title = new Label(); title.AddToClassList("tut-title");
         text = new Label(); text.AddToClassList("tut-text");
-        checklist = new VisualElement(); checklist.AddToClassList("tut-checklist");
-        checks = new[] { "Serve a visitor", "Issue a library card", "Order a book" }.Select(t =>
+        // Three little cards, one per visitor: the current one has an orange edge, done ones get the kit's tick.
+        checklist = new VisualElement(); checklist.AddToClassList("tut-steps");
+        checks = new[] { ("book", "Find a book"), ("key", "Library card"), ("scroll", "Order a book") }.Select(s =>
         {
-            var row = new Label(t); row.AddToClassList("tut-check"); checklist.Add(row); return row;
+            var c = new VisualElement(); c.AddToClassList("tut-stepcard");
+            var icon = new VisualElement(); icon.AddToClassList("tut-stepicon"); icon.AddToClassList("tut-step-" + s.Item1);
+            var label = new Label(s.Item2); label.AddToClassList("tut-steplabel");
+            var tick = new VisualElement(); tick.AddToClassList("tut-steptick");
+            c.Add(icon); c.Add(label); c.Add(tick);
+            checklist.Add(c); return c;
         }).ToArray();
         var buttons = new VisualElement(); buttons.AddToClassList("tut-buttons");
         ok = new Button(OnOk) { text = "Next" }; ok.AddToClassList("kit-button"); ok.AddToClassList("tut-button");
@@ -161,7 +167,7 @@ public class Tutorial : MonoBehaviour
         servedBefore = GM.Today.served;
         ordersBefore = GM.OrdersPlaced;
         buyer = signer = seeker = null; wanted = null;
-        for (int i = 0; i < ticked.Length; i++) { ticked[i] = false; checks[i].RemoveFromClassList("done"); }
+        for (int i = 0; i < ticked.Length; i++) { ticked[i] = false; checks[i].RemoveFromClassList("done"); checks[i].RemoveFromClassList("current"); }
         zoomed.Clear();
         PCOverlayTrigger.LastViewed = null;
         StartTour();
@@ -336,7 +342,7 @@ public class Tutorial : MonoBehaviour
                 if (seeker == null && !SpawnSeeker()) { GoTo(Step.Ready); break; }
                 if (GM.ReservationFor(seeker.profileKey) != null) { ordersBefore = GM.OrdersPlaced; GoTo(Step.OrderBuy); break; }
                 if (Gone(seeker)) { Respawn(ref seeker); break; }
-                Point(seeker, "Talk");
+                if (seeker.IsWaiting) Point(seeker, "Talk"); else Unpoint();
                 break;
             case Step.OrderBuy:
             {
@@ -372,6 +378,7 @@ public class Tutorial : MonoBehaviour
         string head = next == Step.Ready ? "Tutorial" : $"Tutorial  ·  {VisitorNo(next)} of 3";
         string shelf = wanted != null ? ShelfInteractable.NameOf(wanted.ShelfLocation) : "the right";
         checklist.style.display = DisplayStyle.Flex;
+        for (int i = 0; i < checks.Length; i++) checks[i].EnableInClassList("current", next != Step.Ready && i == VisitorNo(next) - 1 && !ticked[i]);
         ok.style.display = DisplayStyle.None;
         skip.style.display = DisplayStyle.Flex;
         switch (next)
@@ -398,7 +405,9 @@ public class Tutorial : MonoBehaviour
                 Say(head, $"This visitor wants a book we don't have. Talk to them and {H("reserve")} it.");
                 break;
             case Step.OrderBuy:
-                Say(head, $"Order it on the {H("computer")}: find it in the {H("Catalogue")} and press {H("Order")}.");
+                Say(head, $"They need it {H("today")}: find it in the {H("Catalogue")} and press {H("Express")} (normally 2 hours; this one's quick).");
+                // Practice coins: always enough for the express price (the coins are put back after the tutorial).
+                if (SeekerBook != null && GM.Coins < GameManager.OrderPrice(SeekerBook, true)) GM.AddCoins(GameManager.OrderPrice(SeekerBook, true) - GM.Coins);
                 break;
             case Step.CartTake:
                 Say(head, $"{H("Orders")} arrive on the book {H("cart")} (normally the next morning; this one's quick). Take it.");
@@ -419,12 +428,13 @@ public class Tutorial : MonoBehaviour
 
     static int VisitorNo(Step s) => s <= Step.Give ? 1 : s <= Step.CardFill ? 2 : 3;
 
-    /// <summary>Ticks a checklist line, with a little sound.</summary>
+    /// <summary>Ticks a step card, with a little sound.</summary>
     void Tick(int i)
     {
         if (ticked[i]) return;
         ticked[i] = true;
         checks[i].AddToClassList("done");
+        checks[i].RemoveFromClassList("current");
         GameAudio.Play(a => a.served, 0.7f);
     }
 
@@ -467,6 +477,9 @@ public class Tutorial : MonoBehaviour
         return t.step == Step.Fetch || t.step == Step.LookUp || t.step == Step.Give ? b == t.wanted
              : t.step == Step.CartTake || t.step == Step.CartGive ? b == t.SeekerBook : false;
     }
+
+    /// <summary>The order step: only Express works (the visitor needs it today).</summary>
+    public static bool ExpressOnly => Instance != null && HoldsClock && Instance.step == Step.OrderBuy;
 
     /// <summary>Ordering: only the reserved visitor's book, and only in the order step.</summary>
     public static bool AllowsOrder(BookData b)
@@ -736,7 +749,7 @@ public class Tutorial : MonoBehaviour
     {
         string[] names = s == Step.LookUp ? new[] { "book-search", "tab-catalogue" }
                        : s == Step.CardFill ? new[] { "tab-members" }
-                       : s == Step.OrderBuy ? new[] { "detail-buy", "tab-catalogue" } : null;
+                       : s == Step.OrderBuy ? new[] { "detail-express", "tab-catalogue" } : null;
         if (names == null) return null;
         foreach (var doc in FindObjectsByType<UIDocument>())
         {

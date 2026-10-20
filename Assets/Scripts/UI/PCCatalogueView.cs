@@ -92,6 +92,7 @@ public static class PCCatalogueView
     {
         var gm = GM;
         var b = selected;
+        if (!express && Tutorial.ExpressOnly) return;
         if (gm == null) return;
         if (Dealer(b))
         {
@@ -318,7 +319,7 @@ public static class PCCatalogueView
         exp.style.display = orderable && !dealer ? DisplayStyle.Flex : DisplayStyle.None; // the dealer's courier is one price
         root.Q<Label>("buy-price").text = price.ToString();
         root.Q<Label>("express-price").text = express.ToString();
-        buy.SetEnabled(orderable && gm.Coins >= price);
+        buy.SetEnabled(orderable && gm.Coins >= price && !Tutorial.ExpressOnly); // the tutorial's order is Express
         exp.SetEnabled(orderable && !closed && gm.Coins >= express);
         bool needs = res != null && !coming;
         buy.EnableInClassList("primary", dealer || (needs && !(res.urgent && res.day == gm.day)));

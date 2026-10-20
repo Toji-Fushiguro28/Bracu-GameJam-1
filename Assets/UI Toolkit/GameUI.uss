@@ -847,3 +847,19 @@
 .report-row.total .report-val { font-size: 24px; }
 .report-coins .report-key, .report-coins .report-val { font-size: 18px; }
 .report-coins .report-row.total .report-key { font-size: 21px; }
+
+/* ---------- Tutorial: three step cards (book, library card, order), ticked when done ---------- */
+.tut-steps { flex-direction: row; margin: 8px 0 4px 0; }
+.tut-stepcard { flex-grow: 1; flex-basis: 0; margin: 0 3px; padding: 6px 2px 5px 2px; align-items: center; opacity: 0.55;
+    background-color: rgba(255, 248, 232, 0.6); border-width: 2px; border-color: rgba(128, 92, 70, 0.5); }
+.tut-stepcard.current { opacity: 1; border-color: rgb(214, 120, 64); border-width: 3px; background-color: rgba(235, 200, 120, 0.45); }
+.tut-stepcard.done { opacity: 1; }
+.tut-stepicon { width: 28px; height: 28px; -unity-background-scale-mode: scale-to-fit; }
+.tut-step-book { background-image: url("project://database/Assets/Art/UI/PC/T_IconBook.png"); }
+.tut-step-key { background-image: url("project://database/Assets/Art/UI/PC/T_IconKey.png"); }
+.tut-step-scroll { background-image: url("project://database/Assets/Art/UI/PC/T_IconScroll.png"); }
+.tut-steplabel { font-size: 15px; color: var(--ink); margin: 2px 0 0 0; padding: 0; white-space: nowrap; -unity-text-align: middle-center; }
+.tut-stepcard.done .tut-steplabel { color: rgb(79, 107, 58); }
+.tut-steptick { position: absolute; right: 2px; top: 2px; width: 20px; height: 20px; display: none;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconTick01a.png"); -unity-background-scale-mode: scale-to-fit; }
+.tut-stepcard.done .tut-steptick { display: flex; }

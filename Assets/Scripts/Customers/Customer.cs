@@ -166,7 +166,7 @@ public class Customer : ClickInteractable
             if (request != null && request.Target == null) { kind = Kind.Buyer; request = null; reservation = null; }
         }
         if (kind == Kind.Seeker && !SetUpSeek()) kind = Kind.Buyer; // nothing to look for: just ask
-        if (kind == Kind.Seeker && GoSeek()) return;
+        if (kind == Kind.Seeker && !Tutorial.HoldsClock && GoSeek()) return; // the tutorial's comes straight to the desk
         if (kind == Kind.Browser && GoBrowse()) return;
         if (vip && kind == Kind.Reader && AttendantServes()) return;
         if (kind == Kind.Browser) kind = Kind.Buyer; // nothing on the shelves: ask instead
@@ -614,7 +614,8 @@ public class Customer : ClickInteractable
         // Some need it today (express) and will wait here; others are happy to come back tomorrow.
         wantsToday = soldOut && (Tutorial.HoldsClock || Random.value < (seeker ? 0.5f : 0.4f)) && GM.Hour + 2.5f < GM.closingHour;
         var need = new DialogueAsset.Line { id = "need",
-            text = wantsToday ? $"As soon as possible! I can wait here in the library. Could it be here by <color=#D67840>{GameManager.FormatHour(GM.Hour + 2.5f)}</color>?"
+            text = wantsToday && Tutorial.HoldsClock ? "<color=#D67840>Today</color>, please! I'll wait right here in the library."
+                 : wantsToday ? $"As soon as possible! I can wait here in the library. Could it be here by <color=#D67840>{GameManager.FormatHour(GM.Hour + 2.5f)}</color>?"
                               : "No rush. I'll come back tomorrow for it." };
         need.choices.Add(new DialogueAsset.Choice { text = wantsToday ? "I'll have it here for you today." : "I'll order it for you.", next = "reserve" });
         if (!Tutorial.HoldsClock) need.choices.Add(new DialogueAsset.Choice { text = "Sorry, I can't get that one.", next = "nohave" });
