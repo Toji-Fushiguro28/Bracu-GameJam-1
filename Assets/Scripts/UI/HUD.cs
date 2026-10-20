@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -191,15 +192,17 @@ public class HUD : MonoBehaviour
         return hudLayer.WorldToLocal(icon.worldBound.center);
     }
 
-    /// <summary>More coins for more money (3 to 9), one after another.</summary>
+    /// <summary>More coins for more money (3 for a little, up to 24 for a lot), one after another, faster when
+    /// there are many: each one jingles as it drops in the purse.</summary>
     IEnumerator FlyCoins(int delta)
     {
-        int n = Mathf.Clamp(2 + delta / 8, 3, 9);
+        int n = Mathf.Clamp(2 + delta / 4, 3, 24);
+        float gap = n > 10 ? 0.055f : 0.075f;
         Vector2 from = FlyStart();
         for (int i = 0; i < n; i++)
         {
             StartCoroutine(FlyOne(from + Random.insideUnitCircle * 30f));
-            yield return new WaitForSecondsRealtime(0.07f);
+            yield return new WaitForSecondsRealtime(gap);
         }
     }
 
@@ -225,7 +228,38 @@ public class HUD : MonoBehaviour
         }
         coin.RemoveFromHierarchy();
         if (GameManager.Instance != null) coinLabel.text = GameManager.Instance.Coins.ToString();
+        GameAudio.Play(a => a.coinAdd, 0.5f); // into the purse: clink
         Shake(1f);
+    }
+
+    readonly List<Label> staffNotes = new List<Label>();
+
+    /// <summary>A staff member just did something (tidied, mended, shelved, served): a short line on the left,
+    /// a little above the middle, gone after 2 seconds. A few can stack.</summary>
+    public static void StaffNote(string text)
+    {
+        if (instance == null || instance.hudLayer == null || !instance.isActiveAndEnabled) return;
+        instance.StartCoroutine(instance.ShowStaffNote(text));
+    }
+
+    IEnumerator ShowStaffNote(string text)
+    {
+        var l = new Label(text) { pickingMode = PickingMode.Ignore };
+        l.AddToClassList("staff-note");
+        hudLayer.Add(l);
+        staffNotes.Add(l);
+        if (staffNotes.Count > 3) { staffNotes[0].RemoveFromHierarchy(); staffNotes.RemoveAt(0); }
+        const float duration = 2f;
+        for (float t = 0f; t < 1f && l.parent != null; t += Time.unscaledDeltaTime / duration)
+        {
+            int slot = staffNotes.IndexOf(l);
+            l.style.top = Length.Percent(36f - (staffNotes.Count - 1 - slot) * 5f); // newest lowest, older ones above
+            l.style.opacity = t < 0.75f ? 1f : 1f - (t - 0.75f) / 0.25f;
+            l.style.translate = new Translate(Mathf.Lerp(-30f, 0f, Mathf.Min(1f, t * 6f)), 0f); // slides in
+            yield return null;
+        }
+        staffNotes.Remove(l);
+        l.RemoveFromHierarchy();
     }
 
     /// <summary>A gold line that rises from a spot in the world and fades: a reward for doing something well

@@ -187,7 +187,8 @@ public class StaffHelp : MonoBehaviour
     {
         if (Open == null || how != "paid" && how != "free") return;
         var gm = GameManager.Instance;
-        if (how == "paid" && (gm == null || !gm.TrySpend(Open.cost))) return;
+        if (how == "paid" && (gm == null || !gm.TrySpend(Open.cost, "Staff fixes"))) return;
+        if (how == "paid") RequestLog.Money(GameManager.StaffPerson[(int)role], "Paid to fix a problem straight away", "Staff help", -Open.cost);
         Open = null;
         helpedToday++;
         attentionToday = true;

@@ -15,12 +15,12 @@ What changed in `MainGame.unity` and `Assets/Scripts`, and where. Nothing here c
   - **New Game** (asks for confirmation if a save exists; wipes it and reloads straight into Day 1).
   - **Start** (when there's no save).
   - **How to Play** (9 short pages: controls and stamina, counter, finding books, your notebook, sold out and reservations, cards and readers, repairs and rooms, staff, end of day and the audit log).
-  - **Settings** (volume, music, fullscreen; same values as the PC Settings screen).
+  - **Settings** (volume, music, fullscreen; same values as the PC Settings tab).
   - **Credits**.
   - **Quit** (hidden on WebGL).
 - Pressing play fades the book out and Cinemachine blends down to the follow camera. A glockenspiel sweep plays, and buttons pop softly on hover.
 - **Esc during play** opens it again as a pause screen (Continue becomes **Resume**; Esc again resumes). Esc that closes the PC, a shelf or a dialogue doesn't also open it.
-- **PC → Settings → Main menu** returns to the title screen (asks first; progress since the morning save is lost).
+- **PC → Settings tab → Main menu** returns to the title screen (asks first; progress since the morning save is lost).
 - The title and subtitle are fields on `MainMenuUI` (`gameTitle`, `subtitle`). Team credits are in `MainMenu.uxml` (Credits page).
 - **Build Settings:** `MainGame.unity` is now first; `SampleScene` is unchecked.
 
@@ -39,7 +39,7 @@ What changed in `MainGame.unity` and `Assets/Scripts`, and where. Nothing here c
 | Wrong-book penalty | x0.5 | x1 | x1.5 |
 
 - Code: `GameManager.Difficulty`; all the numbers come from `Mode(...)` in `GameManager`.
-- The mode is saved, shown in the menu and the Day Report title, and can be changed in **Settings** (PC or menu).
+- The mode is saved and shown in the menu and the Day Report title. It is only picked when a new game starts: neither the PC nor the main menu Settings can change it.
 - **Return bin glow:** `ReturnBinGlow` on `SM_ReturnBin` (material `M_BinGlow`) gives the bin a pulsing gold outline whenever it has books in it.
 
 ## 1. How a day plays now
@@ -507,4 +507,102 @@ Small, contained edits. Please check them when merging:
 ## Mouse cursor (`UI/GameCursor.cs`)
 - TravelBook `Cursor01c` normally, `Cursor01d` over something clickable (`InteractionController.HoveringSomething`, or a UI Toolkit button under the mouse on any panel) and while the left button is held.
 - The 14x16 art is scaled up in whole pixels for the screen (`Screen.height / 540`, 2x at 1080p) at runtime, so the two textures are imported Read/Write, uncompressed, point filter.
+- Each click plays `MouseCursorClick01a` frames 1-3 (`GameCursor.click`, 0.06 s a frame, hotspot (8,6) so the tip doesn't jump), then back to the arrow. Those frames are imported Read/Write, uncompressed, point filter too.
 - On its own root object `GameCursor` in MainGame; `DontDestroyOnLoad`, so it carries into the intro scene; a reloaded scene's copy destroys itself.
+
+## PC redesign (tabs, pixel monitor, catalogue buying)
+- **Size:** the monitor is 1040 x 782 (the old PC size), so it stays clear of the notebook on the right edge; maximise makes it 1460 x 1040 but keeps it left of the notebook.
+- **Colours (oxblood leather + brass):** the screen is leather (`--page` rgb(94,43,38)) with light text on it (`--desk-ink`, `--desk-dim`) and a gold line under the tabs. Everything else sits on brass: cards and the sheets behind the book list, members table, log and settings (`T_PC_Card`, rgb(227,201,143)). Inputs, dropdowns and tooltips are lighter (`--input`, `T_PC_Input`, `T_PC_Menu`), buttons are cream (`T_PC_Button`), and the picked book is cream with a 3px orange outline. Disabled buttons are solid (`T_PC_ButtonOff`), never transparent, so they don't show the leather through; locked upgrades use `T_PC_CardLocked` and affordable ones `T_PC_CardReady` (orange edge). The tabs are pixel buttons; the open one is the orange `T_PC_ButtonHot`.
+- **Look:** a cream pixel monitor (WHITMORE plate, two knobs and a power light on the chin) with a parchment screen. The pixel corners come from small 9-sliced sprites in `Assets/Art/UI/PC` (`T_PC_Button`, `T_PC_ButtonHot`, `T_PC_Card` + Epic / Legendary / Warm, `T_PC_Input`, `T_PC_Menu`, `T_PC_Badge` (tinted), `T_PC_Chip`, `T_PC_Stamp` (tinted), `T_PC_Case`), drawn at 1 pixel per unit and scaled with `-unity-slice-scale`. All are Point filter, uncompressed, no mips. Styles are in `PC.uss`.
+- **Frame:** `PCOverlayTemplate.uxml` is now the monitor: title bar (close = log off, minimise = log off but come back to the same tab, maximise = a bigger monitor), "WHITMORE OS", and Day · clock · coins. Under it are the tabs **Home, Catalogue, Members, Shop, Log, Settings**; there's no hub and no Back buttons. `PCOverlayTrigger.ShowTab(name)` clones the tab's template from `Resources` into `#page` and calls its view's `Wire(page)`. A 0.45 s ticker keeps the clock, coins and tab counts live.
+- **Tab counts:** Catalogue shows reservations nobody has ordered yet (red if one is due today), Members shows 1 while someone waits for a card. The Shop tab shows the kit star (it pops) on **every** tab while an upgrade or a hire is affordable, and its name glows gold unless you're on it.
+- **Home (`PCHomeView`):** six numbers (titles, copies on shelf, sold out, visitors served, coins earned today, members); **Needs you** (max 3, only things you can fix on the PC: unordered reservations → *Order* opens a fresh Catalogue so you search for it yourself, a card waiting → Members, an affordable upgrade or staff action → Shop); the day bar (9:00 to closing, a "now" marker, and dots for urgent pickups, today's pickups (`CustomerSpawner.PickupTimes`), Express deliveries (`GameManager.ArrivingToday`) and closing; hover a dot for a tooltip, things in the same 10 minutes share one dot); reputation toward the goal; today's popular books; and the Today / Collection / Library ledgers. It rebuilds only when its numbers change.
+- **Catalogue (`PCCatalogueView`, moved out of `PCOverlayTrigger`):** lists every title, including new titles you don't own yet (at the bottom, "New title"). Filters: **Type** (Book, Newspaper, Magazine, Journal, Research paper, Archive, Rare Books) → **Subject** (greyed out until a type is picked; books are grouped by shelf) → **Show** (adds "Not in library"). Rows: title + badges, "author · subject", then shelf icon, coin + order price, and the damaged icon if any; stock on the right. Epic and Legendary rows/cards get an indigo / plum edge and badge. The card has **Add to note**, **Order** and **Express** (greyed out after closing); the old Shop "Books" tab and "Buy books" are gone.
+- **Shop (`PCShopView`):** Upgrades (cards with pixel icons and level pips) and Staff (one row per role, icons: broom, books, key). Price buttons read "Buy - (coin) 80".
+- **Members:** a table (name, born, access, kit hearts, visits, spent) and the library card form; Day / Month / Year lists show 6 rows (`PickList` `maxVisible`), Issue card is full width at the bottom.
+- **Log (`PCAuditView`):** time, a dot for how it went (a coin for money lines), what happened, the outcome and +/- coins.
+- **Settings:** volume and music are pixel staircases; **Mode is gone** (see Play modes).
+- `PickList` now has group headings and a row cap, and the parchment look on the PC.
+
+## Subjects by type (`BookData.Topic`)
+- Every title has a **Topic** (shown as "Subject" on the PC): finer subjects for books (Astronomy, Biology, Trade, Poetry, Probability...), and their own for newspapers (Local news...), magazines, journals, research papers, the Archive (Town records, Letters & logs...) and Rare Books (Manuscripts, Maps & charts...). `Subject` (Science / History / Philosophy / Math) is still the section and shelf, and the exam rush still uses it.
+- `BookData.TypeName` is the PC's type: Archive / Rare Books come from the shelf prefix (like `BookRequest.IsArchive` / `IsRare`), the rest from the format. `SubjectName` is the topic, falling back to the section.
+- Visitor subject requests use the topic ("I need a good book on Astronomy.", "I need a journal on Physics."); a request made with a section name (the exam rush) still matches.
+- `BookFilterBar` (also used by the Day Report shop) has the same Type → Subject filters.
+
+## New titles cost more, sell for more
+- Titles from `BookDatabase.newTitles` are flagged `NewRelease` at runtime; `SaleValue` = BaseValue × 1.3 (`BookData.NewReleaseMarkup`). Order prices and sale prices (counter sales, browsers, the book club) use `SaleValue`, so a new release costs about 30% more to order and sells for about 30% more. Rare books are still far above both.
+
+## Money in the Audit Log
+- `RequestLog.Entry.coins` (+ earned, - spent) and a new `Kind.Money` for lines that aren't a visitor's request. `RequestLog.Paid(customer, amount, ...)` adds to the visitor's entry (sales, fees, cards, chat bonus, special orders), or makes its own line if they have none. `RequestLog.Money(who, line, outcome, amount)` logs everything else: book orders and Express, upgrades, staff hires and training, wages, paid staff fixes, repairs, perfect-repair donations, tidy rewards, staff reports, VIP and book-club rewards, story rewards.
+- Outcome strings no longer end in "+N"; the amount is its own column on the PC and in the Day Report log.
+
+## One button style everywhere
+- Every button in the game uses the computer's pixel button (`Assets/Art/UI/PC`): `T_PC_Button` (cream, dark outline, bevel), `T_PC_ButtonHot` (orange) on hover and for the selected one, `T_PC_ButtonOff` (flat, greyed) when disabled. They're 9-sliced at 3 px per art pixel (2 px for small buttons) and pressing moves them down 2 px.
+- That's `.kit-button` and the dialogue `.choice` in `GameUI.uss`, so it covers the main menu, How to Play, mode cards, settings, Day Report (its tabs: the selected one is orange), shelves, repair desk, notebook tabs (a new reservation turns the tab orange), tutorial and the interview scene. The PC uses the same sprites through `.pc-button` in `PC.uss`.
+- Hover text turns light (rgb 255,246,232) so it reads on orange; `MainMenu.uss` no longer turns hovered text orange.
+- The round cross close buttons (`.close-button`) and the hover prompt / speaker name tag (not buttons) keep their TravelBook art.
+
+## Story visitors who only want a chat wait around the library (`Customer`, `DayStory.Visit.atDesk`)
+- **Regular visitors are unchanged:** everyone queues at the counter as before.
+- **Story visits** (DayStory, SpecialJobs) are split: `atDesk = true` for the essential ones (each twist's introduction, the inspector and his verdict, the visiting author, special-job offers and the VIP's return), which queue at the counter. The rest only want a chat: they walk somewhere (`GoRoam` → `State.ToSpot` → `WaitHere`): a bookshelf, the newspaper / magazine racks, a chair (they sit) or the notice board, and wait with a "?" bubble and a silent "?" arrow at the screen edge (`DayStory.Point`) until you talk to them. They turn to face you when you come close. If they then ask for a book or a card (`ContinueWithRequest` / `ContinueAsSignUp`), they do it where they are.
+- **Conversation order** (at the counter): books in your hands first, then "Let me find it", "Could you give me a hint?", "When do you need it?" (sold out / seekers), "Sorry, we can't get that".
+- First-time tip "ask" explains the "?".
+
+## Finding books
+- **Highlights** (`BookRequest.H`, #D67840): titles, authors, subjects, the tag words and the key word of "about" requests, in visitors' lines (and so the notebook), story / job dialogue and banners.
+- **"About" requests** highlight their most telling word (`BookRequest.KeyWord`: 4+ letters, not common, found in the fewest other descriptions). The catalogue search now also matches **descriptions** and subjects, so typing that word finds the book.
+- **Shelf screen:** click a book's row to read its description on the right page (`ShelfUI.Pickable`).
+
+## Notebook "To do" (`RequestLog.Task` / `TaskDone` / `EndTasks`)
+- Today's events and accepted jobs are notebook entries ("To do"): exam rush, book thief, leak (which shelf), inspection, book signing, power cut, special order (until ordered), VIP request, book club. Ticked off with how it went (shown in the Log); anything left ends with the day.
+
+## Other fixes
+- PC: every open, after closing or minimising, resets the catalogue's search and filters (minimise still reopens on the same tab).
+- Members table: wider Access column and a gap before the hearts.
+- Settings: the volume steps are small pixel bars (10 px wide, 6-24 px tall, 2 px borders) with small -/+ buttons.
+- The book thief is always one of the men (`CustomerSpawner.ThiefLooks`), as the rumours describe him.
+- **Coins:** every coin landing in the purse plays `coin add sound` (`GameAudio.coinAdd`); more coins for more money (3 to 24, faster when there are many), so a big payday jingles away.
+- **Staff notes** (`HUD.StaffNote`): when a staff member tidies, mends, shelves or brings a scholar a book, a short line slides in on the left (a little above the middle) and fades after 2 s; up to 3 stack.
+- **The cleaner unloads deliveries:** with no mess and no good returns to shelve, Sam takes delivered copies off the book cart and shelves them (`StaffWorker.TakeFromCart`, `DeliveryCart.TakeUnreserved`). Normal and express orders both; any title someone has **reserved** (special orders too) stays on the cart for you to hand over. A "Sam shelved ..." note shows as usual.
+
+## The counter queue bends along the front wall (`CounterQueue.path`)
+- Spots are laid 0.9 m apart along a path: straight out from the desk between the ropes, then (`QueueBend`, z 1.9, just past the rope ends) right along the front wall to `QueueEnd` (x 27.2), about 1.2 m short of column 3 so people can walk round the end of the line. That's 11 spots; a longer line carries on the same way. Move the two child markers under the queue object to reshape it (gizmos show the spots and the path).
+- People in the line face the person ahead (only the front one faces the desk), and stand at a lower avoidance priority (80, others 50), so anyone walking past steers round them instead of getting stuck. The stuck watchdog still hops a queuer to their spot if needed.
+- NavMesh rebaked after the plants by the front door were removed (all 46 test routes complete).
+- **Show: Damaged** in the catalogue (and the Day Report shop) filters: titles with at least one damaged copy (`BookFilterBar.ShowMatches` case 5).
+- **Stamina recovers while you talk / use a screen:** `PlayerLock` switches `PlayerMover` off, so it notes when (`OnDisable`) and adds the recovered breath back when it's switched on again; `Stamina01` shows it filling meanwhile.
+- **Running again after running out:** once the meter is back to half (`PlayerMover.RunAgainAt` = 0.5), you can run on what's there; it used to wait for a full meter. While it's above zero and you're not exhausted, you can always run.
+
+## Subject filter (catalogue + Day Report shop)
+- Subject no longer needs a Type first. The list shows every group as a pickable orange row ("Science shelf: all", "History shelf: all", "Archive: all", "Newspapers: all"...), each with its detailed topics indented under it.
+- Pick a group row to see the whole shelf/type at once, or a topic to narrow down. Picking a Type is still there as an extra filter and trims the Subject list to that type (and clears Subject).
+- Values (`BookFilterBar.SubjectMatches`): `@Book:Science` = a book shelf, `@Archive` = a whole type, `Book|Astronomy` = one topic of one type. `SubjectLabel` turns them into button text.
+- `PickList.Open(..., group:)` marks rows that are pickable but styled like headings (`.picklist-group` in `PC.uss`).
+
+- Dialogue choices: while a choice is hovered (orange button) its <color> tags are stripped so the whole line reads white; they come back on leave (`DialogueUI.OnLineTyped`).
+
+## Honest requests and hints, rare dealer
+- Hints say what an item really is and where it lives (`BookRequest.Kind` / `KindHint`): "a Math book" only for the main shelves; Archive items say "an old record from the Archive, filed under Old maths"; Rare Books, newspapers, magazines, journals and papers say so too. Format hints name the shelf.
+- A little fuzziness, never wrong: from Day 3, 20% of section hints are "Science... or was it History?" (the right one is always one of the two).
+- Items with no real author (Unknown, Anonymous, Various, Whitmore Library: `BookRequest.HasAuthor`) are never asked for "by" that author; Archive/Rare topic requests say "from the Archive" / "one of your rare books". The exam rush only counts main-shelf books.
+- Rare books: 8 on the shelves now; `BookDatabase.rareFinds` holds 5 more the library can buy, one at a time.
+- VIP job (SpecialJobs): the scholar wants a rare book. Owned: have it in your hands at the desk at 3:00 PM. Not owned (45%, or always when no rare book is on a shelf, and only if no dealer order is pending): order it from the rare dealer in the PC Catalogue (top of the list, "VIP request" badge, Order only, no Express, any time that day, `GameManager.RarePrice` = a third of its value). It arrives on the book cart next morning (the cleaner leaves rare books on the cart). The promise is saved (`GameManager.vipPromise`) and the VIP comes back the next afternoon (1:30-3:30 PM).
+- When the VIP is back: in your hands -> they repay the dealer's price (if any) + 40, +2 reputation, then take it to the Rare Books room and read it (`Customer.ReadNow`), checking it back in like any reader (with the Rare Books attendant on duty, the attendant checks them in at their seat, so they don't come back to the counter). Ordering, taking it off the cart and handing it over are always the player's job. Never ordered -> -3 reputation. Ordered/owned but not in your hands -> -1. Either way they read another rare book in the Rare Books room instead of leaving (they leave only if none is on a shelf).
+- No second copy of a rare book can ever be bought: the dealer sells each once, the Catalogue/Day Report never order rare books, and `GameManager.OrderBook` refuses them.
+- Catalogue rows show the sale price (what a copy sells for); order prices stay on the Buy/Express buttons.
+- Renamed titles are mapped on load (`GameManager.RenamedTitles`) so old saves keep their copies. `BOOK_LIST.md` lists every title for checking.
+
+## Staff cut
+- At the end-of-day report each staff member keeps 25% of what their work earned (`StaffTalk.CutPercent`), never 0: at least 1 coin, and from 2 coins up they always hand at least 1 over. They say it: "My work brought in 60 coins. I've kept my 25% (15), so here's 45 coins for you." Only the handed-over part reaches your coins; the kept part is `DayStats.staffKept` (shown as a note in the Summary).
+
+## Day Report money
+- `DayStats` keeps a coin ledger: `coinsAtStart` (set when the day begins, before morning wages), `coinsIn` / `coinsOut` (every `AddCoins`), and `Spend(what, amount)` per kind. Spend through `GameManager.TrySpend(amount, "Book orders" / "Rare dealer" / "Upgrades" / "Staff hires" / "Staff training" / "Staff fixes" / "Repairs")`; wages are filed as "Staff wages". Anything spent without a label shows as "Other".
+- Report page ends with: Coins at the start of the day, Money in, Money out, **Coins now** (+ wages due tomorrow). Summary tab: where the money came from, where it went, and start + in - out = coins now. Buying in the evening refreshes both.
+
+## Text size
+- UI text was raised across `GameUI.uss`, `PC.uss`, `Notebook.uss`, `MainMenu.uss` and `Interview.uss`: +4px for anything up to 24px, +2px for 25-30px (body text is now 21-28px). Dialogue (`.line` 34, `.choice` 27, `.speaker` 26) and big titles/pops (over 30px) were left as they were. The panels scale to 1920x1080, so on smaller windows everything shrinks a little.
+- Wrapping after the size bump: book titles (Catalogue rows, Home "Popular today", evening shop rows) and member cells wrap onto a second line instead of being cut with "..."; badges drop below a long title. Catalogue rows grow with their text (`ListView` dynamic height, `.book-row` min-height 104). Short labels that must stay on one line ("on shelf") are `nowrap` in a wider stock column. Day Report tabs wrap if they ever do not fit; mode cards never shrink.
+- `Tools > Check UI Text Overflow` (`Editor/UITextAudit.cs`) now also reports text cut short with "...". Open a screen in Play mode and run it. Known harmless flags: the floating "+1" reputation pop, the day bar's 9 AM / 5 PM end ticks and the dialogue speaker tag (all placed outside their box on purpose).
+- Tag requests ("I need a proper textbook"): any item with that tag counts, and only those. The hint now names the tag ("It's tagged \"Textbook\" on the computer. I think it's a Science book."), and a wrong book gets a reason (`BookRequest.WrongLine`: not by X / not about X / not tagged X / wanted a newspaper / not the one I meant).
+- The "?" over a visitor's head (and on the screen-edge arrow to a story visitor waiting somewhere) is a pixel-art icon now: `Assets/Art/UI/PC/T_IconAsk.png` (12x16, UI palette: orange fill, light highlight, dark outline; Point filter, uncompressed), shown 4x via `.customer-speech.ask` / `#staff-pointer-label.ask`. `Customer.SetSpeech` swaps the text for the icon whenever the line is "?".

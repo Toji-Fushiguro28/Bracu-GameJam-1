@@ -86,7 +86,7 @@ public class MessSpot : ClickInteractable
         if (gm != null)
         {
             gm.Today.cleaned++;
-            if (byPlayer) { GameAudio.Play(a => a.tidy); gm.AddCoins(reward); gm.Today.Earn(GameManager.DayStats.Source.Other, reward); }
+            if (byPlayer) { GameAudio.Play(a => a.tidy); gm.AddCoins(reward); gm.Today.Earn(GameManager.DayStats.Source.Other, reward); RequestLog.Money("You", "Tidied up the library", "Tidy reward", reward); }
         }
         SetDirty(false);
     }

@@ -193,7 +193,8 @@ public class NotebookHUD : MonoBehaviour
             var e = open[i];
             var box = new VisualElement();
             box.AddToClassList("nb-entry");
-            Line(box, "nb-line", $"{i + 1}. {RequestLog.KindName(e.kind)}" + (e.line != null ? $": \"{e.line}\"" : ""));
+            // Requests are what someone said (in quotes); a "To do" is an instruction.
+            Line(box, "nb-line", $"{i + 1}. {RequestLog.KindName(e.kind)}" + (e.line == null ? "" : e.kind == RequestLog.Kind.Task ? $": {e.line}" : $": \"{e.line}\""));
             if (e.hint != null) Line(box, "nb-hint", $"Hint: {e.hint}");
             foreach (var g in e.guesses) Line(box, "nb-guess", RequestLog.GuessText(g));
             var clear = new Button(() => RequestLog.Clear(e)) { text = "Clear" };

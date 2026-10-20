@@ -1,33 +1,43 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
-    <Style src="../UI Toolkit/PC.uss" />
-    <ui:VisualElement name="container">
-        <ui:VisualElement name="members-window" class="pc-window">
-            <ui:VisualElement class="pc-header">
-                <ui:Button name="back-button" text="&lt; Back" class="pc-button" />
-                <ui:Label text="MEMBERS" class="pc-title font-title" />
+    <ui:VisualElement class="mem">
+        <ui:VisualElement class="cat-col">
+            <ui:Label name="member-count" class="count-line" />
+            <ui:VisualElement class="members-sheet">
+                <ui:VisualElement class="mtable-head">
+                <ui:Label text="Name" class="mcol name" />
+                <ui:Label text="Born" class="mcol born" />
+                <ui:Label text="Access" class="mcol access" />
+                <ui:Label text="Happy" class="mcol happy" />
+                <ui:Label text="Visits" class="mcol num" />
+                <ui:Label text="Spent" class="mcol num" />
             </ui:VisualElement>
-            <ui:VisualElement class="pc-columns">
-                <ui:VisualElement class="pc-left">
-                    <ui:ScrollView name="members-list" class="members-list pc-scroll" />
+    <ui:ScrollView name="members-list" class="pc-scroll members-list" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="card-form" class="libcard">
+            <ui:VisualElement class="libcard-head">
+                <ui:Label text="NEW LIBRARY CARD" class="libcard-title font-title" />
+                <ui:Label name="card-no" class="libcard-no" />
+            </ui:VisualElement>
+            <ui:Label name="card-empty" text="Nobody is waiting for a card. Talk to a visitor who asks for one first." class="detail-empty" />
+            <ui:VisualElement name="card-body" class="card-body">
+                <ui:Label text="A visitor at the counter is waiting for a card. Type the name they told you." class="waiting" />
+                <ui:Label text="NAME" class="field-key" />
+                <ui:VisualElement class="pc-search">
+                    <ui:TextField name="card-name" max-length="30" class="pc-input" />
+                    <ui:Label name="card-name-placeholder" text="type the name they told you" picking-mode="Ignore" class="pc-placeholder" />
                 </ui:VisualElement>
-                <ui:VisualElement name="card-form" class="pc-right">
-                    <ui:Label text="NEW LIBRARY CARD" class="detail-title" />
-                    <ui:Label name="card-empty" text="Nobody is waiting for a card. Talk to a visitor who asks for one first." class="detail-empty" />
-                    <ui:ScrollView name="card-body" class="pc-scroll card-scroll">
-                        <ui:Label text="Name" class="detail-key" />
-                        <ui:VisualElement class="card-name-wrap">
-                            <ui:TextField name="card-name" max-length="30" />
-                            <ui:Label name="card-name-placeholder" text="type the name they told you" picking-mode="Ignore" />
-                        </ui:VisualElement>
-                        <ui:Label text="Date of birth" class="detail-key" />
-                        <ui:VisualElement name="card-dob" class="date-picker" />
-                        <ui:Label name="card-preview" class="card-preview" />
-                        <ui:Label text="Access" class="detail-key" />
-                        <ui:VisualElement name="card-access" class="card-options" />
-                        <ui:Button name="card-issue" text="Issue card" class="pc-button card-issue" />
-                        <ui:Label name="card-feedback" class="card-feedback" />
-                    </ui:ScrollView>
+                <ui:Label text="DATE OF BIRTH" class="field-key" />
+                <ui:VisualElement name="card-dob" class="dob">
+                    <ui:Button name="dob-day" class="dd" />
+                    <ui:Button name="dob-month" class="dd" />
+                    <ui:Button name="dob-year" class="dd" />
                 </ui:VisualElement>
+                <ui:Label text="ACCESS" class="field-key" />
+                <ui:VisualElement name="card-access" class="card-options" />
+                <ui:Label name="card-feedback" class="card-feedback" />
+                <ui:VisualElement class="spacer" />
+                <ui:Button name="card-issue" text="Issue card" class="pc-button primary issue" />
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>

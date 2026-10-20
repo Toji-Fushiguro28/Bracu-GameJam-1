@@ -1,365 +1,469 @@
-/* Front-desk PC: CRT monitor (T_PC_Screen) with a mint-on-teal terminal inside. */
+/* Front-desk PC: a cream pixel monitor with a parchment screen ("Card Catalogue" look).
+   Pixel corners come from tiny 9-sliced sprites in Assets/Art/UI/PC, scaled up in whole pixels. */
 :root {
-    --mint: rgb(99, 210, 181);
-    --mint-dim: rgba(99, 210, 181, 0.55);
-    --mint-faint: rgba(99, 210, 181, 0.14);
-    --screen: rgb(38, 52, 62);
+    --page: rgb(94, 43, 38);          /* oxblood leather: the screen behind everything */
+    --page-2: rgb(207, 176, 113);
+    --card: rgb(227, 201, 143);       /* brass cards */
+    --input: rgb(248, 237, 207);      /* inputs, dropdowns, tooltips: lighter than the cards */
+    --btn: rgb(241, 223, 178);        /* button cream (also the picked row) */
+    --ink: rgb(59, 42, 29);
+    --ink-dim: rgb(85, 64, 42);
+    --rule: rgb(166, 132, 74);
+    --accent: rgb(214, 120, 64);
+    --gold: rgb(246, 226, 168);
+    --ok: rgb(79, 107, 58);
+    --warn: rgb(125, 79, 12);
+    --bad: rgb(142, 59, 50);
+    --hover: rgb(214, 182, 112);
+    --pop-bar: rgb(154, 101, 16);
+    --bar: rgb(59, 37, 22);
+    --bar-text: rgb(240, 223, 191);
+    --desk-ink: rgb(243, 228, 196);   /* text straight on the leather */
+    --desk-dim: rgb(214, 177, 154);
+    --red-rule: rgb(214, 161, 94);    /* the line under the tabs, gold on leather */
+    --epic: rgb(61, 52, 139);
+    --legendary: rgb(95, 15, 64);
+    color: rgb(59, 42, 29);
 }
 
 #container {
     flex-grow: 1;
     justify-content: center;
     align-items: center;
-    background-color: rgba(10, 14, 18, 0.55);
+    background-color: rgba(10, 8, 6, 0.55);
 }
 
-/* Monitor: 415x312 art at 2.5x. Padding = bezel + a little breathing room. */
-.pc-window {
+/* ---------- Monitor ---------- */
+.pc-monitor {
     width: 1040px;
     height: 782px;
-    padding: 84px 100px 80px 96px;
-    background-image: url("project://database/Assets/Art/UI/T_PC_Screen.png");
-    -unity-background-scale-mode: stretch-to-fill;
-}
-
-/* ---------- Header bar ---------- */
-.pc-header {
-    flex-direction: row;
-    align-items: center;
-    padding-bottom: 10px;
-    margin-bottom: 18px;
-    border-bottom-width: 2px;
-    border-bottom-color: var(--mint-dim);
-}
-.pc-title { flex-grow: 1; color: var(--mint); font-size: 44px; }
-.pc-subtitle { color: var(--mint-dim); font-size: 22px; }
-
-/* ---------- Buttons ---------- */
-.pc-button, .pc-tile {
-    margin: 0;
-    border-width: 2px;
-    border-color: var(--mint);
-    border-top-left-radius: 6px; border-top-right-radius: 6px;
-    border-bottom-left-radius: 6px; border-bottom-right-radius: 6px;
-    background-color: rgba(0, 0, 0, 0);
-    background-image: none;
-    color: var(--mint);
-}
-.pc-button:hover, .pc-tile:hover {
-    background-color: var(--mint);
-    color: var(--screen);
-}
-.pc-button { padding: 2px 16px 6px 16px; font-size: 24px; margin-right: 18px; }
-
-/* ---------- Main menu ---------- */
-.pc-grid {
-    flex-grow: 1;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-content: flex-start;
-}
-.pc-tile {
-    width: 48.6%;
-    height: 30%;
-    margin-bottom: 20px;
-    font-size: 40px;
-    -unity-text-align: middle-center;
-    background-color: var(--mint-faint);
-}
-.pc-tile.wide { width: 100%; }
-.pc-footer { color: var(--mint-dim); font-size: 20px; margin-top: 12px; -unity-text-align: middle-center; }
-
-/* ---------- Books: list on the left, details on the right (like the shelf) ---------- */
-.pc-columns { flex-grow: 1; flex-direction: row; }
-.pc-left { width: 56%; margin-right: 22px; }
-.pc-right {
-    flex-grow: 1;
-    padding: 16px 20px;
-    border-width: 2px;
-    border-color: var(--mint-dim);
-    border-top-left-radius: 6px; border-top-right-radius: 6px;
-    border-bottom-left-radius: 6px; border-bottom-right-radius: 6px;
-    background-color: var(--mint-faint);
-}
-
-.pc-search { margin-bottom: 12px; }
-#book-search { margin: 0; }
-#book-search .unity-base-text-field__input {
-    min-height: 44px;
-    padding: 6px 12px 8px 12px;
-    border-width: 2px;
-    border-color: var(--mint);
-    border-top-left-radius: 6px; border-top-right-radius: 6px;
-    border-bottom-left-radius: 6px; border-bottom-right-radius: 6px;
-    background-color: rgba(0, 0, 0, 0.25);
-    color: var(--mint);
-    font-size: 24px;
-    --unity-cursor-color: rgb(99, 210, 181);
-}
-#search-placeholder { position: absolute; left: 16px; top: 9px; color: var(--mint-dim); font-size: 24px; }
-
-#books-list { flex-grow: 1; border-width: 0; background-color: rgba(0, 0, 0, 0); }
-#books-list .unity-list-view__item { background-color: rgba(0, 0, 0, 0); }
-#books-list .unity-list-view__item:hover { background-color: var(--mint-faint); }
-#books-list .unity-list-view__item:checked { background-color: rgba(99, 210, 181, 0.28); }
-
-.pc-book { padding: 8px 12px; border-bottom-width: 1px; border-bottom-color: var(--mint-faint); }
-#book-title { color: var(--mint); font-size: 26px; }
-#book-sub { color: var(--mint-dim); font-size: 19px; }
-#book-meta { color: rgb(235, 200, 120); font-size: 19px; }
-
-/* Details pane */
-.detail-title { color: var(--mint); font-size: 32px; white-space: normal; }
-.detail-author { color: var(--mint-dim); font-size: 22px; margin-bottom: 14px; }
-.detail-row { flex-direction: row; justify-content: space-between; margin-bottom: 6px; }
-.detail-key { color: var(--mint-dim); font-size: 21px; }
-.detail-value { color: var(--mint); font-size: 21px; -unity-text-align: middle-right; }
-.detail-value.warn { color: rgb(235, 200, 120); }
-.detail-value.bad { color: rgb(240, 120, 100); }
-.detail-abstract {
-    color: var(--mint);
-    font-size: 21px;
-    white-space: normal;
-    margin-top: 14px;
-    padding-top: 12px;
-    border-top-width: 1px;
-    border-top-color: var(--mint-dim);
-}
-.detail-empty { color: var(--mint-dim); font-size: 24px; white-space: normal; -unity-text-align: middle-center; flex-grow: 1; }
-
-/* ---------- Kit scrollbar, tinted mint for the screen ---------- */
-#books-list .unity-scroll-view__content-container, .pc-scroll .unity-scroll-view__content-container { padding-right: 14px; }
-#books-list .unity-scroller--vertical, .pc-scroll .unity-scroller--vertical {
-    width: 18px;
-    margin-left: 6px;
-    border-width: 0;
-    background-color: rgba(0, 0, 0, 0);
-}
-#books-list .unity-scroller__low-button, .pc-scroll .unity-scroller__low-button,
-#books-list .unity-scroller__high-button, .pc-scroll .unity-scroller__high-button { display: none; }
-#books-list .unity-scroller__slider, .pc-scroll .unity-scroller__slider { margin: 0; }
-#books-list .unity-base-slider__tracker, .pc-scroll .unity-base-slider__tracker {
-    left: 5px; right: 5px; width: auto;
-    border-width: 0;
-    background-color: rgba(0, 0, 0, 0);
-    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Bar01a.png");
-    -unity-background-image-tint-color: rgb(60, 120, 108);
-    -unity-slice-left: 2; -unity-slice-right: 2; -unity-slice-top: 1; -unity-slice-bottom: 1;
+    max-width: 96%;
+    max-height: 96%;
+    padding: 16px 16px 0 16px;
+    background-image: url("project://database/Assets/Art/UI/PC/T_PC_Case.png");
+    -unity-slice-left: 4; -unity-slice-right: 4; -unity-slice-top: 4; -unity-slice-bottom: 4;
     -unity-slice-scale: 4px;
 }
-#books-list .unity-base-slider__dragger, .pc-scroll .unity-base-slider__dragger {
-    left: 0; width: 18px; min-height: 40px;
-    border-width: 0;
-    background-color: rgba(0, 0, 0, 0);
-    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Handle03a.png");
-    -unity-background-image-tint-color: rgb(140, 235, 210);
-    -unity-slice-left: 3; -unity-slice-right: 3; -unity-slice-top: 3; -unity-slice-bottom: 3;
-    -unity-slice-scale: 3px;
+.pc-monitor.max { width: 1460px; height: 1040px; margin-right: 400px; } /* bigger, but still left of the notebook */
+.pc-screen {
+    flex-grow: 1;
+    background-color: var(--page);
+    border-width: 8px;
+    border-color: rgb(59, 42, 29);
+    overflow: hidden;
 }
-#books-list .unity-base-slider__dragger-border, .pc-scroll .unity-base-slider__dragger-border { display: none; }
-#books-list .unity-scroller--horizontal, .pc-scroll .unity-scroller--horizontal { display: none; }
+.pc-chin { height: 42px; flex-direction: row; align-items: center; justify-content: space-between; padding: 0 26px 6px 26px; flex-shrink: 0; }
+.pc-plate {
+    font-size: 22px; letter-spacing: 3px; color: rgb(59, 37, 22); padding: 2px 12px 4px 12px; margin: 0;
+    background-color: rgb(217, 179, 106);
+    border-width: 3px; border-color: rgb(138, 106, 46);
+}
+.pc-ctrls { flex-direction: row; align-items: center; }
+.pc-knob { width: 16px; height: 16px; margin-left: 10px; background-color: rgb(196, 164, 135); border-width: 3px; border-color: rgb(73, 51, 51); }
+.pc-led { width: 14px; height: 10px; margin-left: 12px; background-color: rgb(127, 211, 106); border-width: 3px; border-color: rgb(73, 51, 51); }
+
+/* ---------- Title bar ---------- */
+.pc-titlebar { flex-direction: row; align-items: center; height: 40px; padding: 0 16px; background-color: var(--bar); flex-shrink: 0; }
+.pc-winbtns { flex-direction: row; flex-grow: 1; flex-basis: 0; }
+.pc-winbtn {
+    width: 24px; height: 24px; margin: 0 8px 0 0; padding: 0;
+    background-color: rgb(217, 179, 106); border-width: 3px; border-color: rgb(138, 106, 46);
+    border-radius: 0; align-items: center; justify-content: center;
+}
+.pc-winbtn.close { background-color: rgb(181, 82, 63); border-color: rgb(110, 42, 32); }
+.pc-winbtn:hover { background-color: rgb(240, 215, 154); }
+.pc-winbtn.close:hover { background-color: rgb(214, 110, 88); }
+.win-glyph { font-size: 22px; color: rgb(251, 233, 220); margin: -4px 0 0 0; padding: 0; -unity-text-align: middle-center; }
+.glyph-min { width: 10px; height: 3px; background-color: rgb(59, 37, 22); margin-top: 6px; }
+.glyph-max { width: 10px; height: 10px; border-width: 2px; border-color: rgb(59, 37, 22); }
+.pc-os { font-size: 28px; letter-spacing: 3px; color: var(--bar-text); margin: 0; padding: 0; }
+.pc-stats { flex-direction: row; align-items: center; justify-content: flex-end; flex-grow: 1; flex-basis: 0; }
+.pc-stat { font-size: 23px; color: var(--bar-text); margin: 0; padding: 0; }
+.pc-stat.coins { color: var(--gold); }
+.pc-dot { font-size: 23px; color: rgba(240, 223, 191, 0.4); margin: 0 8px; padding: 0; }
+
+/* ---------- Tabs ---------- */
+.pc-tabs-row { flex-direction: row; align-items: center; padding: 10px 14px 0 14px; border-bottom-width: 3px; border-bottom-color: var(--red-rule); flex-shrink: 0; }
+.pc-navtab {
+    flex-direction: row; align-items: center; margin: 0 8px 8px 0; padding: 4px 14px 9px 14px;
+    background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0;
+    background-image: url("project://database/Assets/Art/UI/PC/T_PC_Button.png");
+    -unity-slice-left: 1; -unity-slice-right: 1; -unity-slice-top: 2; -unity-slice-bottom: 3; -unity-slice-scale: 3px;
+}
+.pc-navtab:hover, .pc-navtab.selected { background-color: rgba(0, 0, 0, 0); background-image: url("project://database/Assets/Art/UI/PC/T_PC_ButtonHot.png"); }
+.pc-navtab.selected { translate: 0 2px; }
+.navtab-label { font-size: 28px; color: var(--ink); margin: 0; padding: 0; }
+.pc-navtab.ready .navtab-label { transition-property: color, text-shadow; transition-duration: 0.8s; } /* only the Shop glow fades */
+.pc-navtab:hover .navtab-label, .pc-navtab.selected .navtab-label { color: rgb(255, 246, 232); }
+.navtab-count {
+    font-size: 21px; color: var(--ink); min-width: 24px; height: 24px; margin: 0 0 0 6px; padding: 0 6px 2px 6px;
+    -unity-text-align: middle-center;
+    background-image: url("project://database/Assets/Art/UI/PC/T_PC_Badge.png");
+    -unity-slice-left: 1; -unity-slice-right: 1; -unity-slice-top: 1; -unity-slice-bottom: 2; -unity-slice-scale: 2px;
+    -unity-background-image-tint-color: rgb(235, 200, 120);
+}
+.navtab-count.urgent { color: rgb(255, 246, 232); -unity-background-image-tint-color: rgb(142, 59, 50); }
+/* Shop tab while an upgrade or a hire is affordable: the name glows gold, the star pops */
+.pc-navtab.ready .navtab-label { color: var(--warn); }
+.pc-navtab.ready.glow-on .navtab-label { color: rgb(224, 160, 48); text-shadow: 0 0 6px rgba(255, 200, 90, 0.9); }
+.navtab-star {
+    width: 24px; height: 22px; margin-left: 6px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconStar01a.png");
+    -unity-background-scale-mode: scale-to-fit;
+    transition-property: scale, rotate; transition-duration: 0.45s; transition-timing-function: ease-in-out;
+}
+.navtab-star.pop { scale: 1.4 1.4; rotate: 10deg; }
+.pc-esc { flex-grow: 1; -unity-text-align: middle-right; font-size: 22px; color: var(--desk-dim); margin: 0 0 8px 0; padding: 0; }
+.pc-page { flex-grow: 1; padding: 10px 14px 12px 14px; overflow: hidden; }
+.hidden { display: none; }
+
+/* ---------- Pixel pieces ---------- */
+.pc-button, .picklist-item.pc-button {
+    margin: 0; padding: 7px 16px 11px 16px; font-size: 26px; color: var(--ink);
+    background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0;
+    background-image: url("project://database/Assets/Art/UI/PC/T_PC_Button.png");
+    -unity-slice-left: 1; -unity-slice-right: 1; -unity-slice-top: 2; -unity-slice-bottom: 3; -unity-slice-scale: 3px;
+    flex-direction: row; align-items: center; justify-content: center;
+}
+.pc-button:hover, .pc-button.primary, .pc-button.picked {
+    background-color: rgba(0, 0, 0, 0); color: rgb(255, 246, 232);
+    background-image: url("project://database/Assets/Art/UI/PC/T_PC_ButtonHot.png");
+}
+.pc-button:active { translate: 0 2px; }
+.pc-button:disabled, .pc-button:disabled:hover, .pc-button.primary:disabled {
+    opacity: 1; color: rgb(127, 106, 72); translate: 0 0;
+    background-image: url("project://database/Assets/Art/UI/PC/T_PC_ButtonOff.png");
+}
+.pc-button:disabled .btn-text { color: rgb(127, 106, 72); }
+.pc-button.small { font-size: 23px; padding: 5px 12px 9px 12px; }
+.pc-button.danger { color: var(--bad); }
+.pc-button.danger:hover { color: rgb(255, 246, 232); }
+.pc-button.ready { color: var(--warn); }
+.btn-text { margin: 0; padding: 0; font-size: 26px; }
+.pc-button:hover .btn-text, .pc-button.primary .btn-text { color: rgb(255, 246, 232); }
+.pc-button.small .btn-text { font-size: 23px; }
+.cost-minus { margin: 0 3px 0 8px; }
+.picklist-item.pc-button { font-size: 24px; padding: 4px 10px 6px 10px; justify-content: flex-start; background-image: none; }
+.picklist-item.pc-button:hover { background-image: none; background-color: rgb(214, 120, 64); color: rgb(255, 246, 232); }
+.picklist-header { font-size: 20px; letter-spacing: 1px; color: var(--ink-dim); margin: 6px 0 0 0; padding: 6px 10px 2px 10px; border-top-width: 2px; border-top-color: var(--rule); -unity-text-align: lower-left; }
+
+.coin-icon {
+    width: 11px; height: 12px; margin: 0 4px 0 0; flex-shrink: 0;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconCoin01a.png");
+}
+.pc-stats .coin-icon { width: 22px; height: 24px; margin-right: 6px; }
+.book-meta .coin-icon { width: 22px; height: 24px; }
+.px-icon { width: 24px; height: 24px; margin: 0 5px 0 0; flex-shrink: 0; -unity-background-scale-mode: scale-to-fit; }
+.icon-shelf { background-image: url("project://database/Assets/Art/UI/PC/T_IconShelf.png"); height: 20px; }
+.icon-damaged { background-image: url("project://database/Assets/Art/UI/PC/T_IconDamaged.png"); }
+
+.panel, .stile, .cardpane, .ucard, .srow, .libcard {
+    background-color: rgba(0, 0, 0, 0);
+    background-image: url("project://database/Assets/Art/UI/PC/T_PC_Card.png");
+    -unity-slice-left: 1; -unity-slice-right: 1; -unity-slice-top: 1; -unity-slice-bottom: 2; -unity-slice-scale: 2px;
+}
+.cardpane.epic { background-image: url("project://database/Assets/Art/UI/PC/T_PC_CardEpic.png"); }
+.cardpane.legendary { background-image: url("project://database/Assets/Art/UI/PC/T_PC_CardLegendary.png"); }
+
+.pc-search { margin: 0 0 10px 0; }
+.pc-input { margin: 0; }
+.pc-input .unity-base-text-field__input {
+    min-height: 46px; padding: 9px 12px 9px 12px; font-size: 26px; color: var(--ink);
+    background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0;
+    background-image: url("project://database/Assets/Art/UI/PC/T_PC_Input.png");
+    -unity-slice-left: 1; -unity-slice-right: 1; -unity-slice-top: 2; -unity-slice-bottom: 1; -unity-slice-scale: 3px;
+    --unity-cursor-color: rgb(59, 42, 29);
+}
+.pc-placeholder { position: absolute; left: 14px; top: 10px; font-size: 26px; color: var(--ink-dim); margin: 0; padding: 0; }
+
+.badge {
+    font-size: 21px; color: var(--ink); margin: 0 0 0 8px; padding: 2px 9px 5px 9px;
+    background-image: url("project://database/Assets/Art/UI/PC/T_PC_Badge.png");
+    -unity-slice-left: 1; -unity-slice-right: 1; -unity-slice-top: 1; -unity-slice-bottom: 2; -unity-slice-scale: 2px;
+    -unity-background-image-tint-color: rgb(246, 226, 168);
+}
+.badge.urgent { color: rgb(255, 246, 232); -unity-background-image-tint-color: rgb(142, 59, 50); }
+.badge.new { color: rgb(255, 246, 232); -unity-background-image-tint-color: rgb(214, 120, 64); }
+.badge.epic { color: rgb(255, 255, 255); -unity-background-image-tint-color: rgb(61, 52, 139); }
+.badge.legendary { color: rgb(255, 228, 143); -unity-background-image-tint-color: rgb(95, 15, 64); }
+.chip {
+    font-size: 21px; color: var(--ink-dim); margin: 0 6px 6px 0; padding: 2px 8px 4px 8px;
+    background-image: url("project://database/Assets/Art/UI/PC/T_PC_Chip.png");
+    -unity-slice-left: 1; -unity-slice-right: 1; -unity-slice-top: 1; -unity-slice-bottom: 1; -unity-slice-scale: 2px;
+}
+.stamp {
+    position: absolute; right: 18px; top: 84px; font-size: 28px; letter-spacing: 2px; color: var(--bad);
+    padding: 6px 14px 9px 14px; margin: 0; opacity: 0.9;
+    background-image: url("project://database/Assets/Art/UI/PC/T_PC_Stamp.png");
+    -unity-slice-left: 3; -unity-slice-right: 3; -unity-slice-top: 3; -unity-slice-bottom: 3; -unity-slice-scale: 2px;
+    -unity-background-image-tint-color: rgb(142, 59, 50);
+}
+.stamp.gold { color: var(--warn); -unity-background-image-tint-color: rgb(125, 79, 12); }
+
+/* ---------- Scrollbars: square track, bevelled square handle ---------- */
+.pc-scroll .unity-scroll-view__content-container, .book-list .unity-scroll-view__content-container { padding-right: 10px; }
+.pc-scroll .unity-scroller--vertical, .book-list .unity-scroller--vertical { width: 16px; margin-left: 4px; border-width: 0; background-color: rgba(0, 0, 0, 0); }
+.pc-scroll .unity-scroller__low-button, .pc-scroll .unity-scroller__high-button,
+.book-list .unity-scroller__low-button, .book-list .unity-scroller__high-button { display: none; }
+.pc-scroll .unity-scroller__slider, .book-list .unity-scroller__slider { margin: 0; }
+.pc-scroll .unity-base-slider__tracker, .book-list .unity-base-slider__tracker {
+    left: 0; right: 0; width: auto; background-image: none;
+    background-color: var(--page-2); border-width: 2px; border-color: var(--rule); border-radius: 0;
+}
+.pc-scroll .unity-base-slider__dragger, .book-list .unity-base-slider__dragger {
+    left: 0; width: 16px; min-height: 40px; border-radius: 0; background-image: none;
+    background-color: rgb(155, 123, 85); border-width: 2px; border-color: rgb(110, 76, 48);
+    border-left-color: rgb(184, 151, 109); border-top-color: rgb(184, 151, 109);
+}
+.pc-scroll .unity-base-slider__dragger:hover, .book-list .unity-base-slider__dragger:hover { background-color: var(--accent); }
+.pc-scroll .unity-base-slider__dragger-border, .book-list .unity-base-slider__dragger-border { display: none; }
+.pc-scroll .unity-scroller--horizontal, .book-list .unity-scroller--horizontal { display: none; }
+
+/* ---------- Common text ---------- */
+.count-line { font-size: 22px; color: var(--desk-dim); margin: 0 0 6px 0; padding: 0; }
+.page-note { font-size: 23px; color: var(--desk-dim); margin: 10px 0 0 0; padding: 0; white-space: normal; -unity-text-align: middle-center; }
+.ok { color: var(--ok); }
+.warn { color: var(--warn); }
+.bad { color: var(--bad); }
+.detail-empty { flex-grow: 1; font-size: 26px; color: var(--ink-dim); white-space: normal; -unity-text-align: middle-center; margin: 0; padding: 20px; }
+
+/* ---------- Home ---------- */
+.home { flex-grow: 1; }
+.tiles6 { flex-direction: row; justify-content: space-between; margin-bottom: 12px; }
+.stile { width: 16%; padding: 6px 10px 10px 10px; }
+.stile-n { font-size: 32px; margin: 0; padding: 0; color: var(--ink); }
+.stile-l { font-size: 21px; margin: 0; padding: 0; color: var(--ink-dim); white-space: normal; }
+.panel { padding: 10px 14px 14px 14px; margin-bottom: 12px; }
+.panel-head { flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.panel-title { font-size: 26px; letter-spacing: 1px; color: var(--ink-dim); margin: 0; padding: 0; }
+.panel-title.strong { color: var(--ink); font-size: 28px; }
+.panel-small { font-size: 21px; color: var(--ink-dim); margin: 0; padding: 0; }
+.need { flex-direction: row; align-items: center; padding: 6px 0 6px 0; border-top-width: 2px; border-top-color: var(--rule); }
+.need-mark { width: 12px; height: 12px; margin-right: 12px; }
+.need-text { flex-grow: 1; flex-shrink: 1; font-size: 25px; margin: 0; padding: 0; white-space: normal; }
+.allclear { font-size: 25px; color: var(--ok); margin: 0; padding: 4px 0; }
+.mid { flex-direction: row; margin-bottom: 0; }
+.mid-left { flex-grow: 1.4; flex-basis: 0; margin-right: 12px; }
+.mid-right { flex-grow: 1; flex-basis: 0; }
+.mid-right .panel { flex-grow: 1; }
+.cols3 { flex-direction: row; }
+.cols3 > .panel { flex-grow: 1; flex-basis: 0; margin-right: 12px; }
+.cols3 > .panel.last { margin-right: 0; }
+.kv { flex-direction: row; justify-content: space-between; }
+.kv-k { font-size: 24px; color: var(--ink-dim); margin: 1px 0; padding: 0; }
+.kv-v { font-size: 24px; color: var(--ink); margin: 1px 0; padding: 0; }
+.meter { height: 18px; margin: 6px 0 4px 0; background-color: var(--page-2); border-width: 2px; border-color: var(--rule); }
+.meter-fill { position: absolute; left: 0; top: 0; bottom: 0; background-color: var(--accent); }
+.meter-tier { position: absolute; top: 0; bottom: 0; width: 2px; background-color: rgba(125, 102, 80, 0.6); }
+.meter-l { flex-direction: row; justify-content: space-between; }
+.pop-row { flex-direction: row; align-items: center; padding: 6px 0 7px 0; border-top-width: 2px; border-top-color: var(--rule); }
+.pop-row.first { border-top-width: 0; }
+.pop-text { flex-grow: 1; flex-shrink: 1; }
+.pop-title { font-size: 25px; margin: 0; padding: 0; white-space: normal; } /* long titles take a second line */
+.pop-sub { font-size: 21px; color: var(--ink-dim); margin: 0; padding: 0; }
+.pop-n { font-size: 32px; margin: 0; padding: 0; }
+/* Day bar: dots only, details in a tooltip */
+.tl { height: 52px; margin: 8px 26px 0 26px; }
+.tl-track { position: absolute; left: 0; right: 0; top: 12px; height: 10px; background-color: var(--page-2); border-width: 2px; border-color: var(--rule); }
+.tl-fill { position: absolute; left: 0; top: 0; bottom: 0; background-color: rgba(214, 120, 64, 0.6); }
+.tl-tick { position: absolute; top: 28px; width: 60px; margin-left: -30px; font-size: 20px; color: var(--ink-dim); -unity-text-align: upper-center; padding: 0; }
+.tl-now { position: absolute; top: 5px; width: 4px; height: 24px; margin-left: -2px; background-color: var(--ink); }
+.tl-dot { position: absolute; top: 10px; width: 14px; height: 14px; margin-left: -7px; border-width: 2px; border-color: var(--card); }
+.tl-dot:hover { scale: 1.3 1.3; }
+.tl-count { position: absolute; top: -10px; right: -12px; font-size: 17px; color: var(--card); background-color: var(--ink); padding: 0 3px 1px 3px; margin: 0; }
+.tip {
+    position: absolute; width: 260px; padding: 8px 12px 10px 12px;
+    background-image: url("project://database/Assets/Art/UI/PC/T_PC_Menu.png");
+    -unity-slice-left: 1; -unity-slice-right: 1; -unity-slice-top: 1; -unity-slice-bottom: 1; -unity-slice-scale: 3px;
+}
+.tip-time { font-size: 26px; letter-spacing: 1px; margin: 0 0 4px 0; padding: 0; }
+.tip-ev { padding-top: 5px; margin-top: 5px; border-top-width: 2px; border-top-color: var(--rule); }
+.tip-ev.first { border-top-width: 0; padding-top: 0; margin-top: 0; }
+.tip-line { font-size: 23px; margin: 0; padding: 0; white-space: normal; }
+.tip-line.dim { color: var(--ink-dim); }
+
+/* ---------- Catalogue ---------- */
+.cat, .mem { flex-grow: 1; flex-direction: row; }
+.cat-col { flex-grow: 1.1; flex-basis: 0; margin-right: 14px; }
+.pc-filters { flex-direction: row; flex-wrap: wrap; margin-bottom: 8px; }
+.pc-filters .pc-button { margin: 0 8px 6px 0; }
+.book-list, .members-sheet, .audit-list, .settings-list {
+    background-color: rgba(0, 0, 0, 0); padding: 4px 6px 6px 8px;
+    background-image: url("project://database/Assets/Art/UI/PC/T_PC_Card.png");
+    -unity-slice-left: 1; -unity-slice-right: 1; -unity-slice-top: 1; -unity-slice-bottom: 2; -unity-slice-scale: 2px;
+}
+.book-list { flex-grow: 1; }
+.book-list .unity-collection-view__item { background-color: rgba(0, 0, 0, 0); }
+.book-list .unity-collection-view__item:hover { background-color: var(--hover); }
+.book-list .unity-collection-view__item--selected { background-color: var(--btn); border-width: 3px; border-color: var(--accent); }
+.book-row { min-height: 104px; flex-direction: row; align-items: center; padding: 6px 10px 6px 12px; border-bottom-width: 2px; border-bottom-color: var(--rule); border-left-width: 5px; border-left-color: rgba(0, 0, 0, 0); }
+.book-row.popular { border-left-color: var(--pop-bar); }
+.book-row.epic { border-left-color: var(--epic); }
+.book-row.legendary { border-left-color: var(--legendary); }
+.book-row-text { flex-grow: 1; flex-shrink: 1; overflow: hidden; }
+.title-row { flex-direction: row; align-items: center; flex-wrap: wrap; } /* badges drop below a long title */
+.title-badges { flex-direction: row; flex-shrink: 0; }
+.book-title { font-size: 28px; margin: 0; padding: 0; flex-shrink: 0; max-width: 100%; white-space: normal; } /* the whole title, on two lines if needed */
+.book-sub { font-size: 22px; color: var(--ink-dim); margin: 0; padding: 0; white-space: normal; }
+.book-meta { flex-direction: row; align-items: center; margin-top: 2px; }
+.meta-text { font-size: 22px; color: var(--ink-dim); margin: 0; padding: 0; white-space: nowrap; }
+.meta-text.bad { color: var(--bad); }
+.meta-sep { font-size: 22px; color: rgba(125, 102, 80, 0.5); margin: 0 8px; padding: 0; }
+.book-stock { width: 124px; align-items: flex-end; flex-shrink: 0; }
+.stock-n { font-size: 34px; margin: 0; padding: 0; -unity-text-align: middle-right; }
+.stock-sub { font-size: 19px; color: var(--ink-dim); margin: 0; padding: 0; -unity-text-align: middle-right; white-space: nowrap; } /* short: "on shelf", "not in library" */
+
+.cardpane { flex-grow: 1; flex-basis: 0; }
+.detail-body { flex-grow: 1; }
+.callno { position: absolute; right: 16px; top: 12px; font-size: 24px; color: var(--ink-dim); letter-spacing: 1px; margin: 0; padding: 0; }
+.cardtop { padding: 14px 16px 10px 16px; border-bottom-width: 3px; border-bottom-color: var(--red-rule); }
+.cardpane.epic .cardtop { border-bottom-color: var(--epic); }
+.cardpane.legendary .cardtop { border-bottom-color: var(--legendary); }
+.detail-title { font-size: 30px; margin: 0 80px 2px 0; padding: 0; white-space: normal; }
+.detail-author { font-size: 24px; color: var(--ink-dim); margin: 0; padding: 0; }
+.detail-tags { flex-direction: row; flex-wrap: wrap; margin-top: 8px; }
+.detail-tags .badge { margin: 0 6px 6px 0; }
+.detail-scroll { flex-grow: 1; padding: 10px 16px 0 16px; }
+.facts { flex-direction: row; flex-wrap: wrap; margin-bottom: 8px; }
+.fact { width: 50%; flex-direction: row; margin-bottom: 4px; }
+.fact-key { width: 90px; font-size: 24px; color: var(--ink-dim); margin: 0; padding: 0; }
+.fact-value { flex-grow: 1; flex-shrink: 1; font-size: 24px; margin: 0; padding: 0; white-space: normal; }
+.abstract-label { font-size: 21px; letter-spacing: 1px; color: var(--ink-dim); margin: 6px 0 2px 0; padding: 0; }
+.detail-abstract { font-size: 26px; margin: 0; padding: 0; white-space: normal; }
+.reserve { margin: 12px 0 8px 0; padding: 8px 10px 10px 10px; font-size: 23px; color: var(--bad); white-space: normal; border-width: 2px; border-color: var(--bad); }
+.reserve.done { color: var(--ok); border-color: var(--ok); }
+.detail-actions { border-top-width: 2px; border-top-color: var(--rule); padding: 10px 12px 12px 12px; flex-shrink: 0; }
+.detail-btns { flex-direction: row; justify-content: center; flex-wrap: wrap; }
+.detail-btns .pc-button { margin: 0 4px 6px 4px; padding-left: 10px; padding-right: 10px; font-size: 24px; }
+.detail-btns .btn-text { font-size: 24px; }
+.detail-msg { font-size: 22px; color: var(--ink-dim); margin: 0; padding: 0; white-space: normal; -unity-text-align: middle-center; }
+.detail-msg.good { color: var(--ok); }
+
+/* ---------- Shop ---------- */
+.shop, .audit, .settings { flex-grow: 1; }
+.sub-tabs { flex-direction: row; margin-bottom: 10px; }
+.sub-tab {
+    font-size: 28px; color: var(--desk-dim); margin: 0 14px 0 0; padding: 2px 4px 6px 4px;
+    background-color: rgba(0, 0, 0, 0); background-image: none; border-width: 0; border-radius: 0;
+    border-bottom-width: 4px; border-bottom-color: rgba(0, 0, 0, 0);
+}
+.sub-tab:hover { background-color: rgba(0, 0, 0, 0); color: var(--desk-ink); }
+.sub-tab.selected { color: var(--desk-ink); border-bottom-color: var(--accent); }
+.sub-tab.ready { color: rgb(240, 196, 110); }
+.shop-list { flex-grow: 1; }
+.ugrid { flex-direction: row; flex-wrap: wrap; justify-content: space-between; }
+.ucard { width: 32.6%; padding: 10px 10px 12px 10px; margin-bottom: 8px; }
+.ucard.locked { background-image: url("project://database/Assets/Art/UI/PC/T_PC_CardLocked.png"); }
+.ucard.locked .ucard-name, .ucard.locked .ucard-info { color: var(--ink-dim); }
+.ucard.locked .uico-img { opacity: 0.55; }
+.ucard-top { flex-direction: row; }
+.ucard-text { flex-grow: 1; flex-shrink: 1; }
+.uico, .avatar {
+    width: 50px; height: 50px; margin-right: 12px; flex-shrink: 0; align-items: center; justify-content: center;
+    background-color: var(--page-2); border-width: 3px; border-color: var(--rule);
+}
+.uico-img { width: 36px; height: 36px; -unity-background-scale-mode: scale-to-fit; }
+.ucard-name { font-size: 26px; margin: 0; padding: 0; }
+.ucard-info { font-size: 22px; color: var(--ink-dim); margin: 2px 0 0 0; padding: 0; white-space: normal; }
+.ucard-foot { flex-direction: row; justify-content: space-between; align-items: center; margin-top: 8px; }
+.pips { flex-direction: row; }
+.pip { width: 18px; height: 12px; margin-right: 4px; border-width: 3px; border-color: var(--ink-dim); }
+.pip.on { background-color: var(--accent); border-color: rgb(168, 84, 42); }
+.srow { flex-direction: row; align-items: center; padding: 12px 14px 14px 12px; margin-bottom: 10px; }
+.srow-text { flex-grow: 1; flex-shrink: 1; margin-right: 12px; }
+.srow-title { font-size: 28px; margin: 0; padding: 0; }
+.srow-sub { font-size: 22px; color: var(--ink-dim); margin: 2px 0 0 0; padding: 0; white-space: normal; }
+.ucard.ready, .srow.ready { background-image: url("project://database/Assets/Art/UI/PC/T_PC_CardReady.png"); }
 
 /* ---------- Members ---------- */
+.mtable-head { flex-direction: row; padding: 0 8px 4px 8px; border-bottom-width: 3px; border-bottom-color: var(--rule); }
+.mcol { font-size: 22px; color: var(--ink-dim); margin: 0; padding: 0; }
+.mrow { flex-direction: row; align-items: center; padding: 7px 8px 8px 8px; border-bottom-width: 2px; border-bottom-color: var(--rule); }
+.mcell { font-size: 24px; margin: 0; padding: 0; white-space: normal; } /* long names wrap instead of being cut */
+.name { width: 27%; }
+.born { width: 19%; }
+.access { width: 14%; }
+.happy { width: 18%; flex-direction: row; align-items: center; padding-left: 8px; }
+.num { width: 11%; padding-left: 4px; -unity-text-align: middle-right; }
+.heart { width: 13px; height: 10px; margin-right: 1px; background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconHeart01a.png"); }
+.heart.empty { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconHeart01i.png"); }
+.member-empty { font-size: 26px; color: var(--ink-dim); white-space: normal; -unity-text-align: middle-center; margin-top: 40px; }
+.libcard { flex-grow: 1; flex-basis: 0; padding: 14px 18px 18px 18px; }
+.libcard-head { flex-direction: row; justify-content: space-between; align-items: flex-end; padding-bottom: 6px; margin-bottom: 10px; border-bottom-width: 3px; border-bottom-color: var(--red-rule); }
+.libcard-title { font-size: 30px; margin: 0; padding: 0; }
+.libcard-no { font-size: 22px; color: var(--ink-dim); margin: 0; padding: 0; }
+.card-body { flex-grow: 1; }
+.waiting {
+    font-size: 23px; margin: 0 0 12px 0; padding: 8px 12px 10px 12px; white-space: normal;
+    background-image: url("project://database/Assets/Art/UI/PC/T_PC_CardWarm.png");
+    -unity-slice-left: 1; -unity-slice-right: 1; -unity-slice-top: 1; -unity-slice-bottom: 2; -unity-slice-scale: 2px;
+}
+.field-key { font-size: 21px; letter-spacing: 1px; color: var(--ink-dim); margin: 6px 0 4px 0; padding: 0; }
+.dob { flex-direction: row; margin-bottom: 4px; }
+.dd {
+    flex-grow: 1; flex-basis: 0; margin: 0 8px 0 0; padding: 9px 12px 9px 12px; font-size: 26px; color: var(--ink);
+    -unity-text-align: middle-left; border-width: 0; border-radius: 0; background-color: rgba(0, 0, 0, 0);
+    background-image: url("project://database/Assets/Art/UI/PC/T_PC_Input.png");
+    -unity-slice-left: 1; -unity-slice-right: 1; -unity-slice-top: 2; -unity-slice-bottom: 1; -unity-slice-scale: 3px;
+}
+.dd:hover { background-color: rgba(0, 0, 0, 0); color: rgb(176, 88, 40); }
+.dd.empty { color: var(--ink-dim); }
+.dd.last { margin-right: 0; }
+.card-options { flex-direction: row; flex-wrap: wrap; }
+.card-options .pc-button { margin: 0 8px 8px 0; }
+.card-feedback { font-size: 23px; color: var(--bad); margin: 4px 0 0 0; padding: 0; white-space: normal; }
+.spacer { flex-grow: 1; }
+.issue { font-size: 28px; padding-top: 10px; padding-bottom: 14px; margin: 0; }
+
+/* ---------- Log ---------- */
+.audit-days { flex-direction: row; flex-wrap: wrap; margin-bottom: 10px; }
+.audit-days .pc-button { margin: 0 8px 6px 0; }
+.audit-list { flex-grow: 1; }
+.logrow { flex-direction: row; align-items: flex-start; padding: 8px 4px 9px 4px; border-bottom-width: 2px; border-bottom-color: var(--rule); }
+.log-time { width: 96px; font-size: 24px; color: var(--ink-dim); margin: 0; padding: 0; flex-shrink: 0; }
+.log-mark { width: 12px; height: 12px; margin: 6px 12px 0 0; flex-shrink: 0; }
+.log-coin { width: 11px; height: 12px; margin: 5px 13px 0 0; flex-shrink: 0; background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconCoin01a.png"); }
+.log-what { flex-grow: 1; flex-shrink: 1; }
+.log-line { font-size: 25px; margin: 0; padding: 0; white-space: normal; }
+.log-sub { font-size: 22px; color: var(--ink-dim); margin: 0; padding: 0; white-space: normal; }
+.log-out { align-items: flex-end; margin-left: 12px; flex-shrink: 0; max-width: 34%; }
+.log-outcome { font-size: 22px; margin: 0; padding: 0; white-space: normal; -unity-text-align: upper-right; }
+.log-amt { flex-direction: row; align-items: center; margin-top: 2px; }
+.log-amt-text { font-size: 24px; margin: 0; padding: 0; }
+.audit-empty { font-size: 26px; color: var(--ink-dim); -unity-text-align: middle-center; margin-top: 40px; }
+
+/* ---------- Settings ---------- */
+.settings-list { flex-grow: 1; }
+.setting-row { flex-direction: row; align-items: center; padding: 14px 6px; border-bottom-width: 2px; border-bottom-color: var(--rule); }
+.setting-name { width: 220px; font-size: 28px; margin: 0; padding: 0; }
+.setting-value { flex-grow: 1; font-size: 26px; color: var(--ink-dim); margin: 0; padding: 0; }
+.setting-bar { flex-direction: row; align-items: flex-end; margin: 0 6px 0 10px; }
+.setting-pip { width: 10px; margin-right: 2px; background-color: var(--page-2); border-width: 2px; border-color: var(--rule); }
+.setting-pip.on { background-color: var(--accent); border-color: rgb(73, 51, 51); border-top-color: rgb(242, 168, 115); }
+.setting-pip:hover { border-color: var(--accent); }
+.setting-row .pc-button { margin-left: 10px; min-width: 56px; }
+.setting-row .setting-value { margin-right: 10px; }
+
+/* Upgrade and staff icons at a whole 3x scale (kit icons, and ones drawn to match in Art/UI/PC) */
+.uicon-hammer { width: 36px; height: 36px; background-image: url("project://database/Assets/Art/UI/PC/T_IconHammer.png"); }
+.uicon-glue { width: 36px; height: 36px; background-image: url("project://database/Assets/Art/UI/PC/T_IconGlue.png"); }
+.uicon-heart { width: 39px; height: 30px; background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconHeart01a.png"); }
+.uicon-shoe { width: 36px; height: 36px; background-image: url("project://database/Assets/Art/UI/PC/T_IconShoe.png"); }
+.uicon-lamp { width: 36px; height: 36px; background-image: url("project://database/Assets/Art/UI/PC/T_IconLamp.png"); }
+.uicon-armchair { width: 36px; height: 36px; background-image: url("project://database/Assets/Art/UI/PC/T_IconArmchair.png"); }
+.uicon-flyer { width: 36px; height: 36px; background-image: url("project://database/Assets/Art/UI/PC/T_IconFlyer.png"); }
+.uicon-bag { width: 36px; height: 36px; background-image: url("project://database/Assets/Art/UI/PC/T_IconBag.png"); }
+.uicon-energy { width: 36px; height: 42px; background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconEnergy01a.png"); }
+.uicon-broom { width: 36px; height: 36px; background-image: url("project://database/Assets/Art/UI/PC/T_IconBroom.png"); }
+.uicon-books { width: 36px; height: 36px; background-image: url("project://database/Assets/Art/UI/PC/T_IconBooks.png"); }
+.uicon-key { width: 36px; height: 36px; background-image: url("project://database/Assets/Art/UI/PC/T_IconKey.png"); }
+.uico-img { -unity-background-scale-mode: stretch-to-fill; }
+.members-sheet { flex-grow: 1; }
 .members-list { flex-grow: 1; }
-#member-empty { color: var(--mint-dim); font-size: 24px; white-space: normal; -unity-text-align: middle-center; margin-top: 40px; }
-.member-hearts { flex-direction: row; margin-top: 4px; }
-.member-heart {
-    width: 22px; height: 22px; margin-right: 4px;
-    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconHeart01a.png");
-}
-.member-heart.empty { opacity: 0.25; }
-.card-options { flex-direction: row; flex-wrap: wrap; margin: 4px 0 12px 0; }
-.card-option { font-size: 21px; margin: 0 8px 8px 0; padding: 2px 10px 6px 10px; }
-.card-option.picked { background-color: rgba(99, 210, 181, 0.35); color: rgb(255, 255, 255); }
-.card-issue { align-self: center; margin-top: 8px; font-size: 26px; }
-#card-body.hidden, #card-empty.hidden { display: none; }
-#card-feedback { color: rgb(240, 120, 100); }
 
-/* ---------- Shop & Settings ---------- */
-.pc-tabs { flex-direction: row; margin-bottom: 12px; }
-.pc-tab { font-size: 26px; margin-right: 12px; }
-.pc-tab.selected { background-color: var(--mint); color: var(--screen); }
-.pc-scroll { flex-grow: 1; }
-.shop-row { flex-direction: row; align-items: center; padding: 8px 12px; border-bottom-width: 1px; border-bottom-color: var(--mint-faint); }
-.shop-row:hover { background-color: var(--mint-faint); }
-.shop-row-text { flex-grow: 1; flex-shrink: 1; margin-right: 12px; }
-.shop-row .pc-button { margin-right: 0; min-width: 120px; -unity-text-align: middle-center; }
-.shop-row .pc-button:disabled { opacity: 0.35; }
-.shop-level { flex-direction: row; margin-top: 4px; }
-.shop-pip { width: 16px; height: 10px; margin-right: 4px; border-width: 2px; border-color: var(--mint); }
-.shop-pip.on { background-color: var(--mint); }
-.pc-coins { color: rgb(235, 200, 120); font-size: 28px; }
+/* Volume: small - and + beside the pixel staircase. */
+.setting-row .pc-button.vol { min-width: 36px; font-size: 22px; padding: 2px 10px 5px 10px; margin-left: 6px; }
+.setting-row .pc-button.vol .btn-text { font-size: 22px; }
 
-.setting-row { flex-direction: row; align-items: center; padding: 12px 12px; border-bottom-width: 1px; border-bottom-color: var(--mint-faint); }
-.setting-name { color: var(--mint); font-size: 28px; width: 260px; }
-.setting-value { color: var(--mint); font-size: 26px; flex-grow: 1; -unity-text-align: middle-center; }
-.setting-bar { flex-direction: row; flex-grow: 1; justify-content: center; }
-.setting-pip { width: 26px; height: 22px; margin: 0 3px; border-width: 2px; border-color: var(--mint); }
-.setting-pip.on { background-color: var(--mint); }
-.setting-row .pc-button { margin: 0 0 0 10px; min-width: 56px; -unity-text-align: middle-center; }
-.setting-row .pc-button.danger { border-color: rgb(240, 120, 100); color: rgb(240, 120, 100); }
-.setting-row .pc-button.danger:hover { background-color: rgb(240, 120, 100); color: var(--screen); }
-.setting-note { color: var(--mint-dim); font-size: 20px; white-space: normal; margin-top: 12px; -unity-text-align: middle-center; }
-
-/* ---------- Catalogue filters ---------- */
-.pc-filters { flex-direction: row; margin-bottom: 10px; }
-.pc-filter { font-size: 20px; margin-right: 10px; padding: 2px 12px 5px 12px; }
-.shop-row .pc-button.second { margin-left: 8px; }
-.shop-header { color: rgb(235, 200, 120); font-size: 24px; padding: 8px 12px 4px 12px; }
-.shop-reserve { color: var(--mint); font-size: 20px; padding: 2px 12px; white-space: normal; }
-.shop-reserve.warn { color: rgb(240, 120, 100); }
-
-/* ---------- Upgrade row icons ---------- */
-.upgrade-icon {
-    width: 40px; height: 40px; margin-right: 14px; flex-shrink: 0;
-    border-top-left-radius: 8px; border-top-right-radius: 8px;
-    border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;
-    background-color: rgba(99, 210, 181, 0.18);
-    -unity-background-scale-mode: scale-to-fit;
-}
-
-/* Upgrade icons (TravelBook kit) */
-.upg-0 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconGear01a.png"); }
-.upg-1 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconStar01a.png"); }
-.upg-2 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconHeart01a.png"); }
-.upg-3 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconArrow01a.png"); }
-.upg-4 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconStar01c.png"); }
-.upg-5 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconHome01a.png"); }
-.upg-6 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconPlay01a.png"); }
-.upg-7 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_BookCover01a.png"); }
-.upg-8 { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconEnergy01a.png"); }
-
-/* Shop rows: wrap long descriptions so they never run under the button. */
-.shop-row-text { flex-basis: 0; }
-.shop-row #book-title, .shop-row #book-sub { white-space: normal; }
-.shop-row .pc-button { flex-shrink: 0; }
-
-/* Shop search bar (same look as the catalogue) */
-.pc-filter-bar { margin-bottom: 6px; }
-.pc-filter-bar .filter-search { margin: 0 0 8px 0; }
-.pc-filter-bar .filter-search .unity-base-text-field__input {
-    background-color: rgba(0, 0, 0, 0.25);
-    border-width: 2px; border-color: var(--mint-dim);
-    border-top-left-radius: 6px; border-top-right-radius: 6px;
-    border-bottom-left-radius: 6px; border-bottom-right-radius: 6px;
-    color: var(--mint); font-size: 22px; padding: 4px 10px;
-}
-.pc-filter-bar .hidden, .pc-filter-bar.hidden { display: none; }
-.pc-tile.upgrade-ready { border-color: rgb(235, 200, 120); color: rgb(235, 200, 120); }
-
-/* Gold "Requested" box next to a shop title */
-.title-row { flex-direction: row; align-items: center; flex-wrap: wrap; }
-.req-badge {
-    color: rgb(38, 52, 62);
-    background-color: rgb(235, 200, 120);
-    font-size: 17px;
-    padding: 0 8px 3px 8px;
-    margin-left: 10px;
-    border-top-left-radius: 4px; border-top-right-radius: 4px;
-    border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;
-}
-
-/* "Select as guess" under the book details */
-.detail-select { align-self: center; margin: 14px 0 0 0; font-size: 24px; }
-.detail-select:disabled { opacity: 0.35; }
-.detail-select-note { color: rgb(235, 200, 120); font-size: 19px; white-space: normal; -unity-text-align: middle-center; margin-top: 6px; }
-
-/* ---------- Audit log ---------- */
-.audit-days { flex-direction: row; flex-wrap: wrap; margin-bottom: 12px; }
-.audit-day { font-size: 22px; margin: 0 10px 8px 0; padding: 2px 12px 5px 12px; }
-.audit-day.selected { background-color: var(--mint); color: var(--screen); }
-.audit-empty { color: var(--mint-dim); font-size: 24px; white-space: normal; -unity-text-align: middle-center; margin-top: 40px; }
-.log-row { padding: 8px 12px 10px 12px; border-bottom-width: 1px; border-bottom-color: var(--mint-faint); }
-.log-head { color: rgb(235, 200, 120); font-size: 20px; }
-.log-line { color: var(--mint); font-size: 21px; white-space: normal; }
-.log-outcome { color: var(--mint-dim); font-size: 20px; white-space: normal; margin-top: 2px; }
-
-/* ---------- New card: typed name + birthday picker ---------- */
-.card-name-wrap { margin: 2px 0 6px 0; }
-#card-name { margin: 0; }
-#card-name .unity-base-text-field__input {
-    min-height: 40px;
-    padding: 4px 12px 6px 12px;
-    border-width: 2px;
-    border-color: var(--mint);
-    border-top-left-radius: 6px; border-top-right-radius: 6px;
-    border-bottom-left-radius: 6px; border-bottom-right-radius: 6px;
-    background-color: rgba(0, 0, 0, 0.25);
-    color: var(--mint);
-    font-size: 22px;
-    --unity-cursor-color: rgb(99, 210, 181);
-}
-#card-name-placeholder { position: absolute; left: 16px; top: 8px; color: var(--mint-dim); font-size: 21px; }
-.date-picker { flex-direction: row; height: 124px; flex-shrink: 0; margin: 4px 0 6px 0; }
-.date-col { margin-right: 8px; }
-.date-col.day { width: 25%; }
-.date-col.month { width: 30%; }
-.date-col.year { flex-grow: 1; margin-right: 0; }
-.date-head { color: var(--mint-dim); font-size: 18px; -unity-text-align: middle-center; }
-.date-list {
-    flex-grow: 1;
-    border-width: 1px;
-    border-color: var(--mint-dim);
-    border-top-left-radius: 6px; border-top-right-radius: 6px;
-    border-bottom-left-radius: 6px; border-bottom-right-radius: 6px;
-    background-color: rgba(0, 0, 0, 0.2);
-}
-.date-list .unity-scroll-view__content-container { padding-right: 4px; }
-.date-item { margin: 2px 2px 0 4px; padding: 0 4px 3px 4px; font-size: 20px; border-width: 0; -unity-text-align: middle-center; }
-.date-item.picked { background-color: var(--mint); color: var(--screen); }
-.date-item:disabled { opacity: 0.2; }
-.card-preview { color: rgb(235, 200, 120); font-size: 18px; white-space: normal; min-height: 22px; flex-shrink: 0; margin-bottom: 4px; }
-.date-list .unity-scroller--vertical { width: 12px; margin-left: 2px; }
-.date-list .unity-base-slider__dragger { width: 12px; }
-.date-list .unity-base-slider__tracker { left: 3px; right: 3px; }
-/* The card form scrolls when it doesn't fit, instead of squashing its rows. */
-.card-scroll { flex-grow: 1; margin-top: 6px; }
-.card-scroll .unity-scroll-view__content-container > * { flex-shrink: 0; }
-.card-scroll .detail-key { font-size: 18px; }
-.card-scroll .card-options { margin: 2px 0 4px 0; }
-.card-feedback { color: rgb(240, 120, 100); font-size: 19px; white-space: normal; margin-top: 6px; -unity-text-align: middle-center; }
-
-/* Request type icons (visitors' prompts and the computer's tiles use the same ones) */
-.req-icon { width: 30px; height: 30px; margin-right: 6px; flex-shrink: 0; -unity-background-scale-mode: scale-to-fit; display: none; }
-.req-icon.on { display: flex; }
-.req-card { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconHeart01a.png"); }
-.req-buy { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconCoin01a.png"); }
-.req-read { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_BookCover01a.png"); }
-.req-return { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconRestart01a.png"); }
-.req-new { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconStar01c.png"); }
-.req-rare { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconStar01a.png"); }
-.req-collect { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconTick01a.png"); }
-.req-settings { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconGear01a.png"); }
-.pc-tile-icon { position: absolute; left: 16px; top: 50%; translate: 0 -50%; width: 36px; height: 36px; display: flex; }
-
-/* Popular today: gold glow that breathes (PopularGlow toggles .glow-on) */
-.popular { border-left-width: 4px; border-left-color: rgb(235, 200, 120); background-color: rgba(235, 200, 120, 0.04);
-           transition-property: background-color, border-left-color; transition-duration: 0.8s; }
-.popular.glow-on { background-color: rgba(235, 200, 120, 0.12); border-left-color: rgb(255, 228, 160); }
-.popular-badge { color: rgb(38, 52, 62); background-color: rgb(235, 200, 120); font-size: 17px; padding: 0 8px 3px 8px; margin-left: 10px;
-                 border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; }
-.popular-title { color: rgb(235, 200, 120); }
-/* Computer tiles: icon sits right beside its label */
-.pc-tile { flex-direction: row; justify-content: center; align-items: center; }
-.pc-tile .pc-tile-icon { position: relative; left: auto; top: auto; translate: 0 0; margin: 0 10px 0 0; width: 34px; height: 34px; }
-.pc-tile-label { padding: 0; margin: 0; -unity-text-align: middle-center; }
-.pc-filters, .page-filters { flex-wrap: wrap; }
-.req-read { background-image: none; }
-/* Catalogue rows: three tight lines that stay inside their row */
-.pc-book { height: 100%; justify-content: center; overflow: hidden; padding: 4px 12px; }
-.pc-book Label { margin: 0; padding: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pc-book #book-title { font-size: 24px; }
-.pc-book #book-sub, .pc-book #book-meta { font-size: 18px; }
-.pc-tile-note { position: absolute; left: 0; right: 0; bottom: 14px; font-size: 18px; margin: 0; padding: 0; -unity-text-align: middle-center; }
-.pc-tile-note.hidden { display: none; }
-
-/* Something to do behind this tab / tile (affordable upgrade or hire): gold, breathing */
-.ready { border-color: rgb(235, 200, 120); color: rgb(235, 200, 120); transition-property: background-color; transition-duration: 0.8s; }
-.ready.glow-on { background-color: rgba(235, 200, 120, 0.2); }
-
-/* Catalogue: "Buy books" in the header (to the Shop), and "Buy" beside "Add to note". */
-.pc-header-button { margin-right: 0; }
-.detail-actions { flex-direction: row; justify-content: center; flex-wrap: wrap; flex-shrink: 0; }
-.detail-actions .detail-select { margin: 14px 6px 0 6px; flex-shrink: 0; }
-.detail-select-note { flex-shrink: 0; }
+/* A pickable group in a list (e.g. "Science shelf: all"): reads like a heading. */
+.picklist-item.picklist-group { color: var(--accent); letter-spacing: 1px; margin-top: 4px; }

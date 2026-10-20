@@ -1,0 +1,1249 @@
+<title>Whitmore PC Redesign</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jersey+10&family=Jersey+15&display=swap">
+<style>
+/* Layout: the game's dim library behind one PC window (status bar, header, page body);
+   design notes for the current page sit under it. Colour variants only swap the background tokens. */
+:root {
+  color-scheme: dark;
+  --room: #16110d;
+  --room-2: #241a13;
+  --note-fg: #e9dcc6;
+  --note-dim: #a8957b;
+  --note-line: #3a2c21;
+  --legendary: #5f0f40;
+  --epic: #3d348b;
+  --display: "Jersey 15", "Courier New", monospace;
+  --body: "Jersey 10", "Courier New", monospace;
+  --ui: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+body { background: var(--room); color: var(--note-fg); font-family: var(--ui); }
+
+/* ---------- Skin A: Card Catalogue (walnut frame, parchment page, brass, oxblood) ---------- */
+[data-skin="card"] {
+  --frame: #5a3a24;
+  --frame-hi: #7a5234;
+  --frame-lo: #3b2516;
+  --page: #d9c6a0;
+  --page-2: #c9b48c;
+  --card: #e8d9b8;
+  --ink: #3b2a1d;
+  --ink-dim: #65503c;
+  --rule: #b49a70;
+  --accent: #d67840;
+  --accent-ink: #fff6e8;
+  --gold: rgb(235, 200, 120);
+  --gold-ink: #3b2a1d;
+  --ok: #4f6b3a;
+  --warn: #a8701c;
+  --bad: #8e3b32;
+  --sel: #e2bf86;
+  --hover: #d6c09a;
+  --btn: #d8b77c;
+  --btn-border: #6e4c30;
+  --status-bg: #3b2516;
+  --status-fg: #f0dfbf;
+  --red-rule: #c45b4d;
+  --blue-rule: rgba(90, 120, 160, 0.18);
+  --brass: #d9b36a;
+  --brass-dark: #8a6a2e;
+  --brass-ink: #3b2516;
+  --close: #b5523f;
+  --close-dark: #6e2a20;
+  --close-ink: #fbe9dc;
+  --star: #c98a1c;
+  --scroll: #9b7b55;
+  --case: #e8d0b9; --case-hi: #f7ebdc; --case-lo: #c4a487; --case-line: #493333; --bezel: #3b2a1d; --led: #7fd36a;
+  --btn-light: rgba(255, 255, 255, 0.55); --btn-shade: rgba(90, 55, 30, 0.22); --btn-edge: #a8542a;
+  --pip: #d67840; --pip-hi: #f2a873; --pip-lo: #a8542a; --pip-line: #493333; --pip-off: #a68d68;
+  --scroll-hi: #b8976d;
+  --glow-text: #e0a030;
+  --glow-halo: rgba(255, 200, 90, 0.85);
+  --sheet-bg: transparent; --sheet-border: transparent; --sheet-pad: 0px; --sheet-surface: var(--page);
+  --desk-ink: #3b2a1d; --desk-dim: #65503c;
+  --input: var(--card); --pop-bar: var(--gold); --ready: var(--gold);
+  --btn-off: #d9cba8; --ink-off: #8a7658;
+}
+/* Oxblood leather desk: every list sits on a sheet, so the dark screen never sits under dark text. */
+.pc[data-pal="leather"] {
+  --page: #5e2b26; --red-rule: #d6a15e;
+  --sheet-bg: var(--card); --sheet-border: var(--rule); --sheet-pad: 10px; --sheet-surface: var(--card);
+  --desk-ink: #f3e4c4; --desk-dim: #d6b19a;
+}
+/* Brass cards, inputs and controls on the leather desk, checked so nothing blends */
+.pc[data-comp="brass"]     {
+  --card: #e3c98f; --page-2: #cfb071; --rule: #a6844a; --ink-dim: #55402a;
+  --hover: #d6b670;                    /* a clear step darker than the card */
+  --sel: #f1dfb2;                      /* picked row: the button colour plus an orange outline */
+  --input: #f8edcf;                    /* inputs, dropdowns, tooltips: lighter than the card they sit on */
+  --btn: #f1dfb2; --btn-border: #6e4c30; --pip-off: #a6844a;
+  --gold: #f6e2a8;                     /* badges: pale gold with a dark pixel edge */
+  --warn: #7d4f0c;                     /* amber text and the POPULAR stamp, dark enough for gold paper */
+  --pop-bar: #9a6510;                  /* the Popular bar on rows (gold would vanish on brass) */
+  --ready: #c0661f;                    /* "you can afford this" borders */
+  --btn-off: #d8c79c; --ink-off: #7f6a48;  /* disabled: flat, greyed gold, no bevel */
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+/* Scrollbars like the game's TravelBook kit bar: a slim inset track and a rounded handle */
+.pc ::-webkit-scrollbar { width: 14px; height: 14px; }
+.pc ::-webkit-scrollbar-track { background: var(--page-2); border: 1px solid var(--rule); border-radius: 7px; margin: 4px 0; box-shadow: inset 0 1px 2px rgba(0,0,0,0.15); }
+.pc ::-webkit-scrollbar-thumb { min-height: 40px; border-radius: 7px; border: 2px solid var(--page-2); background: linear-gradient(90deg, var(--scroll-hi), var(--scroll) 55%); }
+.pc ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+.pc ::-webkit-scrollbar-button, .pc ::-webkit-scrollbar-corner { display: none; background: transparent; }
+@supports not selector(::-webkit-scrollbar) { .pc * { scrollbar-color: var(--scroll) var(--page-2); } }
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 16px; padding-block: 24px 48px; display: grid; gap: 20px; }
+
+/* ---------- Mockup chrome (outside the game screen) ---------- */
+.top { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: end; justify-content: space-between; }
+.top h1 { font-family: var(--display); font-weight: 400; font-size: 44px; line-height: 1; margin: 0; letter-spacing: 0.5px; }
+.top p { margin: 6px 0 0; color: var(--note-dim); max-width: 60ch; font-size: 14px; line-height: 1.5; }
+.controls { display: flex; flex-wrap: wrap; gap: 10px; }
+.controls { align-items: center; }
+.lbl-ui { font: 600 12px var(--ui); letter-spacing: 1.2px; text-transform: uppercase; color: var(--note-dim); }
+.seg { display: inline-flex; border: 1px solid var(--note-line); border-radius: 8px; overflow: hidden; }
+.seg button { font: 13px var(--ui); color: var(--note-dim); background: transparent; border: 0; padding: 7px 12px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--note-line); }
+.seg button[aria-pressed="true"] { background: #d67840; color: #1b120c; font-weight: 600; }
+.seg button:focus-visible, .pc button:focus-visible, .pc input:focus-visible, .pc select:focus-visible { outline: 2px solid #d67840; outline-offset: 2px; }
+
+/* ---------- The room and the PC window ---------- */
+.stage {
+  position: relative;
+  padding: clamp(10px, 3vw, 36px);
+  border-radius: 14px;
+  background: radial-gradient(ellipse at 50% 30%, var(--room-2), var(--room) 75%);
+}
+.pc {
+  position: relative;
+  max-width: 1080px;
+  margin: 0 auto;
+  border-radius: 14px;
+  padding: 12px;
+  background: linear-gradient(var(--frame-hi), var(--frame) 40%, var(--frame-lo));
+  box-shadow: 0 20px 60px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.15);
+  font-family: var(--body);
+  color: var(--ink);
+}
+.screen {
+  position: relative;
+  height: 680px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--page);
+}
+
+/* Status line: the clock keeps running while the PC is open */
+/* Title bar: window buttons on the left, name centred, day/clock/coins on the right */
+.status {
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px;
+  padding: 6px 14px 7px;
+  background: var(--status-bg); color: var(--status-fg);
+  font-size: 20px; line-height: 1;
+}
+.status .brand { font-family: var(--display); font-size: 24px; letter-spacing: 2px; text-align: center; white-space: nowrap; }
+.status .stats { display: flex; gap: 10px; justify-content: flex-end; align-items: center; min-width: 0; }
+.winbtns { display: flex; gap: 7px; align-items: center; }
+.winbtn {
+  width: 22px; height: 22px; padding: 0; display: grid; place-items: center; cursor: pointer;
+  border-radius: 50%; border: 2px solid var(--brass-dark); background: var(--brass); color: var(--brass-ink);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.35);
+}
+.winbtn svg { width: 10px; height: 10px; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; fill: none; opacity: 0.75; }
+.winbtn:hover svg { opacity: 1; }
+.winbtn.close { background: var(--close); border-color: var(--close-dark); color: var(--close-ink); }
+/* Logged off / minimised screen */
+.off { position: absolute; inset: 0; z-index: 10; display: grid; place-items: center; text-align: center; background: var(--status-bg); color: var(--status-fg); font: 24px var(--body); }
+.off b { display: block; font: 40px var(--display); font-weight: 400; letter-spacing: 2px; margin-bottom: 8px; }
+.pc.max { max-width: none; }
+.status .stat { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.status .coins { color: var(--gold); }
+.status .dot { opacity: 0.4; }
+
+.head { display: flex; align-items: center; gap: 14px; padding: 14px 20px 10px; border-bottom: 2px solid var(--red-rule); }
+.head h2 { font-family: var(--display); font-weight: 400; font-size: 40px; line-height: 1; margin: 0; flex: 1; letter-spacing: 1px; }
+.head .sub { color: var(--ink-dim); font-size: 20px; }
+.body { flex: 1; min-height: 0; padding: 14px 20px 16px; display: flex; flex-direction: column; gap: 12px; }
+.foot { color: var(--ink-dim); font-size: 18px; text-align: center; padding: 0 20px 12px; }
+
+/* Buttons */
+/* Pixel-art buttons: square 3px outline with the corner pixels cut away, a light top row and a dark bottom
+   band like the kit's buttons, and a 2px press-down on click. */
+.btn {
+  font: 22px var(--body); line-height: 1; color: var(--ink);
+  background: var(--btn); border: 3px solid var(--btn-border); border-radius: 0;
+  padding: 4px 14px 9px; cursor: pointer; white-space: nowrap;
+  clip-path: polygon(3px 0, calc(100% - 3px) 0, calc(100% - 3px) 3px, 100% 3px, 100% calc(100% - 3px), calc(100% - 3px) calc(100% - 3px), calc(100% - 3px) 100%, 3px 100%, 3px calc(100% - 3px), 0 calc(100% - 3px), 0 3px, 3px 3px);
+  box-shadow: inset 0 3px 0 var(--btn-light), inset 0 -4px 0 var(--btn-shade);
+}
+.btn:hover:not(:disabled) { background: var(--accent); border-color: var(--btn-edge); color: var(--accent-ink); }
+.btn:active:not(:disabled) { transform: translateY(2px); box-shadow: inset 0 4px 0 var(--btn-shade); padding: 6px 14px 7px; }
+.btn:disabled { opacity: 1; cursor: default; background: var(--btn-off); color: var(--ink-off); border-color: var(--rule); box-shadow: none; }
+.btn.primary:disabled { background: var(--btn-off); color: var(--ink-off); border-color: var(--rule); } /* solid, so it never shows the leather through */
+.pc .btn:focus-visible { outline: none; border-color: var(--ink); }
+.btn.primary { background: var(--accent); border-color: var(--btn-edge); color: var(--accent-ink); }
+.btn.primary:hover:not(:disabled) { filter: brightness(1.08); }
+.btn.danger { border-color: var(--bad); color: var(--bad); }
+.btn.danger:hover:not(:disabled) { background: var(--bad); color: var(--accent-ink); border-color: var(--bad); }
+.btn.small { font-size: 19px; padding: 3px 10px 7px; }
+.btn.small:active:not(:disabled) { padding: 5px 10px 5px; }
+.btn .cost { display: inline-flex; align-items: center; gap: 3px; margin-left: 4px; vertical-align: middle; font-variant-numeric: tabular-nums; }
+.btn .cost .px { margin: 0 1px; } /* kit coin at its native 1x size, still pixel-crisp */
+.btn.ready { border-color: var(--ready); box-shadow: inset 0 3px 0 var(--btn-light), inset 0 -4px 0 rgba(235,200,120,0.55); }
+
+/* Badges / chips */
+.chip { display: inline-block; font-size: 17px; line-height: 1; padding: 3px 7px 5px; border-radius: 4px; border: 1px solid var(--rule); color: var(--ink-dim); white-space: nowrap; }
+.badge { display: inline-block; font-size: 17px; line-height: 1; padding: 3px 8px 5px; border-radius: 4px; background: var(--gold); color: var(--gold-ink); white-space: nowrap; }
+.badge.urgent { background: var(--bad); color: var(--accent-ink); }
+.badge.new { background: var(--accent); color: var(--accent-ink); }
+
+/* ---------- Catalogue ---------- */
+.cat { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 18px; }
+.col { min-height: 0; display: flex; flex-direction: column; gap: 10px; }
+.search { position: relative; }
+.search input {
+  width: 100%; font: 22px var(--body); color: var(--ink);
+  background: var(--input); border: 2px solid var(--btn-border); border-radius: 6px; padding: 6px 12px 8px;
+}
+.search input::placeholder { color: var(--ink-dim); }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; }
+.drop { position: relative; }
+.menu {
+  position: absolute; z-index: 5; top: calc(100% + 4px); left: 0; min-width: 160px;
+  background: var(--input); border: 2px solid var(--btn-border); border-radius: 6px; padding: 4px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+}
+.menu button { display: block; width: 100%; text-align: left; font: 20px var(--body); color: var(--ink); background: none; border: 0; padding: 3px 10px 5px; border-radius: 4px; cursor: pointer; }
+.menu button:hover, .menu button[aria-checked="true"] { background: var(--accent); color: var(--accent-ink); }
+.menu.tall { max-height: 340px; overflow-y: auto; }
+.menu .hdr { font-size: 16px; letter-spacing: 1px; text-transform: uppercase; color: var(--ink-dim); border-top: 1px solid var(--rule); margin-top: 4px; padding: 6px 10px 2px; }
+.menu .sub { padding-left: 24px; color: var(--ink); }
+.menu .sub:hover, .menu .sub[aria-checked="true"] { color: var(--accent-ink); }
+
+.list { flex: 1; min-height: 0; overflow-y: auto; border-top: 1px solid var(--rule); }
+.row {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; align-items: center;
+  padding: 7px 10px 8px; border-bottom: 1px solid var(--rule); cursor: pointer;
+}
+.row:hover { background: var(--hover); }
+.row.sel { background: var(--sel); outline: 3px solid var(--accent); outline-offset: -3px; } /* picked book: always obvious */
+.row .t { font-size: 24px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; gap: 8px; align-items: center; min-width: 0; }
+.row .t span.name { overflow: hidden; text-overflow: ellipsis; }
+.row .s { grid-column: 1; font-size: 18px; color: var(--ink-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row .m { grid-column: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; font-size: 18px; line-height: 22px; color: var(--ink-dim); margin-top: 1px; }
+.row .m span { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.row .m .sep { opacity: 0.5; }
+.row .m .bad { color: var(--bad); }
+/* Pixel icons: the kit's coin, plus a shelf and a damaged-book icon drawn to match. Always whole-pixel scale (x2). */
+.px { image-rendering: pixelated; image-rendering: crisp-edges; flex-shrink: 0; }
+.row .n { grid-row: 1 / span 3; grid-column: 2; text-align: right; font-variant-numeric: tabular-nums; line-height: 1; }
+.row .n b { display: block; font-weight: 400; font-size: 30px; }
+.row .n small { font-size: 16px; color: var(--ink-dim); }
+.row.popular { box-shadow: inset 4px 0 0 var(--pop-bar); }
+/* Tier accents: left border on the row, border + badge on the card. Tier wins over Popular. */
+.row.epic { box-shadow: inset 5px 0 0 var(--epic); }
+.row.legendary { box-shadow: inset 5px 0 0 var(--legendary); }
+.cardpane.epic{ border-color: var(--epic); box-shadow: 0 4px 0 var(--epic); }
+.cardpane.legendary{ border-color: var(--legendary); box-shadow: 0 4px 0 var(--legendary), 0 0 0 3px rgba(95, 15, 64, 0.25); }
+.cardpane.epic .cardtop { border-bottom-color: var(--epic); }
+.cardpane.legendary .cardtop { border-bottom-color: var(--legendary); }
+.badge.epic { background: var(--epic); color: #fff; }
+.badge.legendary { background: var(--legendary); color: #ffe48f; }
+.ok { color: var(--ok); } .warn { color: var(--warn); } .bad { color: var(--bad); }
+.count-line { font-size: 18px; color: var(--desk-dim); }
+/* Lists on a parchment sheet (only visible in the desk variants) */
+.sheet { background: var(--sheet-bg); border: 2px solid var(--sheet-border); border-bottom-width: 4px; padding-inline: var(--sheet-pad); clip-path: var(--notch2); }
+
+/* Details: an index card */
+.cardpane {
+  position: relative; min-height: 0; display: flex; flex-direction: column;
+  background: var(--card); border: 2px solid var(--rule); border-radius: 6px;
+  box-shadow: 0 4px 0 var(--rule);
+}
+.cardtop { padding: 12px 16px 8px; border-bottom: 2px solid var(--red-rule); }
+.callno { position: absolute; top: 10px; right: 14px; font: 20px var(--display); color: var(--ink-dim); letter-spacing: 1px; }
+.cardtop h3 { font: 30px/1.05 var(--display); font-weight: 400; margin: 0 70px 2px 0; text-wrap: balance; }
+.cardtop .by { font-size: 20px; color: var(--ink-dim); }
+.cardtop .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.cardscroll {
+  flex: 1; min-height: 0; overflow-y: auto; padding: 8px 16px 10px;
+  background-image: repeating-linear-gradient(180deg, transparent 0 27px, var(--blue-rule) 27px 28px);
+ 
+}
+.facts { display: grid; grid-template-columns: auto 1fr auto 1fr; gap: 2px 14px; font-size: 20px; line-height: 26px; margin-bottom: 8px; }
+.facts dt { color: var(--ink-dim); }
+.facts dd { margin: 0; }
+.abstract { font-size: 21px; line-height: 28px; margin: 0; }
+.abstract-label { font-size: 17px; color: var(--ink-dim); letter-spacing: 1px; text-transform: uppercase; line-height: 28px; }
+.reserve { margin-top: 10px; padding: 6px 10px 8px; border: 2px dashed var(--bad); border-radius: 6px; font-size: 19px; line-height: 1.25; color: var(--bad); }
+.reserve.done { border-color: var(--ok); color: var(--ok); }
+.stamp {
+  position: absolute; right: 18px; top: 74px; transform: rotate(-9deg);
+  font: 26px var(--display); letter-spacing: 2px; color: var(--bad);
+  border: 3px solid var(--bad); border-radius: 6px; padding: 0 10px 3px; opacity: 0.85; pointer-events: none;
+}
+.stamp.gold { color: var(--warn); border-color: var(--warn); }
+.actions { border-top: 1px solid var(--rule); padding: 10px 12px 10px; display: flex; flex-direction: column; gap: 6px; }
+.actions .btns { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.actions .msg { font-size: 18px; color: var(--ink-dim); text-align: center; min-height: 20px; }
+.actions .msg.good { color: var(--ok); }
+.empty { flex: 1; display: grid; place-items: center; text-align: center; color: var(--ink-dim); font-size: 22px; padding: 20px; }
+
+/* ---------- Shop ---------- */
+.tabs { display: flex; gap: 10px; }
+.tab { font: 24px var(--body); line-height: 1; background: transparent; color: var(--desk-dim); border: 0; border-bottom: 3px solid transparent; padding: 4px 6px 8px; cursor: pointer; }
+.tab[aria-selected="true"] { color: var(--desk-ink); border-bottom-color: var(--accent); }
+.tab.ready { color: var(--warn); }
+.scroll { flex: 1; min-height: 0; overflow-y: auto; }
+.ugrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.ucard { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto 1fr auto; gap: 4px 12px; padding: 12px; background: var(--card); border: 2px solid var(--rule); border-radius: 8px; }
+.ucard.ready { border-color: var(--ready); }
+.ucard.locked { background: var(--page-2); } /* locked: a duller card, never see-through on the dark desk */
+.ucard.locked h4, .ucard.locked p { color: var(--ink-dim); }
+.ucard.locked .uico { opacity: 0.55; }
+.uico { grid-row: 1 / span 2; width: 52px; height: 52px; border-radius: 8px; display: grid; place-items: center; background: var(--page-2); border: 2px solid var(--rule); }
+.ucard h4 { font: 24px/1 var(--display); font-weight: 400; margin: 2px 0 0; }
+.ucard p { margin: 0; font-size: 18px; line-height: 1.2; color: var(--ink-dim); }
+.ufoot { grid-column: 1 / span 2; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; }
+.pips { display: flex; gap: 4px; }
+.pip { width: 18px; height: 10px; border: 2px solid var(--ink-dim); border-radius: 2px; }
+.pip.on { background: var(--accent); border-color: var(--accent); }
+.srow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 4px 14px; align-items: center; padding: 12px; background: var(--card); border: 2px solid var(--rule); border-radius: 8px; margin-bottom: 10px; }
+.srow.ready { border-color: var(--ready); }
+.srow h4 { font: 26px/1 var(--display); font-weight: 400; margin: 0; }
+.srow p { margin: 2px 0 0; font-size: 18px; line-height: 1.25; color: var(--ink-dim); }
+.srow .who { font-size: 20px; }
+.avatar { width: 56px; height: 56px; border-radius: 8px; display: grid; place-items: center; background: var(--page-2); border: 2px solid var(--rule); }
+
+/* ---------- Members ---------- */
+.mem { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 18px; }
+.mtable { width: 100%; border-collapse: collapse; font-size: 20px; }
+.mtable th { text-align: left; font-weight: 400; color: var(--ink-dim); font-size: 17px; padding: 4px 8px; border-bottom: 2px solid var(--rule); position: sticky; top: 0; background: var(--sheet-surface); }
+.mtable td { padding: 6px 8px 7px; border-bottom: 1px solid var(--rule); vertical-align: middle; white-space: nowrap; }
+.mtable td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.hearts { line-height: 0; }
+.hearts .px { margin-right: 1px; vertical-align: middle; }
+.libcard { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; background: var(--card); border: 2px solid var(--rule); border-radius: 8px; box-shadow: 0 4px 0 var(--rule); min-height: 0; overflow-y: auto; }
+.libcard h3 { font: 28px/1 var(--display); font-weight: 400; margin: 0; padding-bottom: 6px; border-bottom: 2px solid var(--red-rule); display: flex; justify-content: space-between; gap: 10px; }
+.libcard h3 small { font: 18px var(--body); color: var(--ink-dim); align-self: end; }
+.field { display: grid; gap: 4px; }
+.field label, .field .lbl { font-size: 17px; color: var(--ink-dim); letter-spacing: 1px; text-transform: uppercase; }
+.field input, .field select {
+  font: 22px var(--body); color: var(--ink); background: transparent;
+  border: 0; border-bottom: 2px solid var(--btn-border); padding: 2px 4px 4px; border-radius: 0;
+}
+.field select option { background: var(--card); color: var(--ink); }
+.dob { display: grid; grid-template-columns: 0.8fr 1fr 1fr; gap: 10px; }
+.dd-wrap { min-width: 0; }
+.dd { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 6px; cursor: pointer; text-align: left;
+  font: 22px var(--body); color: var(--ink); background: var(--input); border: 3px solid var(--btn-border); border-radius: 0;
+  padding: 5px 10px 7px; clip-path: var(--notch2); box-shadow: inset 0 3px 0 var(--btn-shade); }
+.dd.empty { color: var(--ink-dim); }
+.dd span { font-size: 16px; color: var(--ink-dim); }
+.menu.six { max-height: calc(6 * 28px + 6px); overflow-y: auto; min-width: 100%; }
+.menu.six button { line-height: 20px; height: 28px; padding: 3px 10px 5px; }
+.menu.six button:disabled { opacity: 0.3; cursor: default; background: none; color: var(--ink); }
+.libcard .issue { margin-top: auto; width: 100%; font-size: 24px; padding-top: 8px; padding-bottom: 12px; }
+.opts { display: flex; flex-wrap: wrap; gap: 8px; }
+.opt[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.waiting { font-size: 19px; padding: 6px 10px 8px; border-radius: 6px; background: var(--sel); }
+
+/* ---------- Log ---------- */
+.days { display: flex; flex-wrap: wrap; gap: 8px; }
+.logrow { display: grid; grid-template-columns: 92px 12px minmax(0, 1fr) auto; gap: 2px 12px; align-items: start; padding: 8px 4px 9px; border-bottom: 1px solid var(--rule); }
+.logrow .time { font-size: 20px; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+.logrow .mark { width: 10px; height: 10px; border-radius: 50%; margin-top: 7px; }
+.logrow .what { font-size: 21px; line-height: 1.2; }
+.logrow .what small { display: block; font-size: 18px; color: var(--ink-dim); }
+.logrow .out { font-size: 18px; white-space: nowrap; display: grid; justify-items: end; gap: 2px; }
+.logrow .mark.coinmark { width: 12px; height: 12px; border-radius: 0; margin-top: 5px; margin-left: -1px; }
+.logrow.spend .what { color: var(--ink); }
+.amt { display: inline-flex; align-items: center; gap: 2px; font-size: 20px; font-variant-numeric: tabular-nums; }
+.amt.plus { color: var(--ok); } .amt.minus { color: var(--bad); }
+
+/* ---------- Settings ---------- */
+.set { display: grid; grid-template-columns: 200px minmax(0, 1fr) auto; gap: 10px 14px; align-items: center; padding: 12px 6px; border-bottom: 1px solid var(--rule); font-size: 24px; }
+.set .val { color: var(--ink-dim); font-size: 21px; }
+/* Pixel volume meter: blocks rising in 4px steps, hard 4px outlines, notched pixel corners, no smoothing */
+.set .bar { display: flex; gap: 4px; flex-wrap: wrap; align-items: flex-end; }
+.set .bar button {
+  width: 20px; height: var(--h); padding: 0; border: 0; border-radius: 0; cursor: pointer;
+  background: var(--page-2); box-shadow: inset 0 0 0 4px var(--pip-off);
+  clip-path: polygon(4px 0, calc(100% - 4px) 0, calc(100% - 4px) 4px, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 4px calc(100% - 4px), 0 calc(100% - 4px), 0 4px, 4px 4px);
+}
+.set .bar button.on {
+  box-shadow: inset 0 0 0 4px var(--pip-line);
+  background: linear-gradient(var(--pip-hi) 0 8px, var(--pip) 8px calc(100% - 8px), var(--pip-lo) calc(100% - 8px));
+}
+.set .bar button:hover { box-shadow: inset 0 0 0 4px var(--accent); }
+.set .ctl { display: flex; gap: 8px; justify-content: end; }
+
+/* Notebook: sits on the right of the game screen, above the PC */
+.notebook {
+  position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+  writing-mode: vertical-rl; font: 18px var(--body); letter-spacing: 2px;
+  padding: 14px 6px; border-radius: 8px 0 0 8px;
+  background: #b88a3e; color: #2a1b10; box-shadow: -2px 2px 10px rgba(0,0,0,0.4);
+}
+
+/* ---------- Notes under the screen ---------- */
+.notes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+.notes section { border-top: 1px solid var(--note-line); padding-top: 12px; }
+.notes h3 { margin: 0 0 8px; font: 13px var(--ui); font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: #d67840; }
+.notes ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14px; line-height: 1.5; color: var(--note-fg); max-width: 62ch; }
+.notes li::marker { color: var(--note-dim); }
+.notes code { font-size: 12.5px; color: var(--note-dim); }
+
+/* ---------- Tabs: the only navigation (Home first, no Back buttons) ---------- */
+.navtabs { display: flex; flex-wrap: wrap; gap: 2px 6px; flex: 1; }
+.navtab { font: 28px var(--display); line-height: 1; background: none; border: 0; border-bottom: 3px solid transparent; color: var(--desk-dim); padding: 6px 10px 8px; cursor: pointer; }
+.navtab:hover { color: var(--desk-ink); }
+.navtab[aria-selected="true"] { color: var(--desk-ink); border-bottom-color: var(--accent); }
+/* Shop tab when an upgrade is affordable: breathing gold glow, and a star that pops */
+.navtab.ready { color: var(--warn); animation: tab-glow 1.8s ease-in-out infinite; }
+.navtab .star { display: inline-block; margin-left: 4px; color: var(--star); animation: star-pop 1.2s ease-in-out infinite; }
+@keyframes tab-glow {
+  0%, 100% { color: var(--warn); text-shadow: none; }
+  50% { color: var(--glow-text); text-shadow: 0 0 8px var(--glow-halo), 0 0 2px var(--glow-halo); }
+}
+@keyframes star-pop {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.4) rotate(8deg); }
+}
+.navtab { display: inline-flex; align-items: center; gap: 6px; }
+.navtab .n { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 6px; font: 17px/1 var(--body); background: var(--gold); color: var(--gold-ink); border-radius: 8px; }
+.navtab .n.urgent { background: var(--bad); color: var(--accent-ink); }
+.esc-hint { color: var(--desk-dim); font-size: 18px; white-space: nowrap; }
+
+/* ---------- Home tab: "Needs you" + dashboard ---------- */
+.home { flex: 1; min-height: 0; overflow-y: auto; display: grid; gap: 12px; align-content: start; }
+.panel { min-width: 0; background: var(--card); border: 2px solid var(--rule); border-radius: 8px; padding: 10px 14px 12px; }
+.panel h3 { font: 22px/1 var(--display); font-weight: 400; margin: 0 0 8px; color: var(--ink-dim); letter-spacing: 1px; text-transform: uppercase; display: flex; justify-content: space-between; gap: 8px; }
+.panel h3 small { font: 17px var(--body); text-transform: none; letter-spacing: 0; }
+.needs { display: flex; flex-direction: column; gap: 4px; }
+.needs h3 { color: var(--ink); }
+.need { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; gap: 12px; align-items: center; font-size: 21px; padding: 5px 0; border-top: 1px solid var(--rule); }
+.need .mark { width: 10px; height: 10px; border-radius: 50%; }
+.need small { color: var(--ink-dim); font-size: 18px; }
+.allclear { font-size: 21px; color: var(--ok); padding: 4px 0; }
+.kv { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1px 10px; font-size: 20px; line-height: 1.3; margin: 0; }
+.kv dt { color: var(--ink-dim); }
+.kv dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.cols3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.meter { position: relative; height: 16px; border-radius: 8px; background: var(--page-2); border: 2px solid var(--rule); overflow: hidden; margin: 6px 0 4px; }
+.meter i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); }
+.meter .tier { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--ink-dim); opacity: 0.5; }
+.meter-l { display: flex; justify-content: space-between; font-size: 18px; color: var(--ink-dim); }
+
+/* Home: six numbers on top */
+.tiles6 { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+.stile { min-width: 0; background: var(--card); border: 2px solid var(--rule); border-radius: 8px; padding: 6px 10px 8px; display: grid; gap: 2px; align-content: start; }
+.stile b { font: 36px/1 var(--display); font-weight: 400; font-variant-numeric: tabular-nums; }
+.stile span { font-size: 17px; color: var(--ink-dim); line-height: 1.1; }
+/* Home: day + reputation stacked on the left, popular today on the right */
+.mid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 12px; }
+.stack { display: grid; gap: 12px; min-width: 0; }
+.poplist { list-style: none; margin: 0; padding: 0; display: grid; }
+.poplist li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 10px; padding: 6px 0 7px; border-top: 1px solid var(--rule); font-size: 21px; line-height: 1.15; }
+.poplist li:first-child { border-top: 0; }
+.poplist li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.poplist li small { grid-column: 1; font-size: 17px; color: var(--ink-dim); }
+.poplist li b { grid-row: 1 / span 2; grid-column: 2; align-self: center; font: 28px var(--display); font-weight: 400; font-variant-numeric: tabular-nums; }
+
+/* Day bar, 9:00 AM to 5:30 PM */
+.tl { position: relative; height: 50px; margin: 6px 26px 0; }
+.tl-track { position: absolute; left: 0; right: 0; top: 12px; height: 8px; border-radius: 4px; background: var(--page-2); border: 1px solid var(--rule); overflow: hidden; }
+.tl-track i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); opacity: 0.6; }
+.tl-tick { position: absolute; top: 28px; transform: translateX(-50%); font-size: 16px; color: var(--ink-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tl-now { position: absolute; top: 4px; width: 3px; height: 24px; margin-left: -1px; background: var(--ink); border-radius: 2px; }
+/* Events are dots only; details live in a tooltip, so a busy day never overlaps */
+.tl-dot { position: absolute; top: 8px; width: 16px; height: 16px; margin-left: -8px; padding: 0; border-radius: 50%; border: 2px solid var(--card); background: currentColor; cursor: help; z-index: 1; }
+.tl-dot.many::after { content: attr(data-n); position: absolute; top: -9px; right: -10px; font: 13px/1 var(--body); padding: 1px 4px 2px; border-radius: 6px; background: var(--ink); color: var(--card); }
+.tl-dot:hover, .tl-dot:focus-visible { z-index: 3; transform: scale(1.2); }
+.tip {
+  position: absolute; top: calc(100% + 10px); left: 50%; transform: translateX(-50%);
+  display: none; width: max-content; min-width: 170px; max-width: 260px; padding: 8px 12px 10px; text-align: left; white-space: normal; font-family: var(--body);
+  background: var(--input); color: var(--ink); border: 2px solid var(--btn-border); border-radius: 6px;
+  box-shadow: 0 3px 0 var(--rule), 0 8px 18px rgba(0,0,0,0.25); cursor: default;
+}
+.tip::after { content: ""; position: absolute; bottom: 100%; left: 50%; margin-left: -7px; border: 7px solid transparent; border-bottom-color: var(--btn-border); }
+.tl-dot.edge-r .tip { left: auto; right: -12px; transform: none; }
+.tl-dot.edge-r .tip::after { left: auto; right: 12px; }
+.tl-dot.edge-l .tip { left: -12px; transform: none; }
+.tl-dot.edge-l .tip::after { left: 12px; }
+.tl-dot:hover .tip, .tl-dot:focus-visible .tip { display: block; }
+.tip .tt { display: block; font: 22px/1 var(--display); letter-spacing: 1px; margin-bottom: 4px; }
+.tip .ev { display: block; padding-top: 5px; margin-top: 5px; border-top: 1px dashed var(--rule); font-size: 19px; line-height: 1.2; }
+.tip .tt + .ev { border-top: 0; padding-top: 0; margin-top: 0; }
+.tip .ev b { font-weight: 400; }
+.tip .ev i { display: block; font-style: normal; color: var(--ink-dim); }
+.tip .ev em { display: block; font-style: normal; font-size: 17px; }
+
+@media (max-width: 860px) {
+  .cols3, .mid { grid-template-columns: 1fr; }
+  .tl-tick.odd { display: none; }
+  .tiles6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .esc-hint { display: none; }
+  .navtab { font-size: 24px; padding: 4px 6px 6px; }
+}
+@media (max-width: 860px) {
+  .screen { height: auto; min-height: 640px; }
+  .cat, .mem { grid-template-columns: 1fr; }
+  .list { max-height: 320px; }
+  .ugrid { grid-template-columns: 1fr 1fr; }
+  .notes { grid-template-columns: 1fr; }
+  .notebook { display: none; }
+}
+@media (max-width: 560px) {
+  .ugrid { grid-template-columns: 1fr; }
+  .facts { grid-template-columns: auto 1fr; }
+  .set { grid-template-columns: 1fr auto; }
+  .set .bar, .set .val { grid-column: 1 / -1; }
+  .status { grid-template-columns: auto 1fr; }
+  .status .stats { grid-column: 1 / -1; justify-content: center; }
+  .head h2 { font-size: 32px; }
+  .srow { grid-template-columns: 1fr; }
+  .avatar { display: none; }
+  .mtable .hide-sm { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+/* ================= Pixel-art pass =================
+   Everything on the PC uses square pixels: no rounded corners, no 1px hairlines, no blur.
+   Notched corners come from clip-path; anything with a popup inside (day bar, dropdowns) stays square instead,
+   so the popup isn't clipped. */
+:root {
+  --notch2: polygon(2px 0, calc(100% - 2px) 0, calc(100% - 2px) 2px, 100% 2px, 100% calc(100% - 2px), calc(100% - 2px) calc(100% - 2px), calc(100% - 2px) 100%, 2px 100%, 2px calc(100% - 2px), 0 calc(100% - 2px), 0 2px, 2px 2px);
+  --notch4: polygon(4px 0, calc(100% - 4px) 0, calc(100% - 4px) 4px, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 4px calc(100% - 4px), 0 calc(100% - 4px), 0 4px, 4px 4px);
+  --notch8: polygon(8px 0, calc(100% - 8px) 0, calc(100% - 8px) 4px, calc(100% - 4px) 4px, calc(100% - 4px) 8px, 100% 8px, 100% calc(100% - 8px), calc(100% - 4px) calc(100% - 8px), calc(100% - 4px) calc(100% - 4px), calc(100% - 8px) calc(100% - 4px), calc(100% - 8px) 100%, 8px 100%, 8px calc(100% - 4px), 4px calc(100% - 4px), 4px calc(100% - 8px), 0 calc(100% - 8px), 0 8px, 4px 8px, 4px 4px, 8px 4px);
+}
+
+/* PC frame and screen: stepped corners */
+.pc{ border-radius: 0; clip-path: var(--notch8); box-shadow: inset 0 3px 0 rgba(255,255,255,0.15), inset 0 -4px 0 rgba(0,0,0,0.25); }
+.pc .screen{ border-radius: 0; clip-path: var(--notch4); }
+
+/* Cards: flat paper with a 2px outline and a thicker 4px bottom edge. Buttons are filled, bevelled and darker,
+   so the two never read alike. */
+.pc .panel, .pc .stile, .pc .cardpane, .pc .ucard, .pc .srow, .pc .libcard, .pc .needs {
+  border-radius: 0; border-width: 2px 2px 4px; box-shadow: none; clip-path: var(--notch2);
+}
+.pc .panel.noclip { clip-path: none; }
+.pc .cardpane.epic, .pc .cardpane.legendary { box-shadow: none; }
+.pc .cardpane.legendary { box-shadow: inset 0 0 0 2px rgba(95, 15, 64, 0.25); }
+.pc .uico, .pc .avatar { border-radius: 0; clip-path: var(--notch2); }
+.pc .waiting { border-radius: 0; clip-path: var(--notch2); border: 2px solid var(--rule); }
+.pc .reserve { border-radius: 0; border-style: dashed; }
+
+/* Inputs and dropdowns: square boxes with a 3px outline */
+.pc .search input, .pc .field input, .pc .field select {
+  border: 3px solid var(--btn-border); border-radius: 0; clip-path: var(--notch2);
+  background: var(--input); padding: 5px 10px 7px; box-shadow: inset 0 3px 0 var(--btn-shade);
+}
+.pc .menu { border: 3px solid var(--btn-border); border-radius: 0; box-shadow: 6px 6px 0 rgba(59, 42, 29, 0.25); padding: 3px; }
+.pc .menu button { border-radius: 0; }
+.pc .menu .hdr { border-top-width: 2px; }
+
+/* Badges and chips: square, notched, with a pixel outline */
+.pc .chip { border-radius: 0; border-width: 2px; clip-path: var(--notch2); }
+.pc .badge { border-radius: 0; clip-path: var(--notch2); box-shadow: inset 0 0 0 2px rgba(0,0,0,0.28), inset 0 -3px 0 rgba(0,0,0,0.15); padding: 3px 9px 6px; }
+.pc .navtab .n { border-radius: 0; clip-path: var(--notch2); box-shadow: inset 0 0 0 2px rgba(0,0,0,0.25); }
+
+/* Stamps: straight, double pixel outline */
+.pc .stamp { transform: none; border-radius: 0; border-width: 3px; box-shadow: inset 0 0 0 2px var(--card), inset 0 0 0 4px currentColor; padding: 3px 12px 6px; clip-path: var(--notch2); }
+
+/* Lines: 2px solid rules; list rows use 2px dashes */
+.pc .head, .pc .cardtop, .pc .libcard h3 { border-bottom-width: 3px; }
+.pc .list { border-top-width: 2px; }
+.pc .row, .pc .logrow, .pc .set, .pc .mtable td { border-bottom: 2px dashed var(--rule); }
+.pc .need, .pc .poplist li, .pc .actions, .pc .tip .ev { border-top: 2px dashed var(--rule); }
+.pc .mtable th { border-bottom-width: 3px; }
+
+/* Meters, pips, dots: square pixels */
+.pc .meter, .pc .tl-track { border-radius: 0; border-width: 2px; }
+.pc .pip { border-radius: 0; }
+.pc .tl-now { border-radius: 0; }
+.pc .tl-dot { border-radius: 0; width: 14px; height: 14px; margin-left: -7px; top: 9px; }
+.pc .tl-dot.many::after { border-radius: 0; }
+.pc .need .mark, .pc .logrow .mark:not(.coinmark) { border-radius: 0; width: 10px; height: 10px; box-shadow: inset 0 0 0 2px rgba(0,0,0,0.25); }
+.pc .tip { border-radius: 0; border-width: 3px; box-shadow: 6px 6px 0 rgba(59, 42, 29, 0.25); }
+.pc .winbtn{ border-radius: 0; clip-path: var(--notch2); }
+
+/* Scrollbars: square track and a bevelled square handle */
+.pc ::-webkit-scrollbar-track { border-radius: 0; border: 2px solid var(--rule); box-shadow: inset 2px 2px 0 var(--btn-shade); }
+.pc ::-webkit-scrollbar-thumb { border-radius: 0; border: 2px solid var(--btn-border); background: var(--scroll); box-shadow: inset 2px 2px 0 var(--scroll-hi), inset -2px -2px 0 var(--btn-shade); }
+.pc ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* ================= Pixel monitor =================
+   A chunky beige CRT like the reference: dark pixel outline, bevelled case, a dark bezel round the screen,
+   and a chin with a brass name plate, two knobs and a power light. */
+.pc{
+  background: var(--case); padding: 16px 16px 0; border-radius: 0; clip-path: var(--notch8);
+  box-shadow: inset 0 0 0 4px var(--case-line), inset 8px 8px 0 var(--case-hi), inset -8px -8px 0 var(--case-lo);
+}
+.pc .screen{ border: 6px solid var(--bezel); clip-path: var(--notch4); box-shadow: none; }
+/* glass shine: a few stepped pixels in the top-left corner of the screen */
+.pc .screen::before {
+  content: ""; position: absolute; left: 6px; top: 40px; width: 8px; height: 56px; z-index: 4; pointer-events: none;
+  background: linear-gradient(rgba(255,255,255,0.55) 0 32px, transparent 32px 40px, rgba(255,255,255,0.55) 40px 48px, transparent 48px);
+  box-shadow: 8px -8px 0 rgba(255,255,255,0.35);
+}
+.chin { display: flex; align-items: center; justify-content: space-between; height: 40px; padding: 0 22px 6px; }
+.chin .plate {
+  font: 16px var(--display); letter-spacing: 3px; padding: 2px 10px 4px; color: var(--brass-ink, #3b2516);
+  background: #d9b36a; box-shadow: inset 0 0 0 2px #8a6a2e, inset 0 2px 0 #f0d79a; clip-path: var(--notch2);
+}
+.chin .led { width: 12px; height: 8px; background: var(--led); box-shadow: inset 0 0 0 2px var(--case-line), inset 2px 2px 0 rgba(255,255,255,0.6); }
+@media (max-width: 560px) { .chin { height: 32px; } .chin .plate { font-size: 13px; } }
+
+/* Chin controls: two small knobs and the power light */
+.chin .ctrls { display: flex; align-items: center; gap: 10px; }
+.chin .knob { display: block; width: 14px; height: 14px; background: var(--case-lo); clip-path: var(--notch2);
+  box-shadow: inset 0 0 0 2px var(--case-line), inset 2px 2px 0 var(--case-hi); }
+
+/* Navigation tabs as pixel buttons: the open tab is the pressed orange one */
+.pc .navtabs { gap: 6px 8px; padding-bottom: 8px; }
+.pc .navtab {
+  font: 24px var(--display); color: var(--ink); background: var(--btn);
+  border: 3px solid var(--btn-border); border-radius: 0; padding: 5px 14px 9px;
+  clip-path: var(--notch2);
+  box-shadow: inset 0 3px 0 var(--btn-light), inset 0 -4px 0 var(--btn-shade);
+}
+.pc .navtab:hover { background: var(--accent); border-color: var(--btn-edge); color: var(--accent-ink); }
+.pc .navtab[aria-selected="true"] {
+  background: var(--accent); border-color: var(--btn-edge); color: var(--accent-ink);
+  box-shadow: inset 0 4px 0 var(--btn-shade); transform: translateY(2px);
+}
+.pc .navtab:active { transform: translateY(2px); box-shadow: inset 0 4px 0 var(--btn-shade); }
+.pc .navtab.ready { color: var(--warn); }
+.pc .navtab.ready:hover { color: var(--accent-ink); }
+.pc .head { padding-bottom: 0; align-items: center; }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Whitmore PC Redesign</h1>
+      <p>Clickable mockup of the front desk computer. Every screen works with sample data. Oxblood leather screen with brass cards, inputs and controls.</p>
+    </div>
+    <div class="controls">
+    </div>
+  </header>
+
+  <div class="stage">
+    <div class="pc" id="pc" data-skin="card" data-pal="leather" data-comp="brass">
+      <div class="screen">
+        <div class="status">
+          <div class="winbtns">
+            <button class="winbtn close" data-win="close" aria-label="Log off" title="Log off (Esc)"><svg viewBox="0 0 10 10"><path d="M2 2l6 6M8 2l-6 6"/></svg></button>
+            <button class="winbtn" data-win="min" aria-label="Minimise" title="Minimise"><svg viewBox="0 0 10 10"><path d="M2 5.5h6"/></svg></button>
+            <button class="winbtn" data-win="max" aria-label="Maximise" title="Maximise"><svg viewBox="0 0 10 10"><rect x="2" y="2" width="6" height="6"/></svg></button>
+          </div>
+          <span class="brand">WHITMORE OS</span>
+          <div class="stats">
+            <span class="stat">Day 3</span><span class="dot">·</span>
+            <span class="stat" id="clock">11:40</span><span class="dot">·</span>
+            <span class="stat coins" id="coins">245 coins</span>
+          </div>
+        </div>
+        <div class="off" id="off" hidden></div>
+        <div class="head" id="head"></div>
+        <div class="body" id="body"></div>
+        <div class="foot" id="foot">click outside the screen or press Esc to log off</div>
+      </div>
+      <div class="chin">
+        <span class="plate">WHITMORE</span>
+        <span class="ctrls" aria-hidden="true"><i class="knob"></i><i class="knob"></i><span class="led" title="Power"></span></span>
+      </div>
+    </div>
+
+    <div class="notebook" aria-hidden="true">NOTEBOOK</div>
+  </div>
+
+  <div class="notes" id="notes"></div>
+</div>
+
+<script>
+(() => {
+  // ---------- Sample data (from BookDatabase.asset and GameManager) ----------
+  // Shelf names as they are in the scene (ShelfInteractable.displayName).
+  const SHELF = { SCI: "Science", HIS: "History", PHI: "Philosophy", MATH: "Math", NEWS: "Newspaper Rack", MAG: "Magazine Rack", JRNL: "Journals", PAPR: "Research Papers",
+    "ARC-A": "Archive Stacks A", "ARC-B": "Archive Stacks B", "RARE-I": "Rare Books I", "RARE-II": "Rare Books II" };
+  // Proposed: Type first, then the subjects for that type. Names are placeholders.
+  // Archive and Rare Books count as types; they come from the shelf (ARC*, RARE*), like BookRequest.IsArchive / IsRare.
+  const TYPES = ["Book", "Newspaper", "Magazine", "Journal", "Research paper", "Archive", "Rare Books"];
+  const BOOK_GROUPS = { // books are grouped by their shelf in the Subject menu
+    Science: ["Astronomy", "Biology", "Physics", "Engineering"],
+    History: ["Local history", "Trade", "Geography"],
+    Philosophy: ["Poetry", "Reflection", "Ethics"],
+    Math: ["Numbers", "Probability", "Geometry"],
+  };
+  const SUBJECTS = {
+    Book: Object.values(BOOK_GROUPS).flat(),
+    Newspaper: ["Local news", "Regional news", "Weekend features"],
+    Magazine: ["Science & Nature", "Puzzles", "Home & Leisure", "Essays"],
+    Journal: ["Physics", "Natural history", "Mathematics"],
+    "Research paper": ["Chemistry", "Mathematics", "Ethics"],
+    Archive: ["Town records", "Letters", "Maps", "Ship logs"],
+    "Rare Books": ["Manuscripts", "Early prints", "Atlases"],
+  };
+  const SUB = {
+    "A Brief History of Stars": "Astronomy", "The Clockwork Atlas": "Engineering", "Small Wonders: The Cell": "Biology", "Physics for Sleepy Students": "Physics",
+    "The Salt Road Chronicles": "Trade", "Rivers of Bengal": "Geography", "The Last Lighthouse Keeper": "Local history", "War and Tea": "Trade",
+    "Meditations on Dust": "Reflection", "Gitanjali": "Poetry", "Infinity in a Teacup": "Numbers", "Ledgers and Luck": "Probability",
+    "The Whitmore Gazette": "Local news", "Stargazer Weekly": "Science & Nature", "Journal of Gentle Physics": "Physics", "On the Glow of Old Ink": "Chemistry",
+    "Town Records, 1890": "Town records", "Letters from the Front": "Letters", "First Folio Fragment": "Early prints", "The Star Codex": "Manuscripts",
+    "The Lighthouse Keeper's Almanac": "Astronomy", "Quiet Machines": "Engineering",
+  };
+  const kind = b => b.sh.startsWith("ARC") ? "Archive" : b.sh.startsWith("RARE") ? "Rare Books" : b.f;
+  // Pixel icons: kit icons (coin, heart, energy) and new ones drawn to match. Shown at whole-pixel scales only.
+  const ICON = {
+    coin: { w: 11, h: 12, src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAMCAYAAAC0qUeeAAAAAXNSR0IArs4c6QAAAIlJREFUKJFjZEACnsbG/xnQwPazZxlhbBZkhd353OhqGRgmGv+HaWBEV/jqzXu4OjERQQYGBgaG0olfGbafPcvIiKxQSkaJ4dmTe3DFr968R9HABJNAVwgzGdkmJgYSAB0UP3tyj0FKRglFEtmDDAxYgg5ZA8zD8KCDSeCKFJhCuMnIGtAVI0c3AO4MQIs0Cx9oAAAAAElFTkSuQmCC" },
+    heart: { w: 13, h: 10, src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAAKCAYAAABv7tTEAAAAAXNSR0IArs4c6QAAAGhJREFUKJGF0MENwCAIBdBP05vjMEUHcooOxBSMw9lexLQK9p/IJy9GCD0Xc/NZVGnXn764S8EIcxNVyvp10VPNkPXH0vZEwJOiXQgI/pSkmkFU6XOlHXQwXvqDb7CgCM4gRA59ngEAPJaqPGsGf7A3AAAAAElFTkSuQmCC" },
+    heartEmpty: { w: 13, h: 10, src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAAKCAYAAABv7tTEAAAAAXNSR0IArs4c6QAAAGNJREFUKJFjZIACT2Pj/zD29rNnGfGJM8IkpHj5YHIMzz5/Yth+9iwjLnEMCWQFuMSZMEShAJsGGMCpCR/A6idcAO4nmAAhjTANcJsIaUTWgKEJm0Z0DVg1wTTC2OgaGBgYGAAgXj3wp1VDEgAAAABJRU5ErkJggg==" },
+    energy: { w: 12, h: 14, src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAOCAYAAAAbvf3sAAAAAXNSR0IArs4c6QAAAHFJREFUKJGNkrENwCAMBN8RHeN4ChZIy2xpWYApPE7qpEJK4A18CXePMABOkuqTVJ9+/fDg+7xo0SDM4EFYwT9hBwaAsIL7i8tuMwDEkvmUZhE2a3ZiLBnVTEI1k+8GK2gw4DycBy+FHp4KDKbxPl3LC6zjN8kJuAxLAAAAAElFTkSuQmCC" },
+    shelf: { w: 12, h: 10, src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAKCAYAAACALL/6AAAAeklEQVR4nGP0NDb+z0ACYAER6e7SRCmeufMpRIPKkQ8MV969YzggJ8DwK06C4dGNFwwqpxgYrtnPYHh3+wqDzbMpcE1MxDqlsuob8Roqq74xvHrzgzQbSHYSDDCSFazOOpwMe698Z9h+9iwjNkUgQ2FqwE4CMQgBmBoAAccsm8IQX3QAAAAASUVORK5CYII=" },
+    dmg: { w: 12, h: 12, src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAAf0lEQVR4nGP0NDb+z0Ak2H72LCMLiJGuyI1VwUs5eQb/uBiGJXnlDHu/MoPFmHCZBlOMDphIUfziws7/TLgUb1y0BMzfCKWx2oBsMkyT+KOH2DVgMxldMQNMAzEmo2hA9iA+xRh+IKQYBBhJiekAey0GRhBjZlEsUZrS+xYzAgA9qz0eaAbLVAAAAABJRU5ErkJggg==" },
+    hammer: { w: 12, h: 12, src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAAXUlEQVR4nGNgIBEwehob/ydW8fazZxlZQIzS7ql4FR45cpLh+MZFYDYLTIBYwAIiYLphIN1dmuHO03cMe698x9QAcheyALqftqPJMxHtFobhowEcrOhg5s6nODUAAM7vHRSYhieAAAAAAElFTkSuQmCC" },
+    glue: { w: 12, h: 12, src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAAlklEQVR4nGNkQAOexsb/kfnbz55lBNGfnmf855OcwcjEgAUE2GuBMQx8ep7x//3dU2CaBZuGDQevofD5JGcwwmzAcM6LCztRsCeaE+FOAknMn9uGYdv8uW0o/gJbARL4GraQAR/gXhUPDgAUT69yf4pV8bvbVzCdBAJhO6Xx2oKhgRhAsgZ4PCC7Ex+ARwR6eKMDWBIBAKWWRN0RgbKkAAAAAElFTkSuQmCC" },
+    shoe: { w: 12, h: 12, src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAAdklEQVR4nGNgoDVghDE8jY3/I0tsP3sWLocMWGCKu7m5USQYjI3/Y9PEhMwRmVTNQAgwIXPe5LXCNYFsBNnsieZURpxOQgKlX7+CaZATwX4gBOCGGRv/h2u48u4dYZ3s7JBQAgGHJb0E1S9MrsIdD9gArrjBCwDeEiTv0gQ+nAAAAABJRU5ErkJggg==" },
+    lamp: { w: 12, h: 12, src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAAlUlEQVR4nGNkQAKexsb/GbCA7WfPMsLYjMiKZ0xEVS+obMbw/u4phox8RrgmJgY8AKQYHTDhMh0ZNNV+hzuXBSb46s0PBmIAC4xR18xJlAZGdAGQ1enu0gx3nr5j2HvlO0oIwf1ACiBZA9wPsFAAOQcEVKSFGBgY3jEwMEDEscYDTDEMgDQ566AGBtwGEJi58ylBJwEAuAIxCZSBpxEAAAAASUVORK5CYII=" },
+    armchair: { w: 12, h: 12, src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAAd0lEQVR4nGNgIBEwwhiexsb/8SncfvYsWC0LsqBkqSKGwkc3XjCwbv4O5zOR6iQWQk6BAZg6JlxOQQe/fTkZMPzwvPs+hkJWND5cAyFbQJ6Ha4BxiAFgDcjBRhQAhcCGKj+codUTb/MfJZRAYObOpzgN3HsF4QIAO1IlLA3dmR8AAAAASUVORK5CYII=" },
+    flyer: { w: 12, h: 12, src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAAcUlEQVR4nGNgwAI8jY3/gzA2ORZsiru5uSEcY+P/28+eZUSWB3NwmYYOtp89ywi3Yf7cNryKE5OrMJ30Jq8Vq2KRSdXY/YAsgQuwIHM2LlqCVZF/XAx2DcgSZNmAzQCibEA2CK4Bl/tx2rDh4DWiNAAADEki9N7KzRwAAAAASUVORK5CYII=" },
+    bag: { w: 12, h: 12, src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAAbUlEQVR4nGNkQAKexsb/GbCA7WfPMmIIghRj0+CJQxyn6ehyjIQUozuNBcaJNuRkwAXuPPvAcPIlO5jNgixIDGCCMVSkBOAYZFpiFRuYVpESQNEAtwEZgJx3eAGIxmMDsYBkDSR7Gq4BFmyEAACJZyZdoqKpJQAAAABJRU5ErkJggg==" },
+    broom: { w: 12, h: 12, src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAAc0lEQVR4nGNkQAOexsb/kfnbz55lROYzMWAB6e7SDM46nNikGLBqwAeYBp8GRnwhhC2kWJAVd3NzYyi+8u4dA4Ox8X+YJjABUjxjIlbDweDVmx8Mdc2cYJtQ/ACSwEaj+AFmOkhSTIQDLw2yBawBf7igAgCIXjnTSlayqAAAAABJRU5ErkJggg==" },
+    books: { w: 12, h: 12, src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAAkElEQVR4nGNgIBEwwhiexsb/CSnefvYsIwuywNewhVgVvrt9hUH2fDeYjaJhlftTrBo2vtzKsAHmJGKcAnMO3IZubm4GXODKu3cMC9nZ4XywBpFJ1Tg1fFy0hIHh4DU4H2wNKc6Ce1qyVBGnwkc3XjCwbv6OcBIItGmk4tSw8dQShg0MEGfBNSQmVxHjKtIBAFtYKtqa9G8BAAAAAElFTkSuQmCC" },
+    key: { w: 12, h: 12, src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAAbUlEQVR4nGNgGHSAEUR4Ghv/RxbcfvYsWBwr8DQ2/v/wiNH/T88zwDQIoxuADFhgDD7JGWBTQRpANC5NLNgEZ0zEbkFGPiNCA8xkmAQMNNV+Z6hr5gTTDAycDCwgD2bkY/c0NmfhDg08/qAtAADypC4rpXXWQwAAAABJRU5ErkJggg==" },
+  };
+  // Price on a button: "Order −[coin]15"
+  const cost = n => `<span class="cost">−${px("coin", 1, "coins")}${n}</span>`;
+  const px = (name, scale, alt = "") => `<img class="px" src="${ICON[name].src}" width="${ICON[name].w * scale}" height="${ICON[name].h * scale}" alt="${alt}">`;
+  const books = [
+    { t: "A Brief History of Stars", a: "Nadia Rahman", s: "Science", f: "Book", tag: "Best Seller", sh: "SCI", tier: "Normal", v: 25, g: 2, w: 1, d: 0, pop: true, ab: "How stars are born, burn out, and guide sailors home." },
+    { t: "The Clockwork Atlas", a: "Edmund Hale", s: "Science", f: "Book", tag: "Reference", sh: "SCI", tier: "Normal", v: 30, g: 2, w: 0, d: 0, ab: "A survey of mechanical navigation instruments and the maps they drew." },
+    { t: "Small Wonders: The Cell", a: "Leo Park", s: "Science", f: "Book", tag: "Textbook", sh: "SCI", tier: "Normal", v: 20, g: 3, w: 0, d: 0, ab: "Everything a single cell does to keep you alive." },
+    { t: "Physics for Sleepy Students", a: "Clara Bell", s: "Science", f: "Book", tag: "Textbook, New Arrival", sh: "SCI", tier: "Normal", v: 22, g: 2, w: 0, d: 0, ab: "Motion, energy and gravity, explained gently." },
+    { t: "The Salt Road Chronicles", a: "Amara Diallo", s: "History", f: "Book", tag: "Classic", sh: "HIS", tier: "Normal", v: 28, g: 2, w: 0, d: 0, ab: "Three centuries of trade, caravans, and the cities the salt road built." },
+    { t: "Rivers of Bengal", a: "Kai Hossain", s: "History", f: "Book", tag: "Best Seller", sh: "HIS", tier: "Normal", v: 25, g: 2, w: 0, d: 1, pop: true, ab: "How rivers shaped the cities, songs and trade of Bengal." },
+    { t: "The Last Lighthouse Keeper", a: "Finn Archer", s: "History", f: "Book", tag: "New Arrival", sh: "HIS", tier: "Normal", v: 20, g: 0, w: 0, d: 0, ab: "A coastal town's story, told through its lighthouse.", res: { who: "Maya Rahman", urgent: true, due: "14:10" } },
+    { t: "War and Tea", a: "Hazel Grant", s: "History", f: "Book", tag: "Classic", sh: "HIS", tier: "Normal", v: 22, g: 0, w: 2, d: 0, ab: "How a humble drink started trade wars." },
+    { t: "Meditations on Dust", a: "Mara Voss", s: "Philosophy", f: "Book", tag: "Classic", sh: "PHI", tier: "Normal", v: 24, g: 1, w: 1, d: 0, ab: "Short reflections on time, decay, and what we choose to keep." },
+    { t: "Gitanjali", a: "Rabindranath Tagore", s: "Philosophy", f: "Book", tag: "Classic, Poetry", sh: "PHI", tier: "Normal", v: 26, g: 0, w: 0, d: 0, ab: "Song offerings: poems of devotion, nature and the search for meaning.", res: { who: "Kai Tanaka", urgent: false } },
+    { t: "Infinity in a Teacup", a: "Clara Bell", s: "Math", f: "Book", tag: "Best Seller", sh: "MATH", tier: "Normal", v: 22, g: 1, w: 0, d: 0, ab: "Endless numbers, found in everyday things." },
+    { t: "Ledgers and Luck", a: "Ravi Menon", s: "Math", f: "Book", tag: "Reference", sh: "MATH", tier: "Normal", v: 20, g: 2, w: 0, d: 0, pop: true, ab: "Probability, bookkeeping and the odd gambler's ruin." },
+    { t: "The Whitmore Gazette", a: "Whitmore Press", s: "History", f: "Newspaper", tag: "Daily, New Arrival", sh: "NEWS", tier: "Normal", v: 5, g: 5, w: 0, d: 0, ab: "Town news, the weather, and who won the pie contest." },
+    { t: "Stargazer Weekly", a: "Orbit Press", s: "Science", f: "Magazine", tag: "Weekly", sh: "MAG", tier: "Normal", v: 10, g: 3, w: 0, d: 0, ab: "Comets, eclipses, and where to look up this week." },
+    { t: "Journal of Gentle Physics", a: "Whitmore Science Society", s: "Science", f: "Journal", tag: "Reference", sh: "JRNL", tier: "Normal", v: 15, g: 2, w: 0, d: 0, ab: "Peer-reviewed studies on very small, very polite particles." },
+    { t: "On the Glow of Old Ink", a: "Dr. Nadia Rahman", s: "Science", f: "Research paper", tag: "New Arrival", sh: "PAPR", tier: "Normal", v: 12, g: 2, w: 0, d: 0, ab: "Why some old inks shine under candlelight." },
+    { t: "Town Records, 1890", a: "Whitmore Library", s: "History", f: "Book", tag: "Records", sh: "ARC-A", tier: "Epic", v: 60, g: 1, w: 0, d: 0, ab: "Births, deeds and council minutes from the year the library was founded." },
+    { t: "Letters from the Front", a: "Various", s: "History", f: "Book", tag: "Archive", sh: "ARC-B", tier: "Epic", v: 160, g: 0, w: 0, d: 0, ab: "Letters soldiers wrote home and never expected kept." },
+    { t: "First Folio Fragment", a: "William Shakespeare", s: "Philosophy", f: "Book", tag: "Rare, English Literature", sh: "RARE-II", tier: "Epic", v: 300, g: 1, w: 0, d: 0, rare: true, ab: "Six surviving pages of the very first printing." },
+    { t: "The Star Codex", a: "Anonymous", s: "Science", f: "Book", tag: "Manuscript", sh: "RARE-I", tier: "Legendary", v: 200, g: 1, w: 0, d: 0, rare: true, ab: "A hand-drawn star atlas, older than the town. Read in Rare Books only." },
+    // Not in the library yet: found by searching their name
+    { t: "The Lighthouse Keeper's Almanac", a: "Mira Solberg", s: "Science", f: "Book", tag: "", sh: "SCI", tier: "Normal", v: 28, g: 0, w: 0, d: 0, isNew: true, ab: "Tides, storms and the stars, as logged by three generations of lighthouse keepers." },
+    { t: "Quiet Machines", a: "Theo Abernathy", s: "Science", f: "Book", tag: "", sh: "SCI", tier: "Normal", v: 26, g: 0, w: 0, d: 0, isNew: true, ab: "How clocks, looms and music boxes taught us to build computers." },
+  ];
+  books.forEach(b => { b.order = 0; b.sub = SUB[b.t]; });
+  books.find(b => b.t === "Gitanjali").order = 1;
+
+  const upgrades = [
+    ["Repair tools", "Repairs take less time.", "hammer", 1, 1],
+    ["Restoration kit", "+7% Perfect Restoration chance.", "glue", 0, 2],
+    ["Comfy queue", "Customers wait 15% longer.", "heart", 2, 1],
+    ["Running shoes", "You walk and run 10% faster.", "shoe", 0, 1],
+    ["Cozy lamps", "Warm light: +10% tips.", "lamp", 0, 2],
+    ["Reading nooks", "Comfier seats: +15% reading fees.", "armchair", 3, 2],
+    ["Town flyers", "Posters around town bring more visitors.", "flyer", 0, 4],
+    ["Book bag", "Carry one more book at a time.", "bag", 1, 1],
+    ["Stamina", "Run longer and catch your breath faster.", "energy", 0, 1],
+  ];
+  const DAY = 3;
+  const members = [
+    ["Edmund Thorne", "04 Feb 1958", "Rare", 4, 6, 140],
+    ["Omar Haddad", "27 Jun 1985", "Archive", 3, 4, 85],
+    ["Amara Okafor", "11 Mar 2003", "Basic", 5, 5, 62],
+    ["Clara Bennett", "30 Jul 2002", "Basic", 2, 2, 18],
+    ["Leo Marsh", "15 May 2003", "Archive", 3, 3, 40],
+  ];
+  // [time, who, what, outcome, colour, coins]: coins > 0 earned, < 0 spent. Colour "spend" marks money-only rows.
+  const log = {
+    1: [["09:00", "Janitor Sam", "Hired as Cleaner (from the interview)", "Staff hire", "spend", -70],
+        ["09:24", "Clara Bennett", "Asked for a book by Clara Bell", "Sold", "ok", 22],
+        ["10:05", "Visitor", "Wanted something about trade and caravans", "Reading fee", "ok", 6],
+        ["13:40", "Visitor", "Asked for War and Tea (sold out)", "Reserved", "warn", 0],
+        ["13:45", "You", "Ordered “War and Tea” (arrives tomorrow)", "Book order", "spend", -13],
+        ["15:12", "Visitor", "Waited too long at the counter", "Left angry", "bad", 0]],
+    2: [["09:05", "You", "Bought Repair tools (level 1)", "Upgrade", "spend", -40],
+        ["09:15", "Amara Okafor", "Asked for a Best Seller in History", "Sold + tip", "ok", 29],
+        ["11:30", "New member", "Card issued: Leo Marsh, Archive", "Card issued", "ok", 10],
+        ["14:02", "Visitor", "Asked for Gitanjali (sold out)", "Reserved", "warn", 0],
+        ["14:05", "You", "Ordered “Gitanjali” (arrives tomorrow)", "Book order", "spend", -16],
+        ["16:50", "Visitor", "Wanted a Math book about luck", "Sent away", "bad", 0]],
+    3: [["09:02", "You", "Bought Comfy queue (level 2)", "Upgrade", "spend", -80],
+        ["09:20", "Edmund Thorne", "Wanted something about stars and sailors", "Sold", "ok", 25],
+        ["10:12", "Maya Rahman", "Asked for The Last Lighthouse Keeper. Needs it TODAY", "Reserved", "warn", 0],
+        ["10:40", "Janitor Sam", "Tidied 3 cups and open books", "Tidy reward", "ok", 6],
+        ["11:05", "Visitor", "Asked for a book by Ravi Menon", "Reading fee", "ok", 5]],
+  };
+  const hhmm = m => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+  const addLog = (who, what, out, cls, amount) => log[DAY].push([hhmm(minutes), who, what, out, cls, amount]);
+
+  // ---------- State ----------
+  let coins = 245, minutes = 11 * 60 + 40;
+  let page = "home";
+  let q = "", fSub = "All", fType = "All", fShow = "All", openMenu = null, sel = null, msg = "", msgGood = false, noted = new Set();
+  let shopTab = "upgrades", logDay = DAY, vol = 7, music = 5, full = false, confirm = null;
+  let form = { name: "", day: "", month: "", year: "", access: null, done: "" };
+  const staff = [
+    { role: "Cleaner", person: "Janitor Sam", icon: "broom", state: "hired", level: 1, max: 3, cost: 35, info: "Roams the library tidying cups and open books, putting copies back on their shelves.", mood: "Cheerful" },
+    { role: "Archivist", person: null, icon: "books", state: "open", fee: 250, info: "Works at a desk in the Archive, taking worn and damaged books from the returns and repairing them one by one." },
+    { role: "Rare Books attendant", person: null, icon: "key", state: "open", fee: 450, info: "Looks after VIP scholars in Rare Books: fetches their rare book and checks them in, so you don't have to." },
+  ];
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const NEW_TITLE_BONUS = 1.3; // placeholder until it's tuned in TUNING_GUIDE
+  const price = (b, ex) => Math.max(3, Math.round(b.v * 0.6 * (ex ? 1.5 : 1) * (b.isNew ? NEW_TITLE_BONUS : 1)));
+  const salePrice = b => Math.round(b.v * (b.isNew ? NEW_TITLE_BONUS : 1));
+  const qty = b => b.g + b.w + b.d;
+  // 12-hour clock, minutes in steps of 10, like GameManager.FormatHour
+  const fmt = m => { const h = Math.floor(m / 60), mm = Math.floor((m % 60) / 10) * 10; return `${h % 12 || 12}:${String(mm).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`; };
+  const hm = t => { const [h, m] = t.split(":").map(Number); return fmt(h * 60 + m); }; // "14:10" -> "2:10 PM"
+  const upgReady = () => upgrades.some(u => u[3] < 3 && DAY >= u[4] && coins >= 40 + u[3] * 40);
+
+  // ---------- Notes per screen ----------
+  const TABS_NOTE = ["Tabs", ["Tabs are the only way around: Home, Catalogue, Members, Shop, Log, Settings. No Back buttons anywhere.", "The PC opens on Home. The other tabs carry small counts: reservations not ordered yet (red when one is urgent), a card waiting, ★ when an upgrade is affordable.", "The status line shows day, clock and coins on every tab. The clock keeps running while the PC is open."]];
+  const NEEDS_NOTE = "“Needs you” only lists things you can fix from the PC. Its buttons open the right tab: “Order” opens a fresh Catalogue so you still search for the book yourself, “Fill in card” opens Members, “See upgrades” opens the Shop. When nothing is waiting it says “All clear”.";
+  const NOTES = {
+    catalogue: [["What changes", ["Rows are three lines: the title; author · subject; then shelf, order price and damaged copies (only when there are any) with pixel icons. The coin is the kit's own; the shelf and the bandaged-book icons are new, drawn in the kit's colours and outline. Stock is a big number on the right, coloured green, amber or red.", "The details card scrolls, so long abstracts never get clipped. Add to note, Order and Express stay pinned at the bottom.", "Order (tomorrow morning) and Express (+50%, 2 hours) are right on the card.", "A sold-out book shows a stamp and, if someone reserved it, who and by when.", "Every book is listed, including titles the library doesn't have yet. Those sit at the bottom, tagged “New title”, and can be ordered (Show › Not in library lists only them).", "Express is always there for books you can order. After closing it stays visible but greyed out, with a note saying why.", "New titles cost about 30% more to order and sell for about 30% more. Rare books stay far above both. (Numbers are placeholders.)", "Filters are Type, then Subject. Subject stays greyed out until you pick a Type, and then lists only that type's subjects (Magazine: Science & Nature, Puzzles…).", "Archive and Rare Books are Types too. They're worked out from the shelf, so the book data doesn't need a new field.", "Tiers have their own colour: Epic is indigo, Legendary is plum with gold text. Each shows as a left border on the row, a border on the card, and the tier badge. A tier colour replaces the gold Popular border on that row.", "Book subjects are grouped by shelf in the menu (Science shelf: Astronomy, Biology…). The card shows “Shelf: Science” and the subject “Astronomy”, so the two never read as the same word."]],
+                ["Kept as is", ["Search matches title, author and tag. Show is still a dropdown (Reserved, Sold out, In stock, Not in library).", "Rare Books can't be ordered (try The Star Codex).", "Add to note goes to the open request, or To Shelve."]]],
+    shop: [["What changes", ["The Books tab is gone: ordering moved into the Catalogue.", "Upgrades are cards in a grid with a pixel icon, level pips and price. Affordable ones get the gold border.", "Icons: Repair tools a hammer, Restoration kit a glue bottle, Comfy queue the kit heart, Running shoes a sneaker, Cozy lamps a lamp, Reading nooks an armchair, Town flyers a pinned poster, Book bag a satchel, Stamina the kit energy bolt.", "Staff are one card per role with an icon (Cleaner a broom, Archivist a stack of books, Rare Books attendant a key) and the same Hire / Interview / Cancel / Upgrade button as today."]],
+           ["Kept as is", ["The Day Report shop at closing time is untouched.", "Coins now live in the status line instead of the Shop header."]]],
+    members: [["What changes", ["Members become a table: name, access, hearts, visits, spent. Easier to scan than stacked text.", "The new card form looks like a library card. The date picker uses three dropdowns, so it no longer needs its own scroll box.", "“Issue card” stays disabled until the name, birthday and access are all filled in."]],
+              ["Kept as is", ["Name rules: letters, spaces, hyphens and apostrophes, 30 characters, tidied to Title Case on issue.", "Days that don't exist in the chosen month are greyed out.", "When nobody is waiting, the form shows the same message as today."]]],
+    log: [["What changes", ["Each entry has a time, a coloured dot for the outcome, the request, and the result on the right.", "Green is good, amber is pending (reserved), red is lost.", "Money is part of the log: earnings show +coins in green (sales, tips, reading fees, card sign-ups, tidy rewards), spending shows −coins in red.", "Spending rows have a coin instead of a dot: book orders, Express orders, upgrades, staff hires and staff upgrades. Order a book, buy an upgrade or train Janitor Sam and it appears in today's log."]],
+          ["Kept as is", ["One button per day, today selected, newest at the top.", "Same rows feed the Day Report's Log tab."]]],
+    settings: [["What changes", ["Mode is gone from the PC. It's still picked from the main menu.", "Bigger rows and clearer danger buttons."]],
+               ["Kept as is", ["Volume, Music, Fullscreen, Main menu and New game, with the same two-click confirm.", "“Your library saves itself every morning” note."]]],
+  };
+  const NOTES_HOME = [["Home layout", ["Top row: six numbers to read at a glance (titles, copies on shelf, sold out, visitors served, coins earned today, members).", NEEDS_NOTE, "Middle: the day bar (9:00 AM to 5:30 PM) and reputation on the left; today's popular books on the right.", "The day bar only shows dots: red needs you, green is fine, amber is closing. Hover a dot for the time, who, and which book. Things in the same 10 minutes share one dot with a count, so a busy day never overlaps (try 2:10 PM).", "Bottom: three small ledgers for Today, Collection and Library."]], TABS_NOTE];
+  const isUrgentOpen = () => books.some(b => b.res && b.res.urgent && !b.order);
+
+  // ---------- Home tab data ----------
+  const today = { served: 7, sold: 4, read: 3, returns: 2, income: 86, angry: 1 };
+  const rep = 38, REP_GOAL = 60; // Standard mode goal
+  const OPEN = 9 * 60, CLOSE = 17 * 60 + 30;
+  const arrivals = []; // Express orders arriving today
+  // Pickups booked for today (yesterday's reservations), besides the urgent ones in the books list
+  const pickups = [
+    { at: "13:20", who: "Omar Haddad", book: "The Salt Road Chronicles", ready: true },
+    { at: "14:10", who: "Clara Bennett", book: "Rivers of Bengal", ready: true },
+    { at: "15:40", who: "Leo Marsh", book: "Infinity in a Teacup", ready: false },
+  ];
+  function stats() {
+    const lib = books.filter(b => !b.isNew);
+    return {
+      titles: lib.length,
+      copies: lib.reduce((n, b) => n + qty(b), 0),
+      soldOut: lib.filter(b => qty(b) === 0).length,
+      worn: lib.reduce((n, b) => n + b.w, 0),
+      damaged: lib.reduce((n, b) => n + b.d, 0),
+      onOrder: books.reduce((n, b) => n + b.order, 0),
+      reserved: books.filter(b => b.res).length,
+      upgrades: upgrades.reduce((n, u) => n + u[3], 0),
+      staff: staff.filter(s => s.state === "hired").length,
+    };
+  }
+  function needs() {
+    const items = [];
+    books.forEach((b, i) => { if (b.res && !b.order) items.push([b.res.urgent ? "bad" : "warn", `${esc(b.res.who)} needs <b>${esc(b.t)}</b>${b.res.urgent ? ` by ${hm(b.res.due)}` : " tomorrow"}`, b.res.urgent ? "not ordered yet · use Express" : "not ordered yet", "Order", `data-go="catalogue" data-fresh="1"`]); });
+    if (!form.done) items.push(["warn", "A visitor is waiting for a library card", "at the counter", "Fill in card", `data-go="members"`]);
+    if (upgReady()) items.push(["ok", "An upgrade is affordable", `${coins} coins`, "See upgrades", `data-go="shop"`]);
+    return items;
+  }
+  function needsPanel(max) {
+    const items = needs();
+    const list = items.slice(0, max).map(([c, t, s, b, attr]) => `<div class="need"><span class="mark" style="background:var(--${c})"></span><span>${t} <small>· ${s}</small></span><button class="btn small" ${attr}>${b}</button></div>`).join("");
+    const more = items.length > max ? `<div class="count-line">+${items.length - max} more</div>` : "";
+    return `<div class="panel needs"><h3>Needs you <small>${items.length ? items.length + " to do" : ""}</small></h3>${list || `<div class="allclear">All clear. Nothing needs you right now.</div>`}${more}</div>`;
+  }
+  const kv = rows => `<dl class="kv">${rows.map(([k, v, c]) => `<dt>${k}</dt><dd class="${c || ""}">${v}</dd>`).join("")}</dl>`;
+  const repPanel = () => {
+    const pct = Math.min(100, rep / REP_GOAL * 100), mid = Math.ceil(REP_GOAL * 0.6) / REP_GOAL * 100;
+    return `<div class="panel"><h3>Reputation <small>goal ${REP_GOAL}</small></h3>
+      <div class="meter" role="img" aria-label="Reputation ${rep} of ${REP_GOAL}"><i style="width:${pct}%"></i><span class="tier" style="left:${mid}%"></span></div>
+      <div class="meter-l"><span>${rep} now</span><span>${REP_GOAL > rep ? (REP_GOAL - rep) + " to go" : "Goal reached!"}</span></div></div>`;
+  };
+  const stile = (n, l, c) => `<div class="stile"><b class="${c || ""}">${n}</b><span>${l}</span></div>`;
+  const leftText = () => { const l = Math.max(0, CLOSE - minutes); return l ? `${Math.floor(l / 60)}h ${l % 60}m until closing` : "closed"; };
+  const tlX = m => ((Math.min(Math.max(m, OPEN), CLOSE) - OPEN) / (CLOSE - OPEN) * 100).toFixed(2) + "%";
+
+  function dayPanel() {
+    const ticks = []; for (let h = 9; h <= 17; h++) ticks.push(`<span class="tl-tick ${h % 2 ? "" : "odd"}" style="left:${tlX(h * 60)}">${h % 12 || 12} ${h < 12 ? "AM" : "PM"}</span>`);
+    const toMin = t => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
+    // [minute, colour, html for the tooltip]
+    const ev = [];
+    books.forEach(b => { if (b.res && b.res.urgent) ev.push([toMin(b.res.due), b.order ? "ok" : "bad", `<b>${esc(b.res.who)}</b> picks up<i>${esc(b.t)}</i><em class="${b.order ? "ok" : "bad"}">${b.order ? "On its way" : "Not ordered yet: use Express"}</em>`]); });
+    pickups.forEach(p => ev.push([toMin(p.at), p.ready ? "ok" : "bad", `<b>${esc(p.who)}</b> picks up<i>${esc(p.book)}</i><em class="${p.ready ? "ok" : "bad"}">${p.ready ? "Ready on the shelf" : "Not on the shelf yet"}</em>`]));
+    arrivals.forEach(a => ev.push([a.at, "ok", `<b>Express delivery</b><i>${esc(a.title)}</i><em>Goes to the book cart</em>`]));
+    ev.push([CLOSE, "warn", `<b>Closing time</b><i>Tidy up, then leave by the door</i>`]);
+    // Events in the same 10-minute slot share one dot
+    const slots = new Map();
+    ev.forEach(([m, c, html]) => { const k = Math.floor(m / 10) * 10; const s = slots.get(k) || { c: "ok", items: [] }; s.items.push(html); if (c === "bad" || (c === "warn" && s.c === "ok")) s.c = c; slots.set(k, s); });
+    const dots = [...slots].sort((a, b) => a[0] - b[0]).map(([m, s]) => {
+      const edge = m >= CLOSE - 90 ? "edge-r" : m <= OPEN + 90 ? "edge-l" : "";
+      return `<button class="tl-dot ${s.c} ${edge} ${s.items.length > 1 ? "many" : ""}" data-n="${s.items.length}" style="left:${tlX(m)}" aria-label="${fmt(m)}: ${s.items.length} event${s.items.length > 1 ? "s" : ""}">
+        <span class="tip" role="tooltip"><span class="tt">${fmt(m)}</span>${s.items.map(h => `<span class="ev">${h}</span>`).join("")}</span></button>`;
+    }).join("");
+    return `<div class="panel noclip"><h3><small id="tl-left">${leftText()}</small></h3>
+      <div class="tl"><div class="tl-track"><i id="tl-fill" style="width:${tlX(minutes)}"></i></div>${ticks.join("")}<span class="tl-now" id="tl-now" style="left:${tlX(minutes)}"></span>${dots}</div></div>`;
+  }
+
+  function homeView() {
+    const s = stats();
+    const pop = books.filter(b => b.pop);
+    return `<div class="home">
+      <div class="tiles6">
+        ${stile(s.titles, "titles")}${stile(s.copies, "copies on shelf")}${stile(s.soldOut, "sold out", s.soldOut ? "bad" : "")}
+        ${stile(today.served, "visitors served")}${stile(today.income, "coins earned today", "ok")}${stile(members.length, "members")}
+      </div>
+      ${needsPanel(3)}
+      <div class="mid">
+        <div class="stack">${dayPanel()}${repPanel()}</div>
+        <div class="panel"><h3>Popular today <small>sell well today</small></h3>
+          <ul class="poplist">${pop.map(b => `<li><span>${esc(b.t)}</span><small>${esc(b.sub)} · ${SHELF[b.sh]}</small><b class="${qty(b) ? "" : "bad"}">${qty(b)}</b></li>`).join("")}</ul></div>
+      </div>
+      <div class="cols3">
+        <div class="panel"><h3>Today <small>Day ${DAY}</small></h3>${kv([["Visitors served", today.served], ["Books sold", today.sold], ["Read here", today.read], ["Returns", today.returns], ["Earned", today.income + " coins", "ok"], ["Left angry", today.angry, today.angry ? "bad" : ""]])}</div>
+        <div class="panel"><h3>Collection</h3>${kv([["Titles", s.titles], ["Copies on shelves", s.copies], ["Sold out", s.soldOut, s.soldOut ? "bad" : ""], ["Worn / damaged", `${s.worn} / ${s.damaged}`, s.damaged ? "warn" : ""], ["On order", s.onOrder], ["Reserved", s.reserved]])}</div>
+        <div class="panel"><h3>Library</h3>${kv([["Members", members.length], ["Staff", `${s.staff} of 3`], ["Rooms open", "3 of 3"], ["Upgrades", `${s.upgrades} of 27`]])}</div>
+      </div>
+    </div>`;
+  }
+
+  // ---------- Render ----------
+  function render() {
+    $("coins").textContent = coins + " coins";
+    const res = books.filter(b => b.res && !b.order).length, ready = upgReady();
+    const tab = (k, n, extra = "", cls = "") => `<button class="navtab ${cls}" role="tab" aria-selected="${page === k}" data-go="${k}">${n}${extra}</button>`;
+    $("head").innerHTML = `<nav class="navtabs" role="tablist">
+      ${tab("home", "Home")}
+      ${tab("catalogue", "Catalogue", res ? `<span class="n ${isUrgentOpen() ? "urgent" : ""}">${res}</span>` : "")}
+      ${tab("members", "Members", form.done ? "" : `<span class="n">1</span>`)}
+      ${tab("shop", "Shop", ready ? `<span class="star" aria-label="upgrade ready">★</span>` : "", ready && page !== "shop" ? "ready" : "")}
+      ${tab("log", "Log")}${tab("settings", "Settings")}</nav><span class="esc-hint">Esc to log off</span>`;
+    $("foot").hidden = true;
+    $("body").innerHTML = ({ home: homeView, catalogue: catView, shop: shopView, members: memView, log: logView, settings: setView })[page]();
+    const notes = page === "home" ? NOTES_HOME : NOTES[page];
+    $("notes").innerHTML = notes.map(([h, items]) => `<section><h3>${h}</h3><ul>${items.map(i => `<li>${i}</li>`).join("")}</ul></section>`).join("");
+  }
+
+
+  function filtered() {
+    const n = q.trim().toLowerCase();
+    return books.filter(b => {
+      if (n && !(b.t + " " + b.a + " " + b.tag).toLowerCase().includes(n)) return false;
+      if (fSub !== "All" && b.sub !== fSub) return false;
+      if (fType !== "All" && kind(b) !== fType) return false;
+      if (fShow === "Not in library" && !b.isNew) return false;
+      if (fShow === "Reserved" && !b.res) return false;
+      if (fShow === "Sold out" && (qty(b) > 0 || b.isNew)) return false;
+      if (fShow === "In stock" && qty(b) === 0) return false;
+      return true;
+    }).sort((x, y) => (x.isNew ? 1 : 0) - (y.isNew ? 1 : 0) || (y.pop ? 1 : 0) - (x.pop ? 1 : 0)); // popular first, not-in-library last
+  }
+
+  function drop(id, label, value, opts) {
+    const open = openMenu === id;
+    return `<div class="drop"><button class="btn small" data-menu="${id}" aria-expanded="${open}">${label}: ${value} ▾</button>
+      ${open ? `<div class="menu" role="menu">${opts.map(o => `<button role="menuitemradio" aria-checked="${o === value}" data-pick="${id}" data-val="${o}">${o}</button>`).join("")}</div>` : ""}</div>`;
+  }
+
+  // Subject only unlocks once a Type is picked; its list depends on the type.
+  function subjectFilter() {
+    if (fType === "All") return `<div class="drop"><button class="btn small" disabled title="Pick a type first">Subject: pick a type first</button></div>`;
+    const open = openMenu === "sub";
+    const item = o => `<button role="menuitemradio" class="${fType === "Book" && o !== "All" ? "sub" : ""}" aria-checked="${o === fSub}" data-pick="sub" data-val="${o}">${o}</button>`;
+    const items = fType === "Book"
+      ? [item("All"), ...Object.entries(BOOK_GROUPS).map(([shelf, subs]) => `<div class="hdr">${shelf} shelf</div>` + subs.map(item).join(""))]
+      : ["All", ...SUBJECTS[fType]].map(item);
+    return `<div class="drop"><button class="btn small" data-menu="sub" aria-expanded="${open}">Subject: ${fSub} ▾</button>
+      ${open ? `<div class="menu ${fType === "Book" ? "tall" : ""}" role="menu">${items.join("")}</div>` : ""}</div>`;
+  }
+
+  function catView() {
+    const list = filtered();
+    const rows = list.map(b => {
+      const n = qty(b);
+      const cls = b.isNew ? "" : n === 0 ? "bad" : n === 1 || b.w + b.d > 0 ? "warn" : "ok";
+      const bits = `${b.a} · ${b.sub}`;
+      const meta = [`<span>${px("shelf", 2, "Shelf")}${SHELF[b.sh]}</span>`];
+      if (!b.rare) meta.push(`<span>${px("coin", 2, "Price")}${price(b, false)}</span>`);
+      if (b.d) meta.push(`<span class="bad">${px("dmg", 2)}${b.d} damaged</span>`);
+      return `<div class="row ${b === sel ? "sel" : ""} ${b.tier !== "Normal" ? b.tier.toLowerCase() : b.pop ? "popular" : ""}" data-book="${books.indexOf(b)}" tabindex="0">
+        <div class="t"><span class="name">${esc(b.t)}</span>${b.pop ? `<span class="badge">Popular</span>` : ""}${b.res ? `<span class="badge ${b.res.urgent ? "urgent" : ""}">${b.res.urgent ? "Reserved · TODAY" : "Reserved"}</span>` : ""}${b.isNew ? `<span class="badge new">New title</span>` : ""}</div>
+        <div class="s">${esc(bits)}</div>
+        <div class="m">${meta.join('<span class="sep">·</span>')}</div>
+        <div class="n ${cls}">${b.isNew ? `<small>not in<br>library</small>` : `<b>${n}</b><small>${b.order ? `+${b.order} coming` : "on shelf"}</small>`}</div>
+      </div>`;
+    }).join("") || `<div class="empty">No books match. Try fewer filters.</div>`;
+
+    return `<div class="cat">
+      <div class="col">
+        <div class="search"><input id="search" type="text" placeholder="search title, author or tag" value="${esc(q)}" autocomplete="off" aria-label="Search books"></div>
+        <div class="filters">
+          ${drop("type", "Type", fType, ["All", ...TYPES])}
+          ${subjectFilter()}
+          ${drop("show", "Show", fShow, ["All", "Reserved", "Sold out", "In stock", "Not in library"])}
+        </div>
+        <div class="count-line">${list.length} ${list.length === 1 ? "book" : "books"}</div>
+        <div class="list sheet" role="listbox" aria-label="Books">${rows}</div>
+      </div>
+      ${detailView()}
+    </div>`;
+  }
+
+  function detailView() {
+    const b = sel;
+    if (!b) return `<div class="cardpane"><div class="empty">Select a book to see where it lives,<br>read its abstract, or order more.</div></div>`;
+    const n = qty(b);
+    const cond = n === 0 ? "-" : [b.g && `${b.g} good`, b.w && `${b.w} worn`, b.d && `${b.d} damaged`].filter(Boolean).join(", ");
+    const condCls = b.d ? "bad" : b.w ? "warn" : "";
+    const stock = b.isNew ? "not in library" : n > 0 ? `${n} on shelf` : "none left";
+    const canOrder = !b.rare;
+    const closed = minutes >= 17 * 60 + 30;
+    const p = price(b, false), pe = price(b, true);
+    let stamp = "";
+    if (b.isNew) stamp = `<div class="stamp gold">NEW TITLE</div>`;
+    else if (n === 0) stamp = `<div class="stamp">SOLD OUT</div>`;
+    else if (b.pop) stamp = `<div class="stamp gold">POPULAR</div>`;
+    let res = "";
+    if (b.res) {
+      const coming = b.order > 0;
+      res = `<div class="reserve ${coming ? "done" : ""}">${esc(b.res.who)} reserved this. ${b.res.urgent ? `Needs it <b>TODAY by ${hm(b.res.due)}</b>, so use Express.` : "Picks it up tomorrow."} ${coming ? "On its way." : "NOT ORDERED YET."}</div>`;
+    }
+    const isNoted = noted.has(b);
+    const defaultMsg = b.rare ? "Rare Books stay in the library: they can't be ordered."
+      : b.isNew && !b.order ? "New title: costs a little more to order, and sells for more."
+      : closed ? "The library is closed: Express is off until tomorrow. Normal orders still arrive in the morning."
+      : isNoted ? "Already in your notebook."
+      : b.order ? `${b.order} on order. Normal orders arrive tomorrow on the book cart.`
+      : "Add to note: goes on the visitor's request in your notebook.";
+    return `<div class="cardpane ${b.tier !== "Normal" ? b.tier.toLowerCase() : ""}">
+      <div class="callno">${b.sh}</div>
+      ${stamp}
+      <div class="cardtop">
+        <h3>${esc(b.t)}</h3>
+        <div class="by">by ${esc(b.a)}</div>
+        <div class="tags"><span class="chip">${kind(b)}</span><span class="chip">${b.sub}</span>${b.tag ? b.tag.split(", ").map(t => `<span class="chip">${esc(t)}</span>`).join("") : ""}${b.tier !== "Normal" ? `<span class="badge ${b.tier.toLowerCase()}">${b.tier}</span>` : ""}</div>
+      </div>
+      <div class="cardscroll">
+        <dl class="facts">
+          <dt>Shelf</dt><dd>${SHELF[b.sh]}</dd>
+          <dt>Stock</dt><dd class="${n === 0 && !b.isNew ? "bad" : ""}">${stock}</dd>
+          <dt>Copies</dt><dd class="${condCls}">${cond}</dd>
+          <dt>Sells for</dt><dd class="${b.rare ? "warn" : b.isNew ? "ok" : ""}">${b.rare ? "read here only" : salePrice(b) + " coins" + (b.isNew ? " (new title +30%)" : "")}</dd>
+        </dl>
+        <div class="abstract-label">Abstract</div>
+        <p class="abstract">${esc(b.ab)}</p>
+        ${res}
+      </div>
+      <div class="actions">
+        <div class="btns">
+          <button class="btn" data-act="note" ${isNoted || b.isNew ? "disabled" : ""}>Add to note</button>
+          ${canOrder ? `<button class="btn ${b.res && !b.res.urgent && !b.order ? "primary" : ""}" data-act="order" ${coins < p ? "disabled" : ""}>Order ${cost(p)}</button>` : ""}
+          ${canOrder ? `<button class="btn ${b.res && b.res.urgent && !b.order && !closed ? "primary" : ""}" data-act="express" ${coins < pe || closed ? "disabled" : ""} title="${closed ? "Express only runs while the library is open" : "Arrives in 2 hours"}">Express ${cost(pe)}</button>` : ""}
+        </div>
+        <div class="msg ${msgGood ? "good" : ""}">${esc(msg || defaultMsg)}</div>
+      </div>
+    </div>`;
+  }
+
+  function shopView() {
+    const ready = upgReady();
+    const tabs = `<div class="tabs" role="tablist">
+      <button class="tab ${ready && shopTab !== "upgrades" ? "ready" : ""}" role="tab" aria-selected="${shopTab === "upgrades"}" data-tab="upgrades">Upgrades${ready ? " ★" : ""}</button>
+      <button class="tab" role="tab" aria-selected="${shopTab === "staff"}" data-tab="staff">Staff</button></div>`;
+    let inner;
+    if (shopTab === "upgrades") {
+      inner = `<div class="ugrid">${upgrades.map((u, i) => {
+        const [name, info, ico, lvl, unlock] = u;
+        const max = lvl >= 3, locked = DAY < unlock, price = 40 + lvl * 40, can = !max && !locked && coins >= price;
+        const label = max ? "Max" : locked ? `Day ${unlock}` : `Buy ${cost(price)}`;
+        return `<div class="ucard ${can ? "ready" : ""} ${locked ? "locked" : ""}">
+          <div class="uico" aria-hidden="true">${px(ico, 3)}</div><h4>${name}</h4><p>${info}${locked ? ` Unlocks on Day ${unlock}.` : ""}</p>
+          <div class="ufoot"><div class="pips" aria-label="Level ${lvl} of 3">${[0, 1, 2].map(k => `<span class="pip ${k < lvl ? "on" : ""}"></span>`).join("")}</div>
+          <button class="btn small" data-upg="${i}" ${can ? "" : "disabled"}>${label}</button></div></div>`;
+      }).join("")}</div>`;
+    } else {
+      inner = staff.map((s, i) => {
+        let sub, btn, en = true, ready = false;
+        if (s.state === "hired") { sub = `${s.info} Level ${s.level}/${s.max}. Mood: ${s.mood}.`; btn = `Upgrade ${cost(s.cost)}`; en = coins >= s.cost; ready = en; }
+        else if (s.state === "booked") { sub = "Interview booked: two applicants come in tomorrow morning, before the library opens."; btn = "Cancel"; }
+        else { sub = `${s.info} Hire fee about ${s.fee}.`; btn = "Interview"; en = coins >= s.fee; ready = en; }
+        return `<div class="srow ${ready ? "ready" : ""}"><div class="avatar" aria-hidden="true">${px(s.icon, 3)}</div>
+          <div><h4>${s.role}${s.person ? `: <span class="who">${s.person}</span>` : ""}</h4><p>${sub}</p></div>
+          <button class="btn" data-staff="${i}" ${en ? "" : "disabled"}>${btn}</button></div>`;
+      }).join("");
+    }
+    const note = shopTab === "upgrades" ? "Upgrades last forever and are saved with your library." : "Press Interview: two applicants come in tomorrow morning. Staff are paid once, when you hire them.";
+    return `${tabs}<div class="scroll">${inner}</div><div class="count-line" style="text-align:center">${note}</div>`;
+  }
+
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  function daysIn(m, y) { if (!m) return 31; return new Date(y || 2000, MONTHS.indexOf(m) + 1, 0).getDate(); }
+  // Day / Month / Year pickers: a pixel box that opens a list showing 6 items at a time
+  function dobDrop(field, label, value, opts, off = () => false) {
+    const id = "dob-" + field, open = openMenu === id;
+    return `<div class="drop dd-wrap"><button class="dd ${value ? "" : "empty"}" data-menu="${id}" aria-expanded="${open}" aria-label="${label}">${value || label}<span>▾</span></button>
+      ${open ? `<div class="menu six" role="menu">${opts.map(o => `<button role="menuitemradio" aria-checked="${o === value}" data-pick="dob" data-field="${field}" data-val="${o}" ${off(o) ? "disabled" : ""}>${o}</button>`).join("")}</div>` : ""}</div>`;
+  }
+
+  function memView() {
+    const rows = members.map(([n, dob, acc, h, v, sp]) => `<tr><td>${n}</td><td class="hide-sm">${dob}</td><td>${acc}</td>
+      <td class="hearts" aria-label="${h} of 5 hearts">${Array.from({ length: 5 }, (_, k) => px(k < h ? "heart" : "heartEmpty", 1)).join("")}</td><td class="num">${v}</td><td class="num hide-sm">${sp}</td></tr>`).join("");
+    const max = daysIn(form.month, +form.year);
+    const nameOk = /^[A-Za-z][A-Za-z' -]{1,29}$/.test(form.name.trim());
+    const ready = nameOk && form.day && form.month && form.year && form.access;
+    const years = []; for (let y = 2010; y >= 1930; y--) years.push(y);
+    const card = form.done
+      ? `<div class="libcard"><h3>NEW LIBRARY CARD</h3><div class="empty">Card issued to ${esc(form.done)}!<br><br>Nobody else is waiting for a card.</div></div>`
+      : `<div class="libcard">
+        <h3>NEW LIBRARY CARD <small>No. 0006</small></h3>
+        <div class="waiting">A visitor at the counter is waiting for a card. Type the name they told you.</div>
+        <div class="field"><label for="f-name">Name</label><input id="f-name" maxlength="30" placeholder="type the name they told you" value="${esc(form.name)}" autocomplete="off"></div>
+        <div class="field"><span class="lbl">Date of birth</span>
+          <div class="dob">
+            ${dobDrop("day", "Day", form.day, Array.from({ length: 31 }, (_, i) => String(i + 1)), d => +d > max)}
+            ${dobDrop("month", "Month", form.month, MONTHS)}
+            ${dobDrop("year", "Year", form.year, years.map(String))}
+          </div></div>
+        <div class="field"><span class="lbl">Access</span><div class="opts">${["Basic", "Archive", "Rare"].map(a => `<button class="btn small opt" aria-pressed="${form.access === a}" data-acc="${a}">${a}</button>`).join("")}</div></div>
+        <button class="btn primary issue" data-act="issue" ${ready ? "" : "disabled"}>Issue card</button>
+      </div>`;
+    return `<div class="mem">
+      <div class="col"><div class="count-line">${members.length} members</div>
+        <div class="scroll sheet"><table class="mtable"><thead><tr><th>Name</th><th class="hide-sm">Born</th><th>Access</th><th>Happy</th><th style="text-align:right">Visits</th><th class="hide-sm" style="text-align:right">Spent</th></tr></thead><tbody>${rows}</tbody></table></div></div>
+      ${card}</div>`;
+  }
+
+  function logView() {
+    const days = [1, 2, 3].map(d => `<button class="btn small ${d === logDay ? "primary" : ""}" data-day="${d}">Day ${d}${d === DAY ? " (today)" : ""}</button>`).join("");
+    const entries = log[logDay];
+    const money = n => n === 0 ? "" : `<span class="amt ${n > 0 ? "plus" : "minus"}">${n > 0 ? "+" : "−"}${px("coin", 1)}${Math.abs(n)}</span>`;
+    const rows = [...entries].reverse().map(([t, who, line, out, c, amt]) => `<div class="logrow ${c === "spend" ? "spend" : ""}"><span class="time">${hm(t)}</span>
+      ${c === "spend" ? `<span class="mark coinmark">${px("coin", 1)}</span>` : `<span class="mark" style="background:var(--${c})"></span>`}
+      <div class="what">${esc(line)}<small>${esc(who)}</small></div><span class="out"><span class="${c === "spend" ? "" : c}">${out}</span>${money(amt)}</span></div>`).join("");
+    return `<div class="days">${days}</div><div class="scroll sheet">${rows}</div>`;
+  }
+
+  function setView() {
+    const bar = (v, key) => `<div class="bar">${Array.from({ length: 10 }, (_, i) => `<button class="${i < v ? "on" : ""}" data-pip="${key}" data-v="${i + 1}" style="--h:${16 + i * 4}px" aria-label="${key} ${i + 1}"></button>`).join("")}</div>`;
+    return `<div class="scroll sheet">
+      <div class="set"><span>Volume</span>${bar(vol, "vol")}<div class="ctl"><button class="btn small" data-step="vol:-1">-</button><button class="btn small" data-step="vol:1">+</button></div></div>
+      <div class="set"><span>Music</span>${bar(music, "music")}<div class="ctl"><button class="btn small" data-step="music:-1">-</button><button class="btn small" data-step="music:1">+</button></div></div>
+      <div class="set"><span>Fullscreen</span><span class="val">${full ? "On" : "Off"}</span><div class="ctl"><button class="btn small" data-act="full">Toggle</button></div></div>
+      <div class="set"><span>Main menu</span><span class="val">${confirm === "menu" ? "Today's progress isn't saved. Sure?" : "Back to the title screen."}</span><div class="ctl"><button class="btn small" data-act="menu">${confirm === "menu" ? "Yes, leave" : "Go"}</button></div></div>
+      <div class="set"><span>New game</span><span class="val">${confirm === "reset" ? "Are you sure? All progress is lost." : "Start again from Day 1."}</span><div class="ctl"><button class="btn small danger" data-act="reset">${confirm === "reset" ? "Yes, reset" : "Reset"}</button></div></div>
+    </div><div class="count-line" style="text-align:center">Your library saves itself every morning when a new day starts.</div>`;
+  }
+
+  // ---------- Events ----------
+  document.addEventListener("click", e => {
+    if (e.target.closest("#off")) { $("off").hidden = true; return; }
+    const t = e.target.closest("button, .row");
+    if (!t) { if (openMenu) { openMenu = null; render(); } return; }
+    const d = t.dataset;
+    if (d.win) {
+      if (d.win === "max") { $("pc").classList.toggle("max"); return; }
+      $("off").innerHTML = d.win === "close" ? "<div><b>LOGGED OFF</b>Back to the library. Click to log on again.</div>" : "<div><b>MINIMISED</b>The PC stays where you left it. Click to bring it back.</div>";
+      $("off").hidden = false; return;
+    }
+    if (d.go) {
+      page = d.go; openMenu = null; confirm = null; msg = "";
+      if (d.fresh) { sel = null; q = ""; fSub = fType = fShow = "All"; }
+      render(); return;
+    }
+    if (d.menu) { openMenu = openMenu === d.menu ? null : d.menu; render(); return; }
+    if (d.pick) {
+      if (d.pick === "dob") {
+        form[d.field] = d.val; form.done = "";
+        if (form.day && +form.day > daysIn(form.month, +form.year)) form.day = ""; // a day that stops existing is cleared
+      }
+      else if (d.pick === "type") { fType = d.val; fSub = "All"; }
+      else if (d.pick === "sub") fSub = d.val;
+      else fShow = d.val;
+      openMenu = null; render(); return;
+    }
+    if (d.book !== undefined) { sel = books[+d.book]; msg = ""; openMenu = null; render(); return; }
+    if (d.act === "note" && sel) { noted.add(sel); msg = `Noted: "${sel.t}" (${SHELF[sel.sh]})`; msgGood = true; render(); return; }
+    if ((d.act === "order" || d.act === "express") && sel) {
+      const ex = d.act === "express", p = price(sel, ex);
+      if (coins < p) return;
+      coins -= p; sel.order++;
+      addLog("You", `${ex ? "Express order" : "Ordered"} “${sel.t}” (${ex ? "arrives in 2 hours" : "arrives tomorrow"})`, ex ? "Express order" : "Book order", "spend", -p);
+      if (ex) arrivals.push({ at: minutes + 120, title: sel.t });
+      msg = ex ? `Express ordered! It arrives on the book cart at ${fmt(minutes + 120)}.` : `Ordered! It arrives on the book cart tomorrow morning (${sel.order} on order).`;
+      msgGood = true; render(); return;
+    }
+    if (d.tab) { shopTab = d.tab; render(); return; }
+    if (d.upg !== undefined) { const u = upgrades[+d.upg], c = 40 + u[3] * 40; if (coins >= c) { coins -= c; u[3]++; addLog("You", `Bought ${u[0]} (level ${u[3]})`, "Upgrade", "spend", -c); } render(); return; }
+    if (d.staff !== undefined) {
+      const s = staff[+d.staff];
+      if (s.state === "hired") { if (coins >= s.cost && s.level < s.max) { coins -= s.cost; s.level++; addLog(s.person, `${s.role} trained to level ${s.level}`, "Staff upgrade", "spend", -s.cost); s.cost *= 2; } }
+      else s.state = s.state === "booked" ? "open" : "booked";
+      render(); return;
+    }
+    if (d.acc) { form.access = d.acc; render(); return; }
+    if (d.act === "issue") {
+      const n = form.name.trim().toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+      members.push([n, `${form.day.padStart(2, "0")} ${form.month} ${form.year}`, form.access, 3, 1, 0]);
+      form = { name: "", day: "", month: "", year: "", access: null, done: n }; render(); return;
+    }
+    if (d.day) { logDay = +d.day; render(); return; }
+    if (d.pip) { const v = +d.v; if (d.pip === "vol") vol = v === vol ? 0 : v; else music = v === music ? 0 : v; render(); return; }
+    if (d.step) { const [k, s] = d.step.split(":"); if (k === "vol") vol = Math.max(0, Math.min(10, vol + +s)); else music = Math.max(0, Math.min(10, music + +s)); render(); return; }
+    if (d.act === "full") { full = !full; render(); return; }
+    if (d.act === "menu" || d.act === "reset") {
+      if (confirm === d.act) { confirm = null; msg = ""; } else { confirm = d.act; setTimeout(() => { if (confirm === d.act) { confirm = null; render(); } }, 4000); }
+      render(); return;
+    }
+  });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Enter" && e.target.classList && e.target.classList.contains("row")) e.target.click();
+    if (e.key === "Escape" && openMenu) { openMenu = null; render(); }
+  });
+  document.addEventListener("input", e => {
+    if (e.target.id === "search") {
+      q = e.target.value; const pos = e.target.selectionStart;
+      render(); const inp = $("search"); inp.focus(); inp.setSelectionRange(pos, pos);
+    }
+    if (e.target.id === "f-name") {
+      // Only letters, single spaces, hyphens and apostrophes get into the box.
+      const clean = e.target.value.replace(/[^A-Za-z' -]/g, "").replace(/ {2,}/g, " ").slice(0, 30);
+      form.name = clean; form.done = "";
+      const pos = Math.min(e.target.selectionStart, clean.length);
+      render(); const inp = $("f-name"); inp.focus(); inp.setSelectionRange(pos, pos);
+    }
+  });
+  document.addEventListener("change", e => {
+  });
+
+  // The clock keeps running while the PC is open (1 game minute every 2 real seconds here).
+  // The clock moves 10 game minutes at a time. The game does 9:00 to 5:30 in about 4 real minutes, so one step is about 4.7 s.
+  setInterval(() => {
+    if (minutes >= CLOSE) return;
+    minutes = Math.min(CLOSE, minutes + 10); $("clock").textContent = fmt(minutes);
+    if ($("tl-now")) { $("tl-now").style.left = $("tl-fill").style.width = tlX(minutes); $("tl-left").textContent = leftText(); }
+  }, 4700);
+
+  sel = books[6]; // the sold-out, reserved book: shows the most at once
+  page = "home";
+  $("clock").textContent = fmt(minutes);
+  render();
+})();
+</script>

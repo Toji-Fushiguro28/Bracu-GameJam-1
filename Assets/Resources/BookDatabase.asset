@@ -17,26 +17,26 @@ MonoBehaviour:
     Format: 0
     Author: Nadia Rahman
     Subject: Science
+    Topic: Astronomy
     Tag: Best Seller
     Abstract: How stars are born, burn out, and guide sailors home.
     ShelfLocation: SCI
     Tier: 0
     BaseValue: 25
-    Popularity: 5
     Sellable: 1
     GoodCopies: 2
     WornCopies: 1
     DamagedCopies: 0
-  - Title: The Clockwork Atlas
+  - Title: The Clockwork Compass
     Format: 0
     Author: Edmund Hale
     Subject: Science
+    Topic: Engineering
     Tag: Reference
     Abstract: A survey of mechanical navigation instruments and the maps they drew.
     ShelfLocation: SCI
     Tier: 0
     BaseValue: 30
-    Popularity: 4
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -45,12 +45,12 @@ MonoBehaviour:
     Format: 0
     Author: Leo Park
     Subject: Science
+    Topic: Biology
     Tag: Textbook
     Abstract: Everything a single cell does to keep you alive.
     ShelfLocation: SCI
     Tier: 0
     BaseValue: 20
-    Popularity: 3
     Sellable: 1
     GoodCopies: 3
     WornCopies: 0
@@ -59,12 +59,12 @@ MonoBehaviour:
     Format: 0
     Author: Clara Bell
     Subject: Science
+    Topic: Physics
     Tag: Textbook, New Arrival
     Abstract: Motion, energy and gravity, explained gently.
     ShelfLocation: SCI
     Tier: 0
     BaseValue: 22
-    Popularity: 3
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -73,12 +73,12 @@ MonoBehaviour:
     Format: 0
     Author: Ravi Menon
     Subject: Science
+    Topic: Biology
     Tag: New Arrival
     Abstract: Plants, soil and the chemistry of growing things.
     ShelfLocation: SCI
     Tier: 0
     BaseValue: 18
-    Popularity: 4
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -87,12 +87,12 @@ MonoBehaviour:
     Format: 0
     Author: Amara Diallo
     Subject: History
+    Topic: Trade
     Tag: Classic
     Abstract: Three centuries of trade, caravans, and the cities the salt road built.
     ShelfLocation: HIS
     Tier: 0
     BaseValue: 28
-    Popularity: 2
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -101,12 +101,12 @@ MonoBehaviour:
     Format: 0
     Author: Kai Hossain
     Subject: History
+    Topic: Geography
     Tag: Best Seller
     Abstract: How rivers shaped the cities, songs and trade of Bengal.
     ShelfLocation: HIS
     Tier: 0
     BaseValue: 25
-    Popularity: 5
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -115,12 +115,12 @@ MonoBehaviour:
     Format: 0
     Author: Omar Farouk
     Subject: History
+    Topic: Empires
     Tag: Reference
     Abstract: The printing presses that built empires, and toppled them.
     ShelfLocation: HIS
     Tier: 0
     BaseValue: 30
-    Popularity: 3
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -129,12 +129,12 @@ MonoBehaviour:
     Format: 0
     Author: Finn Archer
     Subject: History
+    Topic: Local history
     Tag: New Arrival
     Abstract: A coastal town's story, told through its lighthouse.
     ShelfLocation: HIS
     Tier: 0
     BaseValue: 20
-    Popularity: 2
     Sellable: 1
     GoodCopies: 1
     WornCopies: 0
@@ -143,12 +143,12 @@ MonoBehaviour:
     Format: 0
     Author: Hazel Grant
     Subject: History
+    Topic: Trade
     Tag: Classic
     Abstract: How a humble drink started trade wars.
     ShelfLocation: HIS
     Tier: 0
     BaseValue: 22
-    Popularity: 2
     Sellable: 1
     GoodCopies: 0
     WornCopies: 2
@@ -157,12 +157,12 @@ MonoBehaviour:
     Format: 0
     Author: Hazel Grant
     Subject: History
+    Topic: Culture
     Tag: English Literature
     Abstract: The streets, theatres and taverns behind the plays.
     ShelfLocation: HIS
     Tier: 0
     BaseValue: 26
-    Popularity: 3
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -171,12 +171,12 @@ MonoBehaviour:
     Format: 0
     Author: Mara Voss
     Subject: Philosophy
+    Topic: Reflection
     Tag: Classic
     Abstract: Essays on impermanence, archives, and what libraries choose to forget.
     ShelfLocation: PHI
     Tier: 0
     BaseValue: 24
-    Popularity: 1
     Sellable: 1
     GoodCopies: 0
     WornCopies: 1
@@ -185,12 +185,12 @@ MonoBehaviour:
     Format: 0
     Author: Arthur Lane
     Subject: Philosophy
+    Topic: Wellbeing
     Tag: Best Seller
     Abstract: Small daily habits for a calmer, kinder life.
     ShelfLocation: PHI
     Tier: 0
     BaseValue: 20
-    Popularity: 5
     Sellable: 1
     GoodCopies: 1
     WornCopies: 1
@@ -199,12 +199,12 @@ MonoBehaviour:
     Format: 0
     Author: Edmund Hale
     Subject: Philosophy
+    Topic: Big questions
     Tag: Textbook
     Abstract: A gentle tour of the big questions.
     ShelfLocation: PHI
     Tier: 0
     BaseValue: 22
-    Popularity: 2
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -213,12 +213,12 @@ MonoBehaviour:
     Format: 0
     Author: Rabindranath Tagore
     Subject: Philosophy
+    Topic: Poetry
     Tag: Classic, English Literature
     Abstract: Song offerings about devotion, nature and the soul.
     ShelfLocation: PHI
     Tier: 0
     BaseValue: 30
-    Popularity: 4
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -227,12 +227,12 @@ MonoBehaviour:
     Format: 0
     Author: Mara Voss
     Subject: Philosophy
+    Topic: Big questions
     Tag: New Arrival
     Abstract: Can you know the light without the dark?
     ShelfLocation: PHI
     Tier: 0
     BaseValue: 18
-    Popularity: 1
     Sellable: 1
     GoodCopies: 1
     WornCopies: 0
@@ -241,12 +241,12 @@ MonoBehaviour:
     Format: 0
     Author: Maya Chen
     Subject: Math
+    Topic: Arithmetic
     Tag: Best Seller, Textbook
     Abstract: Arithmetic tricks that make mental math fun.
     ShelfLocation: MATH
     Tier: 0
     BaseValue: 18
-    Popularity: 5
     Sellable: 1
     GoodCopies: 2
     WornCopies: 1
@@ -255,12 +255,12 @@ MonoBehaviour:
     Format: 0
     Author: Leo Park
     Subject: Math
+    Topic: Geometry
     Tag: Reference
     Abstract: Geometry, from triangles to the curve of the Earth.
     ShelfLocation: MATH
     Tier: 0
     BaseValue: 26
-    Popularity: 2
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -269,12 +269,12 @@ MonoBehaviour:
     Format: 0
     Author: Clara Bell
     Subject: Math
+    Topic: Paradoxes
     Tag: New Arrival
     Abstract: The paradoxes of infinity, explained over tea.
     ShelfLocation: MATH
     Tier: 0
     BaseValue: 20
-    Popularity: 1
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -283,12 +283,12 @@ MonoBehaviour:
     Format: 0
     Author: Ravi Menon
     Subject: Math
+    Topic: Probability
     Tag: Classic
     Abstract: Probability, learned through old card games.
     ShelfLocation: MATH
     Tier: 0
     BaseValue: 24
-    Popularity: 1
     Sellable: 1
     GoodCopies: 1
     WornCopies: 0
@@ -297,12 +297,12 @@ MonoBehaviour:
     Format: 0
     Author: Whitmore Library
     Subject: History
+    Topic: Town records
     Tag: Archive
     Abstract: Births, deeds and gossip from the year 1890.
     ShelfLocation: ARC-A
     Tier: 1
     BaseValue: 140
-    Popularity: 3
     Sellable: 1
     GoodCopies: 0
     WornCopies: 1
@@ -311,12 +311,12 @@ MonoBehaviour:
     Format: 0
     Author: Unknown
     Subject: Math
+    Topic: Old maths
     Tag: Archive
     Abstract: Proofs copied by a monk who got some of them wrong.
     ShelfLocation: ARC-B
     Tier: 1
     BaseValue: 180
-    Popularity: 3
     Sellable: 1
     GoodCopies: 0
     WornCopies: 0
@@ -325,12 +325,12 @@ MonoBehaviour:
     Format: 0
     Author: Anonymous
     Subject: Science
+    Topic: Star charts
     Tag: Rare
     Abstract: A hand-painted star chart said to guide lost sailors home.
     ShelfLocation: RARE-I
     Tier: 2
     BaseValue: 500
-    Popularity: 3
     Sellable: 0
     GoodCopies: 1
     WornCopies: 0
@@ -338,13 +338,13 @@ MonoBehaviour:
   - Title: First Folio Fragment
     Format: 0
     Author: William Shakespeare
-    Subject: Philosophy
+    Subject: History
+    Topic: Early prints
     Tag: Rare, English Literature
     Abstract: Six surviving pages of the very first printing.
     ShelfLocation: RARE-II
     Tier: 1
     BaseValue: 300
-    Popularity: 4
     Sellable: 0
     GoodCopies: 1
     WornCopies: 0
@@ -353,12 +353,12 @@ MonoBehaviour:
     Format: 0
     Author: Elias Whitmore
     Subject: History
+    Topic: Maps & charts
     Tag: Rare
     Abstract: The library founder's own maps of the old city.
     ShelfLocation: RARE-I
     Tier: 1
     BaseValue: 250
-    Popularity: 3
     Sellable: 0
     GoodCopies: 0
     WornCopies: 1
@@ -367,12 +367,12 @@ MonoBehaviour:
     Format: 0
     Author: Capt. R. Sen
     Subject: History
+    Topic: Letters & logs
     Tag: Archive
     Abstract: A riverboat captain's daily logs, storms and all.
     ShelfLocation: ARC-B
     Tier: 0
     BaseValue: 60
-    Popularity: 3
     Sellable: 1
     GoodCopies: 0
     WornCopies: 1
@@ -381,12 +381,12 @@ MonoBehaviour:
     Format: 0
     Author: Whitmore Library
     Subject: Science
+    Topic: Almanacs
     Tag: Archive
     Abstract: Tides, moon phases and weather guesses for 1923.
     ShelfLocation: ARC-B
     Tier: 0
     BaseValue: 45
-    Popularity: 4
     Sellable: 1
     GoodCopies: 1
     WornCopies: 0
@@ -395,12 +395,12 @@ MonoBehaviour:
     Format: 0
     Author: Various
     Subject: History
+    Topic: Letters & logs
     Tag: Archive
     Abstract: Letters soldiers wrote home and never expected kept.
     ShelfLocation: ARC-B
     Tier: 1
     BaseValue: 160
-    Popularity: 4
     Sellable: 1
     GoodCopies: 0
     WornCopies: 1
@@ -409,12 +409,12 @@ MonoBehaviour:
     Format: 0
     Author: Lin Wei
     Subject: Math
+    Topic: Old maths
     Tag: Archive
     Abstract: How merchants counted fortunes on beads.
     ShelfLocation: ARC-B
     Tier: 0
     BaseValue: 50
-    Popularity: 3
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -423,12 +423,12 @@ MonoBehaviour:
     Format: 0
     Author: Brother Anselm
     Subject: Philosophy
+    Topic: Faith
     Tag: Archive
     Abstract: Reflections carved, then copied, from a monastery wall.
     ShelfLocation: ARC-C
     Tier: 0
     BaseValue: 55
-    Popularity: 3
     Sellable: 1
     GoodCopies: 0
     WornCopies: 0
@@ -437,12 +437,12 @@ MonoBehaviour:
     Format: 0
     Author: Elias Whitmore
     Subject: History
+    Topic: Maps
     Tag: Archive
     Abstract: Hand-drawn paths that no longer lead anywhere.
     ShelfLocation: ARC-D
     Tier: 1
     BaseValue: 150
-    Popularity: 3
     Sellable: 1
     GoodCopies: 1
     WornCopies: 0
@@ -451,12 +451,12 @@ MonoBehaviour:
     Format: 0
     Author: Unknown
     Subject: Philosophy
+    Topic: Manuscripts
     Tag: Rare
     Abstract: Silver-inked hymns, said to glow by candlelight.
     ShelfLocation: RARE-II
     Tier: 2
     BaseValue: 450
-    Popularity: 4
     Sellable: 0
     GoodCopies: 1
     WornCopies: 0
@@ -465,12 +465,12 @@ MonoBehaviour:
     Format: 1
     Author: Whitmore Press
     Subject: History
+    Topic: Local news
     Tag: Daily, New Arrival
     Abstract: Town news, the weather, and who won the pie contest.
     ShelfLocation: NEWS
     Tier: 0
     BaseValue: 5
-    Popularity: 1
     Sellable: 1
     GoodCopies: 5
     WornCopies: 0
@@ -479,12 +479,12 @@ MonoBehaviour:
     Format: 1
     Author: Morning Post Co.
     Subject: History
+    Topic: Regional news
     Tag: Daily
     Abstract: Headlines from across the delta, printed at dawn.
     ShelfLocation: NEWS
     Tier: 0
     BaseValue: 5
-    Popularity: 4
     Sellable: 1
     GoodCopies: 4
     WornCopies: 0
@@ -493,12 +493,12 @@ MonoBehaviour:
     Format: 1
     Author: Ledger House
     Subject: History
+    Topic: Weekend
     Tag: Weekly
     Abstract: A fat weekend paper full of long stories and crosswords.
     ShelfLocation: NEWS
     Tier: 0
     BaseValue: 8
-    Popularity: 3
     Sellable: 1
     GoodCopies: 3
     WornCopies: 0
@@ -506,13 +506,13 @@ MonoBehaviour:
   - Title: Cozy Corners Monthly
     Format: 2
     Author: Hearth Media
-    Subject: Philosophy
+    Subject: History
+    Topic: Home & leisure
     Tag: New Arrival
     Abstract: Reading nooks, rainy days and the perfect cup of tea.
     ShelfLocation: MAG
     Tier: 0
     BaseValue: 10
-    Popularity: 3
     Sellable: 1
     GoodCopies: 3
     WornCopies: 0
@@ -521,12 +521,12 @@ MonoBehaviour:
     Format: 2
     Author: Orbit Press
     Subject: Science
+    Topic: Science & nature
     Tag: Weekly
     Abstract: Comets, eclipses, and where to look up this week.
     ShelfLocation: MAG
     Tier: 0
     BaseValue: 10
-    Popularity: 3
     Sellable: 1
     GoodCopies: 3
     WornCopies: 0
@@ -535,12 +535,12 @@ MonoBehaviour:
     Format: 2
     Author: Brainteaser Ltd.
     Subject: Math
+    Topic: Puzzles
     Tag: Puzzles
     Abstract: Logic grids, number riddles and one very hard maze.
     ShelfLocation: MAG
     Tier: 0
     BaseValue: 9
-    Popularity: 1
     Sellable: 1
     GoodCopies: 3
     WornCopies: 0
@@ -549,12 +549,12 @@ MonoBehaviour:
     Format: 2
     Author: Quiet Hour Press
     Subject: Philosophy
+    Topic: Essays
     Tag: Weekly
     Abstract: Short essays you can finish before your tea goes cold.
     ShelfLocation: MAG
     Tier: 0
     BaseValue: 9
-    Popularity: 4
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -563,12 +563,12 @@ MonoBehaviour:
     Format: 3
     Author: Whitmore Science Society
     Subject: Science
+    Topic: Physics
     Tag: Reference
     Abstract: Peer-reviewed studies on very small, very polite particles.
     ShelfLocation: JRNL
     Tier: 0
     BaseValue: 15
-    Popularity: 1
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -577,12 +577,12 @@ MonoBehaviour:
     Format: 3
     Author: The Thinking Guild
     Subject: Philosophy
+    Topic: Philosophy
     Tag: Reference
     Abstract: Four times a year, scholars argue about everything.
     ShelfLocation: JRNL
     Tier: 0
     BaseValue: 15
-    Popularity: 3
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -591,12 +591,12 @@ MonoBehaviour:
     Format: 3
     Author: Historical Trust
     Subject: History
+    Topic: Archaeology
     Tag: Reference
     Abstract: Digs, maps and records from cities long gone.
     ShelfLocation: JRNL
     Tier: 0
     BaseValue: 15
-    Popularity: 3
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -605,40 +605,40 @@ MonoBehaviour:
     Format: 3
     Author: Numerical Society
     Subject: Math
+    Topic: Mathematics
     Tag: Reference
     Abstract: New proofs, old problems, and a lot of chalk.
     ShelfLocation: JRNL
     Tier: 0
     BaseValue: 15
-    Popularity: 1
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
   - Title: On the Glow of Old Ink
     Format: 4
-    Author: Dr. Nadia Rahman
+    Author: Nadia Rahman
     Subject: Science
+    Topic: Chemistry
     Tag: New Arrival
     Abstract: Why some old inks shine under candlelight.
     ShelfLocation: PAPR
     Tier: 0
     BaseValue: 12
-    Popularity: 2
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
   - Title: Counting Without Zero
     Format: 4
-    Author: Prof. Maya Chen
+    Author: Maya Chen
     Subject: Math
+    Topic: Mathematics
     Tag: Classic
     Abstract: How ancient merchants did sums with no zero at all.
     ShelfLocation: PAPR
     Tier: 0
     BaseValue: 12
-    Popularity: 2
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -647,12 +647,12 @@ MonoBehaviour:
     Format: 4
     Author: Arthur Lane
     Subject: Philosophy
+    Topic: Ethics
     Tag: Best Seller
     Abstract: Is it ever fair to charge for a late book?
     ShelfLocation: PAPR
     Tier: 0
     BaseValue: 12
-    Popularity: 5
     Sellable: 1
     GoodCopies: 2
     WornCopies: 0
@@ -661,14 +661,70 @@ MonoBehaviour:
     Format: 4
     Author: Amara Diallo
     Subject: History
+    Topic: Trade
     Tag: Reference
     Abstract: Tracing old trade routes through postage stamps.
     ShelfLocation: PAPR
     Tier: 0
     BaseValue: 12
-    Popularity: 3
     Sellable: 1
     GoodCopies: 2
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: The Moonlit Herbal
+    Format: 0
+    Author: Sister Agnes Vale
+    Subject: Science
+    Topic: Herbals
+    Tag: Rare
+    Abstract: Pressed flowers and remedies, each picked by the light of a full moon.
+    ShelfLocation: RARE-I
+    Tier: 1
+    BaseValue: 280
+    Sellable: 0
+    GoodCopies: 1
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: Sea Charts of the Delta
+    Format: 0
+    Author: Capt. Ivo Marsh
+    Subject: History
+    Topic: Maps & charts
+    Tag: Rare
+    Abstract: Hand-inked soundings and sandbanks, drawn before the river moved.
+    ShelfLocation: RARE-I
+    Tier: 1
+    BaseValue: 260
+    Sellable: 0
+    GoodCopies: 1
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: The Whitmore Book of Hours
+    Format: 0
+    Author: Brother Anselm
+    Subject: Philosophy
+    Topic: Manuscripts
+    Tag: Rare
+    Abstract: A tiny prayer book with gold-leaf margins and a cat doodled in one corner.
+    ShelfLocation: RARE-II
+    Tier: 2
+    BaseValue: 480
+    Sellable: 0
+    GoodCopies: 1
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: The Printer's First Proof
+    Format: 0
+    Author: Whitmore Press
+    Subject: History
+    Topic: Early prints
+    Tag: Rare
+    Abstract: The first page ever printed in Whitmore, typo and all.
+    ShelfLocation: RARE-II
+    Tier: 1
+    BaseValue: 240
+    Sellable: 0
+    GoodCopies: 1
     WornCopies: 0
     DamagedCopies: 0
   newTitles:
@@ -676,12 +732,12 @@ MonoBehaviour:
     Format: 0
     Author: Mira Solberg
     Subject: Science
+    Topic: Astronomy
     Tag: New Release
     Abstract: Tides, storms and the stars, as logged by three generations of lighthouse keepers.
     ShelfLocation: SCI
     Tier: 0
     BaseValue: 28
-    Popularity: 3
     Sellable: 1
     GoodCopies: 0
     WornCopies: 0
@@ -690,26 +746,26 @@ MonoBehaviour:
     Format: 0
     Author: Theo Abernathy
     Subject: Science
+    Topic: Engineering
     Tag: New Release, Best Seller
     Abstract: How clocks, looms and music boxes taught us to build computers.
     ShelfLocation: SCI
     Tier: 0
     BaseValue: 32
-    Popularity: 5
     Sellable: 1
     GoodCopies: 0
     WornCopies: 0
     DamagedCopies: 0
-  - Title: The Salt Road
+  - Title: Camels and Caravans
     Format: 0
     Author: Amina Yusuf
     Subject: History
+    Topic: Trade
     Tag: New Release
     Abstract: The traders, camels and cities of the great desert salt routes.
     ShelfLocation: HIS
     Tier: 0
     BaseValue: 26
-    Popularity: 4
     Sellable: 1
     GoodCopies: 0
     WornCopies: 0
@@ -718,12 +774,12 @@ MonoBehaviour:
     Format: 0
     Author: Elspeth Carrow
     Subject: History
+    Topic: Empires
     Tag: New Release, Best Seller
     Abstract: Five forgotten rulers who held river kingdoms together.
     ShelfLocation: HIS
     Tier: 0
     BaseValue: 30
-    Popularity: 5
     Sellable: 1
     GoodCopies: 0
     WornCopies: 0
@@ -732,12 +788,12 @@ MonoBehaviour:
     Format: 0
     Author: Jonas Petrov
     Subject: History
+    Topic: Local history
     Tag: New Release
     Abstract: Twelve months, twelve towns, and the ordinary people who changed them.
     ShelfLocation: HIS
     Tier: 0
     BaseValue: 24
-    Popularity: 1
     Sellable: 1
     GoodCopies: 0
     WornCopies: 0
@@ -746,12 +802,12 @@ MonoBehaviour:
     Format: 0
     Author: "Luc\xEDa Ortega"
     Subject: Math
+    Topic: Geometry
     Tag: New Release
     Abstract: Fractals, ripples and the hidden maths of weather.
     ShelfLocation: MATH
     Tier: 0
     BaseValue: 27
-    Popularity: 4
     Sellable: 1
     GoodCopies: 0
     WornCopies: 0
@@ -760,12 +816,12 @@ MonoBehaviour:
     Format: 0
     Author: Raymond Achebe
     Subject: Math
+    Topic: Arithmetic
     Tag: New Release, Best Seller
     Abstract: How nothing became the most useful number in the world.
     ShelfLocation: MATH
     Tier: 0
     BaseValue: 29
-    Popularity: 5
     Sellable: 1
     GoodCopies: 0
     WornCopies: 0
@@ -774,12 +830,12 @@ MonoBehaviour:
     Format: 0
     Author: Hana Kobayashi
     Subject: Philosophy
+    Topic: Ethics
     Tag: New Release
     Abstract: How to disagree well, from ancient debates to the dinner table.
     ShelfLocation: PHI
     Tier: 0
     BaseValue: 25
-    Popularity: 3
     Sellable: 1
     GoodCopies: 0
     WornCopies: 0
@@ -788,12 +844,12 @@ MonoBehaviour:
     Format: 0
     Author: Samuel Okoro
     Subject: Philosophy
+    Topic: Reflection
     Tag: New Release, Best Seller
     Abstract: Short essays on what really matters, and why small things count.
     ShelfLocation: PHI
     Tier: 0
     BaseValue: 31
-    Popularity: 5
     Sellable: 1
     GoodCopies: 0
     WornCopies: 0
@@ -802,12 +858,12 @@ MonoBehaviour:
     Format: 0
     Author: Edith Marlowe
     Subject: Philosophy
+    Topic: Wellbeing
     Tag: New Release
     Abstract: A retired librarian's warm advice on books, people and patience.
     ShelfLocation: PHI
     Tier: 0
     BaseValue: 23
-    Popularity: 4
     Sellable: 1
     GoodCopies: 0
     WornCopies: 0
@@ -816,12 +872,12 @@ MonoBehaviour:
     Format: 0
     Author: Oskar Lind
     Subject: History
+    Topic: Geography
     Tag: New Release
     Abstract: Every island that sailors swore was real, and the maps that drew them.
     ShelfLocation: HIS
     Tier: 0
     BaseValue: 28
-    Popularity: 2
     Sellable: 1
     GoodCopies: 0
     WornCopies: 0
@@ -830,13 +886,84 @@ MonoBehaviour:
     Format: 0
     Author: Priyanka Rao
     Subject: Math
+    Topic: Arithmetic
     Tag: New Release
     Abstract: 'From shepherds to satellites: the numbers behind the night sky.'
     ShelfLocation: MATH
     Tier: 0
     BaseValue: 26
-    Popularity: 4
     Sellable: 1
+    GoodCopies: 0
+    WornCopies: 0
+    DamagedCopies: 0
+  rareFinds:
+  - Title: The Astronomer's Lost Ledger
+    Format: 0
+    Author: Hassan al-Nur
+    Subject: Science
+    Topic: Star charts
+    Tag: Rare
+    Abstract: Night-by-night notes on a comet nobody else ever saw.
+    ShelfLocation: RARE-I
+    Tier: 2
+    BaseValue: 520
+    Sellable: 0
+    GoodCopies: 0
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: The Drowned Coast Atlas
+    Format: 0
+    Author: Elias Whitmore
+    Subject: History
+    Topic: Maps & charts
+    Tag: Rare
+    Abstract: Maps of a coastline the sea has since taken back.
+    ShelfLocation: RARE-I
+    Tier: 1
+    BaseValue: 300
+    Sellable: 0
+    GoodCopies: 0
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: The Lantern Psalms
+    Format: 0
+    Author: Unknown
+    Subject: Philosophy
+    Topic: Manuscripts
+    Tag: Rare
+    Abstract: Hymns copied by lantern light through the long winter of 1610.
+    ShelfLocation: RARE-II
+    Tier: 1
+    BaseValue: 340
+    Sellable: 0
+    GoodCopies: 0
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: Euclid in Bengali
+    Format: 0
+    Author: Pandit H. Roy
+    Subject: Math
+    Topic: Early prints
+    Tag: Rare
+    Abstract: The first Bengali printing of Euclid, its margins full of a student's notes.
+    ShelfLocation: RARE-II
+    Tier: 1
+    BaseValue: 320
+    Sellable: 0
+    GoodCopies: 0
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: The Whitmore Charter
+    Format: 0
+    Author: Elias Whitmore
+    Subject: History
+    Topic: Founding papers
+    Tag: Rare
+    Abstract: The library's founding charter, signed with a very large flourish.
+    ShelfLocation: RARE-II
+    Tier: 2
+    BaseValue: 450
+    Sellable: 0
     GoodCopies: 0
     WornCopies: 0
     DamagedCopies: 0

@@ -3,7 +3,8 @@ using UnityEngine;
 
 /// <summary>
 /// The line at the front desk. Place it where the first customer should stand,
-/// facing the desk; the queue grows backwards from there.
+/// facing the desk; the queue grows backwards from there, along <see cref="path"/> if it has points
+/// (straight out from the desk, then along the front wall, so a long line stays out of the doorway).
 /// Also holds the door points customers walk in from and leave to.
 /// </summary>
 public class CounterQueue : MonoBehaviour
@@ -13,6 +14,9 @@ public class CounterQueue : MonoBehaviour
     public Transform entrance;
     public Transform exit;
     public float spacing = 0.9f;
+    [Tooltip("Where the line bends, in order after the front spot (e.g. a corner, then the end of the line). " +
+             "Spots are laid along these points; a longer line carries on past the last one. Empty = straight back from the desk.")]
+    public Transform[] path;
 
     readonly List<Customer> line = new List<Customer>();
 
@@ -34,7 +38,45 @@ public class CounterQueue : MonoBehaviour
 
     public int IndexOf(Customer c) => line.IndexOf(c);
 
-    public Vector3 SlotPosition(int index) => transform.position - transform.forward * spacing * index;
+    /// <summary>Spot number index (0 = at the desk), spacing apart along the path.</summary>
+    public Vector3 SlotPosition(int index)
+    {
+        float d = index * spacing;
+        Vector3 from = transform.position, dir = -transform.forward;
+        if (path != null)
+            foreach (var p in path)
+            {
+                if (p == null) continue;
+                Vector3 seg = p.position - from;
+                seg.y = 0f;
+                float len = seg.magnitude;
+                if (len < 0.01f) continue;
+                dir = seg / len;
+                if (d <= len) return from + dir * d;
+                d -= len;
+                from = new Vector3(p.position.x, from.y, p.position.z);
+            }
+        return from + dir * d; // past the end: carry on the same way
+    }
+
+    /// <summary>How many spots fit before the end of the path (more just carry on past it).</summary>
+    public int PathSlots
+    {
+        get
+        {
+            float total = 0f;
+            Vector3 from = transform.position;
+            if (path != null)
+                foreach (var p in path)
+                {
+                    if (p == null) continue;
+                    var seg = p.position - from; seg.y = 0f;
+                    total += seg.magnitude;
+                    from = p.position;
+                }
+            return Mathf.FloorToInt(total / spacing) + 1;
+        }
+    }
 
     /// <summary>Direction a waiting customer faces (toward the desk).</summary>
     public Quaternion FacingDesk => transform.rotation;
@@ -42,7 +84,17 @@ public class CounterQueue : MonoBehaviour
     void OnDrawGizmos()
     {
         Gizmos.color = new Color(1f, 0.7f, 0.3f);
-        for (int i = 0; i < 4; i++) Gizmos.DrawWireSphere(SlotPosition(i) + Vector3.up * 0.1f, 0.25f);
+        int n = path != null && path.Length > 0 ? PathSlots : 4;
+        for (int i = 0; i < n; i++) Gizmos.DrawWireSphere(SlotPosition(i) + Vector3.up * 0.1f, 0.25f);
         Gizmos.DrawRay(transform.position + Vector3.up * 0.1f, transform.forward);
+        // The path itself.
+        Vector3 from = transform.position;
+        if (path != null)
+            foreach (var p in path)
+            {
+                if (p == null) continue;
+                Gizmos.DrawLine(from + Vector3.up * 0.1f, p.position + Vector3.up * 0.1f);
+                from = p.position;
+            }
     }
 }

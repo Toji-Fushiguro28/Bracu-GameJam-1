@@ -23,6 +23,33 @@ public class DeliveryCart : ClickInteractable
         return true;
     }
 
+    /// <summary>A delivered copy nobody has reserved (the cleaner shelves these; reserved ones wait here for you).</summary>
+    public bool HasUnreserved
+    {
+        get
+        {
+            foreach (var b in copies) if (Shelvable(b)) return true;
+            return false;
+        }
+    }
+
+    /// <summary>Not reserved, and not a rare book (you carry those yourself, e.g. for a VIP).</summary>
+    static bool Shelvable(BookData b)
+    {
+        var gm = GameManager.Instance;
+        return !BookRequest.IsRare(b) && (gm == null || !gm.reservations.Exists(r => r.title == b.Title));
+    }
+
+    /// <summary>The cleaner takes one unreserved copy off the cart to shelve it. False if every copy is reserved.</summary>
+    public bool TakeUnreserved(out BookData book)
+    {
+        book = copies.Find(Shelvable);
+        if (book == null) return false;
+        copies.Remove(book);
+        GameManager.Instance?.NotifyBooksChanged();
+        return true;
+    }
+
     /// <summary>True if this copy came off the cart, so it can be put back on it.</summary>
     public bool CameFromCart(BookData book) => takenOut.Contains(book);
 

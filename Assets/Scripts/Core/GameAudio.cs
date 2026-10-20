@@ -12,6 +12,8 @@ public class GameAudio : MonoBehaviour
 
     [Header("Economy")]
     public AudioClip coin;
+    [Tooltip("Each coin landing in the purse (top right).")]
+    public AudioClip coinAdd;
     public AudioClip buy;
     [Header("Customers")]
     public AudioClip customerArrives;

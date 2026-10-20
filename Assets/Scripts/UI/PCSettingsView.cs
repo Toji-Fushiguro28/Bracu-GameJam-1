@@ -25,14 +25,13 @@ public static class GameSettings
     }
 }
 
-/// <summary>PC "Settings" screen: volume, music, day length, fullscreen, new game.</summary>
+/// <summary>PC "Settings" screen: volume, music, fullscreen, main menu, new game. (The mode is only picked when a new game starts.)</summary>
 public static class PCSettingsView
 {
     static float confirmUntil, menuConfirmUntil;
 
-    public static void Wire(VisualElement root, Action back)
+    public static void Wire(VisualElement root)
     {
-        root.Q<Button>("back-button")?.RegisterCallback<ClickEvent>(_ => back());
         Refresh(root);
     }
 
@@ -43,15 +42,6 @@ public static class PCSettingsView
         Volume(list, root, "Volume", GameSettings.Master, v => GameSettings.Master = v);
         Volume(list, root, "Music", GameSettings.Music, v => GameSettings.Music = v);
 
-
-        var gm = GameManager.Instance;
-        if (gm != null)
-        {
-            var mode = Row(list, "Mode");
-            mode.Add(Value(gm.difficulty == GameManager.Difficulty.Standard ? "Standard (recommended)" : GameManager.DifficultyNames[(int)gm.difficulty]));
-            mode.Add(Button("<", () => { gm.SetDifficulty((GameManager.Difficulty)(((int)gm.difficulty + 2) % 3)); Refresh(root); }));
-            mode.Add(Button(">", () => { gm.SetDifficulty((GameManager.Difficulty)(((int)gm.difficulty + 1) % 3)); Refresh(root); }));
-        }
 
         var full = Row(list, "Fullscreen");
         full.Add(Value(Screen.fullScreen ? "On" : "Off"));
@@ -85,7 +75,9 @@ public static class PCSettingsView
     static void Volume(ScrollView list, VisualElement root, string name, int value, Action<int> set)
     {
         var row = Row(list, name);
-        row.Add(Button("-", () => { set(value - 1); Refresh(root); }));
+        var minus = Button("-", () => { set(value - 1); Refresh(root); });
+        minus.AddToClassList("vol");
+        row.Add(minus);
         var bar = new VisualElement();
         bar.AddToClassList("setting-bar");
         for (int i = 0; i < GameSettings.Steps; i++)
@@ -93,12 +85,15 @@ public static class PCSettingsView
             int v = i + 1;
             var pip = new VisualElement();
             pip.AddToClassList("setting-pip");
+            pip.style.height = 6 + i * 2; // a small pixel staircase, like a volume meter
             pip.EnableInClassList("on", i < value);
             pip.RegisterCallback<ClickEvent>(_ => { set(v == value ? 0 : v); Refresh(root); });
             bar.Add(pip);
         }
         row.Add(bar);
-        row.Add(Button("+", () => { set(value + 1); Refresh(root); }));
+        var plus = Button("+", () => { set(value + 1); Refresh(root); });
+        plus.AddToClassList("vol");
+        row.Add(plus);
     }
 
     static VisualElement Row(ScrollView list, string name)
@@ -123,6 +118,7 @@ public static class PCSettingsView
     {
         var b = new Button(onClick) { text = text };
         b.AddToClassList("pc-button");
+        b.AddToClassList("small");
         return b;
     }
 }

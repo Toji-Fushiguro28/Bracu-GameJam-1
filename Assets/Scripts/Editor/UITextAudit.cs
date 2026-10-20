@@ -29,13 +29,14 @@ public static class UITextAudit
                 bool ellipsis = t.resolvedStyle.textOverflow == TextOverflow.Ellipsis;
                 if (wraps)
                 {
-                    var need = t.MeasureTextSize(t.text, r.width, VisualElement.MeasureMode.Exactly, 0, VisualElement.MeasureMode.Undefined);
+                    // +2px: a label exactly as wide as its text can measure one rounding error short and "wrap".
+                    var need = t.MeasureTextSize(t.text, r.width + 2f, VisualElement.MeasureMode.Exactly, 0, VisualElement.MeasureMode.Undefined);
                     if (need.y > r.height + 3f) why = $"needs {need.y:0}px tall, has {r.height:0}";
                 }
-                else if (!ellipsis)
+                else
                 {
                     var need = t.MeasureTextSize(t.text, 0, VisualElement.MeasureMode.Undefined, 0, VisualElement.MeasureMode.Undefined);
-                    if (need.x > r.width + 3f) why = $"needs {need.x:0}px wide, has {r.width:0}";
+                    if (need.x > r.width + 3f) why = ellipsis ? $"cut short with '...' (needs {need.x:0}px, has {r.width:0})" : $"needs {need.x:0}px wide, has {r.width:0}";
                 }
                 // Poking out of its box (ignoring scroll views, whose content is meant to be bigger).
                 var box = t.parent;

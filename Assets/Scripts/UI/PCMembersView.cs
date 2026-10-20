@@ -22,9 +22,8 @@ public static class PCMembersView
     static Customer formFor;
     static Button dayButton, monthButton, yearButton;
 
-    public static void Wire(VisualElement root, Action back)
+    public static void Wire(VisualElement root)
     {
-        root.Q<Button>("back-button")?.RegisterCallback<ClickEvent>(_ => back());
         root.Q<Button>("card-issue")?.RegisterCallback<ClickEvent>(_ => Issue(root));
         BuildList(root);
         WireName(root);
@@ -37,26 +36,45 @@ public static class PCMembersView
         var list = root.Q<ScrollView>("members-list");
         if (list == null) return;
         list.Clear();
+        var count = root.Q<Label>("member-count");
+        if (count != null) count.text = Members.All.Count == 1 ? "1 member" : Members.All.Count + " members";
+        var no = root.Q<Label>("card-no");
+        if (no != null) no.text = $"No. {Members.All.Count + 1:0000}";
         if (Members.All.Count == 0)
-            list.Add(new Label("No members yet. Visitors who ask for a library card can sign up here.") { name = "member-empty" });
+        {
+            var empty = new Label("No members yet. Visitors who ask for a library card can sign up here.");
+            empty.AddToClassList("member-empty");
+            list.Add(empty);
+        }
         foreach (var m in Members.All)
         {
             var row = new VisualElement();
-            row.AddToClassList("pc-book");
-            row.Add(new Label(m.name) { name = "book-title" });
-            row.Add(new Label($"Born {m.dob}  ·  {m.access} access  ·  {m.visits} visits  ·  spent {m.spent}") { name = "book-sub" });
+            row.AddToClassList("mrow");
+            row.Add(Cell(m.name, "name"));
+            row.Add(Cell(m.dob, "born"));
+            row.Add(Cell(m.access.ToString(), "access"));
             var hearts = new VisualElement();
-            hearts.AddToClassList("member-hearts");
+            hearts.AddToClassList("happy");
             for (int i = 0; i < 5; i++)
             {
                 var h = new VisualElement();
-                h.AddToClassList("member-heart");
+                h.AddToClassList("heart"); // the kit's pixel heart, full or empty
                 h.EnableInClassList("empty", i >= m.Hearts);
                 hearts.Add(h);
             }
             row.Add(hearts);
+            row.Add(Cell(m.visits.ToString(), "num"));
+            row.Add(Cell(m.spent.ToString(), "num"));
             list.Add(row);
         }
+    }
+
+    static Label Cell(string text, string col)
+    {
+        var l = new Label(text);
+        l.AddToClassList("mcell");
+        l.AddToClassList(col);
+        return l;
     }
 
     // ---------------- Name ----------------
@@ -117,44 +135,41 @@ public static class PCMembersView
     static string Dob => $"{pickDay:00} {Months[pickMonth - 1]} {pickYear}";
     static bool DobReady => pickDay > 0 && pickMonth > 0 && pickYear > 0;
 
+    /// <summary>Day / Month / Year: pixel boxes that open a list showing six at a time.</summary>
     static void BuildDatePicker(VisualElement root)
     {
-        var box = root.Q("card-dob");
-        if (box == null) return;
-        box.Clear();
-        box.style.height = StyleKeyword.Auto;
-        box.style.alignItems = Align.Center;
-        dayButton = DateButton(box, () =>
+        dayButton = root.Q<Button>("dob-day");
+        monthButton = root.Q<Button>("dob-month");
+        yearButton = root.Q<Button>("dob-year");
+        yearButton?.AddToClassList("last");
+        dayButton?.RegisterCallback<ClickEvent>(_ =>
         {
             int days = DaysIn(pickMonth, pickYear);
             PickList.Open(dayButton, Enumerable.Range(1, 31).Select(d => d.ToString("00")).ToArray(), pickDay - 1,
-                i => { pickDay = i + 1; UpdateForm(root); }, true, i => i < days); // no 31 Apr
+                i => { pickDay = i + 1; UpdateForm(root); }, true, i => i < days, -1, null, 6); // no 31 Apr
         });
-        monthButton = DateButton(box, () => PickList.Open(monthButton, Months, pickMonth - 1, i => { pickMonth = i + 1; UpdateForm(root); }, true));
-        yearButton = DateButton(box, () =>
+        monthButton?.RegisterCallback<ClickEvent>(_ => PickList.Open(monthButton, Months, pickMonth - 1, i => { pickMonth = i + 1; UpdateForm(root); }, true, null, -1, null, 6));
+        yearButton?.RegisterCallback<ClickEvent>(_ =>
         {
             var years = Enumerable.Range(FirstYear, LastYear - FirstYear + 1).Select(y => y.ToString()).ToArray();
             // Nothing picked yet: open around 1980 rather than at 1930.
-            PickList.Open(yearButton, years, pickYear - FirstYear, i => { pickYear = FirstYear + i; UpdateForm(root); }, true, null, 1980 - FirstYear);
+            PickList.Open(yearButton, years, pickYear - FirstYear, i => { pickYear = FirstYear + i; UpdateForm(root); }, true, null, 1980 - FirstYear, null, 6);
         });
         DateLabels();
     }
 
     static void DateLabels()
     {
-        if (dayButton != null) dayButton.text = "Day: " + (pickDay > 0 ? pickDay.ToString("00") : "--");
-        if (monthButton != null) monthButton.text = "Month: " + (pickMonth > 0 ? Months[pickMonth - 1] : "--");
-        if (yearButton != null) yearButton.text = "Year: " + (pickYear > 0 ? pickYear.ToString() : "--");
+        SetDate(dayButton, pickDay > 0 ? pickDay.ToString("00") : null, "Day");
+        SetDate(monthButton, pickMonth > 0 ? Months[pickMonth - 1] : null, "Month");
+        SetDate(yearButton, pickYear > 0 ? pickYear.ToString() : null, "Year");
     }
 
-    static Button DateButton(VisualElement box, Action open)
+    static void SetDate(Button b, string value, string empty)
     {
-        var b = new Button(open);
-        b.AddToClassList("pc-button");
-        b.AddToClassList("pc-filter");
-        b.style.flexGrow = 1;
-        box.Add(b);
-        return b;
+        if (b == null) return;
+        b.text = value ?? empty;
+        b.EnableInClassList("empty", value == null);
     }
 
     // ---------------- Form ----------------
@@ -189,9 +204,6 @@ public static class PCMembersView
 
         string name = NormalizeName(typedName);
         bool nameOk = NameReady(typedName.Trim());
-        var preview = root.Q<Label>("card-preview");
-        if (preview != null)
-            preview.text = $"{(nameOk ? name : "-")}  ·  {(DobReady ? Dob : "-")}";
         root.Q<Button>("card-issue")?.SetEnabled(nameOk && DobReady && pickAccess != null);
     }
 
@@ -204,8 +216,8 @@ public static class PCMembersView
             var value = v;
             var b = new Button(() => { set(value); BuildForm(root); }) { text = value };
             b.AddToClassList("pc-button");
-            b.AddToClassList("card-option");
-            b.EnableInClassList("picked", get() == value);
+            b.AddToClassList("small");
+            b.EnableInClassList("primary", get() == value);
             box.Add(b);
         }
     }

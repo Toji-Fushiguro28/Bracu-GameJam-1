@@ -1,8 +1,25 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
-    <Style src="../UI Toolkit/PC.uss" />
-    <ui:VisualElement name="book-item" class="pc-book">
-        <ui:Label name="book-title" />
-        <ui:Label name="book-sub" />
-        <ui:Label name="book-meta" />
+    <ui:VisualElement name="book-item" class="book-row">
+        <ui:VisualElement class="book-row-text">
+            <ui:VisualElement class="title-row">
+                <ui:Label name="book-title" class="book-title" />
+                <ui:VisualElement name="book-badges" class="title-badges" />
+            </ui:VisualElement>
+            <ui:Label name="book-sub" class="book-sub" />
+            <ui:VisualElement class="book-meta">
+                <ui:VisualElement class="px-icon icon-shelf" />
+                <ui:Label name="meta-shelf" class="meta-text" />
+                <ui:Label name="meta-price-sep" text="·" class="meta-sep" />
+                <ui:VisualElement name="meta-coin" class="coin-icon" />
+                <ui:Label name="meta-price" class="meta-text" />
+                <ui:Label name="meta-dmg-sep" text="·" class="meta-sep" />
+                <ui:VisualElement name="meta-dmg-icon" class="px-icon icon-damaged" />
+                <ui:Label name="meta-dmg" class="meta-text bad" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement class="book-stock">
+            <ui:Label name="stock-n" class="stock-n font-title" />
+            <ui:Label name="stock-sub" class="stock-sub" />
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

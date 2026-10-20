@@ -33,6 +33,8 @@ public class DayStory : MonoBehaviour
         public string[] prefabs;    // who comes, first choice first (falls back to whoever is free)
         public string name;         // shown instead of their own name (people who aren't regulars)
         public string teaser;       // their bubble while they wait at the desk
+        public bool atDesk;         // essential (a twist starting, the inspector, the author, a job): they come to the counter.
+                                    // Otherwise they only want a chat: they wait around the library with a "?" over their head.
         public Func<Customer, DialogueAsset> talk;    // built when you click, so it can mention how the day is going
         public Action<Customer, string> after;        // gets the id of the last line shown (which choice you picked)
         public float lingerUntil;   // with next: they look around the shelves until this hour...
@@ -169,6 +171,7 @@ public class DayStory : MonoBehaviour
 
     void SetUpDay()
     {
+        RequestLog.EndTasks(); // yesterday's to-do list is over
         beats.Clear();
         popups.Clear();
         usedOpeners.Clear();
@@ -192,7 +195,7 @@ public class DayStory : MonoBehaviour
     {
         if (phase == GameManager.Phase.Open) return;
         powerOut = false;
-        if (leaking) { leaking = false; Unpoint(ref leakPointer); }
+        if (leaking) { leaking = false; Unpoint(ref leakPointer); RequestLog.TaskDone("leak", "The rain stopped"); }
         inspecting = false;
     }
 
@@ -266,7 +269,7 @@ public class DayStory : MonoBehaviour
 
     static void Reward(int coins, int reputation)
     {
-        if (coins > 0) { GM.AddCoins(coins); GM.Today.Earn(GameManager.DayStats.Source.Other, coins); }
+        if (coins > 0) { GM.AddCoins(coins); GM.Today.Earn(GameManager.DayStats.Source.Other, coins); RequestLog.Money("Today's event", "A thank-you for today's event", "Reward", coins); }
         if (reputation != 0) GM.AddReputation(reputation);
     }
 
@@ -277,7 +280,9 @@ public class DayStory : MonoBehaviour
         if (wp == null) return null;
         var el = new VisualElement();
         el.AddToClassList("staff-pointer");
-        el.Add(new Label(text) { name = "staff-pointer-label" });
+        var label = new Label(text == "?" ? "" : text) { name = "staff-pointer-label" };
+        label.EnableInClassList("ask", text == "?"); // the pixel question mark, as over their head
+        el.Add(label);
         var arrow = new VisualElement();
         arrow.AddToClassList("staff-pointer-arrow");
         el.Add(arrow);
@@ -342,7 +347,7 @@ public class DayStory : MonoBehaviour
                     after = (c, _) =>
                     {
                         if (c.Membership == null && Members.TryProfile(c.profileKey, out var profile)) c.ContinueAsSignUp();
-                        else ThenRead(c, b => $"Something to sit with for an hour. \"{b.Title}\", if it's in.");
+                        else ThenRead(c, b => $"Something to sit with for an hour. <color=#D67840>\"{b.Title}\"</color>, if it's in.");
                     },
                 });
                 VisitAt(15.75f, new Visit
@@ -424,7 +429,7 @@ public class DayStory : MonoBehaviour
                         .Say("A librarian who... no. I'll jinx it.", "about")
                         .Say("Could you find me something with good sentences? I'm going to steal one. Just one. A small one.", "book")
                         .d,
-                    after = (c, _) => ThenRead(c, b => $"Something with good sentences to steal. \"{b.Title}\", if it's in?"),
+                    after = (c, _) => ThenRead(c, b => $"Something with good sentences to steal. <color=#D67840>\"{b.Title}\"</color>, if it's in?"),
                 });
                 VisitAt(16f, new Visit
                 {
@@ -480,11 +485,11 @@ public class DayStory : MonoBehaviour
                                .Select(b => b.Subject).Where(s => !string.IsNullOrEmpty(s)).Distinct().ToList();
         if (subjects.Count > 0) examSubject = subjects[UnityEngine.Random.Range(0, subjects.Count)];
         string s = examSubject;
-        bool OnSubject(BookData b) => b.Subject == s;
+        bool OnSubject(BookData b) => b.Subject == s && !BookRequest.IsArchive(b) && !BookRequest.IsRare(b);
 
         VisitAt(9.25f, new Visit
         {
-            prefabs = Student("PF_NPC_Student_Nadia", "PF_NPC_Student_Leila"), teaser = "Please tell me you're open all day.",
+            prefabs = Student("PF_NPC_Student_Nadia", "PF_NPC_Student_Leila"), teaser = "Please tell me you're open all day.", atDesk = true,
             talk = c => new Script()
                 .Say($"Okay. So. The whole of second year has a {s} exam tomorrow, and the department library's shut for \"carpet reasons\".")
                 .Say("Nobody knows what carpet reasons are. But everyone's coming here instead.")
@@ -497,7 +502,8 @@ public class DayStory : MonoBehaviour
             after = (c, _) =>
             {
                 Banner($"Exam rush from 10:00 AM to 1:30 PM: students want {s} books!", 7f);
-                ThenRead(c, b => $"Right, starting with me. Have you got \"{b.Title}\"? I need to read it here. Now. Immediately.", OnSubject);
+                RequestLog.Task("exam", "Exam rush", $"Students want {BookRequest.H(s)} books from 10:00 to 1:30. Keep that shelf stocked."); 
+                ThenRead(c, b => $"Right, starting with me. Have you got <color=#D67840>\"{b.Title}\"</color>? I need to read it here. Now. Immediately.", OnSubject);
             },
         });
         Do(RushStart, () => Banner($"The exam rush has started! Keep the {s} books coming."));
@@ -519,7 +525,7 @@ public class DayStory : MonoBehaviour
                                                             Line = $"Anything on {s}, please. Short. With pictures, if you've got it." }, false);
             },
         });
-        Do(RushEnd, () => Banner("The exam rush is over. Deep breaths."));
+        Do(RushEnd, () => { Banner("The exam rush is over. Deep breaths."); RequestLog.TaskDone("exam", "The students survived"); });
         VisitAt(15f, new Visit
         {
             prefabs = Student("PF_NPC_Student_Nadia", "PF_NPC_Student_Leila"), teaser = "Update. Big update.",
@@ -546,7 +552,7 @@ public class DayStory : MonoBehaviour
     {
         VisitAt(9.3f, new Visit
         {
-            prefabs = Old(Bernard), teaser = "You'll want to hear this.",
+            prefabs = Old(Bernard), teaser = "You'll want to hear this.", atDesk = true,
             talk = c => new Script()
                 .Say("Keep your eyes peeled today. Somebody's been pinching books. Did the charity shop on Fenn Street on Tuesday and the dentist's waiting room yesterday.")
                 .Say("Who nicks from a dentist? Those magazines are from 2009.")
@@ -555,7 +561,11 @@ public class DayStory : MonoBehaviour
                 .Say("Long coat, collar up, if you see them. Don't be a hero. Well. Be a little bit of a hero.", "thanks")
                 .Me("If a stranger in a long coat heads for the door with a book they haven't checked out, click them before they get out", "tip")
                 .d,
-            after = (c, _) => Banner("Book thief about! Stop the stranger in a long coat before they reach the door.", 7f),
+            after = (c, _) =>
+            {
+                Banner("Book thief about! Stop the stranger in a long coat before they reach the door.", 7f);
+                RequestLog.Task("thief", "Book thief", "Watch for a stranger in a long coat leaving with a book. Click them before they reach the door.");
+            },
         });
         Try(11f, () => SpawnThief(11f));
         VisitAt(12.5f, new Visit
@@ -569,7 +579,7 @@ public class DayStory : MonoBehaviour
                 .Say("I literally just told you about the knee.", "tackle")
                 .Say("Find me something to read while I keep watch? Something short, in case it all kicks off.", "book")
                 .d,
-            after = (c, _) => ThenRead(c, b => $"Something to read while I watch the door. \"{b.Title}\", maybe?"),
+            after = (c, _) => ThenRead(c, b => $"Something to read while I watch the door. <color=#D67840>\"{b.Title}\"</color>, maybe?"),
         });
         Try(14.5f, () => SpawnThief(14.5f));
         VisitAt(16.25f, new Visit
@@ -591,7 +601,11 @@ public class DayStory : MonoBehaviour
                      .Say("They'll be back. And next time you'll know the coat.");
                 return s.d;
             },
-            after = (c, _) => { if (thievesSeen > 0 && thievesEscaped == 0) Reward(0, 1); },
+            after = (c, _) =>
+            {
+                if (thievesSeen > 0 && thievesEscaped == 0) Reward(0, 1);
+                RequestLog.TaskDone("thief", thievesSeen == 0 ? "They never showed" : $"Caught {thievesCaught}, got away {thievesEscaped}");
+            },
         });
     }
 
@@ -622,7 +636,7 @@ public class DayStory : MonoBehaviour
         Unpoint(ref thiefPointer);
         thief = null;
         Reward(0, 1);
-        string t = book != null ? $"\"{book.Title}\"" : "the book";
+        string t = book != null ? $"<color=#D67840>\"{book.Title}\"</color>" : "the book";
         var s = new Script(ThiefName);
         switch (UnityEngine.Random.Range(0, 3))
         {
@@ -652,7 +666,7 @@ public class DayStory : MonoBehaviour
         if (thief == c) thief = null;
         GM.AddReputation(-1);
         GM.NotifyBooksChanged();
-        Banner(book != null ? $"The stranger got away with \"{book.Title}\"! -1 reputation." : "The stranger got away! -1 reputation.", 6f);
+        Banner(book != null ? $"The stranger got away with <color=#D67840>\"{book.Title}\"</color>! -1 reputation." : "The stranger got away! -1 reputation.", 6f);
     }
 
     // ---------------- Leaky roof ----------------
@@ -670,7 +684,7 @@ public class DayStory : MonoBehaviour
     {
         VisitAt(9.3f, new Visit
         {
-            prefabs = Old(Gus), teaser = "Chucking it down out there.",
+            prefabs = Old(Gus), teaser = "Chucking it down out there.", atDesk = true,
             talk = c => new Script()
                 .Say("It's chucking it down out there. Proper sideways rain. My hood's given up.")
                 .Say("Your gutters are full of leaves, by the way. I could see from the bus. Water backs up like that, it finds a way in somewhere.")
@@ -712,6 +726,7 @@ public class DayStory : MonoBehaviour
                 leaking = false;
                 Unpoint(ref leakPointer);
                 Banner("The leak's stopped.");
+                RequestLog.TaskDone("leak", soaked > 0 ? $"{soaked} soaked" : "No books soaked");
             },
         });
     }
@@ -732,6 +747,7 @@ public class DayStory : MonoBehaviour
         var shelf = leakShelf;
         leakPointer = Point("Leak!", () => shelf != null ? shelf.TopAnchor + Vector3.up * 0.4f : Vector3.zero);
         Banner($"Leak! Water is dripping on the {LeakShelfName} shelf. Click it to save the books!", 7f);
+        RequestLog.Task("leak", "Leaky roof", $"Water is dripping on the {BookRequest.H(LeakShelfName)} shelf. Click the shelf to move the books.");
         Popup(() => new Script()
             .Me($"Plink. ... Plink. Water is dripping onto the {LeakShelfName} shelf!")
             .Me("Click that shelf to move the books and put the bin under the drip. Every few minutes it drips, another book gets soaked"));
@@ -750,7 +766,7 @@ public class DayStory : MonoBehaviour
         book.AddCopy(BookCondition.Damaged);
         soaked++;
         GM.NotifyBooksChanged();
-        Banner($"\"{book.Title}\" got soaked!", 3f);
+        Banner($"<color=#D67840>\"{book.Title}\"</color> got soaked!", 3f);
     }
 
     /// <summary>The player clicked a shelf: if it's the leaking one, they deal with the leak (instead of browsing).</summary>
@@ -759,6 +775,7 @@ public class DayStory : MonoBehaviour
         if (!leaking || shelf != leakShelf) return false;
         leaking = false;
         Unpoint(ref leakPointer);
+        RequestLog.TaskDone("leak", soaked > 0 ? $"Fixed, {soaked} soaked" : "Fixed, no books soaked");
         GameAudio.Play(a => a.tidy);
         var s = new Script().Me("You shuffle the books along and wedge the waste bin under the drip. Plink. Plonk. Plonk is better");
         if (soaked > 0) s.Me($"{soaked} {S(soaked, "book", "books")} got soaked. Take {S(soaked, "it", "them")} to the Repair desk to dry out and mend");
@@ -779,7 +796,7 @@ public class DayStory : MonoBehaviour
     {
         VisitAt(9.3f, new Visit
         {
-            prefabs = new[] { Dean }, name = "Edgar Whitmore", teaser = "A quick word, before it gets busy.",
+            prefabs = new[] { Dean }, name = "Edgar Whitmore", teaser = "A quick word, before it gets busy.", atDesk = true,
             talk = c => new Script()
                 .Say("A quick word. The board is sending an inspector at one o'clock. A Mr. Pryce.")
                 .Say("He once failed a bakery for having too much flour. In a bakery.")
@@ -789,7 +806,11 @@ public class DayStory : MonoBehaviour
                 .Say("I'd stay, but if I'm here he'll say I coached you. Which I am doing. Right now.", "go")
                 .Me("Inspection from 1:00 to 2:30. Tidy cups and books quickly, and don't let anyone walk out")
                 .d,
-            after = (c, _) => Banner("Inspection at 1:00 PM: keep it tidy and keep visitors happy until 2:30.", 7f),
+            after = (c, _) =>
+            {
+                Banner("Inspection at 1:00 PM: keep it tidy and keep visitors happy until 2:30.", 7f);
+                RequestLog.Task("inspection", "Inspection", "Mr. Pryce inspects from 1:00 to 2:30. Keep the floor tidy and don't let anyone walk out.");
+            },
         });
         VisitAt(11f, new Visit
         {
@@ -804,7 +825,7 @@ public class DayStory : MonoBehaviour
         });
         var verdictVisit = new Visit
         {
-            name = "Mr. Pryce", teaser = "Right. I've seen enough.",
+            name = "Mr. Pryce", teaser = "Right. I've seen enough.", atDesk = true,
             talk = c =>
             {
                 inspecting = false;
@@ -836,12 +857,13 @@ public class DayStory : MonoBehaviour
                 int r = verdict == "satisfactory" ? 3 : verdict == "concerns" ? -2 : 1;
                 GM.AddReputation(r);
                 Banner($"Inspection result: {verdict} ({(r > 0 ? "+" : "")}{r} reputation).", 6f);
+                RequestLog.TaskDone("inspection", $"Verdict: {verdict}");
             },
         };
         VisitAt(InspectFrom, new Visit
         {
             prefabs = new[] { "PF_NPC_Visitor_Arthur", "PF_NPC_Scholar_Omar", "PF_NPC_Professor_Victor", "PF_NPC_Professor_Edmund" },
-            name = "Mr. Pryce", teaser = "Pryce. From the board.",
+            name = "Mr. Pryce", teaser = "Pryce. From the board.", atDesk = true,
             talk = c => new Script()
                 .Say("Pryce. Board of Governors. I have a clipboard and ninety minutes.")
                 .Say("Carry on as normal. I'll just be looking. Don't mind me. Everyone minds me.")
@@ -888,13 +910,13 @@ public class DayStory : MonoBehaviour
     int signSold;
     static readonly HashSet<string> Women = new HashSet<string> { "Clara Bell", "Hazel Grant", "Mara Voss" };
 
-    string TitlesText => signTitles.Count == 0 ? "their books" : string.Join(" and ", signTitles.Select(t => $"\"{t}\""));
+    string TitlesText => signTitles.Count == 0 ? "their books" : string.Join(" and ", signTitles.Select(t => BookRequest.H($"\"{t}\"")));
 
     string StockText => string.Join(", ", signTitles.Select(t =>
     {
         var b = GM.FindTitle(t);
         int n = b != null ? b.GoodCopies + b.WornCopies : 0;
-        return $"\"{t}\" {(n > 0 ? "x" + n : "none")}";
+        return $"{BookRequest.H($"\"{t}\"")} {(n > 0 ? "x" + n : "none")}";
     }));
 
     void SetUpSigning()
@@ -916,16 +938,20 @@ public class DayStory : MonoBehaviour
 
         VisitAt(9.3f, new Visit
         {
-            prefabs = who, name = author, teaser = "Hello! You must be the librarian.",
+            prefabs = who, name = author, teaser = "Hello! You must be the librarian.", atDesk = true,
             talk = c => new Script()
                 .Say($"Hello! {author}. I'm signing books here at two o'clock. The Dean said it was all arranged.")
                 .Say("...He didn't tell you, did he. He does this. He did this at my last launch, and that was in his own house.")
                 .Choose("First I've heard of it, but you're welcome.", "kind", "He did not tell me, no.", "no")
                 .Say($"You're very kind. Have you got copies of {TitlesText}? People like to buy one to get it signed.", "kind", "stock")
                 .Say($"Classic Edgar. Have you at least got copies of {TitlesText}? People like to buy one to get it signed.", "no")
-                .Me($"On the shelves: {StockText}. Order more in the Shop: express gets here in 2 hours", "stock")
+                .Me($"On the shelves: {StockText}. Order more from the Catalogue: express gets here in 2 hours", "stock")
                 .d,
-            after = (c, _) => Banner($"Book signing at 2:00 PM! {author}'s fans will want {TitlesText}.", 7f),
+            after = (c, _) =>
+            {
+                Banner($"Book signing at 2:00 PM! {author}'s fans will want {TitlesText}.", 7f);
+                RequestLog.Task("signing", "Book signing", $"{BookRequest.H(author)} signs at 2:00 PM. Have {TitlesText} on the shelves (order more in the Catalogue).");
+            },
         });
         VisitAt(12.25f, new Visit
         {
@@ -937,12 +963,12 @@ public class DayStory : MonoBehaviour
             after = (c, _) =>
             {
                 var b = signTitles.Count > 0 ? GM.FindTitle(signTitles[0]) : null;
-                if (b != null) c.ContinueWithRequest(ByTitle(b, $"Could I buy \"{b.Title}\"? For the signing."), false);
+                if (b != null) c.ContinueWithRequest(ByTitle(b, $"Could I buy <color=#D67840>\"{b.Title}\"</color>? For the signing."), false);
             },
         });
         var farewell = new Visit
         {
-            name = author, teaser = "That's me done!",
+            name = author, teaser = "That's me done!", atDesk = true,
             talk = c =>
             {
                 int n = signSold;
@@ -958,13 +984,14 @@ public class DayStory : MonoBehaviour
             },
             after = (c, _) =>
             {
+                RequestLog.TaskDone("signing", $"{signSold} sold");
                 if (signSold >= 3) { Reward(25, 2); Banner($"{author} left a thank-you: +25 coins."); }
                 else if (signSold > 0) Reward(0, 1);
             },
         };
         VisitAt(SignStart, new Visit
         {
-            prefabs = who, name = author, teaser = "Right! Where do you want me?",
+            prefabs = who, name = author, teaser = "Right! Where do you want me?", atDesk = true,
             talk = c => new Script()
                 .Say("Right! Where do you want me? Near the door so people see me, but not so near they feel trapped.")
                 .Say("I've brought my own pen. Last time somebody lent me one and it was a crayon.")
@@ -990,6 +1017,7 @@ public class DayStory : MonoBehaviour
         Do(9.25f, () =>
         {
             Banner("Power cut from 12:00 to 2:00 PM: no computer. Learn where the books live!", 7f);
+            RequestLog.Task("power", "Power cut", "No power from 12:00 to 2:00 PM, so no computer. Find books by their shelves.");
             Popup(() => new Script("Note on the doormat")
                 .Say("EASTERN ELECTRIC. Planned maintenance at the Mill Road substation, 12:00 to 2:00 PM. We apologise for any inconvenience.")
                 .Me("It's dated three weeks ago. Somebody has been using it as a coaster")
@@ -1006,7 +1034,7 @@ public class DayStory : MonoBehaviour
                 .Say("I'm wearing two.", "jumper")
                 .Say("Can you find me something to read for when it happens? Something old. Old counts as spooky.", "book")
                 .d,
-            after = (c, _) => ThenRead(c, b => $"Something old for the dark. \"{b.Title}\"?"),
+            after = (c, _) => ThenRead(c, b => $"Something old for the dark. <color=#D67840>\"{b.Title}\"</color>?"),
         });
         Do(PowerOff, () =>
         {
@@ -1032,6 +1060,7 @@ public class DayStory : MonoBehaviour
         {
             powerOut = false;
             Banner("The power's back! The computer works again.");
+            RequestLog.TaskDone("power", "Power back");
             Popup(() => new Script()
                 .Me("The lights stutter, buzz, and come back on. A small cheer from the reading chairs. Someone by the window looks genuinely disappointed"));
         });
