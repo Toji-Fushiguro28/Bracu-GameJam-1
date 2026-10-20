@@ -54,6 +54,10 @@ public class ShelfUI : MonoBehaviour
         handTitle = doc.Q<Label>("hand-title");
         handSub = doc.Q<Label>("hand-sub");
         note = doc.Q<Label>("shelf-note");
+        // What the book you picked out is about (click a row).
+        about = new Label { name = "shelf-about" };
+        about.AddToClassList("shelf-about");
+        note.parent.Insert(note.parent.IndexOf(note), about);
         putBack = doc.Q<Button>("put-back");
         doc.Q<Button>("shelf-close")?.RegisterCallback<ClickEvent>(_ => Close());
         putBack?.RegisterCallback<ClickEvent>(_ => PutBack());
@@ -68,7 +72,7 @@ public class ShelfUI : MonoBehaviour
         PlayerLock.Lock(this);
         root.RemoveFromClassList("hidden");
         GameAudio.Play(a => a.panelOpen, 0.6f);
-        note.text = "";
+        note.text = ""; picked = null; ShowAbout(); // a fresh shelf: nothing picked yet
         Refresh();
     }
 
@@ -81,7 +85,7 @@ public class ShelfUI : MonoBehaviour
         PlayerLock.Lock(this);
         root.RemoveFromClassList("hidden");
         GameAudio.Play(a => a.panelOpen, 0.6f);
-        note.text = "";
+        note.text = ""; picked = null; ShowAbout();
         Refresh();
     }
 
@@ -118,6 +122,7 @@ public class ShelfUI : MonoBehaviour
             if (book.Tier != BookTier.Normal) sub += "  ·  " + book.Tier;
             var row = Row(book.Title, sub, GameManager.Instance != null && GameManager.Instance.IsPopular(book));
             row.EnableInClassList("has-damage", book.DamagedCopies > 0);
+            Pickable(row, book);
 
             // Main Take grabs the best copy; extra buttons let you pick a worn/damaged one on purpose.
             // Only greyed out when there are no copies; full hands are handled in Take().
@@ -167,6 +172,7 @@ public class ShelfUI : MonoBehaviour
                  : res != null ? $"Reserved for {res.name}{(res.urgent ? " (needs it today)" : "")}"
                  : $"Goes on {ShelfInteractable.NameOf(book.ShelfLocation)}";
             var row = Row(book.Title, sub, gm != null && gm.IsPopular(book));
+            Pickable(row, book);
             var buttons = new VisualElement();
             buttons.AddToClassList("take-col");
             buttons.Add(TakeButton("Take", true, () => TakeFromCart(book)));
@@ -201,6 +207,30 @@ public class ShelfUI : MonoBehaviour
             : carry.Capacity > 1 ? $"Take books from the left page. You can carry {carry.Capacity}." : "Take a book from the left page.";
         putBack.text = belongs > 1 ? $"Put back ({belongs})" : "Put back";
         putBack.SetEnabled(belongs > 0);
+    }
+
+    Label about;
+    BookData picked;
+
+    /// <summary>Clicking a row (not its buttons) shows what the book is about on the right page.</summary>
+    void Pickable(VisualElement row, BookData book)
+    {
+        row.EnableInClassList("picked", book == picked);
+        row.RegisterCallback<ClickEvent>(e =>
+        {
+            for (var t = e.target as VisualElement; t != null && t != row; t = t.parent) if (t is Button) return;
+            picked = book;
+            ShowAbout();
+            Refresh();
+        });
+    }
+
+    void ShowAbout()
+    {
+        if (about == null) return;
+        about.text = picked == null ? "" : string.IsNullOrEmpty(picked.Abstract)
+            ? $"{BookRequest.H(picked.Title)}: no description."
+            : $"{BookRequest.H(picked.Title)}: {picked.Abstract}";
     }
 
     VisualElement Row(string main, string sub, bool popular = false)

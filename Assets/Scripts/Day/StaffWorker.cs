@@ -11,7 +11,7 @@ using UnityEngine.AI;
 [RequireComponent(typeof(NavMeshAgent))]
 public class StaffWorker : MonoBehaviour
 {
-    enum State { ToChair, AtChair, ToBin, ToDesk, Repairing, Wander, Idle, ToMess, Cleaning, ToCollect, ToShelf, ToBinShelve, GoingHome, OffDuty, ToReport, Reporting, ToFetch }
+    enum State { ToChair, AtChair, ToBin, ToDesk, Repairing, Wander, Idle, ToMess, Cleaning, ToCollect, ToShelf, ToBinShelve, GoingHome, OffDuty, ToReport, Reporting, ToFetch, ToCart }
 
     public GameManager.StaffRole role;
     public SeatPoint chair;
@@ -130,18 +130,27 @@ public class StaffWorker : MonoBehaviour
             case State.ToCollect: if (Arrived()) CollectFinished(); break;
             case State.ToShelf: if (Arrived()) ShelveCarried(); break;
             case State.ToBinShelve: if (Arrived()) TakeReturnToShelve(); break;
+            case State.ToCart: if (Arrived()) TakeFromCart(); break;
             case State.GoingHome: if (Arrived()) { state = State.OffDuty; gameObject.SetActive(false); } break;
             case State.Wander: if (Arrived() || timer <= 0f) { state = State.Idle; timer = Random.Range(2f, 5f); } if (MessWaiting()) GoClean(); break;
             case State.Idle: if (MessWaiting()) GoClean(); else if (CleanerShelves()) { } else if (timer <= 0f) Wander(); break;
             case State.ToMess: UpdateToMess(); break;
             case State.Cleaning:
                 if (timer > 0f) break;
-                if (target != null && target.IsDirty) { earnedToday += target.CleanByStaff(); cleanedToday++; GameAudio.Play(a => a.tidy, 0.4f); }
+                if (target != null && target.IsDirty)
+                {
+                    bool book = target.kind == MessSpot.Kind.Book;
+                    earnedToday += target.CleanByStaff(); cleanedToday++; GameAudio.Play(a => a.tidy, 0.4f);
+                    HUD.StaffNote(book ? $"{Who} put a book back" : $"{Who} cleared away a cup");
+                }
                 target = null;
                 if (MessWaiting()) GoClean(); else Wander();
                 break;
         }
     }
+
+    /// <summary>Their first name, for the little notes on the left of the screen.</summary>
+    string Who => GameManager.StaffPerson[(int)role];
 
     bool Arrived() => agent.enabled && !agent.pathPending && agent.remainingDistance <= agent.stoppingDistance + 0.15f;
 
@@ -332,6 +341,7 @@ public class StaffWorker : MonoBehaviour
         var desk = RepairDesk.Instance;
         if (desk == null || !desk.TakeDone(out carried, out carriedCondition)) { GoToChair(); return; }
         repairedToday++;
+        HUD.StaffNote($"{Who} mended {BookRequest.H($"\"{carried.Title}\"")}");
         // A mended book is worth a fair bit, but capped: rare books (140-500) paid up to 200 a repair.
         earnedToday += perRepair + Mathf.Min(maxRepairBonus, Mathf.RoundToInt(carried.BaseValue * 0.4f));
         if (anim) { anim.PlayReachShelf(); anim.SetCarrying(true); }
@@ -344,6 +354,7 @@ public class StaffWorker : MonoBehaviour
         if (carried != null)
         {
             carried.AddCopy(carriedCondition);
+            HUD.StaffNote($"{Who} shelved {BookRequest.H($"\"{carried.Title}\"")}");
             carried = null;
             shelvedToday++;
             earnedToday += perShelved;
@@ -363,9 +374,22 @@ public class StaffWorker : MonoBehaviour
     /// <summary>Cleaner with nothing to tidy: puts good returned copies back on their shelves.</summary>
     bool CleanerShelves()
     {
-        if (role != GameManager.StaffRole.Cleaner || !CanWork || ReturnBin.Instance == null || !ReturnBin.Instance.HasGood) return false;
-        Walk(ReturnBin.Instance.transform.position, State.ToBinShelve);
-        return true;
+        if (role != GameManager.StaffRole.Cleaner || !CanWork) return false;
+        if (ReturnBin.Instance != null && ReturnBin.Instance.HasGood) { Walk(ReturnBin.Instance.transform.position, State.ToBinShelve); return true; }
+        // Then the deliveries: ordinary and express orders go on their shelves; reserved ones stay on the cart for you.
+        var cart = DeliveryCart.Instance;
+        if (cart != null && cart.HasUnreserved) { Walk(cart.transform.position, State.ToCart); return true; }
+        return false;
+    }
+
+    /// <summary>At the delivery cart: takes an unreserved copy and carries it to its shelf.</summary>
+    void TakeFromCart()
+    {
+        var cart = DeliveryCart.Instance;
+        if (cart == null || !cart.TakeUnreserved(out carried)) { carried = null; Wander(); return; }
+        carriedCondition = BookCondition.Good;
+        if (anim) { anim.PlayReachShelf(); anim.SetCarrying(true); }
+        GoToShelfFor(carried);
     }
 
     bool MessWaiting()

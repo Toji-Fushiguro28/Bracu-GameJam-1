@@ -61,19 +61,61 @@ public class BookRequest
     // Tags a customer can ask for, with how they'd say it.
     static readonly Dictionary<string, string> TagLines = new Dictionary<string, string>
     {
-        { "Best Seller", "What's your best seller right now?" },
-        { "New Arrival", "Anything new come in lately?" },
-        { "Classic", "I'd love a real classic." },
-        { "Textbook", "I need a proper textbook." },
-        { "English Literature", "Something from English literature, please." },
-        { "Reference", "I need a good reference book." },
-        { "Daily", "Today's paper, please." },
-        { "Weekly", "Do you have this week's paper?" },
-        { "Puzzles", "Anything with puzzles in it?" },
+        { "Best Seller", "What's your <color=#D67840>best seller</color> right now?" },
+        { "New Arrival", "Anything <color=#D67840>new</color> come in lately?" },
+        { "Classic", "I'd love a real <color=#D67840>classic</color>." },
+        { "Textbook", "I need a proper <color=#D67840>textbook</color>." },
+        { "English Literature", "Something from <color=#D67840>English literature</color>, please." },
+        { "Reference", "I need a good <color=#D67840>reference</color> book." },
+        { "Daily", "<color=#D67840>Today's paper</color>, please." },
+        { "Weekly", "Do you have <color=#D67840>this week's</color> paper?" },
+        { "Puzzles", "Anything with <color=#D67840>puzzles</color> in it?" },
     };
 
     public static bool IsRare(BookData b) => b.ShelfLocation != null && b.ShelfLocation.StartsWith("RARE");
     public static bool IsArchive(BookData b) => b.ShelfLocation != null && b.ShelfLocation.StartsWith("ARC");
+
+    // "Authors" nobody would ask for by name (old records, anonymous manuscripts).
+    static readonly HashSet<string> NoAuthor = new HashSet<string> { "Unknown", "Anonymous", "Various", "Whitmore Library" };
+    /// <summary>It has an author a visitor could ask for by name.</summary>
+    public static bool HasAuthor(BookData b) => b != null && !string.IsNullOrEmpty(b.Author) && !NoAuthor.Contains(b.Author);
+
+    static readonly string[] Sections = { "Science", "History", "Philosophy", "Math" };
+
+    /// <summary>What it is and where it lives, as a visitor would say it: "a Math book" (main shelves),
+    /// "an old record from the Archive", "one of the Rare Books", "a magazine".</summary>
+    public static string Kind(BookData b)
+    {
+        if (IsArchive(b)) return "an old record from the Archive";
+        if (IsRare(b)) return "one of the Rare Books";
+        if (b.Format == BookFormat.Book) return $"a {b.Subject} book";
+        return b.Format == BookFormat.ResearchPaper ? "a research paper" : $"a {b.FormatName.ToLowerInvariant()}";
+    }
+
+    /// <summary>A hint about what kind of item it is. Always true, but from Day 3 a visitor sometimes only half
+    /// remembers the shelf ("Science... or was it History?"): the right one is always one of the two.</summary>
+    public static string KindHint(BookData b)
+    {
+        var gm = GameManager.Instance;
+        bool mainShelf = b.Format == BookFormat.Book && !IsArchive(b) && !IsRare(b) && System.Array.IndexOf(Sections, b.Subject) >= 0;
+        if (mainShelf && (gm == null || gm.day >= 3) && Random.value < 0.2f)
+        {
+            var others = Sections.Where(s => s != b.Subject).ToArray();
+            string other = others[Random.Range(0, others.Length)];
+            bool rightFirst = Random.value < 0.5f;
+            return $"It's a {(rightFirst ? b.Subject : other)} book... or was it {(rightFirst ? other : b.Subject)}? One of those two.";
+        }
+        string kind = Kind(b);
+        if (IsArchive(b) || IsRare(b) || b.Format != BookFormat.Book)
+            return $"It's {kind}" + (string.IsNullOrEmpty(b.Topic) ? "." : $", filed under {b.SubjectName}."); // the catalogue's Subject
+        return Pick($"I think it's {kind}.", $"I'm fairly sure it's {kind}.", $"It's {kind}, if that helps.");
+    }
+
+    /// <summary>Asking by topic, worded for where it lives (Archive and Rare Books say so).</summary>
+    static string SubjectLine(BookData b) =>
+        IsArchive(b) ? $"Could I look at something from the {H("Archive")} on {H(b.SubjectName)}?"
+      : IsRare(b) ? $"May I see one of your {H("rare books")} on {H(b.SubjectName)}?"
+      : $"I need a good book on {H(b.SubjectName)}.";
 
     /// <summary>
     /// Builds a request for a random item that's on a shelf, or null if none.
@@ -112,7 +154,7 @@ public class BookRequest
                 var want = Weighted(missing, day);
                 var oos = new BookRequest { Target = want, Format = want.Format };
                 return Random.value < 0.6f
-                    ? Set(oos, HintType.Title, null, Pick($"Do you have \"{want.Title}\"?", $"I'm looking for \"{want.Title}\"."))
+                    ? Set(oos, HintType.Title, null, Pick($"Do you have {H($"\"{want.Title}\"")}?", $"I'm looking for {H($"\"{want.Title}\"")}."))
                     : About(oos);
             }
         }
@@ -133,7 +175,7 @@ public class BookRequest
         {
             var oos = new BookRequest { Target = item, Format = item.Format };
             return Random.value < 0.6f || day < 2
-                ? Set(oos, HintType.Title, null, Pick($"Do you have \"{item.Title}\"?", $"I'm looking for \"{item.Title}\"."))
+                ? Set(oos, HintType.Title, null, Pick($"Do you have {H($"\"{item.Title}\"")}?", $"I'm looking for {H($"\"{item.Title}\"")}."))
                 : About(oos);
         }
         var req = new BookRequest { Target = item, Format = item.Format };
@@ -157,18 +199,19 @@ public class BookRequest
                         ? Pick("Got a magazine I could flip through here?", "I'd love a magazine to read for a bit.")
                         : Pick("I'd love a magazine for the bus.", "Can I buy a magazine?"));
                 case BookFormat.Journal:
-                    return Set(req, HintType.FormatSubject, item.SubjectName, $"I need a journal on {item.SubjectName}.");
+                    return Set(req, HintType.FormatSubject, item.SubjectName, $"I need a {H("journal")} on {H(item.SubjectName)}.");
                 default:
-                    return Set(req, HintType.FormatSubject, item.SubjectName, $"I'm after a research paper on {item.SubjectName}.");
+                    return Set(req, HintType.FormatSubject, item.SubjectName, $"I'm after a {H("research paper")} on {H(item.SubjectName)}.");
             }
         }
 
-        // Books
-        if (simple) return r < 0.5f
-            ? Set(req, HintType.Author, item.Author, $"Do you have anything by {item.Author}?")
-            : Set(req, HintType.Subject, item.SubjectName, $"I need a good book on {item.SubjectName}.");
-        if (r < 0.3f) return Set(req, HintType.Author, item.Author, $"Do you have anything by {item.Author}?");
-        if (r < 0.55f) return Set(req, HintType.Subject, item.SubjectName, $"I need a good book on {item.SubjectName}.");
+        // Books (nobody asks for an old record "by Unknown": those are asked for by topic)
+        bool byAuthor = HasAuthor(item);
+        if (simple) return r < 0.5f && byAuthor
+            ? Set(req, HintType.Author, item.Author, $"Do you have anything by {H(item.Author)}?")
+            : Set(req, HintType.Subject, item.SubjectName, SubjectLine(item));
+        if (r < 0.3f && byAuthor) return Set(req, HintType.Author, item.Author, $"Do you have anything by {H(item.Author)}?");
+        if (r < 0.55f) return Set(req, HintType.Subject, item.SubjectName, SubjectLine(item));
         if (r < 0.8f && tags.Count > 0) return Tag(req, tags);
         return About(req);
     }
@@ -190,6 +233,9 @@ public class BookRequest
         return pool[pool.Count - 1];
     }
 
+    /// <summary>The highlight colour for the words that tell you which book (titles, authors, subjects, tags).</summary>
+    public static string H(string s) => $"<color=#D67840>{s}</color>";
+
     static BookRequest Set(BookRequest r, HintType hint, string value, string line)
     {
         r.Hint = hint; r.Value = value; r.Line = line;
@@ -206,8 +252,36 @@ public class BookRequest
     {
         string about = (r.Target.Abstract ?? r.Target.Title).TrimEnd('.');
         about = char.ToLowerInvariant(about[0]) + about.Substring(1);
-        string noun = r.Target.Format == BookFormat.Book ? "book" : r.Target.FormatName.ToLowerInvariant();
+        // The one word that gives it away: search it on the computer (the catalogue searches descriptions too).
+        string key = KeyWord(r.Target);
+        if (key != null) about = System.Text.RegularExpressions.Regex.Replace(about, $@"\b{System.Text.RegularExpressions.Regex.Escape(key)}\b", m => H(m.Value), System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        string noun = IsArchive(r.Target) ? "old record" : IsRare(r.Target) ? "rare book"
+                    : r.Target.Format == BookFormat.Book ? "book" : r.Target.FormatName.ToLowerInvariant();
         return Set(r, HintType.Abstract, null, $"I'm looking for that {noun} about {about}.");
+    }
+
+    static readonly HashSet<string> Common = new HashSet<string>
+    { "about", "after", "again", "their", "there", "these", "those", "which", "while", "where", "other", "every", "under", "through",
+      "could", "would", "should", "into", "from", "with", "that", "this", "what", "when", "your", "they", "them", "were", "have",
+      "been", "being", "some", "more", "most", "very", "just", "only", "also", "than", "then", "over", "each", "much", "many" };
+
+    /// <summary>The most telling word in a description: at least 4 letters, not a common one, and found in as few
+    /// other descriptions as possible (ideally only this one), so searching it finds the book.</summary>
+    public static string KeyWord(BookData b)
+    {
+        if (b == null || string.IsNullOrEmpty(b.Abstract)) return null;
+        var gm = GameManager.Instance;
+        var all = gm != null ? gm.Books.Concat(gm.NewTitles).ToList() : new List<BookData>();
+        string best = null;
+        int bestCount = int.MaxValue;
+        foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(b.Abstract, @"[A-Za-z']{4,}"))
+        {
+            string w = m.Value.Trim('\'').ToLowerInvariant();
+            if (w.Length < 4 || Common.Contains(w)) continue;
+            int count = all.Count(x => x != b && !string.IsNullOrEmpty(x.Abstract) && x.Abstract.ToLowerInvariant().Contains(w));
+            if (count < bestCount || (count == bestCount && best != null && w.Length > best.Length)) { best = w; bestCount = count; }
+        }
+        return best;
     }
 
     static string Pick(params string[] lines) => lines[Random.Range(0, lines.Length)];

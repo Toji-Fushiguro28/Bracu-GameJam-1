@@ -346,7 +346,7 @@ public class Tutorial : MonoBehaviour
 
     /// <summary>Every hint key (so a new game can forget them all).</summary>
     static readonly string[] HintKeys =
-        { "seeker", "soldout", "damaged", "staffhelp", "pickup", "vip", "delivery", "mess", "reader", "checkout", "returns", "wrongbook", "express" };
+        { "seeker", "soldout", "damaged", "staffhelp", "pickup", "vip", "delivery", "mess", "reader", "checkout", "returns", "wrongbook", "express", "ask" };
 
     readonly Queue<(string key, string text)> hints = new Queue<(string, string)>();
 

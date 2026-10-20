@@ -75,7 +75,9 @@ public static class PCSettingsView
     static void Volume(ScrollView list, VisualElement root, string name, int value, Action<int> set)
     {
         var row = Row(list, name);
-        row.Add(Button("-", () => { set(value - 1); Refresh(root); }));
+        var minus = Button("-", () => { set(value - 1); Refresh(root); });
+        minus.AddToClassList("vol");
+        row.Add(minus);
         var bar = new VisualElement();
         bar.AddToClassList("setting-bar");
         for (int i = 0; i < GameSettings.Steps; i++)
@@ -83,13 +85,15 @@ public static class PCSettingsView
             int v = i + 1;
             var pip = new VisualElement();
             pip.AddToClassList("setting-pip");
-            pip.style.height = 16 + i * 4; // a pixel staircase, like a volume meter
+            pip.style.height = 6 + i * 2; // a small pixel staircase, like a volume meter
             pip.EnableInClassList("on", i < value);
             pip.RegisterCallback<ClickEvent>(_ => { set(v == value ? 0 : v); Refresh(root); });
             bar.Add(pip);
         }
         row.Add(bar);
-        row.Add(Button("+", () => { set(value + 1); Refresh(root); }));
+        var plus = Button("+", () => { set(value + 1); Refresh(root); });
+        plus.AddToClassList("vol");
+        row.Add(plus);
     }
 
     static VisualElement Row(ScrollView list, string name)

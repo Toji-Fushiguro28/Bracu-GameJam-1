@@ -94,7 +94,8 @@ All of it is in `Core/GameManager.cs`, in the *Play mode* section:
 | Daily twists (Days 1-5) | `Day/DayStory.cs`: exam rush 10:00-1:30 (visitors x1.6, +25% readers, patience x0.9, exam subject asked x4); thief at 11:00 and 2:30 (walks out at 60% speed; caught +1 rep, escaped -1 and the copy is lost); leak at 11:00 (first soak after 0.5 h, then every 0.35 h, max 4 books); inspection 1:00-2:30 (satisfactory +3 / adequate +1 / concerns -2); signing 2:00-3:30 (visitors x1.5, author's books x3 and popular all day; 3+ sold = +25 coins +2 rep); power cut 12:00-2:00 (no PC, patience x1.3) |
 | Story rewards | `Day/DayStory.cs`: exam whip-round +20 coins +1 rep, Archive historian +1 rep, regulars' card on Day 5 +2 rep |
 | Staff mood | `Core/GameManager.cs` → `StaffMoodFactor` (0.7 + 0.1 x mood), rested day x1.25; changes in `Day/StaffHelp.cs` (paid +0.5, free -0.3, quick +0.2, reminder -0.15) and `Day/StaffTalk.cs` (chat +0.15, ignored -0.3) |
-| Special jobs | `Day/SpecialJobs.cs`: order bonus 15-40, VIP reward 40 (+2 rep), book club 3 copies + 15 bonus (+2 rep), due 3:00 / 4:00 PM |
+| Special jobs | `Day/SpecialJobs.cs`: order bonus 15-40, VIP reward 40 (+2 rep; a dealer book is repaid on top, back next day 1:30-3:30; never ordered -3 rep, not in hands -1), book club 3 copies + 15 bonus (+2 rep), due 3:00 / 4:00 PM. Dealer price: `GameManager.RarePrice` (value / 3) |
+| Staff cut | `Day/StaffTalk.cs` → `CutPercent` (25, never 0): what staff keep of their day's earnings at the end-of-day report |
 | Skill rewards | Right shelf: 10% of the book's value (3-10) + 1 rep, paid at once (`Customer.Chat`); perfect repair +5 coins + 1 rep (`RepairDesk.PerfectBonus`) |
 | The Dean's reputation goal | `Core/GameManager.cs` → `ReputationGoals` (Cozy 40 / Standard 60 / Busy 75), checked at the end of `EndingDay` (5). `GoalTier`: reached, close (60%+), missed |
 | Patience by day | `Core/GameManager.cs` → `PatienceDayFactor` (100% Days 1-2, 85% Day 3, 75% after) |

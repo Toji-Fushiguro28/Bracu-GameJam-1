@@ -93,10 +93,15 @@ public class StaffTalk : ClickInteractable
                 help.ReportDone();
                 if (worker.earnedToday > 0 && gm != null)
                 {
-                    gm.AddCoins(worker.earnedToday);
-                    gm.Today.Earn(GameManager.DayStats.Source.Staff, worker.earnedToday);
-                    RequestLog.Money(GameManager.StaffPerson[(int)role], "Handed over the day's earnings", "Staff report", worker.earnedToday);
-                    GameAudio.Play(a => a.coin);
+                    int handed = worker.earnedToday - Cut(worker.earnedToday); // they keep their cut
+                    gm.Today.staffKept += Cut(worker.earnedToday);
+                    if (handed > 0)
+                    {
+                        gm.AddCoins(handed);
+                        gm.Today.Earn(GameManager.DayStats.Source.Staff, handed);
+                        RequestLog.Money(GameManager.StaffPerson[(int)role], $"Handed over the day's earnings ({worker.earnedToday} coins, kept {Cut(worker.earnedToday)} as their {CutPercent}% cut)", "Staff report", handed);
+                        GameAudio.Play(a => a.coin);
+                    }
                     worker.earnedToday = 0;
                 }
                 StaffManager.Instance?.Dismiss(worker);
@@ -152,6 +157,11 @@ public class StaffTalk : ClickInteractable
         });
     }
 
+    /// <summary>Staff keep this share of what they earned when they hand it over at the end of the day.</summary>
+    const int CutPercent = 25;
+    /// <summary>Their cut: at least 1 coin, and they always hand something over (from 2 coins up).</summary>
+    static int Cut(int earned) => earned <= 0 ? 0 : earned == 1 ? 1 : Mathf.Clamp(Mathf.RoundToInt(earned * CutPercent / 100f), 1, earned - 1);
+
     /// <summary>A few words about today's work.</summary>
     string Report(StaffWorker w, StaffHelp help, bool ignored)
     {
@@ -163,7 +173,10 @@ public class StaffTalk : ClickInteractable
         string thanks = help.helpedToday > 1 ? $" Thanks for helping me out {help.helpedToday} times."
                       : help.helpedToday == 1 ? " Thanks for sorting out that problem." : "";
         string bye = role == GameManager.StaffRole.Cleaner ? " Night, boss!" : role == GameManager.StaffRole.Repairer ? " Goodnight!" : " Goodnight, my dear.";
-        string money = w.earnedToday > 0 ? $" Here's what came in from my work: <color=#D67840>{w.earnedToday} coins</color>." : "";
+        int cut = Cut(w.earnedToday);
+        string money = w.earnedToday <= 0 ? ""
+                     : w.earnedToday - cut > 0 ? $" My work brought in <color=#D67840>{w.earnedToday} coins</color>. I've kept my {CutPercent}% (<color=#D67840>{cut}</color>), so here's <color=#D67840>{w.earnedToday - cut} coins</color> for you."
+                     : $" My work brought in <color=#D67840>{w.earnedToday} coin</color>, and that's my cut, I'm afraid.";
         // How they feel about the job (their mood decides how fast they work).
         var gm = GameManager.Instance;
         float mood = gm != null ? gm.staffMood[(int)role] : 3f;

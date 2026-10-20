@@ -542,3 +542,60 @@ Small, contained edits. Please check them when merging:
 - That's `.kit-button` and the dialogue `.choice` in `GameUI.uss`, so it covers the main menu, How to Play, mode cards, settings, Day Report (its tabs: the selected one is orange), shelves, repair desk, notebook tabs (a new reservation turns the tab orange), tutorial and the interview scene. The PC uses the same sprites through `.pc-button` in `PC.uss`.
 - Hover text turns light (rgb 255,246,232) so it reads on orange; `MainMenu.uss` no longer turns hovered text orange.
 - The round cross close buttons (`.close-button`) and the hover prompt / speaker name tag (not buttons) keep their TravelBook art.
+
+## Story visitors who only want a chat wait around the library (`Customer`, `DayStory.Visit.atDesk`)
+- **Regular visitors are unchanged:** everyone queues at the counter as before.
+- **Story visits** (DayStory, SpecialJobs) are split: `atDesk = true` for the essential ones (each twist's introduction, the inspector and his verdict, the visiting author, special-job offers and the VIP's return), which queue at the counter. The rest only want a chat: they walk somewhere (`GoRoam` → `State.ToSpot` → `WaitHere`): a bookshelf, the newspaper / magazine racks, a chair (they sit) or the notice board, and wait with a "?" bubble and a silent "?" arrow at the screen edge (`DayStory.Point`) until you talk to them. They turn to face you when you come close. If they then ask for a book or a card (`ContinueWithRequest` / `ContinueAsSignUp`), they do it where they are.
+- **Conversation order** (at the counter): books in your hands first, then "Let me find it", "Could you give me a hint?", "When do you need it?" (sold out / seekers), "Sorry, we can't get that".
+- First-time tip "ask" explains the "?".
+
+## Finding books
+- **Highlights** (`BookRequest.H`, #D67840): titles, authors, subjects, the tag words and the key word of "about" requests, in visitors' lines (and so the notebook), story / job dialogue and banners.
+- **"About" requests** highlight their most telling word (`BookRequest.KeyWord`: 4+ letters, not common, found in the fewest other descriptions). The catalogue search now also matches **descriptions** and subjects, so typing that word finds the book.
+- **Shelf screen:** click a book's row to read its description on the right page (`ShelfUI.Pickable`).
+
+## Notebook "To do" (`RequestLog.Task` / `TaskDone` / `EndTasks`)
+- Today's events and accepted jobs are notebook entries ("To do"): exam rush, book thief, leak (which shelf), inspection, book signing, power cut, special order (until ordered), VIP request, book club. Ticked off with how it went (shown in the Log); anything left ends with the day.
+
+## Other fixes
+- PC: every open, after closing or minimising, resets the catalogue's search and filters (minimise still reopens on the same tab).
+- Members table: wider Access column and a gap before the hearts.
+- Settings: the volume steps are small pixel bars (10 px wide, 6-24 px tall, 2 px borders) with small -/+ buttons.
+- The book thief is always one of the men (`CustomerSpawner.ThiefLooks`), as the rumours describe him.
+- **Coins:** every coin landing in the purse plays `coin add sound` (`GameAudio.coinAdd`); more coins for more money (3 to 24, faster when there are many), so a big payday jingles away.
+- **Staff notes** (`HUD.StaffNote`): when a staff member tidies, mends, shelves or brings a scholar a book, a short line slides in on the left (a little above the middle) and fades after 2 s; up to 3 stack.
+- **The cleaner unloads deliveries:** with no mess and no good returns to shelve, Sam takes delivered copies off the book cart and shelves them (`StaffWorker.TakeFromCart`, `DeliveryCart.TakeUnreserved`). Normal and express orders both; any title someone has **reserved** (special orders too) stays on the cart for you to hand over. A "Sam shelved ..." note shows as usual.
+
+## The counter queue bends along the front wall (`CounterQueue.path`)
+- Spots are laid 0.9 m apart along a path: straight out from the desk between the ropes, then (`QueueBend`, z 1.9, just past the rope ends) right along the front wall to `QueueEnd` (x 27.2), about 1.2 m short of column 3 so people can walk round the end of the line. That's 11 spots; a longer line carries on the same way. Move the two child markers under the queue object to reshape it (gizmos show the spots and the path).
+- People in the line face the person ahead (only the front one faces the desk), and stand at a lower avoidance priority (80, others 50), so anyone walking past steers round them instead of getting stuck. The stuck watchdog still hops a queuer to their spot if needed.
+- NavMesh rebaked after the plants by the front door were removed (all 46 test routes complete).
+- **Show: Damaged** in the catalogue (and the Day Report shop) filters: titles with at least one damaged copy (`BookFilterBar.ShowMatches` case 5).
+- **Stamina recovers while you talk / use a screen:** `PlayerLock` switches `PlayerMover` off, so it notes when (`OnDisable`) and adds the recovered breath back when it's switched on again; `Stamina01` shows it filling meanwhile.
+- **Running again after running out:** once the meter is back to half (`PlayerMover.RunAgainAt` = 0.5), you can run on what's there; it used to wait for a full meter. While it's above zero and you're not exhausted, you can always run.
+
+## Subject filter (catalogue + Day Report shop)
+- Subject no longer needs a Type first. The list shows every group as a pickable orange row ("Science shelf: all", "History shelf: all", "Archive: all", "Newspapers: all"...), each with its detailed topics indented under it.
+- Pick a group row to see the whole shelf/type at once, or a topic to narrow down. Picking a Type is still there as an extra filter and trims the Subject list to that type (and clears Subject).
+- Values (`BookFilterBar.SubjectMatches`): `@Book:Science` = a book shelf, `@Archive` = a whole type, `Book|Astronomy` = one topic of one type. `SubjectLabel` turns them into button text.
+- `PickList.Open(..., group:)` marks rows that are pickable but styled like headings (`.picklist-group` in `PC.uss`).
+
+- Dialogue choices: while a choice is hovered (orange button) its <color> tags are stripped so the whole line reads white; they come back on leave (`DialogueUI.OnLineTyped`).
+
+## Honest requests and hints, rare dealer
+- Hints say what an item really is and where it lives (`BookRequest.Kind` / `KindHint`): "a Math book" only for the main shelves; Archive items say "an old record from the Archive, filed under Old maths"; Rare Books, newspapers, magazines, journals and papers say so too. Format hints name the shelf.
+- A little fuzziness, never wrong: from Day 3, 20% of section hints are "Science... or was it History?" (the right one is always one of the two).
+- Items with no real author (Unknown, Anonymous, Various, Whitmore Library: `BookRequest.HasAuthor`) are never asked for "by" that author; Archive/Rare topic requests say "from the Archive" / "one of your rare books". The exam rush only counts main-shelf books.
+- Rare books: 8 on the shelves now; `BookDatabase.rareFinds` holds 5 more the library can buy, one at a time.
+- VIP job (SpecialJobs): the scholar wants a rare book. Owned: have it in your hands at the desk at 3:00 PM. Not owned (45%, or always when no rare book is on a shelf, and only if no dealer order is pending): order it from the rare dealer in the PC Catalogue (top of the list, "VIP request" badge, Order only, no Express, any time that day, `GameManager.RarePrice` = a third of its value). It arrives on the book cart next morning (the cleaner leaves rare books on the cart). The promise is saved (`GameManager.vipPromise`) and the VIP comes back the next afternoon (1:30-3:30 PM).
+- When the VIP is back: in your hands -> they repay the dealer's price (if any) + 40, +2 reputation, then take it to the Rare Books room and read it (`Customer.ReadNow`), checking it back in like any reader (with the Rare Books attendant on duty, the attendant checks them in at their seat, so they don't come back to the counter). Ordering, taking it off the cart and handing it over are always the player's job. Never ordered -> -3 reputation. Ordered/owned but not in your hands -> -1. Either way they read another rare book in the Rare Books room instead of leaving (they leave only if none is on a shelf).
+- No second copy of a rare book can ever be bought: the dealer sells each once, the Catalogue/Day Report never order rare books, and `GameManager.OrderBook` refuses them.
+- Catalogue rows show the sale price (what a copy sells for); order prices stay on the Buy/Express buttons.
+- Renamed titles are mapped on load (`GameManager.RenamedTitles`) so old saves keep their copies. `BOOK_LIST.md` lists every title for checking.
+
+## Staff cut
+- At the end-of-day report each staff member keeps 25% of what their work earned (`StaffTalk.CutPercent`), never 0: at least 1 coin, and from 2 coins up they always hand at least 1 over. They say it: "My work brought in 60 coins. I've kept my 25% (15), so here's 45 coins for you." Only the handed-over part reaches your coins; the kept part is `DayStats.staffKept` (shown as a note in the Summary).
+
+## Day Report money
+- `DayStats` keeps a coin ledger: `coinsAtStart` (set when the day begins, before morning wages), `coinsIn` / `coinsOut` (every `AddCoins`), and `Spend(what, amount)` per kind. Spend through `GameManager.TrySpend(amount, "Book orders" / "Rare dealer" / "Upgrades" / "Staff hires" / "Staff training" / "Staff fixes" / "Repairs")`; wages are filed as "Staff wages". Anything spent without a label shows as "Other".
+- Report page ends with: Coins at the start of the day, Money in, Money out, **Coins now** (+ wages due tomorrow). Summary tab: where the money came from, where it went, and start + in - out = coins now. Buying in the evening refreshes both.

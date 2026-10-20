@@ -17,4 +17,8 @@ public class BookDatabase : ScriptableObject
     [Tooltip("Books the library doesn't own yet. Visitors ask for these; ordering one adds it to the library.")]
     public List<BookData> newTitles = new List<BookData>();
     public List<BookData> CreateNewTitlesCopy() => newTitles.Select(b => { var c = b.Clone(); c.NewRelease = true; return c; }).ToList();
+
+    [Tooltip("Rare books the library doesn't hold yet. Only a VIP request offers one, from the rare dealer in the PC Catalogue; once bought it stays in Rare Books.")]
+    public List<BookData> rareFinds = new List<BookData>();
+    public List<BookData> CreateRareFindsCopy() => rareFinds.Select(b => b.Clone()).ToList();
 }

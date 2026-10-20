@@ -37,6 +37,10 @@ public static class PCCatalogueView
     /// <summary>Copies can be ordered: not Rare Books, and not a room that's still locked.</summary>
     static bool CanOrder(BookData b) => b != null && !BookRequest.IsRare(b) && BookRequest.Available(b);
 
+    /// <summary>The rare book a VIP asked you to buy: the rare dealer sells it here until you do.</summary>
+    static bool Dealer(BookData b) => b != null && SpecialJobs.Instance != null && SpecialJobs.Instance.WantedRare == b;
+    static bool NotOwned(BookData b) => GM != null && (GM.IsNewTitle(b) || Dealer(b));
+
     public static void Wire(VisualElement page)
     {
         root = page;
@@ -86,7 +90,18 @@ public static class PCCatalogueView
     {
         var gm = GM;
         var b = selected;
-        if (gm == null || !CanOrder(b)) return;
+        if (gm == null) return;
+        if (Dealer(b))
+        {
+            if (!gm.BuyRare(b)) return;
+            GameAudio.Play(a => a.buy);
+            msg = "Ordered from the rare dealer! It arrives on the book cart tomorrow morning.";
+            msgGood = true;
+            Apply();
+            ShowDetails(b);
+            return;
+        }
+        if (!CanOrder(b)) return;
         if (!gm.OrderBook(b, express)) return;
         GameAudio.Play(a => a.buy);
         msg = express ? $"Express ordered! It reaches the book cart at {GameManager.FormatHour(gm.Hour + GameManager.ExpressHours)}."
@@ -108,8 +123,8 @@ public static class PCCatalogueView
             if (typeButton != null) typeButton.text = "Type: " + BookFilterBar.TypeNames[type];
             if (subjectButton != null)
             {
-                subjectButton.text = type == 0 ? "Subject: pick a type first" : "Subject: " + (subject ?? "All");
-                subjectButton.SetEnabled(type != 0);
+                subjectButton.text = "Subject: " + BookFilterBar.SubjectLabel(subject);
+                subjectButton.SetEnabled(true); // no need to pick a type first
             }
             if (showButton != null) showButton.text = "Show: " + BookFilterBar.Shows[show];
         }
@@ -124,12 +139,12 @@ public static class PCCatalogueView
         var gm = GM;
         string q = search.Trim().ToLowerInvariant();
         bool Popular(BookData b) => gm != null && gm.IsPopular(b);
-        bool New(BookData b) => gm != null && gm.IsNewTitle(b);
+        bool New(BookData b) => NotOwned(b);
         shown = BookFilterBar.Everything.Where(b =>
-                (q.Length == 0 || (b.Title ?? "").ToLowerInvariant().Contains(q) || (b.Author ?? "").ToLowerInvariant().Contains(q) || (b.Tag ?? "").ToLowerInvariant().Contains(q)) &&
+                (q.Length == 0 || Matches(b, q)) &&
                 BookFilterBar.TypeMatches(b, BookFilterBar.TypeNames[type], subject) &&
                 BookFilterBar.ShowMatches(show, b))
-            .OrderBy(b => New(b) ? 1 : 0).ThenBy(b => Popular(b) ? 0 : 1) // popular first, titles you don't have yet last
+            .OrderBy(b => Dealer(b) ? -1 : New(b) ? 1 : 0).ThenBy(b => Popular(b) ? 0 : 1) // a VIP's rare book on top, popular next, titles you don't have yet last
             .ToList();
         var count = root.Q<Label>("book-count");
         if (count != null) count.text = shown.Count == 1 ? "1 book" : shown.Count + " books";
@@ -142,6 +157,13 @@ public static class PCCatalogueView
         if (keep >= 0) list.SetSelectionWithoutNotify(new[] { keep });
     }
 
+    /// <summary>The search looks at the title, author, tags, subject and the description (so a word from an
+    /// "about" request finds the book).</summary>
+    static bool Matches(BookData b, string q) =>
+        (b.Title ?? "").ToLowerInvariant().Contains(q) || (b.Author ?? "").ToLowerInvariant().Contains(q) ||
+        (b.Tag ?? "").ToLowerInvariant().Contains(q) || (b.SubjectName ?? "").ToLowerInvariant().Contains(q) ||
+        (b.Abstract ?? "").ToLowerInvariant().Contains(q);
+
     static void BindRow(VisualElement el, int i)
     {
         if (i < 0 || i >= shown.Count) return;
@@ -150,7 +172,7 @@ public static class PCCatalogueView
         el.userData = b;
         var row = el.Q("book-item");
         bool popular = gm != null && gm.IsPopular(b);
-        bool notOwned = gm != null && gm.IsNewTitle(b);
+        bool notOwned = NotOwned(b);
         row.EnableInClassList("epic", b.Tier == BookTier.Epic);
         row.EnableInClassList("legendary", b.Tier == BookTier.Legendary);
         row.EnableInClassList("popular", popular && b.Tier == BookTier.Normal);
@@ -161,13 +183,14 @@ public static class PCCatalogueView
         if (popular) badges.Add(Badge("Popular", null));
         var res = gm != null ? gm.reservations.Find(r => r.title == b.Title) : null;
         if (res != null) badges.Add(Badge(res.urgent && res.day == gm.day ? "Reserved · TODAY" : "Reserved", res.urgent && res.day == gm.day ? "urgent" : null));
-        if (notOwned) badges.Add(Badge("New title", "new"));
+        if (Dealer(b)) badges.Add(Badge("VIP request", "urgent"));
+        else if (notOwned) badges.Add(Badge("New title", "new"));
 
         el.Q<Label>("book-sub").text = $"{b.Author}  ·  {b.SubjectName}";
         el.Q<Label>("meta-shelf").text = ShelfInteractable.NameOf(b.ShelfLocation);
-        bool priced = CanOrder(b) || (!BookRequest.IsRare(b) && b.Sellable);
+        bool priced = b.Sellable && !BookRequest.IsRare(b); // rare books are read here, never sold
         Show(el, "meta-price-sep", priced); Show(el, "meta-coin", priced); Show(el, "meta-price", priced);
-        if (priced) el.Q<Label>("meta-price").text = GameManager.OrderPrice(b, false).ToString();
+        if (priced) el.Q<Label>("meta-price").text = b.SaleValue.ToString(); // what a copy sells for
         bool dmg = b.DamagedCopies > 0;
         Show(el, "meta-dmg-sep", dmg); Show(el, "meta-dmg-icon", dmg); Show(el, "meta-dmg", dmg);
         if (dmg) el.Q<Label>("meta-dmg").text = $"{b.DamagedCopies} damaged";
@@ -224,7 +247,8 @@ public static class PCCatalogueView
         if (b == null) return;
 
         var gm = GM;
-        bool notOwned = gm != null && gm.IsNewTitle(b);
+        bool notOwned = NotOwned(b);
+        bool dealer = Dealer(b);
         bool popular = gm != null && gm.IsPopular(b);
         bool soldOut = !notOwned && !BookRequest.InStock(b);
 
@@ -232,7 +256,7 @@ public static class PCCatalogueView
         Set("detail-title", b.Title);
         Set("detail-author", "by " + b.Author);
         var stamp = root.Q<Label>("detail-stamp");
-        string stampText = notOwned ? "NEW TITLE" : soldOut ? "SOLD OUT" : popular ? "POPULAR" : null;
+        string stampText = dealer ? null : notOwned ? "NEW TITLE" : soldOut ? "SOLD OUT" : popular ? "POPULAR" : null;
         stamp.style.display = stampText != null ? DisplayStyle.Flex : DisplayStyle.None;
         stamp.text = stampText ?? "";
         stamp.EnableInClassList("gold", stampText != "SOLD OUT");
@@ -269,20 +293,21 @@ public static class PCCatalogueView
         }
 
         // Buttons
-        bool orderable = gm != null && CanOrder(b);
         bool closed = gm != null && gm.CurrentPhase == GameManager.Phase.Closed;
-        int price = orderable ? GameManager.OrderPrice(b, false) : 0, express = orderable ? GameManager.OrderPrice(b, true) : 0;
+        bool orderable = gm != null && (CanOrder(b) || dealer); // the dealer delivers tomorrow, so any time today
+        int price = dealer ? GameManager.RarePrice(b) : orderable ? GameManager.OrderPrice(b, false) : 0, express = orderable && !dealer ? GameManager.OrderPrice(b, true) : 0;
         var note = root.Q<Button>("detail-select");
         note.SetEnabled(!notOwned && !RequestLog.IsNoted(b));
         var buy = root.Q<Button>("detail-buy");
         var exp = root.Q<Button>("detail-express");
-        buy.style.display = exp.style.display = orderable ? DisplayStyle.Flex : DisplayStyle.None;
+        buy.style.display = orderable ? DisplayStyle.Flex : DisplayStyle.None;
+        exp.style.display = orderable && !dealer ? DisplayStyle.Flex : DisplayStyle.None; // the dealer's courier is one price
         root.Q<Label>("buy-price").text = price.ToString();
         root.Q<Label>("express-price").text = express.ToString();
         buy.SetEnabled(orderable && gm.Coins >= price);
         exp.SetEnabled(orderable && !closed && gm.Coins >= express);
         bool needs = res != null && !coming;
-        buy.EnableInClassList("primary", needs && !(res.urgent && res.day == gm.day));
+        buy.EnableInClassList("primary", dealer || (needs && !(res.urgent && res.day == gm.day)));
         exp.EnableInClassList("primary", needs && res.urgent && res.day == gm.day && !closed);
         exp.tooltip = closed ? "Express only runs while the library is open." : "Arrives in 2 hours.";
 
@@ -291,7 +316,8 @@ public static class PCCatalogueView
         if (text == null)
         {
             int onOrder = gm != null ? gm.OnOrder(b) : 0;
-            text = BookRequest.IsRare(b) ? "Rare Books stay in the library: they can't be ordered."
+            text = dealer ? $"Rare dealer: {SpecialJobs.Instance.VipName} asked for this (VIP request) and repays you when they come to read it. It arrives on the book cart tomorrow morning, and stays in Rare Books."
+                 : BookRequest.IsRare(b) ? "Rare Books stay in the library: they can't be ordered."
                  : !BookRequest.Available(b) ? "This room isn't open yet, so copies can't be ordered."
                  : notOwned ? "New title: costs a little more to order, and sells for more."
                  : closed && orderable ? "The library is closed: Express is off until tomorrow. Normal orders still arrive in the morning."

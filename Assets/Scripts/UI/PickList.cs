@@ -17,7 +17,7 @@ public static class PickList
     /// <paramref name="header"/> turns options into group headings (not pickable), and
     /// <paramref name="maxVisible"/> caps how many rows show before it scrolls (0 = as many as fit).</summary>
     public static void Open(Button button, string[] options, int current, Action<int> pick, bool pcStyle, Func<int, bool> enabled = null, int scrollTo = -1,
-                            Func<int, bool> header = null, int maxVisible = 0)
+                            Func<int, bool> header = null, int maxVisible = 0, Func<int, bool> group = null)
     {
         Close();
         if (button?.panel == null || options == null || options.Length == 0) return;
@@ -75,6 +75,7 @@ public static class PickList
             var item = new Button(() => { Close(); pick(index); }) { text = options[i] };
             item.AddToClassList(pcStyle ? "pc-button" : "kit-button");
             item.AddToClassList("picklist-item");
+            if (group != null && group(i)) item.AddToClassList("picklist-group"); // a whole group: pickable, styled like a heading
             item.style.marginTop = item.style.marginBottom = 1f;
             item.style.marginLeft = item.style.marginRight = 0f;
             item.style.unityTextAlign = TextAnchor.MiddleLeft;

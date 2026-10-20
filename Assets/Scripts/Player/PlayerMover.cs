@@ -32,7 +32,7 @@ public class PlayerMover : MonoBehaviour
     bool exhausted;
 
     /// <summary>0..1 meter. Running drains it; empty means a cooldown until it's full again.</summary>
-    public float Stamina01 => stamina;
+    public float Stamina01 => enabled || disabledAt < 0f ? stamina : Rested(Time.time - disabledAt).stamina; // still filling while you talk
     public bool Exhausted => exhausted;
     public bool Running { get; private set; }
 
@@ -52,7 +52,29 @@ public class PlayerMover : MonoBehaviour
         sprintAction = InputSystem.actions?.FindAction("Sprint");
     }
 
-    void OnEnable() { moveAction?.Enable(); sprintAction?.Enable(); }
+    void OnEnable()
+    {
+        moveAction?.Enable(); sprintAction?.Enable();
+        // Back from a conversation (or any screen): the breath you got back while standing there.
+        if (disabledAt >= 0f) { (stamina, recoverIn, exhausted) = Rested(Time.time - disabledAt); disabledAt = -1f; }
+    }
+
+    // PlayerLock switches this script off while you talk or use a screen; stamina keeps recovering meanwhile.
+    float disabledAt = -1f;
+
+    /// <summary>After running out of breath, you can run again once the meter is back to half.</summary>
+    const float RunAgainAt = 0.5f;
+    void OnDisable() => disabledAt = Time.time;
+
+    /// <summary>Stamina after standing still for this long (the recovery delay first, then refilling).</summary>
+    (float stamina, float recoverIn, bool exhausted) Rested(float seconds)
+    {
+        float s = stamina, wait = recoverIn;
+        float refill = seconds - Mathf.Max(0f, wait);
+        wait -= seconds;
+        if (refill > 0f) s = Mathf.Min(1f, s + Recovery * refill);
+        return (s, wait, exhausted && s < RunAgainAt);
+    }
 
     void UpdateStamina(bool sprinting)
     {
@@ -60,13 +82,13 @@ public class PlayerMover : MonoBehaviour
         {
             stamina -= Time.deltaTime / Mathf.Max(0.5f, MaxSeconds);
             recoverIn = recoveryDelay;
-            if (stamina <= 0f) { stamina = 0f; exhausted = true; } // out of breath: cooldown until full
+            if (stamina <= 0f) { stamina = 0f; exhausted = true; } // out of breath: walk until it's half back
             return;
         }
         recoverIn -= Time.deltaTime;
         if (recoverIn > 0f) return;
         stamina = Mathf.Min(1f, stamina + Recovery * Time.deltaTime);
-        if (exhausted && stamina >= 1f) exhausted = false;
+        if (exhausted && stamina >= RunAgainAt) exhausted = false;
     }
 
     void Update()

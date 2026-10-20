@@ -5,7 +5,8 @@ using UnityEngine.UIElements;
 
 /// <summary>
 /// Search box + Type / Subject / Show drop-downs, shared by the PC catalogue and the end-of-day shop.
-/// Subject stays greyed out until a Type is picked, then lists only that type's subjects.
+/// Subject works on its own: pick a whole shelf or type ("Science shelf: all") or one topic under it.
+/// Picking a Type as well just narrows the Subject list to that type.
 /// The search matches titles, authors and tags.
 /// </summary>
 public class BookFilterBar
@@ -61,58 +62,94 @@ public class BookFilterBar
         get
         {
             var gm = GameManager.Instance;
-            return gm == null ? BookData.Samples() : gm.Books.Concat(gm.NewTitles);
+            if (gm == null) return BookData.Samples();
+            var rare = SpecialJobs.Instance != null ? SpecialJobs.Instance.WantedRare : null; // the rare dealer's offer
+            return rare != null ? gm.Books.Concat(gm.NewTitles).Append(rare) : gm.Books.Concat(gm.NewTitles);
         }
     }
 
-    /// <summary>Opens the Subject list for a type: books grouped under their shelf, other types as a plain list.</summary>
+    /// <summary>Opens the Subject list. No need to pick a type first: every shelf (Science, History...) and every
+    /// other type (Archive, Newspapers...) is a group you can pick whole ("Science shelf: all"), with its topics
+    /// under it. With a Type picked, only that type's groups show. The value is a group ("@Book:Science",
+    /// "@Archive") or a topic within a type ("Book|Astronomy"); see <see cref="TypeMatches"/>.</summary>
     public static void OpenSubjects(Button button, string typeName, string current, Action<string> pick, bool pcStyle)
     {
-        var options = new List<string> { "All" };
-        var headers = new List<bool> { false };
-        var ofType = Everything.Where(b => b.TypeName == typeName).ToList();
-        if (typeName == "Book")
-            foreach (var section in Sections)
-            {
-                var subs = ofType.Where(b => b.Subject == section).Select(b => b.SubjectName).Distinct().OrderBy(s => s).ToList();
-                if (subs.Count == 0) continue;
-                options.Add(section + " shelf"); headers.Add(true);
-                foreach (var s in subs) { options.Add(s); headers.Add(false); }
-            }
-        else
-            foreach (var s in ofType.Select(b => b.SubjectName).Distinct().OrderBy(s => s)) { options.Add(s); headers.Add(false); }
-        int at = current == null ? 0 : options.IndexOf(current);
-        PickList.Open(button, options.ToArray(), at, i => pick(i == 0 ? null : options[i]), pcStyle, null, -1, i => headers[i]);
+        var options = new List<string> { "All subjects" };
+        var values = new List<string> { null };
+        var groups = new List<bool> { false };
+        bool anyType = typeName == null || typeName == "All";
+        var books = Everything.ToList();
+        void Group(string label, string value, IEnumerable<BookData> inGroup, string type)
+        {
+            var topics = inGroup.Select(b => b.SubjectName).Where(t => !string.IsNullOrEmpty(t)).Distinct().OrderBy(t => t).ToList();
+            if (topics.Count == 0) return;
+            options.Add(label + ": all"); values.Add(value); groups.Add(true);
+            foreach (var t in topics) { options.Add("   " + t); values.Add(type + "|" + t); groups.Add(false); }
+        }
+        foreach (var type in TypeNames.Skip(1))
+        {
+            if (!anyType && type != typeName) continue;
+            var ofType = books.Where(b => b.TypeName == type).ToList();
+            if (type == "Book")
+                foreach (var section in Sections) Group(section + " shelf", "@Book:" + section, ofType.Where(b => b.Subject == section), "Book");
+            else Group(Plural(type), "@" + type, ofType, type);
+        }
+        int at = Math.Max(0, values.IndexOf(current));
+        PickList.Open(button, options.ToArray(), at, i => pick(values[i]), pcStyle, null, -1, null, 0, i => groups[i]);
+    }
+
+    static string Plural(string type) => type == "Archive" || type == "Rare Books" ? type : type + "s";
+
+    /// <summary>What the Subject button says for a picked value.</summary>
+    public static string SubjectLabel(string value)
+    {
+        if (string.IsNullOrEmpty(value)) return "All";
+        if (value.StartsWith("@Book:")) return value.Substring(6) + " shelf";
+        if (value.StartsWith("@")) return Plural(value.Substring(1));
+        int bar = value.IndexOf('|');
+        return bar >= 0 ? value.Substring(bar + 1) : value;
     }
 
     /// <summary>All, Reserved (someone's waiting for it), Sold out, In stock, Not in library (a new title you could order).</summary>
-    public static readonly string[] Shows = { "All", "Reserved", "Sold out", "In stock", "Not in library" };
+    public static readonly string[] Shows = { "All", "Reserved", "Sold out", "In stock", "Not in library", "Damaged" };
 
     public static bool ShowMatches(int show, BookData b)
     {
         var gm = GameManager.Instance;
         bool inStock = b.GoodCopies + b.WornCopies > 0;
-        bool notOwned = gm != null && gm.IsNewTitle(b);
+        bool notOwned = gm != null && (gm.IsNewTitle(b) || gm.RareFinds.Contains(b));
         switch (show)
         {
             case 1: return gm != null && gm.reservations.Exists(r => r.title == b.Title);
             case 2: return !inStock && !notOwned;
             case 3: return inStock;
             case 4: return notOwned;
+            case 5: return b.DamagedCopies > 0; // copies waiting for the Repair desk
             default: return true;
         }
     }
 
     /// <summary>Type and Subject filters (null or "All" = any).</summary>
     public static bool TypeMatches(BookData b, string typeName, string subjectName) =>
-        (typeName == null || typeName == "All" || b.TypeName == typeName) &&
-        (subjectName == null || b.SubjectName == subjectName);
+        (typeName == null || typeName == "All" || b.TypeName == typeName) && SubjectMatches(b, subjectName);
+
+    /// <summary>A whole group ("@Book:Science" = the Science shelf's books, "@Archive" = the Archive), a topic of one
+    /// type ("Book|Astronomy"), or a plain topic name (any type).</summary>
+    static bool SubjectMatches(BookData b, string value)
+    {
+        if (string.IsNullOrEmpty(value)) return true;
+        if (value.StartsWith("@Book:")) return b.TypeName == "Book" && b.Subject == value.Substring(6);
+        if (value.StartsWith("@")) return b.TypeName == value.Substring(1);
+        int bar = value.IndexOf('|');
+        if (bar >= 0) return b.TypeName == value.Substring(0, bar) && b.SubjectName == value.Substring(bar + 1);
+        return b.SubjectName == value;
+    }
 
     void Labels()
     {
         typeButton.text = "Type: " + TypeNames[type];
-        subjectButton.text = type == 0 ? "Subject: pick a type first" : "Subject: " + (subject ?? "All");
-        subjectButton.SetEnabled(type != 0);
+        subjectButton.text = "Subject: " + SubjectLabel(subject);
+        subjectButton.SetEnabled(true); // no need to pick a type first
         showButton.text = "Show: " + Shows[show];
     }
 

@@ -660,3 +660,21 @@
 .tut-text { color: var(--ink); font-size: 23px; white-space: normal; }
 .tut-buttons { flex-direction: row; justify-content: flex-end; margin-top: 10px; }
 .tut-button { font-size: 18px; margin-left: 8px; }
+
+/* A staff member did something: a short line on the left, a little above the middle. */
+.hud Label.staff-note {
+    position: absolute;
+    left: 24px;
+    top: 36%;
+    padding: 4px 14px 7px 12px;
+    font-size: 22px;
+    color: var(--ink);
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Popup01a.png");
+    -unity-slice-left: 4; -unity-slice-right: 4; -unity-slice-top: 4; -unity-slice-bottom: 4;
+    -unity-slice-scale: 3px;
+    white-space: nowrap;
+}
+
+/* Shelf: what the picked book is about. */
+.shelf-about { color: var(--ink); font-size: 19px; white-space: normal; margin: 6px 14px 4px 14px; -unity-text-align: upper-left; }
+.shelf-row.picked { background-color: rgba(214, 120, 64, 0.18); }

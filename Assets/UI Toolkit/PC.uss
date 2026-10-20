@@ -380,11 +380,11 @@
 .mcol { font-size: 18px; color: var(--ink-dim); margin: 0; padding: 0; }
 .mrow { flex-direction: row; align-items: center; padding: 7px 8px 8px 8px; border-bottom-width: 2px; border-bottom-color: var(--rule); }
 .mcell { font-size: 20px; margin: 0; padding: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.name { width: 28%; }
-.born { width: 21%; }
-.access { width: 13%; }
-.happy { width: 18%; flex-direction: row; align-items: center; }
-.num { width: 10%; padding-left: 4px; -unity-text-align: middle-right; }
+.name { width: 27%; }
+.born { width: 19%; }
+.access { width: 14%; }
+.happy { width: 18%; flex-direction: row; align-items: center; padding-left: 8px; }
+.num { width: 11%; padding-left: 4px; -unity-text-align: middle-right; }
 .heart { width: 13px; height: 10px; margin-right: 1px; background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconHeart01a.png"); }
 .heart.empty { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconHeart01i.png"); }
 .member-empty { font-size: 22px; color: var(--ink-dim); white-space: normal; -unity-text-align: middle-center; margin-top: 40px; }
@@ -438,7 +438,7 @@
 .setting-name { width: 220px; font-size: 26px; margin: 0; padding: 0; }
 .setting-value { flex-grow: 1; font-size: 22px; color: var(--ink-dim); margin: 0; padding: 0; }
 .setting-bar { flex-direction: row; align-items: flex-end; margin: 0 6px 0 10px; }
-.setting-pip { width: 20px; margin-right: 4px; background-color: var(--page-2); border-width: 4px; border-color: var(--rule); }
+.setting-pip { width: 10px; margin-right: 2px; background-color: var(--page-2); border-width: 2px; border-color: var(--rule); }
 .setting-pip.on { background-color: var(--accent); border-color: rgb(73, 51, 51); border-top-color: rgb(242, 168, 115); }
 .setting-pip:hover { border-color: var(--accent); }
 .setting-row .pc-button { margin-left: 10px; min-width: 56px; }
@@ -460,3 +460,10 @@
 .uico-img { -unity-background-scale-mode: stretch-to-fill; }
 .members-sheet { flex-grow: 1; }
 .members-list { flex-grow: 1; }
+
+/* Volume: small - and + beside the pixel staircase. */
+.setting-row .pc-button.vol { min-width: 36px; font-size: 18px; padding: 2px 10px 5px 10px; margin-left: 6px; }
+.setting-row .pc-button.vol .btn-text { font-size: 18px; }
+
+/* A pickable group in a list (e.g. "Science shelf: all"): reads like a heading. */
+.picklist-item.picklist-group { color: var(--accent); letter-spacing: 1px; margin-top: 4px; }

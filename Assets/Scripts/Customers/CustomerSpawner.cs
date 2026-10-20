@@ -259,12 +259,19 @@ public class CustomerSpawner : MonoBehaviour
         return c;
     }
 
+    static readonly HashSet<string> ThiefLooks = new HashSet<string>
+    {
+        "PF_NPC_Visitor_Arthur", "PF_NPC_Visitor_Gus", "PF_NPC_Scholar_Omar", "PF_NPC_Scholar_Tariq", "PF_NPC_Writer_Finn",
+        "PF_NPC_Student_Leo", "PF_NPC_Student_Theo", "PF_NPC_Student_Kai", "PF_NPC_Student_Ravi", "PF_NPC_Student_Hiro", "PF_NPC_Student_Arjun",
+    };
+
     /// <summary>The book thief: a stranger (someone without a card, if anyone's free) under a different name.</summary>
     public Customer SpawnThief(string name)
     {
         if (CounterQueue.Instance == null || customerPrefabs == null) return null;
-        var prefab = Pick(false, p => !p.name.Contains("Dean") && Members.Find(p.name) == null)
-                  ?? Pick(false, p => !p.name.Contains("Dean"));
+        // The rumours say "he", "long coat, collar up": one of the men, a stranger with no card if possible.
+        var prefab = Pick(false, p => ThiefLooks.Contains(p.name) && Members.Find(p.name) == null)
+                  ?? Pick(false, p => ThiefLooks.Contains(p.name));
         if (prefab == null) return null;
         var c = Bring(prefab);
         c.thief = true;

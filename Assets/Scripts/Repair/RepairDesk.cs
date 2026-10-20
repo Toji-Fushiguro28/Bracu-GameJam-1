@@ -123,7 +123,7 @@ public class RepairDesk : ClickInteractable
     public bool StartRepair(Job job, float minigameScore)
     {
         int cost = Cost(job);
-        if (!Waiting.Contains(job) || GameManager.Instance == null || !GameManager.Instance.TrySpend(cost)) return false;
+        if (!Waiting.Contains(job) || GameManager.Instance == null || !GameManager.Instance.TrySpend(cost, "Repairs")) return false;
         RequestLog.Money("Repair desk", $"Repaired \"{job.book.Title}\"", "Repair", -cost);
         Waiting.Remove(job);
         job.bonus = minigameBonus * Mathf.Clamp01(minigameScore);

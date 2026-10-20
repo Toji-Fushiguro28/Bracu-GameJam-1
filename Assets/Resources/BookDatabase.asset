@@ -27,7 +27,7 @@ MonoBehaviour:
     GoodCopies: 2
     WornCopies: 1
     DamagedCopies: 0
-  - Title: The Clockwork Atlas
+  - Title: The Clockwork Compass
     Format: 0
     Author: Edmund Hale
     Subject: Science
@@ -325,7 +325,7 @@ MonoBehaviour:
     Format: 0
     Author: Anonymous
     Subject: Science
-    Topic: 'Maps & charts'
+    Topic: Star charts
     Tag: Rare
     Abstract: A hand-painted star chart said to guide lost sailors home.
     ShelfLocation: RARE-I
@@ -338,7 +338,7 @@ MonoBehaviour:
   - Title: First Folio Fragment
     Format: 0
     Author: William Shakespeare
-    Subject: Philosophy
+    Subject: History
     Topic: Early prints
     Tag: Rare, English Literature
     Abstract: Six surviving pages of the very first printing.
@@ -353,7 +353,7 @@ MonoBehaviour:
     Format: 0
     Author: Elias Whitmore
     Subject: History
-    Topic: 'Maps & charts'
+    Topic: Maps & charts
     Tag: Rare
     Abstract: The library founder's own maps of the old city.
     ShelfLocation: RARE-I
@@ -367,7 +367,7 @@ MonoBehaviour:
     Format: 0
     Author: Capt. R. Sen
     Subject: History
-    Topic: 'Letters & logs'
+    Topic: Letters & logs
     Tag: Archive
     Abstract: A riverboat captain's daily logs, storms and all.
     ShelfLocation: ARC-B
@@ -381,7 +381,7 @@ MonoBehaviour:
     Format: 0
     Author: Whitmore Library
     Subject: Science
-    Topic: Town records
+    Topic: Almanacs
     Tag: Archive
     Abstract: Tides, moon phases and weather guesses for 1923.
     ShelfLocation: ARC-B
@@ -395,7 +395,7 @@ MonoBehaviour:
     Format: 0
     Author: Various
     Subject: History
-    Topic: 'Letters & logs'
+    Topic: Letters & logs
     Tag: Archive
     Abstract: Letters soldiers wrote home and never expected kept.
     ShelfLocation: ARC-B
@@ -506,8 +506,8 @@ MonoBehaviour:
   - Title: Cozy Corners Monthly
     Format: 2
     Author: Hearth Media
-    Subject: Philosophy
-    Topic: 'Home & leisure'
+    Subject: History
+    Topic: Home & leisure
     Tag: New Arrival
     Abstract: Reading nooks, rainy days and the perfect cup of tea.
     ShelfLocation: MAG
@@ -521,7 +521,7 @@ MonoBehaviour:
     Format: 2
     Author: Orbit Press
     Subject: Science
-    Topic: 'Science & nature'
+    Topic: Science & nature
     Tag: Weekly
     Abstract: Comets, eclipses, and where to look up this week.
     ShelfLocation: MAG
@@ -617,7 +617,7 @@ MonoBehaviour:
     DamagedCopies: 0
   - Title: On the Glow of Old Ink
     Format: 4
-    Author: Dr. Nadia Rahman
+    Author: Nadia Rahman
     Subject: Science
     Topic: Chemistry
     Tag: New Arrival
@@ -631,7 +631,7 @@ MonoBehaviour:
     DamagedCopies: 0
   - Title: Counting Without Zero
     Format: 4
-    Author: Prof. Maya Chen
+    Author: Maya Chen
     Subject: Math
     Topic: Mathematics
     Tag: Classic
@@ -671,6 +671,62 @@ MonoBehaviour:
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
+  - Title: The Moonlit Herbal
+    Format: 0
+    Author: Sister Agnes Vale
+    Subject: Science
+    Topic: Herbals
+    Tag: Rare
+    Abstract: Pressed flowers and remedies, each picked by the light of a full moon.
+    ShelfLocation: RARE-I
+    Tier: 1
+    BaseValue: 280
+    Sellable: 0
+    GoodCopies: 1
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: Sea Charts of the Delta
+    Format: 0
+    Author: Capt. Ivo Marsh
+    Subject: History
+    Topic: Maps & charts
+    Tag: Rare
+    Abstract: Hand-inked soundings and sandbanks, drawn before the river moved.
+    ShelfLocation: RARE-I
+    Tier: 1
+    BaseValue: 260
+    Sellable: 0
+    GoodCopies: 1
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: The Whitmore Book of Hours
+    Format: 0
+    Author: Brother Anselm
+    Subject: Philosophy
+    Topic: Manuscripts
+    Tag: Rare
+    Abstract: A tiny prayer book with gold-leaf margins and a cat doodled in one corner.
+    ShelfLocation: RARE-II
+    Tier: 2
+    BaseValue: 480
+    Sellable: 0
+    GoodCopies: 1
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: The Printer's First Proof
+    Format: 0
+    Author: Whitmore Press
+    Subject: History
+    Topic: Early prints
+    Tag: Rare
+    Abstract: The first page ever printed in Whitmore, typo and all.
+    ShelfLocation: RARE-II
+    Tier: 1
+    BaseValue: 240
+    Sellable: 0
+    GoodCopies: 1
+    WornCopies: 0
+    DamagedCopies: 0
   newTitles:
   - Title: The Lighthouse Keeper's Almanac
     Format: 0
@@ -700,7 +756,7 @@ MonoBehaviour:
     GoodCopies: 0
     WornCopies: 0
     DamagedCopies: 0
-  - Title: The Salt Road
+  - Title: Camels and Caravans
     Format: 0
     Author: Amina Yusuf
     Subject: History
@@ -837,6 +893,77 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 26
     Sellable: 1
+    GoodCopies: 0
+    WornCopies: 0
+    DamagedCopies: 0
+  rareFinds:
+  - Title: The Astronomer's Lost Ledger
+    Format: 0
+    Author: Hassan al-Nur
+    Subject: Science
+    Topic: Star charts
+    Tag: Rare
+    Abstract: Night-by-night notes on a comet nobody else ever saw.
+    ShelfLocation: RARE-I
+    Tier: 2
+    BaseValue: 520
+    Sellable: 0
+    GoodCopies: 0
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: The Drowned Coast Atlas
+    Format: 0
+    Author: Elias Whitmore
+    Subject: History
+    Topic: Maps & charts
+    Tag: Rare
+    Abstract: Maps of a coastline the sea has since taken back.
+    ShelfLocation: RARE-I
+    Tier: 1
+    BaseValue: 300
+    Sellable: 0
+    GoodCopies: 0
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: The Lantern Psalms
+    Format: 0
+    Author: Unknown
+    Subject: Philosophy
+    Topic: Manuscripts
+    Tag: Rare
+    Abstract: Hymns copied by lantern light through the long winter of 1610.
+    ShelfLocation: RARE-II
+    Tier: 1
+    BaseValue: 340
+    Sellable: 0
+    GoodCopies: 0
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: Euclid in Bengali
+    Format: 0
+    Author: Pandit H. Roy
+    Subject: Math
+    Topic: Early prints
+    Tag: Rare
+    Abstract: The first Bengali printing of Euclid, its margins full of a student's notes.
+    ShelfLocation: RARE-II
+    Tier: 1
+    BaseValue: 320
+    Sellable: 0
+    GoodCopies: 0
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: The Whitmore Charter
+    Format: 0
+    Author: Elias Whitmore
+    Subject: History
+    Topic: Founding papers
+    Tag: Rare
+    Abstract: The library's founding charter, signed with a very large flourish.
+    ShelfLocation: RARE-II
+    Tier: 2
+    BaseValue: 450
+    Sellable: 0
     GoodCopies: 0
     WornCopies: 0
     DamagedCopies: 0

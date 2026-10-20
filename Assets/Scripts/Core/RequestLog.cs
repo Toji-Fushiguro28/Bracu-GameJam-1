@@ -10,7 +10,7 @@ using UnityEngine.UIElements;
 /// </summary>
 public static class RequestLog
 {
-    public enum Kind { Book, Pickup, Card, Shelve, Money }
+    public enum Kind { Book, Pickup, Card, Shelve, Money, Task }
 
     [Serializable]
     public class Guess
@@ -34,6 +34,8 @@ public static class RequestLog
         public List<string> notes = new List<string>();
         /// <summary>Coins this entry brought in (+) or cost (-). 0 = no money changed hands.</summary>
         public int coins;
+        /// <summary>For a "To do" (Kind.Task): which event or job it is.</summary>
+        public string task;
     }
 
     /// <summary>Every entry in this save, oldest first.</summary>
@@ -195,7 +197,36 @@ public static class RequestLog
         if (Open.Remove(e)) Changed?.Invoke();
     }
 
-    public static string KindName(Kind k) => k == Kind.Book ? "Book Request" : k == Kind.Pickup ? "Pickup" : k == Kind.Card ? "Library Card" : k == Kind.Money ? "Coins" : "To Shelve";
+    public static string KindName(Kind k) => k == Kind.Book ? "Book Request" : k == Kind.Pickup ? "Pickup" : k == Kind.Card ? "Library Card" : k == Kind.Money ? "Coins" : k == Kind.Task ? "To do" : "To Shelve";
+
+    /// <summary>Today's events and jobs (the leak, the inspection, a VIP's request...): in the notebook as a
+    /// "To do" until it's done (or the day ends). The same key twice is ignored.</summary>
+    public static void Task(string key, string who, string line)
+    {
+        if (Open.Exists(e => e.kind == Kind.Task && e.task == key)) return;
+        var entry = new Entry { day = GM != null ? GM.day : 1, hour = GM != null ? GM.Hour : 9f, who = who, kind = Kind.Task, line = line, task = key };
+        All.Add(entry);
+        Open.Add(entry);
+        Changed?.Invoke();
+    }
+
+    /// <summary>Ticks a "To do" off (with how it went, for the log).</summary>
+    public static void TaskDone(string key, string outcome)
+    {
+        var e = Open.Find(x => x.kind == Kind.Task && x.task == key);
+        if (e == null) return;
+        e.outcome = outcome;
+        Open.Remove(e);
+        Changed?.Invoke();
+    }
+
+    /// <summary>A new day: anything still on yesterday's to-do list is over.</summary>
+    public static void EndTasks()
+    {
+        bool any = false;
+        foreach (var e in Open.FindAll(x => x.kind == Kind.Task)) { e.outcome ??= "The day ended"; Open.Remove(e); any = true; }
+        if (any) Changed?.Invoke();
+    }
 
     /// <summary>Guess lines as rich text: wrong ones struck through.</summary>
     public static string GuessText(Guess g) => g.wrong
@@ -211,7 +242,7 @@ public static class RequestLog
         string coins = e.coins == 0 ? "" : $"  ·  <color={(e.coins > 0 ? "#4F6B3A" : "#8E3B32")}>{CoinText(e.coins)} coins</color>";
         Add(row, "log-head", $"{GameManager.FormatHour(e.hour)}{who}  ·  {KindName(e.kind)}{coins}");
         if (e.kind == Kind.Money) { Add(row, "log-line", e.line); return row; }
-        Add(row, "log-line", $"\"{e.line}\"");
+        Add(row, "log-line", e.kind == Kind.Task ? e.line : $"\"{e.line}\""); // a to-do is an instruction, not a quote
         if (e.kind == Kind.Book)
             Add(row, "log-line", e.hint != null ? $"<color=#D67840>Hint: {e.hint}</color>" + (e.usedHint ? "  (asked for)" : "  (free)") : "No hint used");
         foreach (var g in e.guesses) Add(row, "log-line", GuessText(g));

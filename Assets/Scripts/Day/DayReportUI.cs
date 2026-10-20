@@ -167,8 +167,12 @@ public class DayReportUI : MonoBehaviour
         Row("New members", d.signups.ToString());
         Row("Tips", d.tips.ToString());
         if (DayStory.Instance != null && DayStory.Instance.ReportRow(out var twist, out var outcome)) Row(twist, outcome); // today's twist
-        if (gm.WagesDueTomorrow > 0) Row("Staff wages (tomorrow)", $"-{gm.WagesDueTomorrow}");
-        Row("Income", d.income.ToString(), true);
+        // The money: what you started with, everything in and out, and what you have now.
+        Row("Coins at the start of the day", d.coinsAtStart.ToString());
+        Row("Money in", $"+{d.coinsIn}");
+        Row("Money out", d.coinsOut > 0 ? $"-{d.coinsOut}" : "0");
+        Row("Coins now", gm.Coins.ToString(), true);
+        if (gm.WagesDueTomorrow > 0) Row("Staff wages tomorrow morning", $"-{gm.WagesDueTomorrow}");
         int s = Stars(d);
         stars.text = new string('*', s) + new string('-', 5 - s);
         int delta = gm.Reputation - gm.ReputationAtStart;
@@ -245,10 +249,24 @@ public class DayReportUI : MonoBehaviour
         Source("Library cards", d.fromCards);
         Source("VIP scholars", d.fromVip);
         Source("Staff work", d.fromStaff);
-        Source("Tidying, rewards and jobs", d.fromOther);
-        if (d.income > 0) SummaryRow("Total", d.income, true);
+        Source("Tidying, rewards and jobs", d.fromOther + Mathf.Max(0, d.coinsIn - d.income)); // anything not filed under a source
+        if (d.coinsIn > 0) SummaryRow("Total in", d.coinsIn, true);
         else SummaryNote("No money came in today.", "summary-note");
         if (d.tips > 0) SummaryNote($"Tips (already in the totals above): {d.tips}", "summary-note");
+        if (d.staffKept > 0) SummaryNote($"Your staff kept {d.staffKept} as their cut (not in the totals).", "summary-note");
+
+        SummaryHead("Where the money went");
+        int listed = 0;
+        for (int i = 0; i < d.spentOn.Count; i++) { SummaryRow(d.spentOn[i], d.spentAmount[i]); listed += d.spentAmount[i]; }
+        if (d.coinsOut - listed > 0) SummaryRow("Other", d.coinsOut - listed);
+        if (d.coinsOut > 0) SummaryRow("Total out", d.coinsOut, true);
+        else SummaryNote("Nothing spent today.", "summary-note");
+
+        SummaryHead("Coins");
+        SummaryRow("At the start of the day", d.coinsAtStart);
+        SummaryRow("+ Money in", d.coinsIn);
+        SummaryRow("- Money out", d.coinsOut);
+        SummaryRow("= Coins now", gm.Coins, true);
 
         SummaryHead("What went wrong");
         int wrong = 0;
@@ -304,7 +322,7 @@ public class DayReportUI : MonoBehaviour
         text.Add(PopularGlow.TitleRow(new Label(title) { name = "row-title" }, popular, row));
         text.Add(new Label(sub) { name = "row-sub" });
         row.Add(text);
-        var b = new Button(() => { onClick(); if (buySound != null) sfx.PlayOneShot(buySound, 0.7f); else GameAudio.Play(a => a.buy); RefreshPlan(); }) { text = button };
+        var b = new Button(() => { onClick(); if (buySound != null) sfx.PlayOneShot(buySound, 0.7f); else GameAudio.Play(a => a.buy); RefreshReport(); RefreshPlan(); }) { text = button };
         b.AddToClassList("kit-button");
         b.SetEnabled(enabled);
         row.Add(b);

@@ -173,6 +173,10 @@ public class DialogueUI : MonoBehaviour
             var c = choice;
             var button = new Button(() => Choose(c)) { text = c.text };
             button.AddToClassList("choice");
+            // Hovered, the button turns orange: show the whole line white so orange highlights (titles) don't vanish into it.
+            string plain = System.Text.RegularExpressions.Regex.Replace(c.text ?? "", "</?color[^>]*>", "");
+            button.RegisterCallback<PointerEnterEvent>(_ => button.text = plain);
+            button.RegisterCallback<PointerLeaveEvent>(_ => button.text = c.text);
             choiceBox.Add(button);
         }
     }

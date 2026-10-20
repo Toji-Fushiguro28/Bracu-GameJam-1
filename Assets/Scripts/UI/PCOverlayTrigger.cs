@@ -281,6 +281,7 @@ public class PCOverlayTrigger : MonoBehaviour
         WireFrame();
         bool back = resume;
         resume = false;
+        PCCatalogueView.ResetFilters(); // every open (after closing or minimising): All books, no search
         ShowTab(back ? lastTab : "home", !back); // a normal open: the catalogue starts on All books
 
         prevCursorVisible = UnityEngine.Cursor.visible;
