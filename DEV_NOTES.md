@@ -687,3 +687,8 @@ Small, contained edits. Please check them when merging:
 
 ## Queue: staying at the desk keeps first place
 - Someone who stays at the front desk for a second request (a VIP with a fresh Rare card and no attendant hired, a new member who meant to browse but found no shelf, any "ask again at the desk") goes back in line at the front (`CounterQueue.JoinFront`), not the back. Joining at the back let the next visitor walk onto the desk spot and stand inside them.
+
+## Night ghosts (`Day/GhostNight.cs`, made at runtime)
+- After closing, once every visitor and staff member has gone (no `Customer`, no active `StaffWorker`), 1-3 ghosts fade in on the floor in front of a shelf in an open room. Every other one is a reader: it drifts to an empty floor-level chair and sits reading (`SitRead`); the rest wander between shelves, pausing as if browsing. They float slightly and shimmer.
+- Built from a random visitor prefab under an inactive parent: every script except `CharacterAnimator`, all colliders, obstacles and audio, and the blob shadow are removed; all renderers use `Resources/M_Ghost` (`Art/Shaders/SH_Ghost.shader`: unlit, see-through, brighter rim, depth prepass), no shadows. Their NavMeshAgent has no avoidance and the lowest priority, so the librarian walks straight through and nobody steps aside. Not clickable, not saved.
+- They fade out when the next day opens. `SeatPoint.All` / `IsFree` were added so they only take empty chairs.

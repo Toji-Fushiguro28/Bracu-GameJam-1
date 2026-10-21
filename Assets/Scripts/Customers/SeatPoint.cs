@@ -59,6 +59,10 @@ public class SeatPoint : MonoBehaviour
         return true;
     }
 
+    /// <summary>Every seat in the scene, and whether one is free (the night ghosts sit in empty ones).</summary>
+    public static IReadOnlyList<SeatPoint> All => all;
+    public bool IsFree(int i) => taken != null && i >= 0 && i < taken.Length && taken[i] == null;
+
     public void Release(Customer who)
     {
         for (int i = 0; i < taken.Length; i++)
