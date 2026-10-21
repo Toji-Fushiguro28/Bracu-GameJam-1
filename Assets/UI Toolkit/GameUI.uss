@@ -141,7 +141,7 @@
     -unity-slice-left: 1; -unity-slice-right: 1; -unity-slice-top: 2; -unity-slice-bottom: 3;
     -unity-slice-scale: 3px;
 }
-.kit-button:hover {
+.kit-button:hover, .kit-button.primary {
     color: rgb(255, 246, 232);
     background-color: rgba(0, 0, 0, 0);
     background-image: url("project://database/Assets/Art/UI/PC/T_PC_ButtonHot.png");

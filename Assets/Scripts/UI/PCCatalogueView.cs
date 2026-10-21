@@ -34,11 +34,16 @@ public static class PCCatalogueView
 
     static GameManager GM => GameManager.Instance;
 
+    /// <summary>The book on the details card (null if none).</summary>
+    public static BookData Selected => selected;
+
     /// <summary>Copies can be ordered: not Rare Books, and not a room that's still locked.</summary>
     static bool CanOrder(BookData b) => b != null && !BookRequest.IsRare(b) && BookRequest.Available(b);
 
     /// <summary>The rare book a VIP asked you to buy: the rare dealer sells it here until you do.</summary>
     static bool Dealer(BookData b) => b != null && SpecialJobs.Instance != null && SpecialJobs.Instance.WantedRare == b;
+    /// <summary>Delivered copies still waiting on the book cart (not counted as on the shelf).</summary>
+    static int OnCart(BookData b) => DeliveryCart.Instance != null ? DeliveryCart.Instance.Copies.Count(c => c == b) : 0;
     static bool NotOwned(BookData b) => GM != null && (GM.IsNewTitle(b) || Dealer(b));
 
     public static void Wire(VisualElement page)
@@ -207,6 +212,9 @@ public static class PCCatalogueView
             n.text = b.Quantity.ToString();
             sub.text = onOrder > 0 ? $"+{onOrder} coming" : "on shelf";
         }
+        int cart = OnCart(b);
+        Show(el, "stock-cart", cart > 0);
+        if (cart > 0) el.Q<Label>("stock-cart-n").text = $"{cart} on cart";
         n.EnableInClassList("bad", !notOwned && b.Quantity == 0);
         n.EnableInClassList("warn", !notOwned && b.Quantity > 0 && (b.Quantity == 1 || b.WornCopies + b.DamagedCopies > 0));
         n.EnableInClassList("ok", !notOwned && b.Quantity > 1 && b.WornCopies + b.DamagedCopies == 0);
@@ -277,7 +285,11 @@ public static class PCCatalogueView
         }
 
         Set("detail-shelf", ShelfInteractable.NameOf(b.ShelfLocation));
-        Set("detail-stock", notOwned ? "not in library" : b.Quantity > 0 ? b.Quantity + " on shelf" : "none left", soldOut ? "bad" : null);
+        int cart = OnCart(b); // "0 on shelf · [cart] 1 on book cart": so you know where to go
+        Set("detail-stock", notOwned ? "not in library" : b.Quantity > 0 || cart > 0 ? b.Quantity + " on shelf" : "none left", soldOut && cart == 0 ? "bad" : null);
+        var cartFact = root.Q("detail-cart");
+        if (cartFact != null) cartFact.style.display = cart > 0 ? DisplayStyle.Flex : DisplayStyle.None;
+        if (cart > 0) Set("detail-cart-n", $"{cart} on book cart");
         Set("detail-condition", b.Quantity > 0 ? b.ConditionSummary : "-", b.DamagedCopies > 0 ? "bad" : b.WornCopies > 0 ? "warn" : null);
         Set("detail-sale", !b.Sellable ? "read here only" : b.SaleValue + " coins" + (b.NewRelease ? " (new title +30%)" : ""), !b.Sellable ? "warn" : b.NewRelease ? "ok" : null);
         root.Q("detail-condition-icon")?.EnableInClassList("damaged", b.DamagedCopies > 0);
@@ -313,6 +325,7 @@ public static class PCCatalogueView
         int price = dealer ? GameManager.RarePrice(b) : orderable ? GameManager.OrderPrice(b, false) : 0, express = orderable && !dealer ? GameManager.OrderPrice(b, true) : 0;
         var note = root.Q<Button>("detail-select");
         note.SetEnabled(!notOwned && !RequestLog.IsNoted(b));
+        root.Q(className: "cat-col")?.SetEnabled(!Tutorial.NoteOnly); // the tutorial's first book: only "Add to note" for now
         var buy = root.Q<Button>("detail-buy");
         var exp = root.Q<Button>("detail-express");
         buy.style.display = orderable ? DisplayStyle.Flex : DisplayStyle.None;

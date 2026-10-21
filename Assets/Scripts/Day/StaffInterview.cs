@@ -43,10 +43,12 @@ public class StaffInterview : MonoBehaviour
     /// <summary>Loaded on top of the library (morning interviews and/or the ending). Only when the library is
     /// actually there: on its own (the new-game intro) this scene is always the Dean's interview.</summary>
     bool Overlay => (Morning || Ending) && GameManager.Instance != null && Finished != null;
+    /// <summary>This scene is open on top of the library right now (morning interviews or the ending).</summary>
+    public static bool OverlayOpen { get; private set; }
 
     // Statics survive between plays in the editor (and a failed load): always start clean.
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    static void ResetStatics() { Queue = null; Finished = null; Ending = false; EndingToMenu = false; Coins = int.MaxValue; }
+    static void ResetStatics() { Queue = null; Finished = null; Ending = false; EndingToMenu = false; Coins = int.MaxValue; OverlayOpen = false; }
 
     /// <summary>The library's purse (morning interviews): you can only hire someone whose fee you can pay.</summary>
     public static int Coins = int.MaxValue;
@@ -76,9 +78,12 @@ public class StaffInterview : MonoBehaviour
 
     string RoleName => GameManager.StaffNames[(int)role];
 
+    void OnDestroy() => OverlayOpen = false;
+
     void Start()
     {
         if (!Overlay) { Queue = null; Ending = false; } // on its own: the new-game intro, nothing left over
+        OverlayOpen = Overlay;
         if (Overlay)
         {
             // Loaded on top of the library: move the room well away from it.

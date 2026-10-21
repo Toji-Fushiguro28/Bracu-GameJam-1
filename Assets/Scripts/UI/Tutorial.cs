@@ -47,7 +47,7 @@ public class Tutorial : MonoBehaviour
     int signupsBefore, servedBefore, ordersBefore;
     readonly bool[] ticked = new bool[3]; // served, card, order
     bool finishing;
-    readonly HashSet<string> zoomed = new HashSet<string>();
+    bool noteSaid; // the card says "Press Add to note" (the right book is picked on the computer)
 
     VisualElement root, card, checklist, spot;
     Label title, text, spotLabel;
@@ -124,6 +124,8 @@ public class Tutorial : MonoBehaviour
         buttons.Add(ok); buttons.Add(skip);
         card.Add(title); card.Add(text); card.Add(checklist); card.Add(buttons);
         holder.Add(card);
+        spot.BringToFront(); // over the card too (the last card frames its "Start Day 1" button)
+        spotLabel.BringToFront();
     }
 
     // ---------------- Running it ----------------
@@ -149,6 +151,7 @@ public class Tutorial : MonoBehaviour
             PlaceSpot();
             return;
         }
+        if (step == Step.Ready && Keyboard.current != null && (Keyboard.current.enterKey.wasPressedThisFrame || Keyboard.current.numpadEnterKey.wasPressedThisFrame)) { Finish(true); return; }
         Advance();
         KeepPointerVisible();
         PlaceSpot();
@@ -168,7 +171,6 @@ public class Tutorial : MonoBehaviour
         ordersBefore = GM.OrdersPlaced;
         buyer = signer = seeker = null; wanted = null;
         for (int i = 0; i < ticked.Length; i++) { ticked[i] = false; checks[i].RemoveFromClassList("done"); checks[i].RemoveFromClassList("current"); }
-        zoomed.Clear();
         PCOverlayTrigger.LastViewed = null;
         StartTour();
     }
@@ -253,6 +255,7 @@ public class Tutorial : MonoBehaviour
         var s = stops[stopIndex];
         Say($"Tour  ·  {stopIndex + 1} of {stops.Count}", s.text);
         ok.text = stopIndex == stops.Count - 1 ? "Meet a visitor" : "Next";
+        ok.RemoveFromClassList("primary");
         ok.style.display = DisplayStyle.Flex;
         skip.style.display = DisplayStyle.Flex;
         checklist.style.display = DisplayStyle.None;
@@ -309,7 +312,13 @@ public class Tutorial : MonoBehaviour
                 if (Gone(buyer)) { Respawn(ref buyer); GoTo(Step.Talk); break; }
                 Point(PC, "Computer");
                 if (Holding(carry)) GoTo(Step.Give);
-                else if (PCOverlayTrigger.LastViewed != null && PCOverlayTrigger.LastViewed == wanted) GoTo(Step.Fetch);
+                else if (RequestLog.IsNoted(wanted)) { FindAnyObjectByType<PCOverlayTrigger>()?.ForceClose(); GoTo(Step.Fetch); }
+                else if (NoteOnly != noteSaid) // the right book is picked: now only "Add to note" works
+                {
+                    noteSaid = NoteOnly;
+                    Say(title.text, noteSaid ? $"That's the one. Press {H("Add to note")} so you remember its shelf."
+                                             : $"They want {H($"\"{wanted?.Title}\"")}. Click the {H("computer")} and find it in the {H("Catalogue")}.");
+                }
                 break;
             case Step.Fetch:
                 if (Gone(buyer)) { Respawn(ref buyer); GoTo(Step.Talk); break; }
@@ -351,6 +360,7 @@ public class Tutorial : MonoBehaviour
                 if (GM.OrdersPlaced > ordersBefore && (res == null || res.ordered || GM.OnOrder(SeekerBook) > 0))
                 {
                     Tick(2);
+                    FindAnyObjectByType<PCOverlayTrigger>()?.ForceClose(); // ordered: back to the library
                     GM.DeliverOrdersNow(); // the tutorial only: the order comes straight away
                     GoTo(res != null && !Gone(seeker) ? Step.CartTake : Step.Ready);
                 }
@@ -380,7 +390,9 @@ public class Tutorial : MonoBehaviour
         checklist.style.display = DisplayStyle.Flex;
         for (int i = 0; i < checks.Length; i++) checks[i].EnableInClassList("current", next != Step.Ready && i == VisitorNo(next) - 1 && !ticked[i]);
         ok.style.display = DisplayStyle.None;
+        ok.RemoveFromClassList("primary");
         skip.style.display = DisplayStyle.Flex;
+        noteSaid = false;
         switch (next)
         {
             case Step.Talk:
@@ -411,7 +423,6 @@ public class Tutorial : MonoBehaviour
                 break;
             case Step.CartTake:
                 Say(head, $"{H("Orders")} arrive on the book {H("cart")} (normally the next morning; this one's quick). Take it.");
-                Zoom("cart", DeliveryCart.Instance);
                 break;
             case Step.CartGive:
                 Say(head, "Now hand it to them at the desk.");
@@ -420,7 +431,10 @@ public class Tutorial : MonoBehaviour
                 Say("You're ready!", $"Serve visitors for coins and {H("reputation")}. {H("Order")} what you don't have. At {H("closing")}, lock the {H("front ropes")}.");
                 ok.text = "Start Day 1";
                 ok.style.display = DisplayStyle.Flex;
+                ok.AddToClassList("primary"); // the only thing left to do: orange, framed and focused (Enter works too)
                 skip.style.display = DisplayStyle.None;
+                SetSpot(null, ok, null);
+                ok.schedule.Execute(() => ok.Focus());
                 GameAudio.Play(a => a.dayReport, 0.6f);
                 break;
         }
@@ -476,6 +490,18 @@ public class Tutorial : MonoBehaviour
         if (t == null || !HoldsClock) return true;
         return t.step == Step.Fetch || t.step == Step.LookUp || t.step == Step.Give ? b == t.wanted
              : t.step == Step.CartTake || t.step == Step.CartGive ? b == t.SeekerBook : false;
+    }
+
+    /// <summary>The first visitor's book is picked in the Catalogue: only "Add to note" works until it's pressed
+    /// (the rest of the catalogue is greyed out and the computer can't be closed).</summary>
+    public static bool NoteOnly
+    {
+        get
+        {
+            var t = Instance;
+            return t != null && HoldsClock && !t.finishing && t.step == Step.LookUp && t.wanted != null
+                   && PCCatalogueView.Selected == t.wanted && !RequestLog.IsNoted(t.wanted);
+        }
     }
 
     /// <summary>The order step: only Express works (the visitor needs it today).</summary>
@@ -582,7 +608,7 @@ public class Tutorial : MonoBehaviour
         return seeker != null;
     }
 
-    // ---------------- Pointing, zooming, the frame and the card ----------------
+    // ---------------- Pointing, the frame and the card ----------------
 
     static ClickInteractable PC => FindAnyObjectByType<ComputerClick>();
     static ShelfInteractable ShelfOf(BookData b) => b == null ? null : FindObjectsByType<ShelfInteractable>().FirstOrDefault(s => s.Belongs(b));
@@ -596,8 +622,12 @@ public class Tutorial : MonoBehaviour
         var t = target.transform;
         float height = target is Customer ? 2.3f : 2.4f;
         var anchor = target as ClickInteractable;
-        pointer = DayStory.Point(label, () => t == null ? Vector3.zero : anchor != null && !(target is Customer) ? anchor.TopAnchor + Vector3.up * 0.4f : t.position + Vector3.up * height);
+        pointer = DayStory.Point(label, () => t == null ? Vector3.zero : anchor != null && !(target is Customer) ? anchor.TopAnchor + Vector3.up * 0.4f : t.position + Vector3.up * height,
+                                 above: (target as Customer)?.Overhead); // stacked over their bubble, never on it
     }
+
+    /// <summary>The tutorial's arrow is over this already (so its hover prompt would only repeat it).</summary>
+    public static bool IsPointingAt(Object target) => Instance != null && target != null && Instance.pointer != null && Instance.pointedAt == target;
 
     void Unpoint()
     {
@@ -613,37 +643,6 @@ public class Tutorial : MonoBehaviour
         if (cam == null || pointedAt == null || !(pointedAt is Component c) || c == null) { NotebookHUD.Tuck(false); return; }
         var vp = cam.WorldToViewportPoint(c.transform.position);
         NotebookHUD.Tuck(vp.z > 0f && vp.x > 0.7f);
-    }
-
-    /// <summary>The first time you need something, the camera glides over and zooms in on it for a moment.</summary>
-    void Zoom(string key, Component target)
-    {
-        if (target == null || !zoomed.Add(key)) return;
-        StartCoroutine(ZoomOn(target.transform.position));
-    }
-
-    IEnumerator ZoomOn(Vector3 focus)
-    {
-        while (PlayerLock.IsLocked) yield return null; // after any conversation or screen
-        var follow = FollowCam;
-        var main = Camera.main;
-        var player = GameObject.FindWithTag("Player");
-        if (follow == null || main == null || player == null) yield break;
-        PlayerLock.Lock(this);
-        var go = new GameObject("CM_TutorialZoom");
-        var cam = go.AddComponent<CinemachineCamera>();
-        var lens = follow.Lens;
-        lens.OrthographicSize *= 0.7f;
-        cam.Lens = lens;
-        Vector3 offset = follow.transform.position - player.transform.position;
-        go.transform.position = focus + offset;
-        go.transform.rotation = follow.transform.rotation;
-        cam.Priority = 55;
-        yield return new WaitForSecondsRealtime(2.4f);
-        cam.Priority = 0;
-        yield return new WaitForSecondsRealtime(1.2f);
-        Destroy(go);
-        PlayerLock.Unlock(this);
     }
 
     // The animated pixel frame (UI_TravelBook_SlotCursor01a, 4 frames) round something, with a small label above it.
@@ -697,7 +696,7 @@ public class Tutorial : MonoBehaviour
                             : step == Step.CartTake ? DeliveryCart.Instance : null;
                 bool screenOpen = PlayerLock.IsLocked;
                 if (t == null || screenOpen) { if (spotTarget != null || spotUi != null) ClearSpot(); }
-                else if (spotTarget != t) SetSpot(t, null, step == Step.CartTake ? $"{H("Orders")} arrive here" : null);
+                else if (spotTarget != t) SetSpot(t, null, null); // just the frame: the arrow above says what it is
             }
         }
         if (spot == null || spot.ClassListContains("hidden") || root == null) return;
@@ -747,7 +746,7 @@ public class Tutorial : MonoBehaviour
     /// <summary>The computer's tab or button for this step, while the computer is open (null otherwise).</summary>
     static VisualElement PcElementFor(Step s)
     {
-        string[] names = s == Step.LookUp ? new[] { "book-search", "tab-catalogue" }
+        string[] names = s == Step.LookUp ? (NoteOnly ? new[] { "detail-select" } : new[] { "book-search", "tab-catalogue" })
                        : s == Step.CardFill ? new[] { "tab-members" }
                        : s == Step.OrderBuy ? new[] { "detail-express", "tab-catalogue" } : null;
         if (names == null) return null;

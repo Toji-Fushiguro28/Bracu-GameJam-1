@@ -315,6 +315,8 @@ public class GameManager : MonoBehaviour
     [Serializable]
     public class VipPromise { public string key, name, title; public int day, cost; }
     [NonSerialized] public VipPromise vipPromise;
+    /// <summary>The rare dealer's VIP request has been offered once (SpecialJobs guarantees it on Day 3 or 4). Saved.</summary>
+    [NonSerialized] public bool rareDealerSeen;
 
     [Serializable]
     public class Reservation
@@ -573,11 +575,11 @@ public class GameManager : MonoBehaviour
     public bool loadSave = true;
 
     [Serializable] class BookSave { public string title; public int good, worn, damaged; }
-    [Serializable] class SaveData { public int day, coins, reputation, difficulty = 1; public bool[] staff; public int[] upgrades; public List<BookSave> books = new List<BookSave>(); public List<Member> members = new List<Member>(); public List<Reservation> reservations = new List<Reservation>(); public List<RequestLog.Entry> log = new List<RequestLog.Entry>(); public List<int> interviews = new List<int>(); public bool endingSeen; public int[] staffLevel; public List<string> added = new List<string>(); public int storySeed; public float[] staffMood; public int[] staffRestedDay; public VipPromise vip; public int[] hirePaid; }
+    [Serializable] class SaveData { public int day, coins, reputation, difficulty = 1; public bool[] staff; public int[] upgrades; public List<BookSave> books = new List<BookSave>(); public List<Member> members = new List<Member>(); public List<Reservation> reservations = new List<Reservation>(); public List<RequestLog.Entry> log = new List<RequestLog.Entry>(); public List<int> interviews = new List<int>(); public bool endingSeen; public int[] staffLevel; public List<string> added = new List<string>(); public int storySeed; public float[] staffMood; public int[] staffRestedDay; public VipPromise vip; public int[] hirePaid; public bool rareDealerSeen; }
 
     public void Save()
     {
-        var data = new SaveData { day = day, difficulty = (int)difficulty, coins = Coins, reputation = Reputation, staff = staff, upgrades = upgrades, members = members, reservations = reservations, log = RequestLog.All, interviews = interviews, endingSeen = endingSeen, staffLevel = staffLevel, added = addedTitles, storySeed = storySeed, staffMood = staffMood, staffRestedDay = staffRestedDay, vip = vipPromise, hirePaid = hirePaid };
+        var data = new SaveData { day = day, difficulty = (int)difficulty, coins = Coins, reputation = Reputation, staff = staff, upgrades = upgrades, members = members, reservations = reservations, log = RequestLog.All, interviews = interviews, endingSeen = endingSeen, staffLevel = staffLevel, added = addedTitles, storySeed = storySeed, staffMood = staffMood, staffRestedDay = staffRestedDay, vip = vipPromise, hirePaid = hirePaid, rareDealerSeen = rareDealerSeen };
         foreach (var b in Books) data.books.Add(new BookSave { title = b.Title, good = b.GoodCopies, worn = b.WornCopies, damaged = b.DamagedCopies });
         // Copies out of the shelves (returns, repair table, hands) still belong to the library.
         void Count(BookData b, BookCondition c)
@@ -616,6 +618,7 @@ public class GameManager : MonoBehaviour
         hirePaid = data.hirePaid != null && data.hirePaid.Length == 3 ? data.hirePaid : new int[3];
         endingSeen = data.endingSeen;
         vipPromise = data.vip != null && !string.IsNullOrEmpty(data.vip.title) ? data.vip : null;
+        rareDealerSeen = data.rareDealerSeen;
         storySeed = data.storySeed;
         if (data.staffLevel != null && data.staffLevel.Length == 3) staffLevel = data.staffLevel;
         if (data.staffMood != null && data.staffMood.Length == 3) staffMood = data.staffMood;
@@ -872,7 +875,7 @@ public class GameManager : MonoBehaviour
     {
         CurrentPhase = phase;
         if (phase == Phase.Closing && closingBell != null)
-            AudioSource.PlayClipAtPoint(closingBell, Camera.main ? Camera.main.transform.position : Vector3.zero, 0.8f);
+            AudioSource.PlayClipAtPoint(closingBell, Camera.main ? Camera.main.transform.position : Vector3.zero, 0.4f);
         PhaseChanged?.Invoke(phase);
     }
 

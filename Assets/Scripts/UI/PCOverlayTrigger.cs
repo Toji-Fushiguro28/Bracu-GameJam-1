@@ -255,7 +255,7 @@ public class PCOverlayTrigger : MonoBehaviour
     public void Open() => Show();
 
     /// <summary>Shut it from outside (the power just went).</summary>
-    public void ForceClose() => Hide();
+    public void ForceClose() => Hide(true);
 
     void Show()
     {
@@ -301,9 +301,10 @@ public class PCOverlayTrigger : MonoBehaviour
             outline.Hide();
     }
 
-    void Hide()
+    /// <param name="force">Close even while the tutorial waits for "Add to note".</param>
+    void Hide(bool force = false)
     {
-        if (!isOpen)
+        if (!isOpen || (!force && Tutorial.NoteOnly))
             return;
         isOpen = false;
         ticker?.Pause();

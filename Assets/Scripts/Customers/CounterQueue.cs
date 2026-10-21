@@ -36,6 +36,14 @@ public class CounterQueue : MonoBehaviour
 
     public void Leave(Customer c) => line.Remove(c);
 
+    /// <summary>Back in line at the front: for someone still standing at the desk (a second request after being
+    /// served). Joining at the back would let the next person walk onto their spot.</summary>
+    public void JoinFront(Customer c)
+    {
+        line.Remove(c);
+        line.Insert(0, c);
+    }
+
     /// <summary>Swaps this customer with the one just ahead (they're still on their way; this one is already here).</summary>
     public void MoveUp(Customer c)
     {

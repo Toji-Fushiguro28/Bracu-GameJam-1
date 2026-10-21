@@ -11,6 +11,7 @@ using UnityEngine;
 ///                  arrives tomorrow) and they come back tomorrow afternoon to read it, repaying you. Not ordered: -3
 ///                  reputation. Not in your hands: they read another rare book instead.
 ///  Book club     - a club needs 3 copies of a book on the shelves at 4:00 PM, and buys them all.
+/// The rare dealer's VIP request is guaranteed once, staff or not: maybe on Day 3, always on Day 4 if it hasn't come yet.
 /// Accepted jobs show in the Reserved panel (NotebookHUD). Added to the GameManager at runtime.
 /// </summary>
 public class SpecialJobs : MonoBehaviour
@@ -33,6 +34,7 @@ public class SpecialJobs : MonoBehaviour
     bool buying;      // today is the VIP's return for a rare book you were asked to order
     float vipAt = VipDue; // when the VIP comes back today
     bool taskShown;
+    bool forceDealer; // today is the guaranteed rare dealer request
 
     /// <summary>The rare book a VIP asked you to order, while the dealer still has it (else null).</summary>
     public BookData WantedRare
@@ -73,7 +75,7 @@ public class SpecialJobs : MonoBehaviour
         orderTask = null;
         book = null;
         vipKey = vipName = null;
-        buying = taskShown = false;
+        buying = taskShown = forceDealer = false;
         vipAt = VipDue;
         if (GM == null) return;
 
@@ -87,6 +89,15 @@ public class SpecialJobs : MonoBehaviour
             book = Title(p.title);
             vipKey = p.key; vipName = p.name;
             vipAt = Random.Range(13.5f, 15.5f);
+            return;
+        }
+        // The rare dealer comes once whether or not you have staff: a coin flip on Day 3, for sure on Day 4.
+        if (!GM.rareDealerSeen && GM.RareOpen && GM.vipPromise == null && GM.RareFinds.Count > 0
+            && (GM.day == GameManager.RareDay + 1 || (GM.day == GameManager.RareDay && Random.value < 0.5f)))
+        {
+            job = Job.Vip;
+            forceDealer = true;
+            offerAt = Random.Range(10f, 11.75f);
             return;
         }
         if (GM.day < 2 || !HasStaff) return;
@@ -211,7 +222,7 @@ public class SpecialJobs : MonoBehaviour
         // Now and then (or when nothing rare is on the shelves) the book isn't in the library yet.
         var find = GM.vipPromise == null ? RareFind() : null; // one dealer order at a time
         book = RareBook();
-        bool fromDealer = find != null && (book == null || Random.value < 0.45f);
+        bool fromDealer = find != null && (forceDealer || book == null || Random.value < 0.45f);
         if (fromDealer) book = find;
         if (book == null) return null;
         var b = book;
@@ -259,6 +270,7 @@ public class SpecialJobs : MonoBehaviour
             after = (c, last) =>
             {
                 done = true; // nothing more today: they're back tomorrow
+                GM.rareDealerSeen = true; // offered, taken or not
                 if (last != "yes") return;
                 accepted = true;
                 vipName = NameOf(c);

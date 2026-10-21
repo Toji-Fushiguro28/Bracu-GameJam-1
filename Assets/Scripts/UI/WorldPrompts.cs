@@ -17,7 +17,7 @@ public class WorldPrompts : MonoBehaviour
     class Bubble { public VisualElement el; public ClickInteractable target; public float until; }
 
     /// <summary>A UI element kept above a moving world point (e.g. a customer's patience bar).</summary>
-    public class Follower { public VisualElement el, arrow; public System.Func<Vector3> anchor; public bool edgeOnly; }
+    public class Follower { public VisualElement el, arrow, above; public System.Func<Vector3> anchor; public bool edgeOnly; }
     readonly List<Follower> followers = new List<Follower>();
 
     public Follower Follow(VisualElement el, System.Func<Vector3> anchor)
@@ -74,7 +74,7 @@ public class WorldPrompts : MonoBehaviour
     {
         hoverTarget = target;
         if (prompt == null) return;
-        if (target == null || BubbleFor(target) != null)
+        if (target == null || BubbleFor(target) != null || Tutorial.IsPointingAt(target)) // the tutorial's arrow already says it
         {
             prompt.AddToClassList("hidden");
             return;
@@ -115,9 +115,11 @@ public class WorldPrompts : MonoBehaviour
         for (int i = followers.Count - 1; i >= 0; i--)
         {
             var f = followers[i];
-            if (f.arrow != null) PlacePinned(f);
-            else Place(f.el, f.anchor());
+            if (f.arrow == null) Place(f.el, f.anchor());
         }
+        // Pins after the rest, so one stacked above a visitor's bubble uses where that bubble is this frame.
+        for (int i = followers.Count - 1; i >= 0; i--)
+            if (followers[i].arrow != null) PlacePinned(followers[i]);
 
         for (int i = bubbles.Count - 1; i >= 0; i--)
         {
@@ -140,6 +142,15 @@ public class WorldPrompts : MonoBehaviour
         bool onScreen = vp.z > 0f && vp.x > left && vp.x < right && vp.y > bottom && vp.y < top;
         f.arrow.style.display = onScreen ? DisplayStyle.None : DisplayStyle.Flex;
         if (onScreen && f.edgeOnly) { f.el.style.visibility = Visibility.Hidden; return; }
+        if (onScreen && f.above != null && f.above.panel != null && f.above.resolvedStyle.visibility == Visibility.Visible && f.above.layout.height > 0f)
+        {
+            // Stacked: centred over the element, a little gap above its top.
+            var b = f.above.layout;
+            f.el.style.visibility = Visibility.Visible;
+            f.el.style.left = b.center.x - f.el.resolvedStyle.width * 0.5f;
+            f.el.style.top = f.above.resolvedStyle.top - f.el.resolvedStyle.height - 6f;
+            return;
+        }
         if (onScreen) { Place(f.el, f.anchor() - Vector3.up * heightOffset); return; }
         float w = layer.resolvedStyle.width, h = layer.resolvedStyle.height;
         if (w <= 0f || h <= 0f) return;

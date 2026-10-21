@@ -1251,6 +1251,7 @@ GameObject:
   m_Component:
   - component: {fileID: 61841565}
   - component: {fileID: 61841564}
+  - component: {fileID: 61841566}
   m_Layer: 0
   m_Name: Audio_BGM
   m_TagString: Untagged
@@ -1370,6 +1371,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &61841566
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 61841563}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0e5bdf6726c176ed8aa0bb1964d319e7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DayNightMusic
+  nightMusic: {fileID: 8300000, guid: 9145491a9b45e7455a6baf816acfe627, type: 3}
+  menuMusic: {fileID: 8300000, guid: 9550e7d2fbb88f25f8bd0d383bf8b957, type: 3}
+  fadeSeconds: 4
 --- !u!1001 &65152840
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6901,7 +6917,7 @@ Transform:
   m_GameObject: {fileID: 360388545}
   serializedVersion: 2
   m_LocalRotation: {x: -0.2546322, y: 0.29631096, z: -0.082288325, w: -0.9168375}
-  m_LocalPosition: {x: 33.99218, y: 16.138319, z: -14.096387}
+  m_LocalPosition: {x: 33.997692, y: 16.138319, z: -14.092409}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -18132,7 +18148,7 @@ Transform:
   m_GameObject: {fileID: 961739749}
   serializedVersion: 2
   m_LocalRotation: {x: -0.2546322, y: 0.29631096, z: -0.082288325, w: -0.9168375}
-  m_LocalPosition: {x: 33.99218, y: 16.138319, z: -14.096387}
+  m_LocalPosition: {x: 33.997692, y: 16.138319, z: -14.092409}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

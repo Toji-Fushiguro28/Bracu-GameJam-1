@@ -274,7 +274,8 @@ public class DayStory : MonoBehaviour
     }
 
     /// <summary>A floating label with an arrow that stays on screen (like a staff member calling for help).</summary>
-    public static WorldPrompts.Follower Point(string text, Func<Vector3> at, bool edgeOnly = false)
+    /// <param name="above">On screen, sit just above this world-layer element (a visitor's bubble) instead of at the point.</param>
+    public static WorldPrompts.Follower Point(string text, Func<Vector3> at, bool edgeOnly = false, VisualElement above = null)
     {
         var wp = WorldPrompts.Instance;
         if (wp == null) return null;
@@ -286,7 +287,9 @@ public class DayStory : MonoBehaviour
         var arrow = new VisualElement();
         arrow.AddToClassList("staff-pointer-arrow");
         el.Add(arrow);
-        return wp.Pin(el, arrow, at, edgeOnly);
+        var f = wp.Pin(el, arrow, at, edgeOnly);
+        if (f != null) f.above = above;
+        return f;
     }
 
     public static void Unpoint(ref WorldPrompts.Follower f)

@@ -50,6 +50,7 @@ public class ReturnBinGlow : MonoBehaviour
                 : desk != null ? desk.Done.Count > 0
                 : cart != null ? cart.Count > 0
                 : computer != null && gm != null && gm.UpgradeReady && gm.upgradesSeenDay != gm.day;
+        if (on && Tutorial.HoldsClock && !Tutorial.Allows(GetComponent<ClickInteractable>())) on = false; // the tutorial: only what you can click now
         if (glow.enabled != on) glow.enabled = on;
         if (!on) return;
         float t = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * Mathf.PI * 2f / Mathf.Max(0.1f, pulseSeconds));

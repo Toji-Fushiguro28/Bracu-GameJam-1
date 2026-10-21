@@ -155,6 +155,7 @@
 .book-meta .coin-icon { width: 22px; height: 24px; }
 .px-icon { width: 24px; height: 24px; margin: 0 5px 0 0; flex-shrink: 0; -unity-background-scale-mode: scale-to-fit; }
 .icon-shelf { background-image: url("project://database/Assets/Art/UI/PC/T_IconShelf.png"); height: 20px; }
+.icon-cart { background-image: url("project://database/Assets/Art/UI/PC/T_IconCart.png"); height: 20px; }
 .icon-damaged { background-image: url("project://database/Assets/Art/UI/PC/T_IconDamaged.png"); }
 
 .panel, .stile, .cardpane, .ucard, .srow, .libcard {
@@ -314,6 +315,9 @@
 .book-stock { width: 80px; align-items: flex-end; flex-shrink: 0; }
 .stock-n { font-size: 34px; margin: 0; padding: 0; -unity-text-align: middle-right; }
 .stock-sub { font-size: 15px; color: var(--ink-dim); margin: 0; padding: 0; -unity-text-align: middle-right; white-space: normal; }
+.stock-cart { flex-direction: row; align-items: center; justify-content: flex-end; }
+.stock-cart .px-icon { width: 18px; height: 15px; margin-right: 3px; }
+.stock-cart .stock-sub { white-space: nowrap; }
 
 .cardpane { flex-grow: 1; flex-basis: 0; }
 .detail-body { flex-grow: 1; }
@@ -340,6 +344,9 @@
 .fi-about { background-image: url("project://database/Assets/Art/UI/PC/T_IconScroll.png"); width: 26px; height: 26px; margin-right: 8px; }
 .fact-key { width: 110px; font-size: 20px; color: var(--ink-dim); margin: 0; padding: 0; }
 .fact-value { flex-grow: 1; flex-shrink: 1; font-size: 20px; margin: 0; padding: 0; white-space: normal; -unity-text-align: middle-right; }
+.fact-cart { flex-direction: row; align-items: center; flex-shrink: 0; }
+.fact-cart .meta-sep { font-size: 20px; }
+.fact-cart .fact-value { flex-grow: 0; white-space: nowrap; }
 /* The abstract on its own framed note, filling the page. */
 .about-box { flex-grow: 1; min-height: 170px; padding: 8px 12px 12px 12px; margin-bottom: 4px; background-color: rgba(207, 176, 113, 0.22); border-width: 2px; border-color: var(--rule); }
 .about-head { flex-direction: row; align-items: center; margin-bottom: 6px; }

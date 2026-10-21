@@ -14,6 +14,8 @@ public class MainMenuUI : MonoBehaviour
     public static MainMenuUI Instance { get; private set; }
     /// <summary>True while the title screen is up.</summary>
     public static bool Active => Instance != null && Instance.showing;
+    /// <summary>The title screen before play has begun (not the Esc pause screen).</summary>
+    public static bool OnTitle => Active && !Instance.started;
     /// <summary>Set before reloading for a new game, so it starts straight away.</summary>
     public static bool SkipOnce;
     [Tooltip("New games start with this intro scene (the Dean's interview). Empty = straight into Day 1.")]
@@ -311,7 +313,7 @@ public class MainMenuUI : MonoBehaviour
         {
             root.AddToClassList("fading");
             root.pickingMode = PickingMode.Ignore;
-            root.schedule.Execute(() => root.AddToClassList("hidden")).ExecuteLater(650);
+            root.schedule.Execute(() => { if (!showing) root.AddToClassList("hidden"); }).ExecuteLater(650); // Esc may have paused again meanwhile
         }
         SetGameHudVisible(true);
         PlayerLock.Unlock(this);

@@ -1069,7 +1069,7 @@ public class Customer : ClickInteractable
             request = null; clue = null; heard = false; usedHint = false; introduced = false;
             kind = Kind.Reader;
             CounterQueue.Instance.Leave(this);
-            if (!AttendantServes()) { CounterQueue.Instance.Join(this); AskAgainAtDesk(); } // ask for their book right here
+            if (!AttendantServes()) { CounterQueue.Instance.JoinFront(this); AskAgainAtDesk(); } // ask for their book right here (still first in line)
             return null;
         }
         if (wish != null)
@@ -1094,7 +1094,7 @@ public class Customer : ClickInteractable
     {
         request = null; clue = null; heard = false; usedHint = false; introduced = false;
         kind = Random.value < 0.5f ? Kind.Browser : Kind.Reader;
-        if (kind == Kind.Browser) { CounterQueue.Instance.Leave(this); if (GoBrowse()) return; CounterQueue.Instance.Join(this); kind = Kind.Buyer; }
+        if (kind == Kind.Browser) { CounterQueue.Instance.Leave(this); if (GoBrowse()) return; CounterQueue.Instance.JoinFront(this); kind = Kind.Buyer; }
         AskAgainAtDesk();
     }
 
@@ -1110,7 +1110,7 @@ public class Customer : ClickInteractable
     {
         yield return new WaitForSeconds(2.5f);
         if (state != State.Waiting || request != null || this == null) yield break;
-        if (CounterQueue.Instance.IndexOf(this) < 0) CounterQueue.Instance.Join(this);
+        if (CounterQueue.Instance.IndexOf(this) < 0) CounterQueue.Instance.JoinFront(this); // still at the desk: keep first place
         GameAudio.Play(a => a.customerArrives);
         BeginRequest();
     }
@@ -1734,6 +1734,9 @@ public class Customer : ClickInteractable
         reqIcon.EnableInClassList("on", cls != null);
         reqIcon.MarkDirtyRepaint();
     }
+
+    /// <summary>Their name, bubble and mood stack over their head (in the world-prompt layer).</summary>
+    public VisualElement Overhead => overhead;
 
     void BuildOverhead()
     {
