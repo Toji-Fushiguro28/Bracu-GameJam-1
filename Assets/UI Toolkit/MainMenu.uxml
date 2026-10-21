@@ -92,6 +92,7 @@
                         <ui:Label class="credit-line" text="TravelBook Lite UI kit" />
                         <ui:Label class="credit-line" text="Jersey 10 &amp; Jersey 15 fonts (Sarah Cadigan-Fried, SIL OFL)" />
                         <ui:Label class="credit-head" text="Sound" />
+                        <ui:Label class="credit-line" text="Music by josefpres" />
                         <ui:Label class="credit-line" text="Sound effects by Yusuf SFX, Dragon Studio and the freesound community" />
                         <ui:Label class="credit-head" text="Engine" />
                         <ui:Label class="credit-line" text="Made with Unity" />

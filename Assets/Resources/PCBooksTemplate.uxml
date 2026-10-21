@@ -26,7 +26,7 @@
                 <ui:ScrollView name="detail-scroll" class="pc-scroll detail-scroll">
                     <ui:VisualElement class="facts">
                         <ui:VisualElement class="fact"><ui:VisualElement class="fact-icon fi-shelf" /><ui:Label text="Shelf" class="fact-key" /><ui:Label name="detail-shelf" class="fact-value" /></ui:VisualElement>
-                        <ui:VisualElement class="fact alt"><ui:VisualElement class="fact-icon fi-stock" /><ui:Label text="Stock" class="fact-key" /><ui:Label name="detail-stock" class="fact-value" /></ui:VisualElement>
+                        <ui:VisualElement class="fact alt"><ui:VisualElement class="fact-icon fi-stock" /><ui:Label text="Stock" class="fact-key" /><ui:Label name="detail-stock" class="fact-value" /><ui:VisualElement name="detail-cart" class="fact-cart"><ui:Label text="·" class="meta-sep" /><ui:VisualElement class="px-icon icon-cart" /><ui:Label name="detail-cart-n" class="fact-value" /></ui:VisualElement></ui:VisualElement>
                         <ui:VisualElement class="fact"><ui:VisualElement name="detail-condition-icon" class="fact-icon fi-condition" /><ui:Label text="Condition" class="fact-key" /><ui:Label name="detail-condition" class="fact-value" /></ui:VisualElement>
                         <ui:VisualElement class="fact alt"><ui:VisualElement class="fact-icon fi-coin" /><ui:Label text="Sells for" class="fact-key" /><ui:Label name="detail-sale" class="fact-value" /></ui:VisualElement>
                         <ui:VisualElement name="detail-status-row" class="fact"><ui:VisualElement class="fact-icon fi-status" /><ui:Label text="Status" class="fact-key" /><ui:Label name="detail-status" class="fact-value" /></ui:VisualElement>

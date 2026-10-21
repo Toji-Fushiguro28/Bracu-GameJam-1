@@ -155,6 +155,7 @@
 .book-meta .coin-icon { width: 22px; height: 24px; }
 .px-icon { width: 24px; height: 24px; margin: 0 5px 0 0; flex-shrink: 0; -unity-background-scale-mode: scale-to-fit; }
 .icon-shelf { background-image: url("project://database/Assets/Art/UI/PC/T_IconShelf.png"); height: 20px; }
+.icon-cart { background-image: url("project://database/Assets/Art/UI/PC/T_IconCart.png"); height: 20px; }
 .icon-damaged { background-image: url("project://database/Assets/Art/UI/PC/T_IconDamaged.png"); }
 
 .panel, .stile, .cardpane, .ucard, .srow, .libcard {
@@ -314,6 +315,9 @@
 .book-stock { width: 80px; align-items: flex-end; flex-shrink: 0; }
 .stock-n { font-size: 34px; margin: 0; padding: 0; -unity-text-align: middle-right; }
 .stock-sub { font-size: 15px; color: var(--ink-dim); margin: 0; padding: 0; -unity-text-align: middle-right; white-space: normal; }
+.stock-cart { flex-direction: row; align-items: center; justify-content: flex-end; }
+.stock-cart .px-icon { width: 18px; height: 15px; margin-right: 3px; }
+.stock-cart .stock-sub { white-space: nowrap; }
 
 .cardpane { flex-grow: 1; flex-basis: 0; }
 .detail-body { flex-grow: 1; }
@@ -340,6 +344,9 @@
 .fi-about { background-image: url("project://database/Assets/Art/UI/PC/T_IconScroll.png"); width: 26px; height: 26px; margin-right: 8px; }
 .fact-key { width: 110px; font-size: 20px; color: var(--ink-dim); margin: 0; padding: 0; }
 .fact-value { flex-grow: 1; flex-shrink: 1; font-size: 20px; margin: 0; padding: 0; white-space: normal; -unity-text-align: middle-right; }
+.fact-cart { flex-direction: row; align-items: center; flex-shrink: 0; }
+.fact-cart .meta-sep { font-size: 20px; }
+.fact-cart .fact-value { flex-grow: 0; white-space: nowrap; }
 /* The abstract on its own framed note, filling the page. */
 .about-box { flex-grow: 1; min-height: 170px; padding: 8px 12px 12px 12px; margin-bottom: 4px; background-color: rgba(207, 176, 113, 0.22); border-width: 2px; border-color: var(--rule); }
 .about-head { flex-direction: row; align-items: center; margin-bottom: 6px; }
@@ -485,3 +492,41 @@
 
 /* A pickable group in a list (e.g. "Science shelf: all"): reads like a heading. */
 .picklist-item.picklist-group { color: var(--accent); letter-spacing: 1px; margin-top: 4px; }
+
+/* ---------- Staff cards (Shop > Staff): who, what they do, what the next level brings ---------- */
+.scard { flex-direction: column; }
+.scard-level { flex-direction: row; align-items: center; justify-content: space-between; margin-top: 8px; }
+.scard-mood { font-size: 17px; color: var(--ink-dim); margin: 0; padding: 0; }
+.scard-price { flex-direction: row; align-items: center; align-self: flex-start; margin-top: 8px; padding: 3px 12px 5px 8px;
+    background-color: rgb(235, 200, 120); border-width: 2px; border-color: var(--rule); }
+.scard-price .coin-icon { width: 22px; height: 24px; margin-right: 6px; }
+.scard-price-text { font-size: 22px; color: var(--ink); margin: 0; padding: 0; }
+.scard-head { font-size: 19px; color: var(--accent); margin: 10px 0 4px 0; padding: 0; }
+.scard-line { flex-direction: row; align-items: center; margin: 2px 0; }
+.scard-text { font-size: 18px; color: var(--ink); margin: 0; padding: 0; white-space: normal; flex-shrink: 1; }
+.scard-line .scard-text { flex-grow: 1; flex-basis: 0; }
+.scard-next { margin-top: 10px; padding: 0 8px 8px 8px; background-color: rgba(235, 200, 120, 0.55); }
+.scard-next .scard-head { margin-top: 6px; }
+.scard-next.later { background-color: rgba(0, 0, 0, 0); border-width: 2px; border-color: var(--rule); }
+.scard-next.later .scard-text { color: var(--ink-dim); }
+.scard-spacer { flex-grow: 1; min-height: 8px; }
+.scard .ucard-foot { justify-content: flex-end; }
+.ucard.locked .scard-text, .ucard.locked .scard-price-text { color: var(--ink-dim); }
+.si { width: 24px; height: 24px; margin-right: 8px; flex-shrink: 0; -unity-background-scale-mode: scale-to-fit; }
+.si-hammer { background-image: url("project://database/Assets/Art/UI/PC/T_IconHammer.png"); }
+.si-books { background-image: url("project://database/Assets/Art/UI/PC/T_IconBooks.png"); }
+.si-book { background-image: url("project://database/Assets/Art/UI/PC/T_IconBook.png"); }
+.si-shelf { background-image: url("project://database/Assets/Art/UI/PC/T_IconShelf.png"); }
+.si-broom { background-image: url("project://database/Assets/Art/UI/PC/T_IconBroom.png"); }
+.si-key { background-image: url("project://database/Assets/Art/UI/PC/T_IconKey.png"); }
+.si-bag { background-image: url("project://database/Assets/Art/UI/PC/T_IconBag.png"); }
+.si-ask { background-image: url("project://database/Assets/Art/UI/PC/T_IconAsk.png"); }
+.si-coin { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconCoin01a.png"); }
+.si-energy { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconEnergy01a.png"); }
+
+/* Birthday: Day / Month / Year are drop-downs (a pick list, no typing): the kit's arrow on the right. */
+.dd { padding-right: 40px; height: 44px; } /* a fixed height: with the arrow inside, the button no longer sizes to its text */
+.dd-arrow { position: absolute; right: 12px; top: 13px; width: 27px; height: 18px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_HandleDropdown01a.png"); -unity-background-scale-mode: stretch-to-fill;
+    -unity-background-image-tint-color: var(--ink); }
+.dd:hover .dd-arrow { -unity-background-image-tint-color: rgb(176, 88, 40); }

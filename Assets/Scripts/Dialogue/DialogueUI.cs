@@ -195,7 +195,8 @@ public class DialogueUI : MonoBehaviour
         voice.PlayOneShot(voiceBlip, voiceVolume);
     }
 
-    void Close()
+    /// <summary>Closes the box (also used when the tutorial is skipped mid-conversation).</summary>
+    public void Close()
     {
         current = null;
         fullText = null;

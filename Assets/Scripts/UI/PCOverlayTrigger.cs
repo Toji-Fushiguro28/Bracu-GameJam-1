@@ -157,7 +157,7 @@ public class PCOverlayTrigger : MonoBehaviour
         foreach (var t in Tabs)
         {
             string tab = t;
-            root.Q<Button>("tab-" + tab)?.RegisterCallback<ClickEvent>(_ => { if (!JustOpened) ShowTab(tab); });
+            root.Q<Button>("tab-" + tab)?.RegisterCallback<ClickEvent>(_ => { if (!JustOpened && (Tutorial.NeededTab == null || Tutorial.NeededTab == tab)) ShowTab(tab); });
         }
         ticker = root.schedule.Execute(RefreshFrame).Every(450);
     }
@@ -255,7 +255,7 @@ public class PCOverlayTrigger : MonoBehaviour
     public void Open() => Show();
 
     /// <summary>Shut it from outside (the power just went).</summary>
-    public void ForceClose() => Hide();
+    public void ForceClose() => Hide(true);
 
     void Show()
     {
@@ -282,7 +282,9 @@ public class PCOverlayTrigger : MonoBehaviour
         bool back = resume;
         resume = false;
         PCCatalogueView.ResetFilters(); // every open (after closing or minimising): All books, no search
-        ShowTab(back ? lastTab : "home", !back); // a normal open: the catalogue starts on All books
+        ShowTab(Tutorial.NeededTab ?? (back ? lastTab : "home"), !back); // a normal open: the catalogue starts on All books
+        // The tutorial: only the tab it needs (the others greyed out).
+        foreach (var t in Tabs) overlayDoc.rootVisualElement.Q<Button>("tab-" + t)?.SetEnabled(Tutorial.NeededTab == null || Tutorial.NeededTab == t);
 
         prevCursorVisible = UnityEngine.Cursor.visible;
         prevLock = UnityEngine.Cursor.lockState;
@@ -299,9 +301,10 @@ public class PCOverlayTrigger : MonoBehaviour
             outline.Hide();
     }
 
-    void Hide()
+    /// <param name="force">Close even while the tutorial waits for "Add to note".</param>
+    void Hide(bool force = false)
     {
-        if (!isOpen)
+        if (!isOpen || (!force && Tutorial.NoteOnly))
             return;
         isOpen = false;
         ticker?.Pause();

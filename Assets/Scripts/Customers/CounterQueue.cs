@@ -36,6 +36,14 @@ public class CounterQueue : MonoBehaviour
 
     public void Leave(Customer c) => line.Remove(c);
 
+    /// <summary>Back in line at the front: for someone still standing at the desk (a second request after being
+    /// served). Joining at the back would let the next person walk onto their spot.</summary>
+    public void JoinFront(Customer c)
+    {
+        line.Remove(c);
+        line.Insert(0, c);
+    }
+
     /// <summary>Swaps this customer with the one just ahead (they're still on their way; this one is already here).</summary>
     public void MoveUp(Customer c)
     {
@@ -44,9 +52,6 @@ public class CounterQueue : MonoBehaviour
         (line[i - 1], line[i]) = (line[i], line[i - 1]);
     }
 
-    [Tooltip("From the front spot: where people leaving the desk walk first, so they go round the left side, not back along the line.")]
-    public Vector3 leaveViaOffset = new Vector3(-3f, 0f, -2.5f);
-    public Vector3 LeaveVia => SlotPosition(0) + leaveViaOffset;
 
     public int IndexOf(Customer c) => line.IndexOf(c);
     public Customer At(int i) => i >= 0 && i < line.Count ? line[i] : null;

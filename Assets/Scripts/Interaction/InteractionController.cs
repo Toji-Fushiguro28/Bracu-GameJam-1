@@ -37,7 +37,9 @@ public class InteractionController : MonoBehaviour
 
     void Update()
     {
-        SetHovered(PlayerLock.IsLocked || NotebookHUD.PointerOver || HUD.PointerOverFeed ? null : Pick());
+        var picked = PlayerLock.IsLocked || NotebookHUD.PointerOver || HUD.PointerOverFeed ? null : Pick();
+        if (picked != null && !Tutorial.Allows(picked)) picked = null; // the tutorial: only the next thing responds
+        SetHovered(picked);
 
         bool inReach = hovered != null && hovered.InReach(transform.position);
         if (WorldPrompts.Instance != null)

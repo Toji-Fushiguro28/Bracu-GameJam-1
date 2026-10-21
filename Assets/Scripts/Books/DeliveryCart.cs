@@ -76,7 +76,7 @@ public class DeliveryCart : ClickInteractable
     {
         if (book == null) return;
         copies.Add(book);
-        Bubble(copies.Count == 1 ? $"Delivery: \"{book.Title}\"" : $"Delivery! {copies.Count} books waiting.");
+        if (!Tutorial.HoldsClock) Bubble(copies.Count == 1 ? $"Delivery: \"{book.Title}\"" : $"Delivery! {copies.Count} books waiting.");
     }
 
     public override void Interact(GameObject player)

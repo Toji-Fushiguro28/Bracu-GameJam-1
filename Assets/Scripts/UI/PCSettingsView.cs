@@ -47,6 +47,13 @@ public static class PCSettingsView
         full.Add(Value(Screen.fullScreen ? "On" : "Off"));
         full.Add(Button("Toggle", () => { Screen.fullScreen = !Screen.fullScreen; root.schedule.Execute(() => Refresh(root)).ExecuteLater(200); }));
 
+        var tut = Row(list, "Tutorial");
+        bool canReplay = GameManager.Instance != null && GameManager.Instance.CurrentPhase == GameManager.Phase.Open && !Tutorial.HoldsClock;
+        tut.Add(Value(canReplay ? "Play the short tutorial again." : "Only while the library is open."));
+        var replay = Button("Replay", () => { Tutorial.RequestReplay(); UnityEngine.Object.FindAnyObjectByType<PCOverlayTrigger>()?.ForceClose(); });
+        replay.SetEnabled(canReplay);
+        tut.Add(replay);
+
         var menu = Row(list, "Main menu");
         bool leaving = Time.unscaledTime < menuConfirmUntil;
         menu.Add(Value(leaving ? "Today's progress isn't saved. Sure?" : "Back to the title screen."));

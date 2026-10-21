@@ -3,8 +3,9 @@ using UnityEngine.AI;
 
 /// <summary>
 /// A hired staff member walking around the library (added at runtime by StaffManager).
-///  Archivist  - types at their Archive desk; fetches one worn/damaged copy from the returns at a
-///               time, takes it to the repair desk and repairs it, then goes back to typing.
+///  Archivist  - types at their Archive desk; fetches worn/damaged copies from the returns (one per trip,
+///               plus one per upgrade), leaves them on the repair desk and repairs them one by one.
+///  Both the archivist and the cleaner carry one more good return per trip for each upgrade.
 ///  Cleaner    - roams the hall, walking to each cup or open book and tidying it away.
 ///  Attendant  - sits reading in the Rare Books room; looks after VIP scholars (see Customer).
 /// </summary>
@@ -25,6 +26,9 @@ public class StaffWorker : MonoBehaviour
     float timer;
     BookData carried;
     BookCondition carriedCondition;
+    /// <summary>More books in their arms after <see cref="carried"/> (one more per upgrade).</summary>
+    readonly System.Collections.Generic.List<(BookData book, BookCondition condition)> extra = new System.Collections.Generic.List<(BookData, BookCondition)>();
+    int Carry => GameManager.Instance != null ? GameManager.Instance.StaffCarry(role) : 1;
     RepairDesk.Job job;
     MessSpot target;
     ShelfInteractable shelf;
@@ -49,7 +53,7 @@ public class StaffWorker : MonoBehaviour
     {
         OnHold = hold;
         if (!hold) return;
-        if (carried != null) { ReturnBin.Instance?.Add(carried, carriedCondition); carried = null; if (anim) anim.SetCarrying(false); }
+        DropAll();
         job = null; target = null;
         if (state == State.Reporting || state == State.ToReport || state == State.GoingHome) return;
         if (role == GameManager.StaffRole.Cleaner) Wander(); else GoToChair();
@@ -72,7 +76,7 @@ public class StaffWorker : MonoBehaviour
     /// <summary>The closing bell: put down what they're doing, walk to the main gate and wait to report.</summary>
     public void WaitToReport(Vector3 gateSpot)
     {
-        if (carried != null) { ReturnBin.Instance?.Add(carried, carriedCondition); carried = null; if (anim) anim.SetCarrying(false); }
+        DropAll();
         job = null; target = null;
         OnHold = false;
         if (agent.enabled) agent.isStopped = false;
@@ -237,11 +241,18 @@ public class StaffWorker : MonoBehaviour
     void TakeFromShelf()
     {
         carried = null;
+        extra.Clear();
         if (shelf != null)
             foreach (var b in shelf.Books)
             {
-                var cond = b.DamagedCopies > 0 ? BookCondition.Damaged : BookCondition.Worn;
-                if ((b.DamagedCopies > 0 || b.WornCopies > 0) && b.TakeCopy(cond)) { carried = b; carriedCondition = cond; break; }
+                // As many worn/damaged copies off this shelf as they can carry.
+                while ((carried == null || 1 + extra.Count < Carry) && (b.DamagedCopies > 0 || b.WornCopies > 0))
+                {
+                    var cond = b.DamagedCopies > 0 ? BookCondition.Damaged : BookCondition.Worn;
+                    if (!b.TakeCopy(cond)) break;
+                    if (carried == null) { carried = b; carriedCondition = cond; } else extra.Add((b, cond));
+                }
+                if (carried != null && 1 + extra.Count >= Carry) break;
             }
         if (carried == null) { GoToChair(); return; }
         GameManager.Instance?.NotifyBooksChanged();
@@ -264,7 +275,9 @@ public class StaffWorker : MonoBehaviour
     void TakeFromBin()
     {
         var bin = ReturnBin.Instance;
+        extra.Clear();
         if (bin == null || !bin.TakeNeedingRepair(out carried, out carriedCondition)) { GoToChair(); return; }
+        while (1 + extra.Count < Carry && bin.TakeNeedingRepair(out var more, out var moreCond)) extra.Add((more, moreCond));
         if (anim) { anim.PlayReachShelf(); anim.SetCarrying(true); }
         Walk(RepairDesk.Instance.transform.position, State.ToDesk);
     }
@@ -278,6 +291,9 @@ public class StaffWorker : MonoBehaviour
             desk.DropOff(carried, carriedCondition);
             job = desk.Waiting[desk.Waiting.Count - 1];
             carried = null;
+            // The rest wait on the desk; they're repaired one by one after this one.
+            foreach (var (b, c) in extra) desk.DropOff(b, c);
+            extra.Clear();
         }
         if (job != null && GameManager.Instance != null && GameManager.Instance.Coins < desk.Cost(job)) TellBroke(desk.Cost(job));
         if (job == null || !desk.StartRepair(job, 0.5f))
@@ -301,7 +317,9 @@ public class StaffWorker : MonoBehaviour
     void TakeReturnToShelve()
     {
         var bin = ReturnBin.Instance;
+        extra.Clear();
         if (bin == null || !bin.TakeGood(out carried, out carriedCondition)) { GoToChair(); return; }
+        while (1 + extra.Count < Carry && bin.TakeGood(out var more, out var moreCond)) extra.Add((more, moreCond));
         if (anim) { anim.PlayReachShelf(); anim.SetCarrying(true); }
         GoToShelfFor(carried);
     }
@@ -320,7 +338,7 @@ public class StaffWorker : MonoBehaviour
     /// <summary>At the closing bell: say goodbye and walk out the front door.</summary>
     public void GoHome(Vector3 door)
     {
-        if (carried != null) { ReturnBin.Instance?.Add(carried, carriedCondition); carried = null; if (anim) anim.SetCarrying(false); }
+        DropAll();
         job = null; target = null;
         Walk(door, State.GoingHome);
     }
@@ -360,7 +378,25 @@ public class StaffWorker : MonoBehaviour
             earnedToday += perShelved;
             GameManager.Instance?.NotifyBooksChanged();
         }
+        // More in their arms: on to the next book's shelf.
+        if (extra.Count > 0 && CanWork)
+        {
+            (carried, carriedCondition) = extra[0];
+            extra.RemoveAt(0);
+            if (anim) anim.SetCarrying(true);
+            GoToShelfFor(carried);
+            return;
+        }
         GoToChair();
+    }
+
+    /// <summary>Puts down everything in their arms: back into the return bin (closing time, a problem).</summary>
+    void DropAll()
+    {
+        if (carried != null) { ReturnBin.Instance?.Add(carried, carriedCondition); carried = null; }
+        foreach (var (b, c) in extra) ReturnBin.Instance?.Add(b, c);
+        extra.Clear();
+        if (anim) anim.SetCarrying(false);
     }
 
     void FaceTowards(Vector3 p)

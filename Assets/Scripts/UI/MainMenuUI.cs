@@ -14,6 +14,8 @@ public class MainMenuUI : MonoBehaviour
     public static MainMenuUI Instance { get; private set; }
     /// <summary>True while the title screen is up.</summary>
     public static bool Active => Instance != null && Instance.showing;
+    /// <summary>The title screen before play has begun (not the Esc pause screen).</summary>
+    public static bool OnTitle => Active && !Instance.started;
     /// <summary>Set before reloading for a new game, so it starts straight away.</summary>
     public static bool SkipOnce;
     [Tooltip("New games start with this intro scene (the Dean's interview). Empty = straight into Day 1.")]
@@ -124,6 +126,15 @@ public class MainMenuUI : MonoBehaviour
         doc.Q<Button>("btn-howto-prev").clicked += () => { howtoPage = Mathf.Max(0, howtoPage - 1); ShowHowTo(); };
         doc.Q<Button>("btn-howto-next").clicked += () => { howtoPage = Mathf.Min(HowTo.Length - 1, howtoPage + 1); ShowHowTo(); };
         doc.Q<Button>("btn-howto-back").clicked += () => Show(main);
+        // Play the tutorial (again): continue the library and run it; on a new game it runs anyway.
+        var howtoButton = doc.Q<Button>("btn-howto");
+        if (howtoButton != null && howtoButton.parent != null)
+        {
+            var tutorial = new Button(() => { Tutorial.RequestReplay(); if (hasSave || started) Play(); else Show(modePanel); }) { name = "btn-tutorial", text = "Tutorial" };
+            tutorial.AddToClassList("kit-button");
+            tutorial.AddToClassList("menu-button");
+            howtoButton.parent.Insert(howtoButton.parent.IndexOf(howtoButton) + 1, tutorial);
+        }
         var quit = doc.Q<Button>("btn-quit");
         quit.clicked += () => Application.Quit();
         quit.EnableInClassList("hidden", Application.platform == RuntimePlatform.WebGLPlayer); // a browser tab can't quit
@@ -302,7 +313,7 @@ public class MainMenuUI : MonoBehaviour
         {
             root.AddToClassList("fading");
             root.pickingMode = PickingMode.Ignore;
-            root.schedule.Execute(() => root.AddToClassList("hidden")).ExecuteLater(650);
+            root.schedule.Execute(() => { if (!showing) root.AddToClassList("hidden"); }).ExecuteLater(650); // Esc may have paused again meanwhile
         }
         SetGameHudVisible(true);
         PlayerLock.Unlock(this);

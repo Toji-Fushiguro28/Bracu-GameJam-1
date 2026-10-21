@@ -63,10 +63,21 @@ public static class RequestLog
 
     public static bool Has(Customer c) => c != null && live.ContainsKey(c);
 
-    /// <summary>Writes a new entry the first time you hear a visitor's request.</summary>
+    /// <summary>Writes a new entry the first time you hear a visitor's request. Heard again after you cleared it:
+    /// the same entry goes back in the notebook (never twice), without the books you'd noted for it.</summary>
     public static void Begin(Customer c, Kind kind, string who, string line, string hint = null, bool usedHint = false)
     {
-        if (c == null || live.ContainsKey(c)) return;
+        if (c == null) return;
+        if (live.TryGetValue(c, out var old))
+        {
+            if (!Open.Contains(old))
+            {
+                old.guesses.RemoveAll(g => !g.wrong && g.title != null); // cleared means cleared: only books they turned down stay
+                Open.Add(old);
+                Changed?.Invoke();
+            }
+            return;
+        }
         var e = new Entry { day = GM != null ? GM.day : 1, hour = GM != null ? GM.Hour : 9f, who = who, kind = kind, line = line, hint = hint, usedHint = usedHint };
         All.Add(e);
         Open.Add(e);
@@ -85,6 +96,9 @@ public static class RequestLog
     /// <summary>The newest open book request (pickups and cards don't take guesses).</summary>
     public static Entry Current => Open.FindLast(e => e.kind == Kind.Book);
 
+    /// <summary>How many untested answers one book request can hold at once.</summary>
+    const int MaxUntested = 3;
+
     static string NotedText(BookData b) => $"Noted: \"{b.Title}\" ({ShelfInteractable.NameOf(b.ShelfLocation)})";
 
     /// <summary>True if the PC's "Add to note" would add nothing new for this book.</summary>
@@ -92,17 +106,13 @@ public static class RequestLog
     {
         if (book == null) return false;
         var e = Current;
-        if (e != null)
-        {
-            var last = e.guesses.Count > 0 ? e.guesses[e.guesses.Count - 1] : null;
-            return last != null && !last.wrong && last.title == book.Title;
-        }
+        if (e != null) return e.guesses.Exists(g => !g.wrong && g.title == book.Title);
         return shelving != null && shelving.guesses.Exists(g => g.title == book.Title);
     }
 
     /// <summary>
-    /// The PC's "Add to note". With a book request open it's your answer for it (swaps an untested one,
-    /// or adds a new line after a wrong one). Otherwise the book goes on the "To Shelve" page.
+    /// The PC's "Add to note". With a book request open it's an answer for it, on a new line (up to
+    /// MaxUntested untested ones; past that the oldest untested one makes room). Otherwise the book goes on the "To Shelve" page.
     /// </summary>
     public static void AddToNote(BookData book)
     {
@@ -110,9 +120,9 @@ public static class RequestLog
         var e = Current;
         if (e != null)
         {
-            var last = e.guesses.Count > 0 ? e.guesses[e.guesses.Count - 1] : null;
-            if (last != null && !last.wrong && last.title != null) { last.title = book.Title; last.text = NotedText(book); }
-            else e.guesses.Add(new Guess { title = book.Title, text = NotedText(book) });
+            var untested = e.guesses.FindAll(g => !g.wrong && g.title != null);
+            if (untested.Count >= MaxUntested) e.guesses.Remove(untested[0]);
+            e.guesses.Add(new Guess { title = book.Title, text = NotedText(book) });
         }
         else
         {

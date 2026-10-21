@@ -136,6 +136,7 @@ public class HUD : MonoBehaviour
     void Notify(string text, string icon, bool urgent, bool log, float seconds = NoteSeconds)
     {
         if (feed == null || string.IsNullOrEmpty(text)) return;
+        if (Tutorial.HoldsClock) return; // the tutorial's practice day: its card says it all (no delivery/upgrade cards after)
         // The same message already showing or waiting: once is enough.
         if (pending.Exists(p => p.text == text) || notes.Exists(n => !n.tip && n.el.Q<Label>(className: "feed-text")?.text == text)) return;
         if (log) RequestLog.News(text); // in the Log straight away, even if the card waits
@@ -151,7 +152,20 @@ public class HUD : MonoBehaviour
     /// <summary>A tip (the first time something happens): in the feed with a lamp, until you click it away.</summary>
     public static void Tip(string text)
     {
-        if (instance != null) instance.Notify(text, "tip", false, false);
+        if (instance != null) instance.Notify(Highlight(text), "tip", false, false);
+    }
+
+    // Words worth spotting at a glance in a tip: where to go and what to press.
+    static readonly string[] TipWords = { "computer", "Catalogue", "Members", "Shop", "Notes", "return bin", "repair desk", "Repair desk",
+        "book cart", "cart", "shelf", "shelves", "reserve", "Order", "Express", "Rare Books", "Archive", "Day Report", "library card",
+        "card", "hint", "click", "front ropes", "VIP", "reputation", "tidy" };
+
+    /// <summary>Highlights the key words of a tip (unless it's already coloured).</summary>
+    static string Highlight(string text)
+    {
+        if (string.IsNullOrEmpty(text) || text.Contains("<")) return text;
+        string pattern = @"\b(" + string.Join("|", System.Linq.Enumerable.Select(TipWords, System.Text.RegularExpressions.Regex.Escape)) + @")\b";
+        return System.Text.RegularExpressions.Regex.Replace(text, pattern, m => $"<color=#D67840>{m.Value}</color>", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
     }
 
     void ShowCard(string text, string icon, bool urgent, float seconds)
@@ -302,17 +316,53 @@ public class HUD : MonoBehaviour
     VisualElement purse, hudLayer;
     Coroutine shaking;
 
+    // The purse number counts one coin at a time: up as each flying coin lands (with its clink), down quietly when you spend.
+    int shownCoins, allowedCoins, coinsFlying, coinWave;
+    float coinStep, coinSpeed = 20f, coinsDueBy;
+
+    /// <summary>Straight to the total (loading, a new day, before the HUD is laid out). Coins still in the air no longer count.</summary>
+    void SnapCoins(int total)
+    {
+        coinWave++;
+        coinsFlying = 0;
+        shownCoins = allowedCoins = total;
+        coinStep = 0f;
+        if (coinLabel != null) coinLabel.text = total.ToString();
+    }
+
+    /// <summary>Moves the purse number toward what has landed (or been spent), one coin per step.</summary>
+    void TickCoins(GameManager gm)
+    {
+        if (coinLabel == null || gm == null) return;
+        // Coins that never landed (the HUD was switched off mid-flight): stop waiting for them.
+        if (coinsFlying > 0 && Time.unscaledTime > coinsDueBy) { coinsFlying = 0; coinWave++; }
+        // Nothing in the air: the purse must end on the real total (a spend mid-flight, rounding).
+        if (coinsFlying == 0 && allowedCoins != gm.Coins) { allowedCoins = gm.Coins; coinSpeed = Mathf.Max(coinSpeed, 20f); }
+        if (shownCoins == allowedCoins) { coinStep = 0f; return; }
+        coinStep += Time.unscaledDeltaTime * coinSpeed;
+        int steps = (int)coinStep;
+        if (steps <= 0) return;
+        coinStep -= steps;
+        shownCoins = allowedCoins > shownCoins ? Mathf.Min(shownCoins + steps, allowedCoins) : Mathf.Max(shownCoins - steps, allowedCoins);
+        coinLabel.text = shownCoins.ToString();
+    }
+
     /// <summary>Paid: coins fly up from the librarian into the purse, which shakes as each one lands and counts up,
     /// and a big "+12" floats up beside it (the coin sound plays from GameAudio). Spending: a shake and a red "-40".</summary>
     void OnCoins(int total, int delta)
     {
         // No effects until the HUD has been laid out (e.g. coins changed on the very first frame).
         bool ready = purse != null && hudLayer != null && isActiveAndEnabled && purse.worldBound.width > 0f && !float.IsNaN(purse.worldBound.width);
-        if (delta <= 0 || !ready) coinLabel.text = total.ToString();
-        if (delta == 0 || !ready) return;
+        if (delta == 0 || !ready) { SnapCoins(total); return; }
         StartCoroutine(Pop(delta));
         if (delta > 0) StartCoroutine(FlyCoins(delta));
-        else Shake(0.8f);
+        else
+        {
+            // Spending: counts down one by one (no clink), done in about half a second.
+            allowedCoins += delta;
+            coinSpeed = Mathf.Max(20f, -delta / 0.5f);
+            Shake(0.8f);
+        }
     }
 
     void Shake(float strength)
@@ -362,18 +412,23 @@ public class HUD : MonoBehaviour
     /// there are many: each one jingles as it drops in the purse.</summary>
     IEnumerator FlyCoins(int delta)
     {
-        int n = Mathf.Clamp(2 + delta / 4, 3, 24);
+        int n = Mathf.Min(delta, Mathf.Clamp(2 + delta / 4, 3, 24)); // never more coins than there are to add: every clink adds
         float gap = n > 10 ? 0.055f : 0.075f;
         Vector2 from = FlyStart();
+        int wave = coinWave;
+        coinsFlying += n;
+        coinsDueBy = Time.unscaledTime + n * gap + 2f; // all landed well before this
         for (int i = 0; i < n; i++)
         {
-            StartCoroutine(FlyOne(from + Random.insideUnitCircle * 30f));
+            int share = delta / n + (i < delta % n ? 1 : 0); // the coins this one brings
+            StartCoroutine(FlyOne(from + Random.insideUnitCircle * 30f, share, gap, wave));
             yield return new WaitForSecondsRealtime(gap);
         }
     }
 
-    /// <summary>One coin on a curve up to the purse; when it lands the purse shakes and shows the new total.</summary>
-    IEnumerator FlyOne(Vector2 from)
+    /// <summary>One coin on a curve up to the purse; when it lands it clinks, the purse shakes, and the number
+    /// counts up by its share, one by one, before the next coin lands.</summary>
+    IEnumerator FlyOne(Vector2 from, int share, float gap, int wave)
     {
         var coin = new VisualElement { pickingMode = PickingMode.Ignore };
         coin.AddToClassList("coin-fly");
@@ -393,7 +448,12 @@ public class HUD : MonoBehaviour
             yield return null;
         }
         coin.RemoveFromHierarchy();
-        if (GameManager.Instance != null) coinLabel.text = GameManager.Instance.Coins.ToString();
+        if (wave == coinWave)
+        {
+            coinsFlying = Mathf.Max(0, coinsFlying - 1);
+            allowedCoins += share;
+            coinSpeed = Mathf.Max(20f, share / gap); // this share is counted before the next clink
+        }
         GameAudio.Play(a => a.coinAdd, 0.5f); // into the purse: clink
         Shake(1f);
     }
@@ -508,7 +568,11 @@ public class HUD : MonoBehaviour
 
     void OnPhase(GameManager.Phase phase)
     {
-        if (phase == GameManager.Phase.Closing) ShowBanner("Closing time! No new visitors.");
+        if (phase == GameManager.Phase.Closing)
+        {
+            ShowBanner("Closing time! No new visitors.");
+            Tutorial.Show("lockup", "Closing time: tidy any cups and books left out (it earns reputation), then click the front ropes to lock up.");
+        }
         else if (phase == GameManager.Phase.Closed) ShowBanner("The library is closed. Tidy up, then click the front ropes to lock up.", 6f);
     }
 
@@ -530,7 +594,7 @@ public class HUD : MonoBehaviour
             gm.ReputationChanged += OnReputation;
             gm.DayStarted += ShowReputation;
             if (!MainMenuUI.Active) ShowBanner(MorningText(gm), 6f); // with the title menu up, Play/Continue shows it
-            coinLabel.text = gm.Coins.ToString();
+            SnapCoins(gm.Coins);
             dayLabel.text = "Day " + gm.day;
             ShowReputation();
         }
@@ -545,6 +609,7 @@ public class HUD : MonoBehaviour
 
     void ShowCarry(BookData book)
     {
+        NotebookHUD.Adopt(carrySlot); // above the screens' dark backdrops
         carrySlot?.EnableInClassList("hidden", book == null);
         // One slot per book in your hands (top book first): a pixel book coloured by its condition, its name underneath.
         if (carrySlot != null && carry != null)
@@ -623,6 +688,7 @@ public class HUD : MonoBehaviour
     {
         UpdateStamina();
         var gm = GameManager.Instance;
+        TickCoins(gm);
         if (gm != null && pin != null)
         {
             string text = gm.Hour < 10f && gm.day == GameManager.ArchiveDay ? "★ The Archive is open today! Readers will ask for its old books."
@@ -651,7 +717,7 @@ public class HUD : MonoBehaviour
         if (repDeltaUntil > 0f && Time.time > repDeltaUntil) { repDeltaUntil = 0f; repDelta.AddToClassList("hidden"); }
         if (gm == null || clockLabel == null) return;
         string clock = gm.CurrentPhase == GameManager.Phase.Closed ? "Closed - tidy up, then click the front ropes" : gm.Paused ? gm.ClockText + "  (paused)" : gm.Slowed ? gm.ClockText + "  (slowed)" : gm.ClockText;
-        string day = $"Day {gm.day}";
+        string day = Tutorial.HoldsClock ? "Day 0 - Training day" : $"Day {gm.day}";
         if (dayLabel != null && dayLabel.text != day) dayLabel.text = day;
         if (clock != lastClock) clockLabel.text = lastClock = clock;
     }

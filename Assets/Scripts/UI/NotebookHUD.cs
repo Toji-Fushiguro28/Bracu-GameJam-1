@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 
 /// <summary>
@@ -20,7 +21,6 @@ public class NotebookHUD : MonoBehaviour
     ScrollView list, reserveList;
     Button tab, reserveTab;
     bool dirty = true;
-    bool overBook, overReserves;
     string reserveSignature;
     float nextReserveCheck, nextPulse;
     /// <summary>The first new reservation of a session opens the list by itself; later ones just light the tab.</summary>
@@ -52,15 +52,11 @@ public class NotebookHUD : MonoBehaviour
         list = root.Q<ScrollView>("notebook-list");
         tab = root.Q<Button>("notebook-tab");
         tab?.RegisterCallback<ClickEvent>(_ => SetCollapsed(!book.ClassListContains("collapsed")));
-        book?.RegisterCallback<PointerEnterEvent>(_ => { overBook = true; PointerOver = true; });
-        book?.RegisterCallback<PointerLeaveEvent>(_ => { overBook = false; PointerOver = overReserves; });
 
         reserves = root.Q("reservations");
         reserveList = root.Q<ScrollView>("reservations-list");
         reserveTab = root.Q<Button>("reservations-tab");
         reserveTab?.RegisterCallback<ClickEvent>(_ => SetReservesOpen(reserves.ClassListContains("collapsed")));
-        reserves?.RegisterCallback<PointerEnterEvent>(_ => { overReserves = true; PointerOver = true; });
-        reserves?.RegisterCallback<PointerLeaveEvent>(_ => { overReserves = false; PointerOver = overBook; });
         reserveSignature = null;
         GameAudio.HookClicks(root);
         current = this;
@@ -73,7 +69,7 @@ public class NotebookHUD : MonoBehaviour
     void OnDisable()
     {
         RequestLog.Changed -= MarkDirty;
-        PointerOver = overBook = overReserves = false;
+        PointerOver = false;
     }
 
     void Start()
@@ -89,6 +85,40 @@ public class NotebookHUD : MonoBehaviour
     }
 
     void MarkDirty() => dirty = true;
+
+    /// <summary>Moves the HUD's "in your hands" box onto this panel (above the PC, shelf and repair backdrops).</summary>
+    public static void Adopt(VisualElement el)
+    {
+        var root = current != null ? current.GetComponent<UIDocument>().rootVisualElement : null;
+        if (el == null || root == null || el.parent == root) return;
+        el.AddToClassList("carry-float");
+        root.Add(el);
+    }
+
+    float fittedHeight = -1f;
+
+    /// <summary>Both lists as tall as the screen allows (under the coin purse, down to the bottom edge):
+    /// Notes and Reserved get half each, minus their titles and padding.</summary>
+    void FitLists()
+    {
+        float h = layer.layout.height;
+        if (float.IsNaN(h) || h <= 0f || Mathf.Abs(h - fittedHeight) < 1f) return;
+        fittedHeight = h;
+        float half = (h - 104f - 24f - 10f) * 0.5f; // the purse above, a margin at the bottom, the gap between
+        if (list != null) list.style.maxHeight = Mathf.Max(140f, half - 100f);
+        if (reserveList != null) reserveList.style.maxHeight = Mathf.Max(100f, half - 80f);
+    }
+
+    /// <summary>Is the mouse on the notebook or the reservations box?</summary>
+    bool MouseOver()
+    {
+        var panel = book?.panel;
+        if (panel == null || Mouse.current == null) return false;
+        Vector2 screen = Mouse.current.position.ReadValue();
+        screen.y = Screen.height - screen.y;
+        Vector2 p = RuntimePanelUtils.ScreenToPanel(panel, screen);
+        return book.worldBound.Contains(p) || (reserves != null && reserves.worldBound.Contains(p));
+    }
 
     static NotebookHUD current;
     static bool tucked;
@@ -115,7 +145,8 @@ public class NotebookHUD : MonoBehaviour
         // Out of the way on the title screen and behind the Day Report.
         bool show = !MainMenuUI.Active && (DayReportUI.Instance == null || !DayReportUI.Instance.IsOpen);
         layer.EnableInClassList("hidden", !show);
-        if (!show) PointerOver = overBook = overReserves = false;
+        PointerOver = show && MouseOver();
+        FitLists();
         if (dirty) Rebuild();
         // Orders and deliveries change a reservation's status, so look again now and then.
         if (Time.unscaledTime >= nextReserveCheck) { nextReserveCheck = Time.unscaledTime + 0.5f; RebuildReserves(); }

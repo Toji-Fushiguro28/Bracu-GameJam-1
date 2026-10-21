@@ -145,34 +145,47 @@ public class DayReportUI : MonoBehaviour
         var gm = GameManager.Instance;
         var d = gm.Today;
         root.Q<Label>("report-title").text = $"Day {gm.day} Report  ·  {GameManager.DifficultyNames[(int)gm.difficulty]}";
-        // One tidy row per stat: label on the left, number on the right.
         rows.Clear();
-        void Row(string label, string value, bool bold = false)
+        // Today's twist, if there was one, in a gold box on top.
+        if (DayStory.Instance != null && DayStory.Instance.ReportRow(out var twist, out var outcome))
         {
-            var r = new VisualElement();
-            r.AddToClassList("report-row");
-            if (bold) r.AddToClassList("total");
-            var l = new Label(label); l.AddToClassList("report-key");
-            var v = new Label(value); v.AddToClassList("report-val");
-            r.Add(l); r.Add(v);
-            rows.Add(r);
+            var t = new Label($"{twist}: <color=#D67840>{outcome}</color>");
+            t.AddToClassList("report-twist");
+            rows.Add(t);
         }
-        Row("Visitors served", d.served.ToString());
-        Row("Left unhappy", d.angry.ToString());
-        Row("Books sold", d.booksSold.ToString());
-        Row("Books read", d.booksRead.ToString());
-        Row("Returns checked in", d.returns.ToString());
-        Row("Repairs", $"{d.repairsPerfect + d.repairsNormal}");
-        Row("Things tidied", d.cleaned.ToString());
-        Row("New members", d.signups.ToString());
-        Row("Tips", d.tips.ToString());
-        if (DayStory.Instance != null && DayStory.Instance.ReportRow(out var twist, out var outcome)) Row(twist, outcome); // today's twist
-        // The money: what you started with, everything in and out, and what you have now.
-        Row("Coins at the start of the day", d.coinsAtStart.ToString());
-        Row("Money in", $"+{d.coinsIn}");
-        Row("Money out", d.coinsOut > 0 ? $"-{d.coinsOut}" : "0");
-        Row("Coins now", gm.Coins.ToString(), true);
-        if (gm.WagesDueTomorrow > 0) Row("Staff wages tomorrow morning", $"-{gm.WagesDueTomorrow}");
+        // The day in nine small tiles (icon, number, name); nothing today = greyed out.
+        var grid = new VisualElement();
+        grid.AddToClassList("report-tiles");
+        void Tile(string icon, int value, string label, bool bad = false)
+        {
+            var tile = new VisualElement();
+            tile.AddToClassList("report-tile");
+            tile.EnableInClassList("zero", value == 0);
+            tile.EnableInClassList("bad", bad && value > 0);
+            // Icon and number on top, the name under them.
+            var top = new VisualElement();
+            top.AddToClassList("rt-top");
+            var ico = new VisualElement();
+            ico.AddToClassList("rt-icon");
+            ico.AddToClassList("rt-" + icon);
+            top.Add(ico);
+            var v = new Label(value.ToString()); v.AddToClassList("rt-val");
+            top.Add(v);
+            tile.Add(top);
+            var k = new Label(label); k.AddToClassList("rt-key");
+            tile.Add(k);
+            grid.Add(tile);
+        }
+        Tile("served", d.served, "Served");
+        Tile("unhappy", d.angry, "Unhappy", true);
+        Tile("sold", d.booksSold, "Sold");
+        Tile("read", d.booksRead, "Read");
+        Tile("returns", d.returns, "Returns");
+        Tile("repairs", d.repairsPerfect + d.repairsNormal, "Repairs");
+        Tile("tidied", d.cleaned, "Tidied");
+        Tile("members", d.signups, "Members");
+        Tile("tips", d.tips, "Tips");
+        rows.Add(grid);
         int s = Stars(d);
         stars.text = new string('*', s) + new string('-', 5 - s);
         int delta = gm.Reputation - gm.ReputationAtStart;
@@ -241,6 +254,26 @@ public class DayReportUI : MonoBehaviour
     void BuildSummary(GameManager gm)
     {
         var d = gm.Today;
+        SummaryHead("Coins");
+        var coins = new VisualElement();
+        coins.AddToClassList("report-coins");
+        void Coin(string label, string value, string cls = null)
+        {
+            var r = new VisualElement();
+            r.AddToClassList("report-row");
+            if (cls != null) r.AddToClassList(cls);
+            var l = new Label(label); l.AddToClassList("report-key");
+            var v = new Label(value); v.AddToClassList("report-val");
+            r.Add(l); r.Add(v);
+            coins.Add(r);
+        }
+        Coin("Start of the day", d.coinsAtStart.ToString());
+        Coin("Money in", $"+{d.coinsIn}", d.coinsIn > 0 ? "in" : null);
+        Coin("Money out", d.coinsOut > 0 ? $"-{d.coinsOut}" : "0", d.coinsOut > 0 ? "out" : null);
+        Coin("Coins now", gm.Coins.ToString(), "total");
+        if (gm.WagesDueTomorrow > 0) Coin("Staff wages tomorrow morning", $"-{gm.WagesDueTomorrow}");
+        list.Add(coins);
+
         SummaryHead("Where the money came from");
         // Only what actually earned something today, so the rest of the page fits.
         void Source(string key, int value) { if (value > 0) SummaryRow(key, value); }
@@ -261,12 +294,6 @@ public class DayReportUI : MonoBehaviour
         if (d.coinsOut - listed > 0) SummaryRow("Other", d.coinsOut - listed);
         if (d.coinsOut > 0) SummaryRow("Total out", d.coinsOut, true);
         else SummaryNote("Nothing spent today.", "summary-note");
-
-        SummaryHead("Coins");
-        SummaryRow("At the start of the day", d.coinsAtStart);
-        SummaryRow("+ Money in", d.coinsIn);
-        SummaryRow("- Money out", d.coinsOut);
-        SummaryRow("= Coins now", gm.Coins, true);
 
         SummaryHead("What went wrong");
         int wrong = 0;

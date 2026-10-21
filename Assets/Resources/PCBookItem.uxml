@@ -20,6 +20,10 @@
         <ui:VisualElement class="book-stock">
             <ui:Label name="stock-n" class="stock-n font-title" />
             <ui:Label name="stock-sub" class="stock-sub" />
+            <ui:VisualElement name="stock-cart" class="stock-cart">
+                <ui:VisualElement class="px-icon icon-cart" />
+                <ui:Label name="stock-cart-n" class="stock-sub" />
+            </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

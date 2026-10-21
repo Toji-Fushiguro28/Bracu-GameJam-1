@@ -40,8 +40,17 @@ public class GameManager : MonoBehaviour
         /// coinsAtStart + coinsIn - coinsOut is always what you have now.</summary>
         public int coinsAtStart, coinsIn, coinsOut, staffKept;
         /// <summary>Where the money went, by kind (book orders, upgrades, wages...), in the order it was first spent.</summary>
-        public readonly List<string> spentOn = new List<string>();
-        public readonly List<int> spentAmount = new List<int>();
+        public List<string> spentOn = new List<string>();
+        public List<int> spentAmount = new List<int>();
+
+        /// <summary>A copy (the tutorial keeps one to put back afterwards).</summary>
+        public DayStats Copy()
+        {
+            var c = (DayStats)MemberwiseClone();
+            c.spentOn = new List<string>(spentOn); // its own lists, not shared
+            c.spentAmount = new List<int>(spentAmount);
+            return c;
+        }
 
         public void Spend(string what, int amount)
         {
@@ -73,6 +82,24 @@ public class GameManager : MonoBehaviour
     public int Reputation { get; private set; }
     /// <summary>Reputation when this day opened (for the report).</summary>
     public int ReputationAtStart { get; private set; }
+    /// <summary>After the tutorial's practice steps: coins and reputation go back to what they were, and today's
+    /// numbers start from here (practice doesn't count).</summary>
+    public void ResetAfterTutorial(int coins, int reputation, DayStats today)
+    {
+        int dc = coins - Coins, dr = reputation - Reputation;
+        Coins = coins; Reputation = reputation;
+        if (dc != 0) CoinsChanged?.Invoke(Coins, dc);
+        if (dr != 0) ReputationChanged?.Invoke(Reputation, dr);
+        Today = today ?? new DayStats { coinsAtStart = Coins };
+    }
+
+    /// <summary>The tutorial only: every order on its way arrives now (on the book cart).</summary>
+    public void DeliverOrdersNow()
+    {
+        foreach (var o in orders) { o.arriveDay = day; o.arriveHour = Hour; }
+        DeliverDue();
+    }
+
     public void AddReputation(int amount)
     {
         int before = Reputation;
@@ -122,13 +149,24 @@ public class GameManager : MonoBehaviour
     };
     /// <summary>Hiring order: Cleaner from day 1, Archivist when the Archive opens, attendant with Rare Books.</summary>
     public static readonly int[] StaffUnlockDay = { ArchiveDay, 1, RareDay };
-    /// <summary>Staff rows on the PC and in the day report (the cleaner is normally hired in the opening interview).</summary>
+    /// <summary>Staff rows on the PC and in the day report. Every role is hired the same way: book an interview.</summary>
     public static readonly StaffRole[] StaffOrder = { StaffRole.Cleaner, StaffRole.Repairer, StaffRole.RareAttendant };
     /// <summary>Usual hire price by role, paid once: Archive 250, Main hall 70, Rare Books 450. Applicants ask
     /// around this and can be talked down a little in the interview.</summary>
     public static readonly int[] StaffHireFee = { 250, 70, 450 };
-    /// <summary>Upgrade prices by role and level. Each level makes them faster and need less help.</summary>
-    public static readonly int[][] StaffUpgradeCosts = { new[] { 150, 300 }, new[] { 35, 70 }, new[] { 450 } };
+    /// <summary>Upgrade prices by role and level. Each level makes them faster and need less help
+    /// (and the archivist and cleaner carry one more book per trip).</summary>
+    public static readonly int[][] StaffUpgradeCosts = { new[] { 150, 300 }, new[] { 50, 100 }, new[] { 450 } };
+    /// <summary>What each role does, for the staff cards: "icon|text" (icons: .si-NAME in PC.uss).</summary>
+    public static readonly string[][] StaffDoes =
+    {
+        new[] { "hammer|Repairs worn and damaged books", "books|Fetches them from the returns and the shelves", "coin|Each repair earns coins" },
+        new[] { "broom|Tidies cups and open books", "shelf|Shelves good books from the return bin" },
+        new[] { "key|Looks after VIP scholars in Rare Books", "book|Fetches their rare book and checks them in" },
+    };
+    /// <summary>Books a staff member carries per trip: one, plus one per upgrade (archivist and cleaner).</summary>
+    public int StaffCarry(StaffRole r) => r == StaffRole.RareAttendant ? 1 : 1 + staffLevel[(int)r];
+    public static bool StaffCarries(StaffRole r) => r != StaffRole.RareAttendant;
     public bool StaffUnlocked(StaffRole r) => day >= StaffUnlockDay[(int)r];
     /// <summary>Daily wages: none any more (staff are paid once, when hired). Kept so old saves and reports still work.</summary>
     public static readonly int[] StaffWage = { 0, 0, 0 };
@@ -277,6 +315,8 @@ public class GameManager : MonoBehaviour
     [Serializable]
     public class VipPromise { public string key, name, title; public int day, cost; }
     [NonSerialized] public VipPromise vipPromise;
+    /// <summary>The rare dealer's VIP request has been offered once (SpecialJobs guarantees it on Day 3 or 4). Saved.</summary>
+    [NonSerialized] public bool rareDealerSeen;
 
     [Serializable]
     public class Reservation
@@ -403,20 +443,25 @@ public class GameManager : MonoBehaviour
 
     /// <summary>Roles with applicants coming in tomorrow morning, before the library opens.</summary>
     [NonSerialized] public List<int> interviews = new List<int>();
+    /// <summary>The hire price paid when each interview was booked (what isn't spent comes back after it). Saved.</summary>
+    [NonSerialized] public int[] hirePaid = new int[3];
     public bool InterviewBooked(StaffRole r) => interviews.Contains((int)r);
 
-    /// <summary>Staff row button: books (or cancels) an interview for tomorrow morning, or upgrades a hire.
-    /// The hire fee is paid in the interview, so booking needs that much in the purse.</summary>
+    /// <summary>Staff button: books an interview for tomorrow morning (paying the full hire price now; it can't be
+    /// cancelled, and whatever the hire doesn't cost comes back after it), or upgrades a hire.</summary>
     public void ToggleStaff(StaffRole r)
     {
         int i = (int)r;
         if (staff[i]) { UpgradeStaff(r); return; }
         if (!StaffUnlocked(r)) return;
         var hud = FindAnyObjectByType<HUD>();
-        if (interviews.Remove(i)) { if (hud != null) hud.ShowBanner($"Interview for the {StaffNames[i]} cancelled.", 4f); return; }
-        if (Coins < StaffHireFee[i]) { if (hud != null) hud.ShowBanner($"You need {StaffHireFee[i]} coins for the {StaffNames[i]}'s hire fee.", 4f); return; }
+        if (interviews.Contains(i)) { if (hud != null) hud.ShowBanner($"The {StaffNames[i]} interview is booked: applicants come in tomorrow morning.", 4f); return; }
+        int fee = StaffHireFee[i];
+        if (!TrySpend(fee, "Staff hires")) { if (hud != null) hud.ShowBanner($"You need {fee} coins to book the {StaffNames[i]} interview.", 4f); return; }
+        hirePaid[i] = fee;
         interviews.Add(i);
-        if (hud != null) hud.ShowBanner($"Interview booked! Two {StaffNames[i]} applicants will come in tomorrow morning, before the library opens.", 6f);
+        RequestLog.Money(StaffNames[i], $"Hire budget for the {StaffNames[i]} interview", "Staff hire", -fee);
+        if (hud != null) hud.ShowBanner($"Interview booked: {fee} coins set aside for the {StaffNames[i]}", 6f); // one sentence: one notice card
     }
 
     /// <summary>What a staff row shows (PC Shop and Day Report share it).</summary>
@@ -432,9 +477,9 @@ public class GameManager : MonoBehaviour
                     cost < 0 ? "Max level" : $"Upgrade {cost}", cost >= 0 && Coins >= cost);
         }
         if (InterviewBooked(r))
-            return (StaffNames[i], "Interview booked: two applicants come in tomorrow morning, before the library opens.", "Cancel", true);
+            return (StaffNames[i], $"Interview booked: {hirePaid[i]} coins set aside. Two applicants come in tomorrow morning; what you don't spend comes back.", "Booked", false);
         if (!StaffUnlocked(r)) return (StaffNames[i], StaffInfo[i], $"Day {StaffUnlockDay[i]}", false);
-        return (StaffNames[i], $"{StaffInfo[i]}  Costs about {StaffHireFee[i]}, paid once: talk it over in the interview.",
+        return (StaffNames[i], $"{StaffInfo[i]}  Hire: {StaffHireFee[i]} coins, paid when you book the interview. Haggle in it and the rest comes back.",
                 Coins >= StaffHireFee[i] ? $"Interview ({StaffHireFee[i]})" : $"Need {StaffHireFee[i]}", Coins >= StaffHireFee[i]);
     }
 
@@ -447,7 +492,8 @@ public class GameManager : MonoBehaviour
         RequestLog.Money(StaffPerson[(int)r], $"{StaffNames[(int)r]} trained to level {staffLevel[(int)r] + 1}", "Staff upgrade", -cost);
         ApplyUpgrades();
         var hud = FindAnyObjectByType<HUD>();
-        if (hud != null) hud.ShowBanner($"{StaffPerson[(int)r]} is now level {staffLevel[(int)r] + 1}: faster, and needs less help.", 4f);
+        if (hud != null) hud.ShowBanner($"{StaffPerson[(int)r]} is now level {staffLevel[(int)r] + 1}: faster, needs less help" +
+                                        (StaffCarries(r) ? $", and carries {StaffCarry(r)} books per trip." : "."), 4f);
         return true;
     }
 
@@ -529,11 +575,11 @@ public class GameManager : MonoBehaviour
     public bool loadSave = true;
 
     [Serializable] class BookSave { public string title; public int good, worn, damaged; }
-    [Serializable] class SaveData { public int day, coins, reputation, difficulty = 1; public bool[] staff; public int[] upgrades; public List<BookSave> books = new List<BookSave>(); public List<Member> members = new List<Member>(); public List<Reservation> reservations = new List<Reservation>(); public List<RequestLog.Entry> log = new List<RequestLog.Entry>(); public List<int> interviews = new List<int>(); public bool endingSeen; public int[] staffLevel; public List<string> added = new List<string>(); public int storySeed; public float[] staffMood; public int[] staffRestedDay; public VipPromise vip; }
+    [Serializable] class SaveData { public int day, coins, reputation, difficulty = 1; public bool[] staff; public int[] upgrades; public List<BookSave> books = new List<BookSave>(); public List<Member> members = new List<Member>(); public List<Reservation> reservations = new List<Reservation>(); public List<RequestLog.Entry> log = new List<RequestLog.Entry>(); public List<int> interviews = new List<int>(); public bool endingSeen; public int[] staffLevel; public List<string> added = new List<string>(); public int storySeed; public float[] staffMood; public int[] staffRestedDay; public VipPromise vip; public int[] hirePaid; public bool rareDealerSeen; }
 
     public void Save()
     {
-        var data = new SaveData { day = day, difficulty = (int)difficulty, coins = Coins, reputation = Reputation, staff = staff, upgrades = upgrades, members = members, reservations = reservations, log = RequestLog.All, interviews = interviews, endingSeen = endingSeen, staffLevel = staffLevel, added = addedTitles, storySeed = storySeed, staffMood = staffMood, staffRestedDay = staffRestedDay, vip = vipPromise };
+        var data = new SaveData { day = day, difficulty = (int)difficulty, coins = Coins, reputation = Reputation, staff = staff, upgrades = upgrades, members = members, reservations = reservations, log = RequestLog.All, interviews = interviews, endingSeen = endingSeen, staffLevel = staffLevel, added = addedTitles, storySeed = storySeed, staffMood = staffMood, staffRestedDay = staffRestedDay, vip = vipPromise, hirePaid = hirePaid, rareDealerSeen = rareDealerSeen };
         foreach (var b in Books) data.books.Add(new BookSave { title = b.Title, good = b.GoodCopies, worn = b.WornCopies, damaged = b.DamagedCopies });
         // Copies out of the shelves (returns, repair table, hands) still belong to the library.
         void Count(BookData b, BookCondition c)
@@ -569,8 +615,10 @@ public class GameManager : MonoBehaviour
         if (data.members != null) members = data.members;
         if (data.reservations != null) { reservations = data.reservations; foreach (var r in reservations) r.title = Renamed(r.title); }
         if (data.interviews != null) interviews = data.interviews;
+        hirePaid = data.hirePaid != null && data.hirePaid.Length == 3 ? data.hirePaid : new int[3];
         endingSeen = data.endingSeen;
         vipPromise = data.vip != null && !string.IsNullOrEmpty(data.vip.title) ? data.vip : null;
+        rareDealerSeen = data.rareDealerSeen;
         storySeed = data.storySeed;
         if (data.staffLevel != null && data.staffLevel.Length == 3) staffLevel = data.staffLevel;
         if (data.staffMood != null && data.staffMood.Length == 3) staffMood = data.staffMood;
@@ -733,7 +781,9 @@ public class GameManager : MonoBehaviour
         DayNightCycle.ForceDay = true; // it's the next morning in there, not last night
         List<StaffRole> hired = null;
         StaffInterview.Queue = roles;
-        StaffInterview.Coins = Coins;
+        int budget = Coins;
+        foreach (var r in roles) budget += hirePaid[(int)r]; // set aside when the interviews were booked
+        StaffInterview.Coins = budget;
         StaffInterview.Finished = h => hired = h;
         yield return UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(StaffInterview.SceneName, UnityEngine.SceneManagement.LoadSceneMode.Additive);
         // The interview room has its own camera, UI and dialogue box.
@@ -756,17 +806,33 @@ public class GameManager : MonoBehaviour
         if (ending) endingSeen = true;
         StaffInterview.Ending = false;
         LoadHires();
-        foreach (var r in hired)
+        var morningHud = FindAnyObjectByType<HUD>();
+        foreach (var r in roles)
         {
+            int i = (int)r, paid = hirePaid[i];
+            hirePaid[i] = 0;
+            bool got = hired.Contains(r);
             // The price you agreed in the interview (or what they asked), paid once.
             var parts = PlayerPrefs.GetString("HiredStats_" + r, "").Split(',');
-            int price = parts.Length == 4 && int.TryParse(parts[3], out int p) ? p : StaffHireFee[(int)r];
-            if (TrySpend(price, "Staff hires"))
+            int price = !got ? 0 : parts.Length == 4 && int.TryParse(parts[3], out int p) ? p : StaffHireFee[i];
+            if (paid <= 0)
             {
-                staff[(int)r] = true; staffLevel[(int)r] = 0; staffMood[(int)r] = 3f; staffRestedDay[(int)r] = 0;
-                RequestLog.Money(StaffPerson[(int)r], $"Hired as {StaffNames[(int)r]}", "Staff hire", -price);
+                // Booked before hire budgets existed (an older save): pay now, as it used to work.
+                if (got && TrySpend(price, "Staff hires")) RequestLog.Money(StaffPerson[i], $"Hired as {StaffNames[i]}", "Staff hire", -price);
+                else if (got) { got = false; morningHud?.ShowBanner($"Not enough coins to hire the {StaffNames[i]} ({price}).", 5f); }
             }
-            else FindAnyObjectByType<HUD>()?.ShowBanner($"Not enough coins to hire the {StaffNames[(int)r]} ({price}).", 5f);
+            else
+            {
+                int back = paid - price;
+                if (back > 0)
+                {
+                    AddCoins(back);
+                    RequestLog.Money(got ? StaffPerson[i] : StaffNames[i], "Hire budget returned", "Hire refund", back);
+                    morningHud?.ShowBanner(got ? $"Hiring refund: +{back} coins ({StaffPerson[i]} agreed to {price} of {paid})"
+                                               : $"Hiring refund: +{back} coins (no {StaffNames[i]} hired)", 7f);
+                }
+            }
+            if (got) { staff[i] = true; staffLevel[i] = 0; staffMood[i] = 3f; staffRestedDay[i] = 0; }
         }
         PlayerLock.Unlock(this);
         then?.Invoke();
@@ -809,7 +875,7 @@ public class GameManager : MonoBehaviour
     {
         CurrentPhase = phase;
         if (phase == Phase.Closing && closingBell != null)
-            AudioSource.PlayClipAtPoint(closingBell, Camera.main ? Camera.main.transform.position : Vector3.zero, 0.8f);
+            AudioSource.PlayClipAtPoint(closingBell, Camera.main ? Camera.main.transform.position : Vector3.zero, 0.4f);
         PhaseChanged?.Invoke(phase);
     }
 

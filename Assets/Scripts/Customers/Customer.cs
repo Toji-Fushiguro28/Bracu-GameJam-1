@@ -70,7 +70,7 @@ public class Customer : ClickInteractable
     ShelfInteractable browseShelf;
     GameManager.Reservation reservation;
 
-    VisualElement overhead, mood, mouth, patienceFill;
+    VisualElement overhead, mood, mouth, patienceBar, patienceFill;
     Label speech, nameplate;
     WorldPrompts.Follower follower;
 
@@ -166,7 +166,7 @@ public class Customer : ClickInteractable
             if (request != null && request.Target == null) { kind = Kind.Buyer; request = null; reservation = null; }
         }
         if (kind == Kind.Seeker && !SetUpSeek()) kind = Kind.Buyer; // nothing to look for: just ask
-        if (kind == Kind.Seeker && GoSeek()) return;
+        if (kind == Kind.Seeker && !Tutorial.HoldsClock && GoSeek()) return; // the tutorial's comes straight to the desk
         if (kind == Kind.Browser && GoBrowse()) return;
         if (vip && kind == Kind.Reader && AttendantServes()) return;
         if (kind == Kind.Browser) kind = Kind.Buyer; // nothing on the shelves: ask instead
@@ -261,7 +261,6 @@ public class Customer : ClickInteractable
                 break;
             case State.Leaving:
                 if (!Arrived()) break;
-                if (leavingVia) { leavingVia = false; agent.SetDestination(CounterQueue.Instance.exit.position); break; }
                 if (sneaking) { sneaking = false; DayStory.Instance?.ThiefGotAway(this, heldBook); heldBook = null; }
                 Destroy(gameObject);
                 break;
@@ -483,7 +482,7 @@ public class Customer : ClickInteractable
     void UpdatePatience()
     {
         if (!roaming) transform.rotation = Quaternion.RotateTowards(transform.rotation, CounterQueue.Instance.FacingDesk, 360f * Time.deltaTime);
-        patience -= Dt;
+        if (!Tutorial.HoldsClock) patience -= Dt; // the tutorial's visitors wait as long as you need
         float t = PatienceLeft;
         SetMood(t);
 
@@ -506,11 +505,13 @@ public class Customer : ClickInteractable
         mood.EnableInClassList("happy", t >= 0.55f);
         mood.EnableInClassList("ok", t < 0.55f && t >= 0.25f);
         mood.EnableInClassList("sad", t < 0.25f);
-        if (patienceFill != null)
+        if (patienceBar != null)
         {
-            patienceFill.style.width = Length.Percent(Mathf.Clamp01(t) * 100f);
-            patienceFill.EnableInClassList("ok", t < 0.55f && t >= 0.25f);
-            patienceFill.EnableInClassList("sad", t < 0.25f);
+            // Drains in chunky tenths (a pixel bar, not a smooth one); the last step only goes at zero.
+            float steps = Mathf.Ceil(Mathf.Clamp01(t) * 10f) / 10f;
+            patienceFill.style.width = Length.Percent(steps * 100f);
+            patienceBar.EnableInClassList("ok", t < 0.55f && t >= 0.25f);
+            patienceBar.EnableInClassList("sad", t < 0.25f);
         }
         // About to give up: the face throbs so you notice from across the room.
         float s = t < 0.25f ? 1f + 0.2f * Mathf.Abs(Mathf.Sin(Time.time * 7f)) : 1f;
@@ -593,27 +594,31 @@ public class Customer : ClickInteractable
         if (soldOut) Tutorial.Show("soldout", "Sold out! Ask when they need it: reserve it, then order more from the computer's Catalogue. Express gets here in 2 hours.");
         bool seeker = kind == Kind.Seeker;
         // After any book in your hands: go and find it, ask for a hint, then the "we haven't got it" answers.
+        bool tutorial = Tutorial.HoldsClock; // the tutorial: only the way forward
         start.choices.Add(new DialogueAsset.Choice { text = seeker ? "Let me check." : "Let me find it.", next = "end" });
-        if (!pickup && !seeker && clue == null && !GM.NoHints) start.choices.Add(new DialogueAsset.Choice { text = "Could you give me a hint? (smaller tip)", next = "hint" });
+        if (!tutorial && !pickup && !seeker && clue == null && !GM.NoHints) start.choices.Add(new DialogueAsset.Choice { text = "Could you give me a hint? (smaller tip)", next = "hint" });
         if (pickup)
-            start.choices.Add(new DialogueAsset.Choice { text = "Sorry, it isn't here yet.", next = "notyet" });
+        {
+            if (!tutorial) start.choices.Add(new DialogueAsset.Choice { text = "Sorry, it isn't here yet.", next = "notyet" });
+        }
         else
         {
             // Not in the library (sold out, or a title we don't have): ask when they need it.
-            if (kind == Kind.Buyer || seeker)
+            if (kind == Kind.Buyer && !tutorial || seeker)
                 start.choices.Add(new DialogueAsset.Choice { text = seeker ? "When do you need it?" : "It's sold out. When do you need it?", next = soldOut ? "need" : "reserve" });
-            start.choices.Add(new DialogueAsset.Choice { text = "Sorry, we can't get that.", next = "nohave" });
+            if (!tutorial) start.choices.Add(new DialogueAsset.Choice { text = "Sorry, we can't get that.", next = "nohave" });
         }
 
         string hintText = HintText();
         d.lines.Add(new DialogueAsset.Line { id = "hint", text = $"<color=#D67840>{hintText}</color>", next = "end" });
         // Some need it today (express) and will wait here; others are happy to come back tomorrow.
-        wantsToday = soldOut && Random.value < (seeker ? 0.5f : 0.4f) && GM.Hour + 2.5f < GM.closingHour;
+        wantsToday = soldOut && (Tutorial.HoldsClock || Random.value < (seeker ? 0.5f : 0.4f)) && GM.Hour + 2.5f < GM.closingHour;
         var need = new DialogueAsset.Line { id = "need",
-            text = wantsToday ? $"As soon as possible! I can wait here in the library. Could it be here by <color=#D67840>{GameManager.FormatHour(GM.Hour + 2.5f)}</color>?"
+            text = wantsToday && Tutorial.HoldsClock ? "<color=#D67840>Today</color>, please! I'll wait right here in the library."
+                 : wantsToday ? $"As soon as possible! I can wait here in the library. Could it be here by <color=#D67840>{GameManager.FormatHour(GM.Hour + 2.5f)}</color>?"
                               : "No rush. I'll come back tomorrow for it." };
         need.choices.Add(new DialogueAsset.Choice { text = wantsToday ? "I'll have it here for you today." : "I'll order it for you.", next = "reserve" });
-        need.choices.Add(new DialogueAsset.Choice { text = "Sorry, I can't get that one.", next = "nohave" });
+        if (!Tutorial.HoldsClock) need.choices.Add(new DialogueAsset.Choice { text = "Sorry, I can't get that one.", next = "nohave" });
         d.lines.Add(need);
         d.lines.Add(new DialogueAsset.Line { id = "reserve", next = "end",
             text = !soldOut ? "Sold out? I'm sure I saw it on the shelf..."
@@ -681,8 +686,7 @@ public class Customer : ClickInteractable
             RequestLog.Rejected(this, book);
             Say(request.WrongLine(book), 3f); // says why, so you know what to look for
             GameAudio.Play(a => a.wrongBook);
-            GM.AddReputation(-1); // word gets around
-            GM.Today.wrongBooks++;
+            if (!Tutorial.HoldsClock) { GM.AddReputation(-1); GM.Today.wrongBooks++; } // word gets around (not in the tutorial)
             Tutorial.Show("wrongbook", "Not what they asked for. Check their request in your Notes (right edge) and look it up on the computer.");
             Penalise(wrongBookPenalty);
             return;
@@ -846,7 +850,7 @@ public class Customer : ClickInteractable
     /// <summary>Into the notebook the first time you hear what they want.</summary>
     void LogRequest()
     {
-        if (request == null || RequestLog.Has(this)) return;
+        if (request == null) return; // already noted: Begin only puts a cleared note back
         bool pickup = kind == Kind.Pickup;
         RequestLog.Begin(this, pickup ? RequestLog.Kind.Pickup : RequestLog.Kind.Book, FirstName, pickup ? RequestText : request.Line, clue, usedHint);
     }
@@ -1039,7 +1043,6 @@ public class Customer : ClickInteractable
                      : null;
         if (wrong != null)
         {
-            RequestLog.CardAttempt(this, $"Card: {name}, born {dob}, {access} access", wrong);
             Say(wrong, 2.5f);
             GameAudio.Play(a => a.cardWrong);
             Penalise(0.2f);
@@ -1057,7 +1060,7 @@ public class Customer : ClickInteractable
         GameAudio.Play(a => a.cardIssued);
         RefreshNameplate();
         // Most new members have a book in mind straight away.
-        var wish = !vip && Random.value < 0.6f ? PickWish() : null;
+        var wish = !vip && !Tutorial.HoldsClock && Random.value < 0.6f ? PickWish() : null;
         RequestLog.Finish(this, $"Card issued ({access} access)");
         if (vip)
         {
@@ -1066,7 +1069,7 @@ public class Customer : ClickInteractable
             request = null; clue = null; heard = false; usedHint = false; introduced = false;
             kind = Kind.Reader;
             CounterQueue.Instance.Leave(this);
-            if (!AttendantServes()) { CounterQueue.Instance.Join(this); AskAgainAtDesk(); } // ask for their book right here
+            if (!AttendantServes()) { CounterQueue.Instance.JoinFront(this); AskAgainAtDesk(); } // ask for their book right here (still first in line)
             return null;
         }
         if (wish != null)
@@ -1081,7 +1084,7 @@ public class Customer : ClickInteractable
             return null;
         }
         Say($"My very own card! Thank you!  +{fee + tip}", 2.5f);
-        if (Random.value < 0.6f) StayAsMember();
+        if (!Tutorial.HoldsClock && Random.value < 0.6f) StayAsMember();
         else Leave();
         return null;
     }
@@ -1091,7 +1094,7 @@ public class Customer : ClickInteractable
     {
         request = null; clue = null; heard = false; usedHint = false; introduced = false;
         kind = Random.value < 0.5f ? Kind.Browser : Kind.Reader;
-        if (kind == Kind.Browser) { CounterQueue.Instance.Leave(this); if (GoBrowse()) return; CounterQueue.Instance.Join(this); kind = Kind.Buyer; }
+        if (kind == Kind.Browser) { CounterQueue.Instance.Leave(this); if (GoBrowse()) return; CounterQueue.Instance.JoinFront(this); kind = Kind.Buyer; }
         AskAgainAtDesk();
     }
 
@@ -1107,7 +1110,7 @@ public class Customer : ClickInteractable
     {
         yield return new WaitForSeconds(2.5f);
         if (state != State.Waiting || request != null || this == null) yield break;
-        if (CounterQueue.Instance.IndexOf(this) < 0) CounterQueue.Instance.Join(this);
+        if (CounterQueue.Instance.IndexOf(this) < 0) CounterQueue.Instance.JoinFront(this); // still at the desk: keep first place
         GameAudio.Play(a => a.customerArrives);
         BeginRequest();
     }
@@ -1445,7 +1448,7 @@ public class Customer : ClickInteractable
         {
             chatReward = false;
             GM.AddReputation(1); // the HUD plays the reputation chime
-            HUD.SkillPop(transform.position + Vector3.up * 2.2f, "+1 reputation"); // floats up over their head and fades
+            HUD.SkillPop(transform.position + Vector3.up * 1.45f, "+1 reputation"); // starts just above their head, floats up and fades
         }
         visit.after?.Invoke(this, last);
         if (request != null || kind == Kind.SignUp || state != State.Waiting) return; // now asking for something like anyone else
@@ -1553,6 +1556,7 @@ public class Customer : ClickInteractable
 
     void Penalise(float share)
     {
+        if (Tutorial.HoldsClock) return; // the tutorial: mistakes are free
         patience -= maxPatience * share * GM.ModeWrongPenalty;
         if (anim) anim.SetActivity(CharacterAnimator.Activity.Impatient);
         Invoke(nameof(EndPenaltyAnim), 1.5f);
@@ -1596,7 +1600,7 @@ public class Customer : ClickInteractable
         mood.RemoveFromClassList("hidden");
         mood.AddToClassList("angry");
         SetMood(0f);
-        if (patienceFill != null) patienceFill.parent.AddToClassList("hidden");
+        if (patienceBar != null) patienceBar.AddToClassList("hidden");
         GameAudio.Play(a => a.impatient, 0.5f);
     }
 
@@ -1621,13 +1625,8 @@ public class Customer : ClickInteractable
         mood.AddToClassList("hidden");
         if (speech.ClassListContains("ask")) SetSpeech(""); // nobody leaves with a "?" over their head
         if (!agent.enabled) agent.enabled = true;
-        // From near the desk: round its left side first, so they don't walk back down the line.
-        var q = CounterQueue.Instance;
-        leavingVia = (transform.position - q.SlotPosition(0)).sqrMagnitude < 6f * 6f;
-        agent.SetDestination(leavingVia ? NearestOnNavMesh(q.LeaveVia) : q.exit.position);
+        agent.SetDestination(CounterQueue.Instance.exit.position);
     }
-
-    bool leavingVia;
 
     /// <summary>A spot by the shelf, a little different for everyone, so two visitors don't fight over one point.</summary>
     static Vector3 ShelfSpot(ShelfInteractable shelf)
@@ -1736,6 +1735,9 @@ public class Customer : ClickInteractable
         reqIcon.MarkDirtyRepaint();
     }
 
+    /// <summary>Their name, bubble and mood stack over their head (in the world-prompt layer).</summary>
+    public VisualElement Overhead => overhead;
+
     void BuildOverhead()
     {
         overhead = new VisualElement();
@@ -1756,7 +1758,7 @@ public class Customer : ClickInteractable
         mouth = new VisualElement(); mouth.AddToClassList("mood-mouth");
         mood.Add(eyeL); mood.Add(eyeR); mood.Add(mouth);
         // How long they'll wait, as a bar beside the face that drains and turns amber, then red.
-        var patienceBar = new VisualElement();
+        patienceBar = new VisualElement();
         patienceBar.AddToClassList("mood-bar");
         patienceFill = new VisualElement();
         patienceFill.AddToClassList("mood-bar-fill");

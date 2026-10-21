@@ -142,6 +142,14 @@ public static class PCMembersView
         monthButton = root.Q<Button>("dob-month");
         yearButton = root.Q<Button>("dob-year");
         yearButton?.AddToClassList("last");
+        // Drop-downs, not text boxes: the kit's arrow on each.
+        foreach (var b in new[] { dayButton, monthButton, yearButton })
+            if (b != null && b.Q(className: "dd-arrow") == null)
+            {
+                var arrow = new VisualElement { pickingMode = PickingMode.Ignore };
+                arrow.AddToClassList("dd-arrow");
+                b.Add(arrow);
+            }
         dayButton?.RegisterCallback<ClickEvent>(_ =>
         {
             int days = DaysIn(pickMonth, pickYear);
@@ -236,5 +244,6 @@ public static class PCMembersView
         else root.Q<Label>("card-feedback").text = $"\"{wrong}\"";
         BuildList(root);
         BuildForm(root);
+        if (wrong == null) UnityEngine.Object.FindAnyObjectByType<PCOverlayTrigger>()?.ForceClose(); // done here: back to the library
     }
 }
