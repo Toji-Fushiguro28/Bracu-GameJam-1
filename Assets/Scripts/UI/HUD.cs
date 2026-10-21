@@ -494,18 +494,19 @@ public class HUD : MonoBehaviour
 
     /// <summary>A gold line that rises from a spot in the world and fades: a reward for doing something well
     /// (the right shelf in a chat, a perfect repair, a special order).</summary>
-    public static void SkillPop(Vector3 world, string text)
+    public static void SkillPop(Vector3 world, string text, string style = null)
     {
         if (instance == null || instance.hudLayer == null || !instance.isActiveAndEnabled) return;
-        instance.StartCoroutine(instance.SkillPopping(world, text));
+        instance.StartCoroutine(instance.SkillPopping(world, text, style));
     }
 
-    IEnumerator SkillPopping(Vector3 world, string text)
+    IEnumerator SkillPopping(Vector3 world, string text, string style)
     {
         var cam = Camera.main;
         if (cam == null) yield break;
         var pop = new Label(text) { pickingMode = PickingMode.Ignore };
         pop.AddToClassList("skill-pop");
+        if (style != null) pop.AddToClassList(style); // e.g. a member's heart (heart-up / heart-down)
         pop.style.visibility = Visibility.Hidden; // until it has a size to centre with
         hudLayer.Add(pop);
         const float duration = 2f;

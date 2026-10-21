@@ -6,7 +6,8 @@ using UnityEngine;
 using UnityEngine.UIElements;
 
 /// <summary>
-/// PC "Members" screen: the card list (access, hearts, visits) and the New Card form.
+/// PC "Members" screen: the card list (access, hearts, visits) and the New Card form. Click a member to open
+/// their card: title and perk, visits, and what went wrong for them (their complaints).
 /// You type the name the visitor told you, pick their birthday from day / month / year drop-downs
 /// (only real dates can be picked) and choose the access level.
 /// </summary>
@@ -21,6 +22,7 @@ public static class PCMembersView
     static AccessLevel? pickAccess;
     static Customer formFor;
     static Button dayButton, monthButton, yearButton;
+    static string openKey; // the member whose card is open in the list
 
     public static void Wire(VisualElement root)
     {
@@ -50,23 +52,65 @@ public static class PCMembersView
         {
             var row = new VisualElement();
             row.AddToClassList("mrow");
-            row.Add(Cell(m.name, "name"));
+            string title = m.Title;
+            row.EnableInClassList("unhappy", title == "Unhappy");
+            row.EnableInClassList("open", openKey == m.key);
+            row.Add(Cell(title == "Member" ? m.name : $"{m.name}\n<size=75%>{title}</size>", "name"));
             row.Add(Cell(m.dob, "born"));
             row.Add(Cell(m.access.ToString(), "access"));
-            var hearts = new VisualElement();
-            hearts.AddToClassList("happy");
-            for (int i = 0; i < 5; i++)
-            {
-                var h = new VisualElement();
-                h.AddToClassList("heart"); // the kit's pixel heart, full or empty
-                h.EnableInClassList("empty", i >= m.Hearts);
-                hearts.Add(h);
-            }
-            row.Add(hearts);
+            row.Add(Hearts(m.satisfaction));
             row.Add(Cell(m.visits.ToString(), "num"));
             row.Add(Cell(m.spent.ToString(), "num"));
+            var key = m.key;
+            row.RegisterCallback<ClickEvent>(_ => { openKey = openKey == key ? null : key; BuildList(root); }); // one card open at a time
             list.Add(row);
+            if (openKey == m.key) list.Add(MemberCard(m));
         }
+    }
+
+    /// <summary>Five pixel hearts: full, half (the kit's half heart) or empty.</summary>
+    static VisualElement Hearts(float value)
+    {
+        var hearts = new VisualElement();
+        hearts.AddToClassList("happy");
+        for (int i = 0; i < 5; i++)
+        {
+            var h = new VisualElement();
+            h.AddToClassList("heart");
+            float left = value - i;
+            h.EnableInClassList("half", left >= 0.5f && left < 1f);
+            h.EnableInClassList("empty", left < 0.5f);
+            hearts.Add(h);
+        }
+        return hearts;
+    }
+
+    /// <summary>The open card under a member's row: title and perk, visits, gifts, and what went wrong.</summary>
+    static VisualElement MemberCard(Member m)
+    {
+        var card = new VisualElement();
+        card.AddToClassList("mcard");
+        string title = m.Title;
+        var top = new VisualElement();
+        top.AddToClassList("mcard-top");
+        top.Add(Hearts(m.satisfaction));
+        top.Add(Line($"<color=#D67840>{title}</color>: {Members.PerkOf(title)}", "mcard-title"));
+        card.Add(top);
+        card.Add(Line($"{m.visits} {(m.visits == 1 ? "visit" : "visits")} · spent {m.spent} coins" + (m.lastDonationDay > 0 ? $" · donated books on Day {m.lastDonationDay}" : ""), "mcard-line"));
+        card.Add(Line("What went wrong", "mcard-head"));
+        if (m.complaints == null || m.complaints.Count == 0) card.Add(Line("No complaints. They're happy here.", "mcard-line"));
+        else
+            for (int i = m.complaints.Count - 1; i >= 0; i--)
+                card.Add(Line($"Day {m.complaints[i].day} · {m.complaints[i].text}", "mcard-gripe"));
+        if (title == "Unhappy") card.Add(Line("On their next visit they may hand their card back.", "mcard-warn"));
+        return card;
+    }
+
+    static Label Line(string text, string cls)
+    {
+        var l = new Label(text);
+        l.AddToClassList(cls);
+        return l;
     }
 
     static Label Cell(string text, string col)

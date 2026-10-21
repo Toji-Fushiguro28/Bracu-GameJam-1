@@ -863,3 +863,10 @@
 .tut-steptick { position: absolute; right: 2px; top: 2px; width: 20px; height: 20px; display: none;
     background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconTick01a.png"); -unity-background-scale-mode: scale-to-fit; }
 .tut-stepcard.done .tut-steptick { display: flex; }
+
+/* A member's heart over their head: the kit heart and +1/2 rising, or a faded heart and -1/2. */
+.hud Label.skill-pop.heart-up, .hud Label.skill-pop.heart-down { font-size: 30px; padding-left: 34px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconHeart01a.png"); background-size: 28px 22px;
+    background-repeat: no-repeat no-repeat; background-position-x: left 0; background-position-y: center; }
+.hud Label.skill-pop.heart-up { color: rgb(255, 150, 160); }
+.hud Label.skill-pop.heart-down { color: rgb(200, 190, 185); -unity-background-image-tint-color: rgb(120, 110, 110); }

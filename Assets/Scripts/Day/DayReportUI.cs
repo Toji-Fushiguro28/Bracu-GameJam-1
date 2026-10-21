@@ -295,6 +295,14 @@ public class DayReportUI : MonoBehaviour
         if (d.coinsOut > 0) SummaryRow("Total out", d.coinsOut, true);
         else SummaryNote("Nothing spent today.", "summary-note");
 
+        // Members: hearts won and lost, and their news (a new Friend or Patron, gifts, cards handed back).
+        if (d.heartsUp > 0f || d.heartsDown > 0f || d.memberNews.Count > 0)
+        {
+            SummaryHead("Members");
+            string hearts = $"Hearts: +{d.heartsUp:0.#}, -{d.heartsDown:0.#}";
+            SummaryNote(d.memberNews.Count > 0 ? $"{hearts}  ·  {string.Join("  ·  ", d.memberNews)}" : hearts, "summary-note");
+        }
+
         SummaryHead("What went wrong");
         int wrong = 0;
         void Bad(string text) { SummaryNote(text, "summary-note"); list[list.childCount - 1].AddToClassList("bad"); wrong++; }

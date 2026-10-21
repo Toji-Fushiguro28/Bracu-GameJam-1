@@ -176,7 +176,7 @@ public class CustomerSpawner : MonoBehaviour
         else if (vip)
             // Scholars need a Rare Books card before they can read there.
             customer.kind = member != null && member.access == AccessLevel.Rare ? Customer.Kind.Reader : Customer.Kind.SignUp;
-        else if (member == null && Members.TryProfile(prefab.name, out var profile) && profile.access != AccessLevel.Rare && Random.value < signUpChance)
+        else if (member == null && Members.TryProfile(prefab.name, out var profile) && profile.access != AccessLevel.Rare && Members.CanSignUp(prefab.name) && Random.value < signUpChance)
             customer.kind = Customer.Kind.SignUp;
         else
         {
@@ -247,7 +247,7 @@ public class CustomerSpawner : MonoBehaviour
         if (CounterQueue.Instance == null || customerPrefabs == null) return null;
         System.Func<GameObject, bool> only = p => !p.name.Contains("Dean");
         if (kind == Customer.Kind.SignUp)
-            only = p => !p.name.Contains("Dean") && Members.Find(p.name) == null
+            only = p => !p.name.Contains("Dean") && Members.Find(p.name) == null && Members.CanSignUp(p.name)
                         && Members.TryProfile(p.name, out var profile) && profile.access != AccessLevel.Rare;
         var prefab = Pick(false, only);
         if (prefab == null) return null;
@@ -256,6 +256,14 @@ public class CustomerSpawner : MonoBehaviour
         c.presetRequest = request;
         if (kind == Customer.Kind.Seeker) seekerToday = true; // today's seeker
         c.gameObject.SetActive(true);
+        return c;
+    }
+
+    /// <summary>Someone a Friend of the library brought along: a stranger who wants a card.</summary>
+    public Customer SpawnFriend(string broughtBy)
+    {
+        var c = SpawnTutorial(Customer.Kind.SignUp); // the same pick: no card yet, not a Rare Books scholar
+        if (c != null) c.broughtBy = broughtBy;
         return c;
     }
 

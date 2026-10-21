@@ -530,3 +530,18 @@
     background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_HandleDropdown01a.png"); -unity-background-scale-mode: stretch-to-fill;
     -unity-background-image-tint-color: var(--ink); }
 .dd:hover .dd-arrow { -unity-background-image-tint-color: rgb(176, 88, 40); }
+
+/* ---------- Members: half hearts, titles, the Unhappy row, the card that opens under a row ---------- */
+.heart.half { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconHeart01e.png"); }
+.mrow:hover { background-color: rgba(214, 120, 64, 0.12); }
+.mrow.open { background-color: rgba(214, 120, 64, 0.2); border-bottom-width: 0; }
+.mrow.unhappy .mcell { color: var(--bad); }
+.mcard { margin: 0 4px 8px 4px; padding: 8px 12px 10px 12px; border-width: 2px; border-color: var(--rule);
+    background-color: rgba(255, 248, 232, 0.65); }
+.mcard-top { flex-direction: row; align-items: center; }
+.mcard-top .happy { margin-right: 10px; }
+.mcard-title { font-size: 19px; color: var(--ink); white-space: normal; flex-shrink: 1; margin: 0; padding: 0; }
+.mcard-line { font-size: 17px; color: var(--ink-dim); white-space: normal; margin: 4px 0 0 0; padding: 0; }
+.mcard-head { font-size: 18px; color: var(--accent); margin: 8px 0 2px 0; padding: 0; }
+.mcard-gripe { font-size: 17px; color: var(--ink); white-space: normal; margin: 2px 0; padding: 0; }
+.mcard-warn { font-size: 17px; color: var(--bad); white-space: normal; margin: 6px 0 0 0; padding: 0; }

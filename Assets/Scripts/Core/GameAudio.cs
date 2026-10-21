@@ -35,6 +35,9 @@ public class GameAudio : MonoBehaviour
     public AudioClip delivery;
     [Tooltip("Reputation went up (a rising chime).")]
     public AudioClip reputationUp;
+    [Tooltip("A member gained half a heart (a bright ding) / lost one (a low ding).")]
+    public AudioClip heartUp;
+    public AudioClip heartDown;
     [Header("UI")]
     public AudioClip uiClick;
     public AudioClip panelOpen;

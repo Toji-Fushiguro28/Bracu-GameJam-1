@@ -103,19 +103,39 @@ public class Customer : ClickInteractable
     public override bool CanInteract => sneaking || state == State.Waiting || state == State.CheckIn || state == State.Reading || state == State.Checkout || state == State.WaitingForBook;
 
     bool introduced;
+    /// <summary>A member's errand at the desk instead of a book: handing the card back, or (patrons) donating books.</summary>
+    enum Errand { None, CardBack, Donate }
+    Errand errand;
+    List<BookData> gift;
+    /// <summary>Wrong card details tried before the right ones: a card made with mistakes starts at 2.5 hearts.</summary>
+    int cardMistakes;
+    /// <summary>When they started waiting with a "?" (game hours); a member left 1.5 hours gives up.</summary>
+    float askSince = -1f;
+    const float IgnoreHours = 1.5f;
+    /// <summary>Set for someone a Friend of the library brought along to get a card.</summary>
+    public string broughtBy;
+    static readonly string[] DonationWishes =
+    {
+        "I hope they help you serve your readers well.",
+        "May they help you serve every reader who comes in.",
+        "I hope your readers enjoy them as much as I did.",
+    };
     /// <summary>The sign-up visitor waiting at the counter who has told you their details.</summary>
     public static Customer WaitingForCard { get; private set; }
     string FirstName => !string.IsNullOrEmpty(displayName) ? displayName : Members.TryProfile(profileKey, out var p) ? p.name.Split(' ')[0] : "Visitor";
     string FullName => !string.IsNullOrEmpty(displayName) ? displayName : Members.TryProfile(profileKey, out var p) ? p.name : "Visitor";
 
     string SignUpText => !introduced
-        ? (vip ? "Good day. I'll need a library card with Rare Books access." : "I'd like a library card, please!")
+        ? (vip ? "Good day. I'll need a library card with Rare Books access."
+           : broughtBy != null ? $"{broughtBy} said I should get a card here!" : "I'd like a library card, please!")
         : Members.TryProfile(profileKey, out var p) ? $"I'm <color=#D67840>{p.name}</color>, born <color=#D67840>{p.dob}</color>.\n<i>{p.line}</i>" : "";
 
     string RequestText
     {
         get
         {
+            if (errand == Errand.CardBack) return "I need a word about my library card.";
+            if (errand == Errand.Donate) return "I've brought something for the library!";
             if (kind == Kind.SignUp) return SignUpText;
             if (kind == Kind.Pickup && reservation != null) return reservation.urgent
                 ? $"I'm back for <color=#D67840>\"{reservation.title}\"</color>! Did it arrive?"
@@ -140,12 +160,22 @@ public class Customer : ClickInteractable
     void Start()
     {
         BuildOverhead();
+        Members.StartVisit(Membership);
         if (story != null) { if (story.atDesk || !GoRoam()) JoinQueue(); return; }
         if (thief)
         {
             if (GoBrowse()) return;
             thief = false; displayName = null; // nothing on the shelves to take: just an ordinary visitor
             RefreshNameplate();
+        }
+        // Members: an unhappy one comes to hand the card back, a patron sometimes brings books, a Friend a friend.
+        var member = Membership;
+        if (Members.Counts(member) && !vip && !thief && kind != Kind.Pickup && kind != Kind.SignUp)
+        {
+            if (Members.WantsToLeave(member)) errand = Errand.CardBack;
+            else if (Members.CanDonate(member) && Random.value < 0.5f && (gift = Members.PickDonation()).Count > 0) errand = Errand.Donate;
+            if (errand != Errand.None) { kind = Kind.Buyer; JoinQueue(); return; }
+            if (Members.BringsFriend(member)) StartCoroutine(BringFriend(FirstName));
         }
         if (kind == Kind.Returner)
         {
@@ -277,7 +307,7 @@ public class Customer : ClickInteractable
 
     /// <summary>Until you talk to them, a waiting visitor only shows a small "?" bubble.</summary>
     bool heard;
-    string WaitingText => story != null ? (roaming && !heard ? AskMark : story.teaser) : heard ? RequestText : "";
+    string WaitingText => story != null ? (roaming && !heard ? AskMark : story.teaser) : heard || errand != Errand.None ? RequestText : "";
     const string AskMark = "?";
 
     void ShowIdleLine()
@@ -461,6 +491,7 @@ public class Customer : ClickInteractable
     /// <summary>They know what they want: at the desk, or wherever they're waiting in the library.</summary>
     void BeginRequest()
     {
+        if (errand != Errand.None) { StartPatience(45f); state = State.Waiting; Say(WaitingText); return; } // here to talk, not for a book
         if (kind != Kind.Pickup && kind != Kind.Seeker)
             request = presetRequest ?? BookRequest.Create(GM.Books, kind == Kind.Reader, vip);
         if (request == null) { Say("Oh... nothing I want today."); Leave(); return; }
@@ -541,6 +572,7 @@ public class Customer : ClickInteractable
             case State.Waiting: break;
             default: return;
         }
+        if (errand != Errand.None) { RunErrand(); return; }
         if (request == null && kind != Kind.SignUp && kind != Kind.Pickup) return; // about to ask (their second request): a moment
         if (kind == Kind.SignUp)
         {
@@ -657,12 +689,12 @@ public class Customer : ClickInteractable
                     GM.reservations.RemoveAll(r => r.key == profileKey); // nothing left waiting for them
                     RequestLog.Finish(this, soldOut ? "Sold out, sent away" : "Told we didn't have it (we did)");
                     if (soldOut) { Say("Maybe next time!", 2.5f); Leave(); }
-                    else { GM.AddReputation(-2); GM.Today.letDown++; Members.Satisfy(Membership, -0.5f); Members.LetDown(Membership); Say("Hmph. I'll try elsewhere.", 2.5f); Leave(); StormOff(); }
+                    else { GM.AddReputation(-2); GM.Today.letDown++; Members.Satisfy(Membership, -0.5f); Members.Complain(Membership, Members.Gripe.CantGetIt); Members.LetDown(Membership); Say("Hmph. I'll try elsewhere.", 2.5f); Leave(); StormOff(); }
                     break;
                 case "notyet":
                     RequestLog.Finish(this, ordered ? "Not here yet, back tomorrow" : "Never ordered");
                     if (ordered) { Say(reservation.urgent ? "Not yet? Fine, tomorrow then." : "See you tomorrow!", 2.5f); reservation.day = GM.day + 1; reservation.urgent = false; reservation.queued = false; Leave(); }
-                    else { GM.reservations.Remove(reservation); GM.Today.angry++; GM.Today.letDown++; GM.AddReputation(-3); Members.Satisfy(Membership, -1f); Members.LetDown(Membership); GameAudio.Play(a => a.angryLeave); Say("I won't reserve here again.", 2.5f); Leave(); StormOff(); }
+                    else { GM.reservations.Remove(reservation); GM.Today.angry++; GM.Today.letDown++; GM.AddReputation(-3); Members.Satisfy(Membership, -1f); Members.Complain(Membership, Members.Gripe.NeverOrdered); Members.LetDown(Membership); GameAudio.Play(a => a.angryLeave); Say("I won't reserve here again.", 2.5f); Leave(); StormOff(); }
                     break;
                 default:
                     if (outcome != null && outcome.StartsWith("give") && int.TryParse(outcome.Substring(4), out int idx)) TryGive(carry, idx);
@@ -686,7 +718,12 @@ public class Customer : ClickInteractable
             RequestLog.Rejected(this, book);
             Say(request.WrongLine(book), 3f); // says why, so you know what to look for
             GameAudio.Play(a => a.wrongBook);
-            if (!Tutorial.HoldsClock) { GM.AddReputation(-1); GM.Today.wrongBooks++; } // word gets around (not in the tutorial)
+            if (!Tutorial.HoldsClock)
+            {
+                GM.AddReputation(-1); GM.Today.wrongBooks++; // word gets around (not in the tutorial)
+                Members.Satisfy(Membership, -0.25f);
+                Members.Complain(Membership, Members.Gripe.WrongBook);
+            }
             Tutorial.Show("wrongbook", "Not what they asked for. Check their request in your Notes (right edge) and look it up on the computer.");
             Penalise(wrongBookPenalty);
             return;
@@ -824,7 +861,7 @@ public class Customer : ClickInteractable
         else
         {
             if (reservation != null) GM.reservations.Remove(reservation);
-            GM.Today.angry++; GM.Today.letDown++; GM.AddReputation(-2); Members.Satisfy(Membership, -0.75f); Members.LetDown(Membership);
+            GM.Today.angry++; GM.Today.letDown++; GM.AddReputation(-2); Members.Satisfy(Membership, -0.75f); Members.Complain(Membership, Members.Gripe.WaitedForBook); Members.LetDown(Membership);
             GameAudio.Play(a => a.angryLeave);
             RequestLog.Finish(this, "Waited all that time: never ordered");
             Say("I waited all that time for nothing...", 3f);
@@ -943,7 +980,7 @@ public class Customer : ClickInteractable
                 GameAudio.Play(a => a.cardIssued, 0.7f);
                 HUD.SkillPop(transform.position + Vector3.up * 2.2f, $"Right shelf! +{bonus} coins");
             }
-            else if (outcome == "wrong") { Members.Satisfy(Membership, -0.25f); GameAudio.Play(a => a.wrongBook, 0.6f); }
+            else if (outcome == "wrong") { Members.Satisfy(Membership, -0.25f); Members.Complain(Membership, Members.Gripe.WrongShelf); GameAudio.Play(a => a.wrongBook, 0.6f); }
             else Members.Satisfy(Membership, 0.15f);
         });
     }
@@ -1043,15 +1080,16 @@ public class Customer : ClickInteractable
                      : null;
         if (wrong != null)
         {
+            cardMistakes++; // the card starts at 2.5 hearts instead of 3
             Say(wrong, 2.5f);
             GameAudio.Play(a => a.cardWrong);
             Penalise(0.2f);
             return wrong;
         }
         RequestLog.CardAttempt(this, $"Card: {name}, born {dob}, {access} access", null);
-        var member = Members.Add(profileKey, p, access);
+        var member = Members.Add(profileKey, p, access, cardMistakes > 0); // 3 hearts, or 2.5 after mistakes
         int fee = vip ? VipCardFee : 10, tip = Mathf.RoundToInt((vip ? VipCardTip : 6) * PatienceLeft); // VIP cards: their own room, attendant and all
-        Members.Satisfy(member, PatienceLeft > 0.5f ? 0.5f : 0f, fee + tip);
+        Members.Satisfy(member, 0f, fee + tip);
         GM.AddCoins(fee + tip);
         RequestLog.Paid(this, fee + tip, FirstName, "Library card");
         GM.Today.Earn(vip ? GameManager.DayStats.Source.Vip : GameManager.DayStats.Source.Cards, fee + tip); GM.Today.tips += tip; GM.Today.served++; GM.Today.signups++;
@@ -1276,6 +1314,7 @@ public class Customer : ClickInteractable
         // They leave the book on the counter anyway, but they're not happy about the wait.
         ReturnHeldCopy(false);
         Members.Satisfy(Membership, -0.5f);
+        Members.Complain(Membership, Members.Gripe.WaitedAtDesk);
         GM.AddReputation(-1);
         Say("I'll just leave it here then...", 2.5f);
         Leave();
@@ -1285,6 +1324,7 @@ public class Customer : ClickInteractable
     {
         ReturnHeldCopy(false);
         Members.Satisfy(Membership, -0.5f);
+        Members.Complain(Membership, Members.Gripe.WaitedAtDesk);
         GM.AddReputation(-1);
         Say("I'll leave it here. Maybe next time.", 2.5f);
         Leave();
@@ -1385,6 +1425,7 @@ public class Customer : ClickInteractable
         else BeginRequest();
         if (state == State.Waiting && !heard)
         {
+            askSince = GM.Hour; // a member left waiting too long gives up (UpdateRoaming)
             var t = transform;
             askPointer = DayStory.Point("?", () => t != null ? t.position + Vector3.up * 2.3f : Vector3.zero, true); // only at the screen edge
         }
@@ -1395,11 +1436,89 @@ public class Customer : ClickInteractable
     void UpdateRoaming()
     {
         if (heard && askPointer != null) DayStory.Unpoint(ref askPointer);
+        // A member nobody came to for 1.5 game hours (only while open; the clock stops on screens and in talks).
+        if (!heard && askSince >= 0f && !vip && !thief && Members.Counts(Membership)
+            && GM.CurrentPhase == GameManager.Phase.Open && GM.Hour - askSince >= IgnoreHours) { GiveUpAsking(); return; }
         if (Seated) return;
         var player = GameObject.FindWithTag("Player");
         bool close = player != null && (player.transform.position - transform.position).sqrMagnitude < 3.5f * 3.5f;
         FaceTowards(close ? player.transform.position : roamLook);
         if (!close && anim && Random.value < Time.deltaTime * 0.08f) anim.PlayReachShelf(); // idly checking the shelves
+    }
+
+    /// <summary>Left waiting with a "?" too long: the "?" goes, half a heart goes with it, and they head off.</summary>
+    void GiveUpAsking()
+    {
+        askSince = -1f;
+        var m = Membership;
+        Members.Satisfy(m, -0.5f);
+        Members.Complain(m, Members.Gripe.Ignored);
+        RequestLog.Finish(this, "Gave up waiting for you");
+        StopRoaming();
+        Say("Never mind, I'll manage.", 2.5f);
+        Leave();
+    }
+
+    // ---------------- A member's errand: the card back, or a patron's books ----------------
+
+    void RunErrand()
+    {
+        var ui = DialogueUI.Instance;
+        if (ui == null || ui.IsOpen) return;
+        var m = Membership;
+        var d = ScriptableObject.CreateInstance<DialogueAsset>();
+        d.speaker = FirstName;
+        if (errand == Errand.CardBack)
+        {
+            d.lines.Add(new DialogueAsset.Line { id = "start", text = $"I'm handing my library card back. {Members.LeavingWords(m)}", next = "bye" });
+            d.lines.Add(new DialogueAsset.Line { id = "bye", text = "Goodbye.", next = "end" });
+        }
+        else
+        {
+            string titles = string.Join(" and ", gift.ConvertAll(b => $"<color=#D67840>\"{b.Title}\"</color>"));
+            d.lines.Add(new DialogueAsset.Line { id = "start", text = $"I brought {(gift.Count == 1 ? "this" : "these")} for the library: {titles}. {Pick(DonationWishes)}", next = "end" });
+        }
+        var was = errand;
+        heard = true;
+        ui.Play(d, () => { Destroy(d); FinishErrand(was, m); }); // the errand (and its icon) stays until the talk ends
+    }
+
+    void FinishErrand(Errand was, Member m)
+    {
+        errand = Errand.None; // done, once
+        StopImpatient(true);
+        if (was == Errand.CardBack)
+        {
+            Members.ReturnCard(m);
+            RefreshNameplate();
+            GameAudio.Play(a => a.angryLeave, 0.5f);
+        }
+        else
+        {
+            Members.Donate(m, gift);
+            GM.AddReputation(1); // the HUD plays the reputation chime
+            HUD.SkillPop(transform.position + Vector3.up * 1.45f, "+1 reputation");
+            Say("Happy reading!", 2f);
+        }
+        Leave();
+    }
+
+    /// <summary>Waited too long with their errand: the card is left on the counter anyway; the books go home again.</summary>
+    void ErrandGaveUp()
+    {
+        var m = Membership;
+        if (errand == Errand.CardBack) { Say("I'll just leave my card here.", 2.5f); Members.ReturnCard(m); RefreshNameplate(); }
+        else Say("Never mind. Another time.", 2.5f);
+        errand = Errand.None;
+        Leave();
+    }
+
+    /// <summary>A Friend of the library brings someone along who wants a card (a moment behind them).</summary>
+    System.Collections.IEnumerator BringFriend(string friendName)
+    {
+        yield return new WaitForSeconds(2f);
+        if (GM != null && GM.CurrentPhase == GameManager.Phase.Open && !Tutorial.HoldsClock && CustomerSpawner.Instance != null)
+            CustomerSpawner.Instance.SpawnFriend(friendName);
     }
 
     void StopRoaming()
@@ -1573,8 +1692,10 @@ public class Customer : ClickInteractable
 
     void LeaveAngry()
     {
+        if (errand != Errand.None) { ErrandGaveUp(); return; }
         GM.Today.angry++;
         Members.Satisfy(Membership, -1f);
+        Members.Complain(Membership, Members.Gripe.WalkedOut);
         GM.AddReputation(-3);
         GameAudio.Play(a => a.angryLeave);
         // Regulars remember: they won't come in tomorrow.
@@ -1709,6 +1830,8 @@ public class Customer : ClickInteractable
         {
             if (state == State.CheckIn) return "req-return";
             if (state == State.Checkout) return "req-buy";
+            if (errand == Errand.CardBack) return "req-card"; // about their card
+            if (errand == Errand.Donate) return "req-new";    // bringing books
             switch (kind)
             {
                 case Kind.SignUp: return "req-card";

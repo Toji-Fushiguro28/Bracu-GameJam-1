@@ -42,6 +42,9 @@ public class GameManager : MonoBehaviour
         /// <summary>Where the money went, by kind (book orders, upgrades, wages...), in the order it was first spent.</summary>
         public List<string> spentOn = new List<string>();
         public List<int> spentAmount = new List<int>();
+        /// <summary>Members' hearts won and lost today, and their news (new Friend, gift, card returned).</summary>
+        public float heartsUp, heartsDown;
+        public List<string> memberNews = new List<string>();
 
         /// <summary>A copy (the tutorial keeps one to put back afterwards).</summary>
         public DayStats Copy()
@@ -49,6 +52,7 @@ public class GameManager : MonoBehaviour
             var c = (DayStats)MemberwiseClone();
             c.spentOn = new List<string>(spentOn); // its own lists, not shared
             c.spentAmount = new List<int>(spentAmount);
+            c.memberNews = new List<string>(memberNews);
             return c;
         }
 
@@ -187,6 +191,8 @@ public class GameManager : MonoBehaviour
     public static int UpgradeCost(int level) => 60 + level * 40; // 60 / 100 / 140: the first one is just out of reach of the starting coins
 
     [NonSerialized] public List<Member> members = new List<Member>();
+    /// <summary>Cards handed back, and when (they can't sign up again for two days). Saved.</summary>
+    [NonSerialized] public List<ReturnedCard> returnedCards = new List<ReturnedCard>();
     [NonSerialized] public bool[] staff = new bool[3];
     [NonSerialized] public int[] upgrades = new int[9];
     public bool Hired(StaffRole r) => staff[(int)r];
@@ -575,11 +581,11 @@ public class GameManager : MonoBehaviour
     public bool loadSave = true;
 
     [Serializable] class BookSave { public string title; public int good, worn, damaged; }
-    [Serializable] class SaveData { public int day, coins, reputation, difficulty = 1; public bool[] staff; public int[] upgrades; public List<BookSave> books = new List<BookSave>(); public List<Member> members = new List<Member>(); public List<Reservation> reservations = new List<Reservation>(); public List<RequestLog.Entry> log = new List<RequestLog.Entry>(); public List<int> interviews = new List<int>(); public bool endingSeen; public int[] staffLevel; public List<string> added = new List<string>(); public int storySeed; public float[] staffMood; public int[] staffRestedDay; public VipPromise vip; public int[] hirePaid; public bool rareDealerSeen; }
+    [Serializable] class SaveData { public int day, coins, reputation, difficulty = 1; public bool[] staff; public int[] upgrades; public List<BookSave> books = new List<BookSave>(); public List<Member> members = new List<Member>(); public List<Reservation> reservations = new List<Reservation>(); public List<RequestLog.Entry> log = new List<RequestLog.Entry>(); public List<int> interviews = new List<int>(); public bool endingSeen; public int[] staffLevel; public List<string> added = new List<string>(); public int storySeed; public float[] staffMood; public int[] staffRestedDay; public VipPromise vip; public int[] hirePaid; public bool rareDealerSeen; public List<ReturnedCard> returnedCards; }
 
     public void Save()
     {
-        var data = new SaveData { day = day, difficulty = (int)difficulty, coins = Coins, reputation = Reputation, staff = staff, upgrades = upgrades, members = members, reservations = reservations, log = RequestLog.All, interviews = interviews, endingSeen = endingSeen, staffLevel = staffLevel, added = addedTitles, storySeed = storySeed, staffMood = staffMood, staffRestedDay = staffRestedDay, vip = vipPromise, hirePaid = hirePaid, rareDealerSeen = rareDealerSeen };
+        var data = new SaveData { day = day, difficulty = (int)difficulty, coins = Coins, reputation = Reputation, staff = staff, upgrades = upgrades, members = members, reservations = reservations, log = RequestLog.All, interviews = interviews, endingSeen = endingSeen, staffLevel = staffLevel, added = addedTitles, storySeed = storySeed, staffMood = staffMood, staffRestedDay = staffRestedDay, vip = vipPromise, hirePaid = hirePaid, rareDealerSeen = rareDealerSeen, returnedCards = returnedCards };
         foreach (var b in Books) data.books.Add(new BookSave { title = b.Title, good = b.GoodCopies, worn = b.WornCopies, damaged = b.DamagedCopies });
         // Copies out of the shelves (returns, repair table, hands) still belong to the library.
         void Count(BookData b, BookCondition c)
@@ -613,6 +619,7 @@ public class GameManager : MonoBehaviour
         if (data.staff != null && data.staff.Length == 3) staff = data.staff;
         if (data.upgrades != null) Array.Copy(data.upgrades, upgrades, Mathf.Min(data.upgrades.Length, upgrades.Length));
         if (data.members != null) members = data.members;
+        returnedCards = data.returnedCards ?? new List<ReturnedCard>();
         if (data.reservations != null) { reservations = data.reservations; foreach (var r in reservations) r.title = Renamed(r.title); }
         if (data.interviews != null) interviews = data.interviews;
         hirePaid = data.hirePaid != null && data.hirePaid.Length == 3 ? data.hirePaid : new int[3];
