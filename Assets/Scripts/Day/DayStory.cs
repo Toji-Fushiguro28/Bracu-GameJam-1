@@ -5,8 +5,8 @@ using UnityEngine;
 using UnityEngine.UIElements;
 
 /// <summary>
-/// The story of the first week (Days 1 to 5, until the Dean's verdict). Each day gets one twist, in a random
-/// order from the first day: an exam rush, a book thief, a leaky roof, an inspection, a book signing or a power cut.
+/// The story of the first week (Days 1 to 5, until the Dean's verdict). Day 1 is calm; Days 2 to 5 share all six
+/// twists in a random order (two days get two): an exam rush, a book thief, a leaky roof, an inspection, a book signing and a power cut.
 /// Around it, a handful of story moments: regulars who walk up to the desk with news, letters, and the twist
 /// playing out. The morning banner, the notice board and banners tell the player what's going on.
 /// After the ending the library has normal days again. Added to the GameManager at runtime.
@@ -42,8 +42,9 @@ public class DayStory : MonoBehaviour
     }
 
     static GameManager GM => GameManager.Instance;
-    Twist? today;
-    public Twist? Today => today;
+    readonly List<Twist> today = new List<Twist>(); // none on Day 1, one or two on Days 2 to 5
+    bool storyDay;                                  // Days 1 to 5: the week's story runs (with or without a twist)
+    public IReadOnlyList<Twist> Today => today;
 
     // ---------------- What the twist changes (read by the spawner, requests, patience and lights) ----------------
 
@@ -51,7 +52,7 @@ public class DayStory : MonoBehaviour
     const float SignStart = 14f, SignEnd = 15.5f;
     const float PowerOff = 12f, PowerOn = 14f;
 
-    static bool Is(Twist t) => Instance != null && Instance.today == t;
+    static bool Is(Twist t) => Instance != null && Instance.today.Contains(t);
     static bool Between(float from, float to) =>
         GM != null && GM.CurrentPhase == GameManager.Phase.Open && GM.Hour >= from && GM.Hour < to;
     static bool Rush => Is(Twist.ExamRush) && Between(RushStart, RushEnd);
@@ -63,6 +64,10 @@ public class DayStory : MonoBehaviour
     public static float ExtraReaders => Rush ? 0.25f : 0f;
     /// <summary>Exam rush: mostly students come in.</summary>
     public static bool StudentsWanted => Rush;
+    /// <summary>Exam rush: room for a few more visitors at once, so the rush actually feels busy.</summary>
+    public static int ExtraCap => Rush ? 3 : 0;
+    /// <summary>Exam rush: the subject everyone's revising, or null outside the rush.</summary>
+    public static string ExamSubject => Rush ? Instance.examSubject : null;
     /// <summary>Stressed students wait less; in the dark, everyone's oddly patient.</summary>
     public static float PatienceFactor => Rush ? 0.9f : PowerOut ? 1.3f : 1f;
     /// <summary>The power cut: no computer.</summary>
@@ -82,28 +87,58 @@ public class DayStory : MonoBehaviour
 
     // ---------------- Which twist, which day ----------------
 
-    /// <summary>Today's twist, or null outside the first week (and after the ending). The order is shuffled once
-    /// per game (saved as GameManager.storySeed); never a power cut on the very first day.</summary>
-    public static Twist? TwistFor(GameManager gm)
+    static bool StoryDay(GameManager gm) => gm != null && gm.GoalActive && gm.day >= 1 && gm.day <= GameManager.EndingDay;
+
+    /// <summary>Twists that can share a day without their busy hours or characters clashing. Left out on purpose:
+    /// thief + leak (both start at 11:00), exam rush or signing + inspection (crowds during the inspection),
+    /// exam rush or inspection + power cut (a rush or an inspector with no computer).</summary>
+    static readonly (Twist, Twist)[] SafePairs =
     {
-        if (gm == null || !gm.GoalActive || gm.day < 1 || gm.day > GameManager.EndingDay) return null;
+        (Twist.ExamRush, Twist.Signing), (Twist.ExamRush, Twist.Thief), (Twist.ExamRush, Twist.Leak),
+        (Twist.Thief, Twist.Inspection), (Twist.Thief, Twist.Signing), (Twist.Thief, Twist.PowerCut),
+        (Twist.Leak, Twist.Inspection), (Twist.Leak, Twist.Signing), (Twist.Leak, Twist.PowerCut),
+        (Twist.Signing, Twist.PowerCut),
+    };
+    static bool Safe(List<Twist> g) => g.Count < 2 || SafePairs.Contains((g[0], g[1])) || SafePairs.Contains((g[1], g[0]));
+
+    /// <summary>Today's twists: none on Day 1 (a calm first day), one each on Days 2 and 3, two each on Days 4
+    /// and 5, so all six happen once. The order is shuffled once per game (saved as GameManager.storySeed);
+    /// pairs must be safe, and the thief stays off Day 4 (its writer and Bernard are busy with the week's story).</summary>
+    public static List<Twist> TwistsFor(GameManager gm)
+    {
+        if (!StoryDay(gm) || gm.day < 2) return new List<Twist>();
         if (gm.storySeed == 0) gm.storySeed = UnityEngine.Random.Range(1, int.MaxValue);
-        var order = ((Twist[])Enum.GetValues(typeof(Twist))).ToList();
         var rng = new System.Random(gm.storySeed);
-        for (int i = order.Count - 1; i > 0; i--) { int j = rng.Next(i + 1); (order[i], order[j]) = (order[j], order[i]); }
-        if (order[0] == Twist.PowerCut) (order[0], order[1]) = (order[1], order[0]);
-        return order[gm.day - 1];
+        var days = Schedule(rng);
+        return new List<Twist>(days[Mathf.Clamp(gm.day - 2, 0, days.Count - 1)]);
+    }
+
+    /// <summary>Days 2 to 5 in order. Reshuffles until it's a valid week; a fixed week if it somehow never is.</summary>
+    public static List<List<Twist>> Schedule(System.Random rng)
+    {
+        var order = ((Twist[])Enum.GetValues(typeof(Twist))).ToList();
+        for (int tries = 0; tries < 100; tries++)
+        {
+            for (int i = order.Count - 1; i > 0; i--) { int j = rng.Next(i + 1); (order[i], order[j]) = (order[j], order[i]); }
+            var week = new List<List<Twist>> { order.GetRange(0, 1), order.GetRange(1, 1), order.GetRange(2, 2), order.GetRange(4, 2) };
+            if (week.All(Safe) && !week[2].Contains(Twist.Thief)) return week;
+        }
+        return new List<List<Twist>>
+        {
+            new List<Twist> { Twist.Inspection }, new List<Twist> { Twist.Thief },
+            new List<Twist> { Twist.ExamRush, Twist.Signing }, new List<Twist> { Twist.Leak, Twist.PowerCut },
+        };
     }
 
     /// <summary>A line for the morning banner, so the player knows what kind of day it is.</summary>
     public static string MorningLine(GameManager gm)
     {
-        var t = TwistFor(gm);
-        return t == null ? "" : "\nToday: " + Headlines[(int)t.Value];
+        var t = TwistsFor(gm);
+        return t.Count == 0 ? "" : "\nToday: " + string.Join("\nAnd ", t.Select(x => Headlines[(int)x]));
     }
 
     /// <summary>Today's pinned notice (the notice board reads it first).</summary>
-    public string Notice => today switch
+    public string Notice => today.Count == 0 ? null : string.Join("\n\n", today.Select(t => t switch
     {
         Twist.ExamRush => $"QUIET PLEASE. Second-year {examSubject} exam tomorrow. Panic in a whisper.",
         Twist.Thief => "Watch for a nervous stranger near the shelves. Tell the desk.",
@@ -111,26 +146,19 @@ public class DayStory : MonoBehaviour
         Twist.Inspection => "Inspection today at 1:00 PM. Please look studious.",
         Twist.Signing => $"Book signing with {author}, 2:00 PM today! Bring a pen. Not a crayon.",
         Twist.PowerCut => "Eastern Electric: no power from 12:00 to 2:00 PM. Bring a jumper.",
-        _ => null,
-    };
+        _ => "",
+    }));
 
-    /// <summary>The Day Report's line about today's twist.</summary>
-    public bool ReportRow(out string key, out string value)
+    /// <summary>The Day Report's lines about today's twists: (twist, how it went).</summary>
+    public List<(string key, string value)> ReportRows() => today.Select(t => (TwistNames[(int)t], t switch
     {
-        key = value = null;
-        if (today == null) return false;
-        key = TwistNames[(int)today.Value];
-        switch (today.Value)
-        {
-            case Twist.ExamRush: value = "the students survived"; break;
-            case Twist.Thief: value = thievesSeen == 0 ? "they never showed" : $"caught {thievesCaught}, got away {thievesEscaped}"; break;
-            case Twist.Leak: value = soaked > 0 ? $"{soaked} book{(soaked == 1 ? "" : "s")} soaked" : leakShelf != null ? "no books soaked" : "the roof held"; break;
-            case Twist.Inspection: value = verdict ?? "no verdict"; break;
-            case Twist.Signing: value = $"{signSold} of their books sold"; break;
-            case Twist.PowerCut: value = "two hours by candlelight"; break;
-        }
-        return true;
-    }
+        Twist.ExamRush => "the students survived",
+        Twist.Thief => thievesSeen == 0 ? "they never showed" : $"caught {thievesCaught}, got away {thievesEscaped}",
+        Twist.Leak => soaked > 0 ? $"{soaked} book{(soaked == 1 ? "" : "s")} soaked" : leakShelf != null ? "no books soaked" : "the roof held",
+        Twist.Inspection => verdict ?? "no verdict",
+        Twist.Signing => $"{signSold} of their books sold",
+        _ => "two hours by candlelight",
+    })).ToList();
 
     // ---------------- Running the day ----------------
 
@@ -176,17 +204,20 @@ public class DayStory : MonoBehaviour
         popups.Clear();
         usedOpeners.Clear();
         ResetTwistState();
-        today = TwistFor(GM);
-        if (today == null) return; // after the ending: an ordinary day
-        switch (today.Value)
-        {
-            case Twist.ExamRush: SetUpExamRush(); break;
-            case Twist.Thief: SetUpThief(); break;
-            case Twist.Leak: SetUpLeak(); break;
-            case Twist.Inspection: SetUpInspection(); break;
-            case Twist.Signing: SetUpSigning(); break;
-            case Twist.PowerCut: SetUpPowerCut(); break;
-        }
+        today.Clear();
+        storyDay = StoryDay(GM);
+        if (!storyDay) return; // after the ending: an ordinary day
+        today.AddRange(TwistsFor(GM));
+        foreach (var t in today)
+            switch (t)
+            {
+                case Twist.ExamRush: SetUpExamRush(); break;
+                case Twist.Thief: SetUpThief(); break;
+                case Twist.Leak: SetUpLeak(); break;
+                case Twist.Inspection: SetUpInspection(); break;
+                case Twist.Signing: SetUpSigning(); break;
+                case Twist.PowerCut: SetUpPowerCut(); break;
+            }
         SetUpWeek(GM.day);
     }
 
@@ -203,7 +234,7 @@ public class DayStory : MonoBehaviour
     {
         var gm = GM;
         if (gm == null) return;
-        if (today != null && gm.CurrentPhase == GameManager.Phase.Open && gm.Hour >= gm.openHour + 1f / 6f)
+        if (storyDay && gm.CurrentPhase == GameManager.Phase.Open && gm.Hour >= gm.openHour + 1f / 6f)
             for (int i = 0; i < beats.Count; i++)
                 if (gm.Hour >= beats[i].hour && beats[i].run()) { beats.RemoveAt(i); i--; }
         UpdateLeak();
@@ -699,7 +730,8 @@ public class DayStory : MonoBehaviour
             after = (c, _) => Banner("Heavy rain today. Mind the roof!"),
         });
         Do(LeakAt, StartLeak);
-        VisitAt(13f, new Visit
+        // With a power cut too, Walter comes at 1:00 to talk about that, so he comes about the leak earlier.
+        VisitAt(today.Contains(Twist.PowerCut) ? 11.5f : 13f, new Visit
         {
             prefabs = Old(Walter), teaser = "Leaking again, is it?",
             talk = c =>
@@ -743,6 +775,12 @@ public class DayStory : MonoBehaviour
         // Best of all a main hall bookcase with books for sale (not the Archive, Rare Books or the periodicals).
         var main = withBooks.Where(s => !s.shelfId.StartsWith("ARC") && !s.shelfId.StartsWith("RARE")
                                         && s.Books.Any(b => b.Sellable && b.Format == BookFormat.Book && b.GoodCopies + b.WornCopies > 0)).ToList();
+        // On an exam rush day, spare the shelf the students need.
+        if (today.Contains(Twist.ExamRush))
+        {
+            var dry = main.Where(s => !s.Books.Any(b => b.Subject == examSubject)).ToList();
+            if (dry.Count > 0) main = dry;
+        }
         var pool = main.Count > 0 ? main : withBooks.Count > 0 ? withBooks : shelves;
         leakShelf = pool[UnityEngine.Random.Range(0, pool.Count)];
         leaking = true;
@@ -1020,7 +1058,7 @@ public class DayStory : MonoBehaviour
     /// <summary>A copy was sold (handed over or stamped out).</summary>
     public void Sold(BookData b)
     {
-        if (b != null && today == Twist.Signing && signTitles.Contains(b.Title)) signSold++;
+        if (b != null && today.Contains(Twist.Signing) && signTitles.Contains(b.Title)) signSold++;
     }
 
     // ---------------- Power cut ----------------
@@ -1149,12 +1187,13 @@ public class DayStory : MonoBehaviour
     public static string Opener(string profileKey)
     {
         var s = Instance;
-        if (s == null || s.today == null || GM == null || Tutorial.HoldsClock) return null; // after the ending (or mid-tutorial): no small talk
+        if (s == null || !s.storyDay || GM == null || Tutorial.HoldsClock) return null; // after the ending (or mid-tutorial): no small talk
         IEnumerable<string> pool = null;
-        if (UnityEngine.Random.value < 0.5f)
+        if (s.today.Count > 0 && UnityEngine.Random.value < 0.5f)
         {
             bool student = profileKey != null && profileKey.Contains("Student");
-            if (s.today != Twist.ExamRush || student) pool = TwistOpeners[(int)s.today.Value];
+            var twist = s.today[UnityEngine.Random.Range(0, s.today.Count)];
+            if (twist != Twist.ExamRush || student) pool = TwistOpeners[(int)twist];
         }
         int day = Mathf.Clamp(GM.day, 1, GameManager.EndingDay);
         if (pool == null && UnityEngine.Random.value < 0.35f)

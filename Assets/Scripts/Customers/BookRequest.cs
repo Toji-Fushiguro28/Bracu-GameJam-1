@@ -184,8 +184,19 @@ public class BookRequest
             var rare = candidates.Where(IsRare).ToList();
             if (rare.Count > 0) candidates = rare;
         }
+        // Exam rush: most visitors want a book on the exam subject, and say so.
+        string exam = DayStory.ExamSubject;
+        bool examAsk = false;
+        if (exam != null && !vip && Random.value < 0.7f)
+        {
+            var onExam = candidates.Where(b => b.Format == BookFormat.Book && b.Subject == exam && !IsArchive(b) && !IsRare(b)).ToList();
+            if (onExam.Count > 0) { candidates = onExam; examAsk = true; }
+        }
         if (candidates.Count == 0) return null;
         var item = Weighted(candidates, day);
+        if (examAsk && InStock(item))
+            return Set(new BookRequest { Target = item, Format = item.Format }, HintType.Subject, exam,
+                       Pick($"Exam tomorrow. Anything on {H(exam)}? Please?", $"I need a {H(exam)} book. The exam's tomorrow."));
         // Wanted but not in stock: they ask for it by name, so you can order it for them.
         if (!InStock(item) && !forReading && item.Sellable)
         {

@@ -138,7 +138,7 @@ public class CustomerSpawner : MonoBehaviour
         // Reputation and flyers bring more visitors; lunch is quiet.
         float busy = (1f + Mathf.Min(gm.Reputation, 60) / 40f) * gm.VisitorMultiplier * Mathf.Max(0.2f, busyness.Evaluate(gm.Hour)) * DayStory.VisitorBoost;
         spawnTimer = Random.Range(interval.x, interval.y) / busy;
-        int cap = maxCustomers + gm.ModeExtraVisitors + Mathf.Min(3, gm.Reputation / 15);
+        int cap = maxCustomers + gm.ModeExtraVisitors + Mathf.Min(3, gm.Reputation / 15) + DayStory.ExtraCap;
         if (FindObjectsByType<Customer>().Length >= cap) { spawnTimer = 3f; return; }
         Spawn(queue, gm);
     }

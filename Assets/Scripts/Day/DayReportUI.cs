@@ -146,13 +146,14 @@ public class DayReportUI : MonoBehaviour
         var d = gm.Today;
         root.Q<Label>("report-title").text = $"Day {gm.day} Report  ·  {GameManager.DifficultyNames[(int)gm.difficulty]}";
         rows.Clear();
-        // Today's twist, if there was one, in a gold box on top.
-        if (DayStory.Instance != null && DayStory.Instance.ReportRow(out var twist, out var outcome))
-        {
-            var t = new Label($"{twist}: <color=#D67840>{outcome}</color>");
-            t.AddToClassList("report-twist");
-            rows.Add(t);
-        }
+        // Today's twists, if there were any, in gold boxes on top.
+        if (DayStory.Instance != null)
+            foreach (var (twist, outcome) in DayStory.Instance.ReportRows())
+            {
+                var t = new Label($"{twist}: <color=#D67840>{outcome}</color>");
+                t.AddToClassList("report-twist");
+                rows.Add(t);
+            }
         // The day in nine small tiles (icon, number, name); nothing today = greyed out.
         var grid = new VisualElement();
         grid.AddToClassList("report-tiles");
