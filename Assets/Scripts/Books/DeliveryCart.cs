@@ -72,6 +72,13 @@ public class DeliveryCart : ClickInteractable
 
     void OnDestroy() { if (Instance == this) Instance = null; }
 
+    /// <summary>After the tutorial: the cart holds exactly these copies again.</summary>
+    public void SetCopies(IEnumerable<BookData> books)
+    {
+        copies.Clear(); takenOut.Clear();
+        copies.AddRange(books);
+    }
+
     public void Add(BookData book)
     {
         if (book == null) return;

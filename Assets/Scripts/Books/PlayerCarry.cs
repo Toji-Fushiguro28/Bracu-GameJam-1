@@ -52,6 +52,9 @@ public class PlayerCarry : MonoBehaviour
         return true;
     }
 
+    /// <summary>Empty hands (after the tutorial).</summary>
+    public void Clear() { items.Clear(); Refresh(); }
+
     /// <summary>Takes the top book out of your hands.</summary>
     public BookData Drop() => IsEmpty ? null : TakeAt(items.Count - 1).book;
 

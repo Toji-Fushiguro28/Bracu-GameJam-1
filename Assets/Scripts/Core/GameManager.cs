@@ -97,6 +97,42 @@ public class GameManager : MonoBehaviour
         Today = today ?? new DayStats { coinsAtStart = Coins };
     }
 
+    // The tutorial's books: every copy, the catalogue, orders, the cart and your hands, to go back to afterwards.
+    List<(BookData book, int good, int worn, int damaged)> tutorialCopies;
+    List<BookData> tutorialBooks, tutorialNew, tutorialRare, tutorialCart;
+    List<string> tutorialAdded;
+    List<Order> tutorialOrders;
+    List<(BookData, BookCondition)> tutorialCarry;
+
+    /// <summary>The tutorial starts: remember the books as they are, so practice can't change them.</summary>
+    public void RememberBooksForTutorial()
+    {
+        tutorialCopies = Books.Concat(NewTitles).Concat(RareFinds).Select(b => (b, b.GoodCopies, b.WornCopies, b.DamagedCopies)).ToList();
+        tutorialBooks = new List<BookData>(Books); tutorialNew = new List<BookData>(NewTitles); tutorialRare = new List<BookData>(RareFinds);
+        tutorialAdded = new List<string>(addedTitles);
+        tutorialOrders = orders.Select(o => new Order { book = o.book, arriveDay = o.arriveDay, arriveHour = o.arriveHour }).ToList();
+        tutorialCart = DeliveryCart.Instance != null ? new List<BookData>(DeliveryCart.Instance.Copies) : null;
+        var carry = GameObject.FindWithTag("Player")?.GetComponent<PlayerCarry>();
+        tutorialCarry = carry != null ? new List<(BookData, BookCondition)>(carry.Items) : null;
+    }
+
+    /// <summary>The tutorial ends: copies, catalogue, orders, the cart and your hands go back to how they were.</summary>
+    public void RestoreBooksAfterTutorial()
+    {
+        if (tutorialCopies == null) return;
+        foreach (var (b, good, worn, damaged) in tutorialCopies) { b.GoodCopies = good; b.WornCopies = worn; b.DamagedCopies = damaged; }
+        Books.Clear(); Books.AddRange(tutorialBooks);
+        NewTitles.Clear(); NewTitles.AddRange(tutorialNew);
+        RareFinds.Clear(); RareFinds.AddRange(tutorialRare);
+        addedTitles.Clear(); addedTitles.AddRange(tutorialAdded);
+        orders.Clear(); orders.AddRange(tutorialOrders);
+        if (tutorialCart != null && DeliveryCart.Instance != null) DeliveryCart.Instance.SetCopies(tutorialCart);
+        var carry = GameObject.FindWithTag("Player")?.GetComponent<PlayerCarry>();
+        if (tutorialCarry != null && carry != null) { carry.Clear(); foreach (var (b, c) in tutorialCarry) carry.PickUp(b, c); }
+        tutorialCopies = null;
+        NotifyBooksChanged();
+    }
+
     /// <summary>The tutorial only: every order on its way arrives now (on the book cart).</summary>
     public void DeliverOrdersNow()
     {

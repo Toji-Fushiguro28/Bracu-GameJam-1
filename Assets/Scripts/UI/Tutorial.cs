@@ -160,12 +160,15 @@ public class Tutorial : MonoBehaviour
     // The tutorial is practice: coins, reputation and today's numbers go back to these when it ends.
     int coinsBefore = -1, repBefore;
     GameManager.DayStats todayBefore;
+    List<string> membersBefore; // cards made in practice are torn up afterwards
 
     void Begin()
     {
         replayRequested = false;
         finishing = false;
         coinsBefore = GM.Coins; repBefore = GM.Reputation; todayBefore = GM.Today.Copy();
+        membersBefore = GM.members.Select(m => m.key).ToList();
+        GM.RememberBooksForTutorial();
         signupsBefore = GM.Today.signups;
         servedBefore = GM.Today.served;
         ordersBefore = GM.OrdersPlaced;
@@ -534,6 +537,9 @@ public class Tutorial : MonoBehaviour
             RemoveVisitors();
             if (coinsBefore >= 0) GM.ResetAfterTutorial(coinsBefore, repBefore, todayBefore);
             coinsBefore = -1;
+            if (membersBefore != null) GM.members.RemoveAll(m => !membersBefore.Contains(m.key));
+            membersBefore = null;
+            GM.RestoreBooksAfterTutorial();
             if (completed && PlayerPrefs.GetInt(GiftKey, 0) == 0)
             {
                 PlayerPrefs.SetInt(GiftKey, 1);
