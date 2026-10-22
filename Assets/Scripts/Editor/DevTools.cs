@@ -56,6 +56,10 @@ public class DevTools : EditorWindow
             if (!gm.RareOpen) EditorGUILayout.HelpBox("Rare Books isn't open on this day, so no VIP will come.", MessageType.Warning);
             Row(("VIP now (book on shelf)", () => jobs.DevVipNow(false)), ("VIP now (rare dealer)", () => jobs.DevVipNow(true)));
             Row(("VIP comes back now", jobs.DevVipBackNow));
+            Header("Second-week jobs (Days 6-9)");
+            Row(("Collector now", () => jobs.DevJobNow(0)), ("Reading list now", () => jobs.DevJobNow(1)));
+            Row(("Rare loan now", () => jobs.DevJobNow(2)), ("Restoration now", () => jobs.DevJobNow(3)));
+            Row(("Job deadline now", jobs.DevJobDueNow));
         }
 
         Header("Money and reputation");

@@ -22,6 +22,7 @@ public class GhostNight : MonoBehaviour
         public CharacterAnimator anim;
         public Renderer[] renderers;
         public bool reader, seated;
+        public int hall; // Main hall, Archive or Rare Books: it stays in its own room
         public SeatPoint seat;
         public int seatIndex;
         public float alpha, targetAlpha = 1f, nextMoveAt, phase;
@@ -67,11 +68,53 @@ public class GhostNight : MonoBehaviour
         if (GM != null) GM.PhaseChanged -= OnPhase;
     }
 
+    float closedAt = -1f;
+    /// <summary>Real seconds after closing when the ghosts come out even if someone is still about (a visitor stuck
+    /// somewhere must not cancel the night).</summary>
+    const float LateSeconds = 20f;
+
     void OnPhase(GameManager.Phase phase)
     {
+        if (phase == GameManager.Phase.Closed) { closedAt = Time.unscaledTime; return; }
         if (phase != GameManager.Phase.Open) return;
         spawnedTonight = false;
+        closedAt = -1f;
         foreach (var g in ghosts) g.targetAlpha = 0f; // morning: fade away
+    }
+
+    // ---------------- The three halls ----------------
+
+    const int MainHall = 0, Archive = 1, RareBooks = 2;
+    static RoomDarkness[] rooms;
+
+    /// <summary>Which hall a floor point is in: the Archive and Rare Books boxes, everything else is the Main Hall.</summary>
+    static int HallAt(Vector3 p)
+    {
+        if (rooms == null || System.Array.Exists(rooms, r => r == null)) rooms = FindObjectsByType<RoomDarkness>(FindObjectsInactive.Include);
+        foreach (var r in rooms)
+            if (r.Contains(new Vector3(p.x, r.transform.position.y, p.z))) // the floor plan only, not the height
+                return r.room == RoomGate.Room.Archive ? Archive : RareBooks;
+        return MainHall;
+    }
+
+    static bool HallOpen(int hall) => hall == MainHall || RoomGate.IsOpen(hall == Archive ? RoomGate.Room.Archive : RoomGate.Room.RareBooks);
+
+    static float Floor { get { var p = GameObject.FindWithTag("Player"); return p != null ? p.transform.position.y : 0f; } }
+
+    /// <summary>On the floor, and a walk away from the librarian: the NavMesh also covers shelf tops and a closed-off
+    /// back room nobody uses, and a ghost must never end up in either.</summary>
+    static bool Reachable(Vector3 p, out Vector3 at)
+    {
+        at = default;
+        float floor = Floor;
+        if (!NavMesh.SamplePosition(p, out var hit, 1.2f, NavMesh.AllAreas) || Mathf.Abs(hit.position.y - floor) > 0.4f) return false;
+        var player = GameObject.FindWithTag("Player");
+        Vector3 from = player != null ? player.transform.position : hit.position;
+        if (!NavMesh.SamplePosition(from, out var start, 2f, NavMesh.AllAreas)) return false;
+        var path = new NavMeshPath();
+        if (!NavMesh.CalculatePath(start.position, hit.position, NavMesh.AllAreas, path) || path.status != NavMeshPathStatus.PathComplete) return false;
+        at = hit.position;
+        return true;
     }
 
     /// <summary>Closed, and nobody left: no visitors in the building, and the staff have reported and gone home
@@ -87,18 +130,25 @@ public class GhostNight : MonoBehaviour
 
     // ---------------- Appearing ----------------
 
+    /// <summary>At least one ghost in every open hall, up to MaxGhosts in all. Each one keeps to its hall,
+    /// drifting from shelf to shelf; some take a free chair there and read.</summary>
     void Spawn()
     {
         var prefabs = CustomerSpawner.Instance != null ? CustomerSpawner.Instance.customerPrefabs : null;
         if (material == null || prefabs == null || prefabs.Length == 0) return;
-        int n = Random.Range(1, MaxGhosts + 1);
+        var open = new List<int> { MainHall };
+        if (HallOpen(Archive)) open.Add(Archive);
+        if (HallOpen(RareBooks)) open.Add(RareBooks);
+        int n = Random.Range(open.Count, MaxGhosts + 1);
         for (int i = 0; i < n; i++)
         {
+            int hall = i < open.Count ? open[i] : open[Random.Range(0, open.Count)];
             var prefab = prefabs[Random.Range(0, prefabs.Length)];
-            if (prefab == null || !RandomSpot(out var at)) continue;
+            if (prefab == null || !RandomSpot(hall, out var at)) continue;
             var g = Make(prefab, at);
             if (g == null) continue;
-            g.reader = i % 2 == 1; // every other one sits down to read
+            g.hall = hall;
+            g.reader = Random.value < 0.5f; // about half sit down to read, if their hall has a free chair
             g.phase = Random.value * 10f;
             g.nextMoveAt = Time.time + Random.Range(0.5f, 2f);
             ghosts.Add(g);
@@ -148,20 +198,32 @@ public class GhostNight : MonoBehaviour
         return g;
     }
 
-    /// <summary>A walkable point on the floor in front of a shelf, in a room that's open (the NavMesh also
-    /// covers some shelf tops: those don't count).</summary>
-    static bool RandomSpot(out Vector3 at)
+    /// <summary>A reachable point on the floor in front of a shelf in this hall (or, failing that, anywhere
+    /// reachable in it).</summary>
+    static bool RandomSpot(int hall, out Vector3 at)
     {
-        var shelves = FindObjectsByType<ShelfInteractable>();
-        var player = GameObject.FindWithTag("Player");
-        float floor = player != null ? player.transform.position.y : 0f; // the librarian is always on the floor
-        for (int tries = 0; tries < 16 && shelves.Length > 0; tries++)
+        float floor = Floor;
+        var shelves = new List<ShelfInteractable>();
+        foreach (var s in FindObjectsByType<ShelfInteractable>())
+            if (HallAt(s.transform.position) == hall && !RoomGate.IsLockedAt(new Vector3(s.transform.position.x, floor, s.transform.position.z))) shelves.Add(s);
+        for (int tries = 0; tries < 16 && shelves.Count > 0; tries++)
         {
-            var s = shelves[Random.Range(0, shelves.Length)];
-            if (RoomGate.IsLockedAt(s.transform.position)) continue;
-            var p = s.transform.position + s.transform.forward * 1.2f + new Vector3(Random.Range(-0.8f, 0.8f), 0f, Random.Range(-0.8f, 0.8f));
+            var s = shelves[Random.Range(0, shelves.Count)];
+            var fwd = s.transform.forward; fwd.y = 0f; // some shelves are rotated on their side
+            if (fwd.sqrMagnitude < 0.01f) fwd = Vector3.back;
+            var p = s.transform.position + fwd.normalized * 1.2f + new Vector3(Random.Range(-0.8f, 0.8f), 0f, Random.Range(-0.8f, 0.8f));
             p.y = floor;
-            if (NavMesh.SamplePosition(p, out var hit, 1.2f, NavMesh.AllAreas) && Mathf.Abs(hit.position.y - floor) < 0.4f) { at = hit.position; return true; }
+            if (Reachable(p, out at) && HallAt(at) == hall) return true;
+        }
+        // No shelf spot: somewhere near a chair in this hall instead.
+        for (int tries = 0; tries < 16; tries++)
+        {
+            if (SeatPoint.All.Count == 0) break;
+            var seat = SeatPoint.All[Random.Range(0, SeatPoint.All.Count)];
+            if (seat == null || HallAt(seat.transform.position) != hall) continue;
+            var p = seat.transform.position + new Vector3(Random.Range(-1.5f, 1.5f), 0f, Random.Range(-1.5f, 1.5f));
+            p.y = floor;
+            if (Reachable(p, out at) && HallAt(at) == hall) return true;
         }
         at = default;
         return false;
@@ -175,7 +237,8 @@ public class GhostNight : MonoBehaviour
         if (!spawnedTonight && Time.unscaledTime >= nextCheck)
         {
             nextCheck = Time.unscaledTime + 1f;
-            if (EveryoneGone()) { spawnedTonight = true; Spawn(); }
+            bool late = closedAt >= 0f && Time.unscaledTime - closedAt > LateSeconds && GM != null && GM.CurrentPhase == GameManager.Phase.Closed;
+            if (EveryoneGone() || late) { spawnedTonight = true; Spawn(); }
         }
         for (int i = ghosts.Count - 1; i >= 0; i--)
         {
@@ -210,7 +273,7 @@ public class GhostNight : MonoBehaviour
 
     void NextMove(Ghost g)
     {
-        if (g.reader && g.seat == null && FreeSeat(out var seat, out int index))
+        if (g.reader && g.seat == null && FreeSeat(g.hall, out var seat, out int index))
         {
             // Aim for the walkable spot nearest the front of the chair (as visitors do).
             var front = seat.ApproachPosition(index);
@@ -219,19 +282,18 @@ public class GhostNight : MonoBehaviour
             g.agent.SetDestination(g.seatTarget);
             return;
         }
-        if (RandomSpot(out var at)) g.agent.SetDestination(at);
+        if (RandomSpot(g.hall, out var at)) g.agent.SetDestination(at);
         g.nextMoveAt = Time.time + Random.Range(4f, 9f); // a pause at each shelf, as if browsing
     }
 
-    /// <summary>An empty chair in an open room (visitors have gone home by now).</summary>
-    bool FreeSeat(out SeatPoint seat, out int index)
+    /// <summary>An empty chair in this ghost's hall (visitors have gone home by now).</summary>
+    bool FreeSeat(int hall, out SeatPoint seat, out int index)
     {
         var free = new List<(SeatPoint, int)>();
-        var player = GameObject.FindWithTag("Player");
-        float floor = player != null ? player.transform.position.y : 0f;
+        float floor = Floor;
         foreach (var s in SeatPoint.All)
         {
-            if (s.staffOnly || RoomGate.IsLockedAt(s.transform.position)) continue;
+            if (s.staffOnly || RoomGate.IsLockedAt(s.transform.position) || HallAt(s.transform.position) != hall) continue;
             if (Mathf.Abs(s.transform.position.y - floor) > 0.5f) continue; // on the floor (not furniture stored up high)
             for (int i = 0; i < s.seats.Length; i++)
                 if (s.IsFree(i) && !ghosts.Exists(o => o.seat == s && o.seatIndex == i)) free.Add((s, i));

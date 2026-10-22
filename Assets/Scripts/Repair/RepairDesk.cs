@@ -107,10 +107,29 @@ public class RepairDesk : ClickInteractable
         return true;
     }
 
-    public void DropOff(BookData book, BookCondition condition)
+    /// <summary>Puts a copy on the table to be repaired; returns its job (SpecialJobs follows its own).</summary>
+    public Job DropOff(BookData book, BookCondition condition)
     {
-        Waiting.Add(new Job { book = book, condition = condition });
+        var job = new Job { book = book, condition = condition };
+        Waiting.Add(job);
         Changed?.Invoke();
+        return job;
+    }
+
+    /// <summary>Takes a job off the table wherever it is (a visitor's own book going home): true if it was there.</summary>
+    public bool Withdraw(Job job)
+    {
+        bool gone = Waiting.Remove(job) || Working.Remove(job);
+        if (gone) Changed?.Invoke();
+        return gone;
+    }
+
+    /// <summary>Takes one finished copy of this book in this state off the table (the owner collects it).</summary>
+    public bool TakeDone(BookData book, BookCondition condition)
+    {
+        if (!Done.Remove((book, condition))) return false;
+        Changed?.Invoke();
+        return true;
     }
 
     int Tier(BookData b) => Mathf.Clamp((int)b.Tier, 0, 2);

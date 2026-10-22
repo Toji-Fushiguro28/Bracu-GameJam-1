@@ -418,6 +418,13 @@ public class GameManager : MonoBehaviour
         return true;
     }
 
+    /// <summary>A rare book lent out for the night (SpecialJobs rare loan): it comes back on the book cart tomorrow
+    /// morning, free. Saved like any order, so a quit overnight can't lose it.</summary>
+    public void ReturnTomorrow(BookData b)
+    {
+        if (b != null) orders.Add(new Order { book = b, arriveDay = day + 1, arriveHour = openHour });
+    }
+
     /// <summary>What the rare dealer asks for a rare book (a third of its value).</summary>
     public static int RarePrice(BookData b) =>
         Mathf.Max(20, Mathf.RoundToInt(b.BaseValue / 3f * (Instance != null ? Instance.ModePrices : 1f)));

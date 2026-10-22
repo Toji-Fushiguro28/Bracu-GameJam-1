@@ -383,7 +383,7 @@ public class StaffInterview : MonoBehaviour
             yield return Say(Dean, EndingTier >= 2
                 ? $"Mind you, the board likes to see things last. <color=#D67840>Reputation {EndingNextGoal}</color> by the end of <color=#D67840>Day {GameManager.SecondEndingDay}</color>. Humour them. I'll write to you then."
                 : $"One more season, then. <color=#D67840>Reputation {EndingNextGoal}</color> by the end of <color=#D67840>Day {GameManager.SecondEndingDay}</color>. I'll write to you when it's done.");
-        yield return Say(Dean, "Edgar. Please. Now, enough of an old man's sniffling. The doors open at nine, and someone has to keep the lamps lit.");
+        yield return Say(Dean, $"Go on, {Me}. Enough of an old man's sniffling. The doors open at nine, and someone has to keep the lamps lit.");
 
         // The End page.
         Play(hireSound);
@@ -495,6 +495,8 @@ public class StaffInterview : MonoBehaviour
         leaving = true;
         skip?.SetEnabled(false);
         StopAllCoroutines();
+        ClearSpawned();
+        resume?.AddToClassList("hidden");
         Play(clickSound);
         if (!Morning) { StartCoroutine(Finish(null)); return; }
         StartCoroutine(SkipMorning());
@@ -518,13 +520,26 @@ public class StaffInterview : MonoBehaviour
 
     // ---------------- Characters ----------------
 
+    readonly List<GameObject> spawned = new List<GameObject>();
+
     GameObject Spawn(Candidate c)
     {
         GameObject prefab = null;
         foreach (var p in characters) if (p != null && p.name.Contains(c.prefab)) { prefab = p; break; }
         var go = prefab != null ? Instantiate(prefab) : GameObject.CreatePrimitive(PrimitiveType.Capsule);
         go.transform.position = door.position;
+        // Into the interview's own scene (not the library's, which is the active one in the morning), so nobody
+        // can be left behind in the chair when the interview scene closes.
+        if (go.scene != gameObject.scene) UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(go, gameObject.scene);
+        spawned.Add(go);
         return go;
+    }
+
+    /// <summary>Skip stops the interview mid-way, before the applicant walks out: send everyone home at once.</summary>
+    void ClearSpawned()
+    {
+        foreach (var go in spawned) if (go != null) Destroy(go);
+        spawned.Clear();
     }
 
     IEnumerator Walk(Transform t, CharacterAnimator anim, Vector3 to)
