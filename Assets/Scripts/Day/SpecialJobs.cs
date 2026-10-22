@@ -77,6 +77,7 @@ public class SpecialJobs : MonoBehaviour
         vipKey = vipName = null;
         buying = taskShown = forceDealer = false;
         vipAt = VipDue;
+        holdSaid = remindSaid = false;
         if (GM == null) return;
 
         // A VIP you promised a rare book to yesterday comes back this afternoon to read it.
@@ -159,12 +160,55 @@ public class SpecialJobs : MonoBehaviour
         if (buying && !taskShown)
         {
             taskShown = true; // added here, after the new day's notebook is set up
-            RequestLog.Task("job-vip", vipName, $"{vipName} comes back this afternoon to read {BookRequest.H($"\"{book.Title}\"")} in the Rare Books room. Have it in your hands at the desk.");
+            RequestLog.Task("job-vip", vipName, $"Take {BookRequest.H($"\"{book.Title}\"")} off the book cart and {Red("keep it in your hands")}. {vipName} comes back around {GameManager.FormatHour(vipAt)}: talk to them with the book in your hands.");
         }
         if (!offered && h >= offerAt) { if (Offer() || h >= offerAt + 1.5f) offered = true; return; }
         if (!accepted || done) return;
+        if (job == Job.Vip) GuideVip();
         if (job == Job.Vip && h >= vipAt) { if (VipReturns() || h >= vipAt + 1.5f) done = true; }
         if (job == Job.BookClub && h >= ClubAt) { done = true; BookClubMeets(); }
+    }
+
+#if UNITY_EDITOR
+    /// <summary>Dev Tools only: a VIP comes to the desk now with a rare-book request, replacing today's job.
+    /// dealer: the library hasn't got the book, so it's ordered from the rare dealer. Needs Rare Books open.</summary>
+    public void DevVipNow(bool dealer)
+    {
+        job = Job.Vip;
+        offered = accepted = done = buying = taskShown = false;
+        book = null;
+        forceDealer = dealer;
+        offerAt = GM.Hour;
+        vipAt = VipDue;
+        holdSaid = remindSaid = false;
+    }
+
+    /// <summary>Dev Tools only: the VIP you said yes to comes back now instead of at 3:00 PM.</summary>
+    public void DevVipBackNow() { if (job == Job.Vip && accepted) vipAt = GM.Hour; }
+#endif
+
+    /// <summary>Red, for what matters most (the notebook's warning red).</summary>
+    static string Red(string s) => $"<color=#AA3C28>{s}</color>";
+
+    // Play testers missed that the VIP's book has to stay in your hands: say so when you pick it up,
+    // and remind you half an hour before they're back if you aren't holding it.
+    bool holdSaid, remindSaid;
+
+    void GuideVip()
+    {
+        if (book == null) return;
+        string t = BookRequest.H($"\"{book.Title}\"");
+        if (Holding(book) >= 0)
+        {
+            if (!holdSaid) { holdSaid = true; FindAnyObjectByType<HUD>()?.ShowBanner($"{Red("Keep holding")} {t} until {vipName} comes back at {GameManager.FormatHour(vipAt)}. Don't put it down or hand it to anyone else.", 7f); }
+            return;
+        }
+        holdSaid = false;
+        if (!remindSaid && GM.Hour >= vipAt - 0.5f)
+        {
+            remindSaid = true;
+            FindAnyObjectByType<HUD>()?.ShowBanner($"{vipName} is back at {GameManager.FormatHour(vipAt)}! Go and get {t} and {Red("keep it in your hands")}.", 7f);
+        }
     }
 
     bool Offer()
@@ -231,22 +275,23 @@ public class SpecialJobs : MonoBehaviour
         if (fromDealer) return BuyRareVisit(b, profs);
         return new DayStory.Visit
         {
-            prefabs = profs, teaser = "A word, if you have a moment.", atDesk = true,
+            prefabs = profs, teaser = "A word, if you have a moment.", atDesk = true, vip = true,
             talk = c => new DayStory.Script()
-                .Say($"Good morning. I'm giving a paper on Friday, and I need to examine <color=#D67840>\"{b.Title}\"</color> this afternoon.")
-                .Say($"Could you have it ready, in your hands, when I come back at {GameManager.FormatHour(VipDue)}? I'd be grateful. Generously grateful.")
+                .Say($"Forgive me. I'm told your Rare Books room has a copy of <color=#D67840>\"{b.Title}\"</color>. I've been chasing one footnote in it since the spring.")
+                .Say($"I'm lecturing this morning. Could you have it in your hands when I come back at {GameManager.FormatHour(VipDue)}? I've lost a whole afternoon before, waiting on a book that was \"somewhere on the shelf\".")
                 .Choose("It'll be ready.", "yes", "I'm afraid I can't.", "no")
-                .Say("Splendid. Until three, then.", "yes", DialogueAsset.End)
-                .Say("A pity. Another time, perhaps.", "no")
+                .Say("Thank you. Three o'clock, then.", "yes", "tip")
+                .Say("Then I'll try the county archive. Good day.", "no", DialogueAsset.End)
+                .Me($"Take it from the Rare Books section and {Red("keep holding it")}. {Red("Don't put it back or give it to anyone else")}. When they come back at {GameManager.FormatHour(VipDue)}, talk to them with the book {Red("in your hands")}", "tip")
                 .d,
             after = (c, last) =>
             {
-                if (last != "yes") { done = true; return; }
+                if (last != "tip") { done = true; return; }
                 accepted = true;
                 vipKey = c.profileKey;
                 vipName = NameOf(c);
-                RequestLog.Task("job-vip", vipName, $"Have {BookRequest.H($"\"{b.Title}\"")} in your hands at the desk by {GameManager.FormatHour(VipDue)}. It's on the {ShelfInteractable.NameOf(b.ShelfLocation)} shelf.");
-                FindAnyObjectByType<HUD>()?.ShowBanner($"VIP request: have <color=#D67840>\"{b.Title}\"</color> in your hands at the desk by {GameManager.FormatHour(VipDue)}. It's on the {ShelfInteractable.NameOf(b.ShelfLocation)} shelf.", 7f);
+                RequestLog.Task("job-vip", vipName, $"Take {BookRequest.H($"\"{b.Title}\"")} from the Rare Books section and {Red("keep it in your hands")}. {vipName} comes back at {GameManager.FormatHour(VipDue)}: talk to them with the book in your hands.");
+                FindAnyObjectByType<HUD>()?.ShowBanner($"VIP request: take <color=#D67840>\"{b.Title}\"</color> from the Rare Books section and {Red("keep it in your hands")} until {vipName} comes back at {GameManager.FormatHour(VipDue)}.", 8f);
             },
         };
     }
@@ -258,14 +303,14 @@ public class SpecialJobs : MonoBehaviour
         int cost = GameManager.RarePrice(b);
         return new DayStory.Visit
         {
-            prefabs = profs, teaser = "A word, if you have a moment.", atDesk = true,
+            prefabs = profs, teaser = "A word, if you have a moment.", atDesk = true, vip = true,
             talk = c => new DayStory.Script()
-                .Say($"Good morning. I'm giving a paper next week, and I need to study <color=#D67840>\"{b.Title}\"</color>.")
-                .Say($"Your library doesn't hold a copy. But the rare-book dealer has one: it's in your computer's Catalogue, for {cost} coins. It would arrive tomorrow morning.")
-                .Say("Order it, and I'll come back tomorrow afternoon to read it in your Rare Books room. I'll repay every coin, with thanks on top. The library keeps the book.")
+                .Say($"Good morning. There's a book called <color=#D67840>\"{b.Title}\"</color>. I've wanted to see a copy for twenty years.")
+                .Say($"No library in the county has one. The rare-book dealer does: it's in your computer's Catalogue, for {cost} coins, and it would be here tomorrow morning.")
+                .Say("Buy it, and I'll come in tomorrow afternoon to read it in your Rare Books room. I'll pay you back, and a little more. The book stays here, of course.")
                 .Choose("I'll order it.", "yes", "That's too dear for us.", "no")
-                .Say("Splendid. Until tomorrow, then.", "yes", DialogueAsset.End)
-                .Say("I understand. Another time, perhaps.", "no")
+                .Say("Then I'll keep tomorrow afternoon free. Thank you.", "yes", DialogueAsset.End)
+                .Say("I understand. Twenty years. I can wait a little longer.", "no")
                 .d,
             after = (c, last) =>
             {
@@ -292,7 +337,7 @@ public class SpecialJobs : MonoBehaviour
         bool neverOrdered = p != null && GM.RareFinds.Exists(x => x.Title == p.title);
         var visit = new DayStory.Visit
         {
-            prefabs = new[] { vipKey }, name = vipName, teaser = "I'm back for the book.", atDesk = true,
+            prefabs = new[] { vipKey }, name = vipName, teaser = "I'm back for the book.", atDesk = true, vip = true,
             talk = c =>
             {
                 var s = new DayStory.Script();
@@ -438,7 +483,7 @@ public class SpecialJobs : MonoBehaviour
         if (job == Job.Vip && !buying)
         {
             bool holding = Holding(book) >= 0;
-            string state = holding ? "you have it" : WantedRare != null ? "BUY IT IN THE CATALOGUE" : "NOT IN YOUR HANDS";
+            string state = holding ? "you have it" : "TAKE IT FROM RARE BOOKS";
             yield return ($"VIP: {vipName} wants <color=#D67840>\"{book.Title}\"</color>", $"In your hands by {GameManager.FormatHour(VipDue)}  ·  {state}", holding);
         }
         else if (job == Job.BookClub)

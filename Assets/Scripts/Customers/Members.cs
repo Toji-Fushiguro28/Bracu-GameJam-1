@@ -111,7 +111,8 @@ public static class Members
         : title == "Friend" ? "brings friends who want a card"
         : title == "Unhappy" ? "may hand their card back" : "tips and waits a little more when happy";
 
-    /// <summary>No hearts, complaints, gifts or card returns for the tutorial's visitors, the VIP scholar, the Dean or the thief.</summary>
+    /// <summary>No hearts, complaints, gifts or card returns during the tutorial or for the Dean. (VIP scholars do count;
+    /// the thief never gains or loses any: no code path touches their hearts.)</summary>
     public static bool Counts(Member m) => m != null && !Tutorial.HoldsClock && !m.key.Contains("Dean");
 
     /// <summary>A member walks in: what they lose on this visit starts from nothing.</summary>
@@ -258,6 +259,7 @@ public static class Members
         if (m == null) return;
         m.spent += spent;
         if (!Counts(m)) { m.satisfaction = Mathf.Clamp(m.satisfaction + amount, 0f, 5f); return; }
+        if (amount > 0f) amount *= GainScale; // hearts are earned over a few days, not one visit
         if (amount < 0f) { amount = -Mathf.Min(-amount, Mathf.Max(0f, MaxVisitLoss - m.visitLoss)); m.visitLoss -= amount; }
         float before = m.satisfaction;
         m.satisfaction = Mathf.Clamp(before + amount, 0f, 5f);
@@ -278,6 +280,9 @@ public static class Members
     }
 
     const float MaxVisitLoss = 1.5f;
+    /// <summary>Every heart gained is scaled by this (losses aren't): Friend around Day 2-3, Patron around Day 3-4
+    /// for a well-treated regular.</summary>
+    const float GainScale = 0.7f;
 
     /// <summary>A little heart over the member's head: full and rising, or faded and falling.</summary>
     static void Pop(Member m, bool up)

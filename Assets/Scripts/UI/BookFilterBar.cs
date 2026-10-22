@@ -32,7 +32,7 @@ public class BookFilterBar
         Root = new VisualElement();
         Root.AddToClassList(pcStyle ? "pc-filter-bar" : "page-filter-bar");
 
-        search = new TextField { name = pcStyle ? "book-search" : "page-search" };
+        search = new TextField { name = pcStyle ? "book-search" : "page-search", maxLength = 40 }; // longest title is well under 40
         search.AddToClassList("filter-search");
         search.textEdition.placeholder = "search title, author or tag";
         search.RegisterValueChangedCallback(_ => changed?.Invoke());

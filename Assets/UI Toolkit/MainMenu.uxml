@@ -31,7 +31,7 @@
                 <ui:VisualElement name="menu-mode" class="menu-panel hidden">
                     <ui:Label class="page-title font-title" text="Choose your pace" />
                     <ui:Button name="mode-1" class="kit-button mode-card recommended">
-                        <ui:Label class="mode-badge" text="★ Recommended" />
+                        <ui:Label class="mode-badge" text="Recommended" />
                         <ui:Label class="mode-name" text="Standard" />
                         <ui:Label class="mode-info" text="The way this game is meant to be played." />
                     </ui:Button>

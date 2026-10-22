@@ -33,6 +33,7 @@ public class DayReportUI : MonoBehaviour
         Instance = this;
         sfx = gameObject.AddComponent<AudioSource>();
         sfx.playOnAwake = false;
+        GameSettings.MarkUi(sfx); // follows the UI sounds slider
     }
 
     void OnDestroy()
@@ -132,12 +133,13 @@ public class DayReportUI : MonoBehaviour
     {
         if (!gm.GoalActive) return "";
         int left = gm.ReputationGoal - gm.Reputation;
-        if (gm.day >= GameManager.EndingDay)
-            return left <= 0 ? $"\n<color=#D67840>The Dean's goal of {gm.ReputationGoal}: reached!</color> He'll visit in the morning."
-                             : $"\nThe Dean's goal was {gm.ReputationGoal}: {left} short. He'll visit in the morning.";
-        int daysLeft = GameManager.EndingDay - gm.day;
+        string morning = gm.SecondWeek ? "He'll write to you in the morning." : "He'll visit in the morning.";
+        if (gm.day >= gm.GoalDay)
+            return left <= 0 ? $"\n<color=#D67840>The Dean's goal of {gm.ReputationGoal}: reached!</color> {morning}"
+                             : $"\nThe Dean's goal was {gm.ReputationGoal}: {left} short. {morning}";
+        int daysLeft = gm.GoalDay - gm.day;
         return left <= 0 ? $"\n<color=#D67840>The Dean's goal of {gm.ReputationGoal}: reached!</color> Keep it up."
-                         : $"\nThe Dean's goal: {gm.ReputationGoal} by Day {GameManager.EndingDay}. {left} to go, {daysLeft} day{(daysLeft == 1 ? "" : "s")} left.";
+                         : $"\nThe Dean's goal: {gm.ReputationGoal} by Day {gm.GoalDay}. {left} to go, {daysLeft} day{(daysLeft == 1 ? "" : "s")} left.";
     }
 
     void RefreshReport()
@@ -342,8 +344,8 @@ public class DayReportUI : MonoBehaviour
             return "Some books are waiting for repair. Mended books can be sold and lent again, and a perfect repair earns a bonus.";
         if (gm.GoalActive && gm.Reputation < gm.ReputationGoal)
         {
-            int left = gm.ReputationGoal - gm.Reputation, days = Mathf.Max(1, GameManager.EndingDay - gm.day);
-            return $"The Dean wants {gm.ReputationGoal} reputation by Day {GameManager.EndingDay}. That's {left} more in {days} {(days == 1 ? "day" : "days")}: every visitor you serve well is +1.";
+            int left = gm.ReputationGoal - gm.Reputation, days = Mathf.Max(1, gm.GoalDay - gm.day);
+            return $"The Dean wants {gm.ReputationGoal} reputation by Day {gm.GoalDay}. That's {left} more in {days} {(days == 1 ? "day" : "days")}: every visitor you serve well is +1.";
         }
         return "The popular books change every morning. Check the catalogue first thing and stock up on the ones that glow.";
     }
@@ -358,7 +360,7 @@ public class DayReportUI : MonoBehaviour
         text.Add(PopularGlow.TitleRow(new Label(title) { name = "row-title" }, popular, row));
         text.Add(new Label(sub) { name = "row-sub" });
         row.Add(text);
-        var b = new Button(() => { onClick(); if (buySound != null) sfx.PlayOneShot(buySound, 0.7f); else GameAudio.Play(a => a.buy); RefreshReport(); RefreshPlan(); }) { text = button };
+        var b = new Button(() => { onClick(); if (!GameAudio.JustSpent) { if (buySound != null) sfx.PlayOneShot(buySound, 0.7f); else GameAudio.Play(a => a.buy); } RefreshReport(); RefreshPlan(); }) { text = button }; // after a payment the coin clink plays instead
         b.AddToClassList("kit-button");
         b.SetEnabled(enabled);
         row.Add(b);

@@ -14,6 +14,8 @@ public class MainMenuUI : MonoBehaviour
     public static MainMenuUI Instance { get; private set; }
     /// <summary>True while the title screen is up.</summary>
     public static bool Active => Instance != null && Instance.showing;
+    /// <summary>A game is under way and the menu isn't up (playtime counts).</summary>
+    public static bool Playing => Instance != null && Instance.started && !Instance.showing;
     /// <summary>The title screen before play has begun (not the Esc pause screen).</summary>
     public static bool OnTitle => Active && !Instance.started;
     /// <summary>Set before reloading for a new game, so it starts straight away.</summary>
@@ -22,7 +24,6 @@ public class MainMenuUI : MonoBehaviour
     public string introScene = "InterviewScene";
 
     public string gameTitle = "The Whitmore Library";
-    public string subtitle = "a cozy library tale";
     [Tooltip("Menu camera (higher priority than the follow cam while the menu is up).")]
     public CinemachineCamera menuCamera;
     [Tooltip("How far the menu camera sways, in metres, and how long one sway takes.")]
@@ -34,7 +35,7 @@ public class MainMenuUI : MonoBehaviour
     {
         "Tip: the computer searches titles, authors and tags. Vague request? Read the abstracts!",
         "Tip: sold out? Reserve it, then order it from the PC Catalogue.",
-        "Tip: chat with readers - point them to the right shelf for a bigger tip.",
+        "Tip: chat with readers - recommend something they'll love for a bigger tip.",
         "Tip: popular books get asked for most. Keep them in stock!",
         "Tip: a visitor who walks out costs 3 reputation, and a regular won't come back tomorrow.",
         "Tip: each of the first five days has its own surprise. Check the morning banner and the notice board.",
@@ -77,6 +78,7 @@ public class MainMenuUI : MonoBehaviour
         Instance = this;
         sfx = gameObject.AddComponent<AudioSource>();
         sfx.playOnAwake = false;
+        GameSettings.MarkUi(sfx); // follows the UI sounds slider
         cancel = InputSystem.actions?.FindAction("UI/Cancel");
     }
 
@@ -98,11 +100,12 @@ public class MainMenuUI : MonoBehaviour
         settingsRows = doc.Q("settings-rows");
         saveLabel = doc.Q<Label>("menu-save");
         doc.Q<Label>("menu-title").text = gameTitle;
-        doc.Q<Label>("menu-subtitle").text = subtitle;
         doc.Q<Label>("menu-tip").text = Tips[Random.Range(0, Tips.Length)];
 
         var gm = GameManager.Instance;
         hasSave = gm != null && gm.HasSave;
+        subtitleLabel = doc.Q<Label>("menu-subtitle");
+        ShowPlaytime();
         saveLabel.text = hasSave ? $"Your library: Day {gm.day}  ·  {gm.Coins} coins  ·  {GameManager.DifficultyNames[(int)gm.difficulty]}" : "A new library awaits.";
 
         var cont = continueButton = doc.Q<Button>("btn-continue");
@@ -126,16 +129,16 @@ public class MainMenuUI : MonoBehaviour
         doc.Q<Button>("btn-howto-prev").clicked += () => { howtoPage = Mathf.Max(0, howtoPage - 1); ShowHowTo(); };
         doc.Q<Button>("btn-howto-next").clicked += () => { howtoPage = Mathf.Min(HowTo.Length - 1, howtoPage + 1); ShowHowTo(); };
         doc.Q<Button>("btn-howto-back").clicked += () => Show(main);
-        // Play the tutorial (again): continue the library and run it; on a new game it runs anyway.
-        var howtoButton = doc.Q<Button>("btn-howto");
-        if (howtoButton != null && howtoButton.parent != null)
-        {
-            var tutorial = new Button(() => { Tutorial.RequestReplay(); if (hasSave || started) Play(); else Show(modePanel); }) { name = "btn-tutorial", text = "Tutorial" };
-            tutorial.AddToClassList("kit-button");
-            tutorial.AddToClassList("menu-button");
-            howtoButton.parent.Insert(howtoButton.parent.IndexOf(howtoButton) + 1, tutorial);
-        }
         var quit = doc.Q<Button>("btn-quit");
+        // Paused mid-game: back to the title screen (asks first: today's progress isn't saved). Hidden on the title screen.
+        if (quit != null && quit.parent != null)
+        {
+            menuButton = new Button(BackToMenu) { name = "btn-main-menu", text = "Main Menu" };
+            menuButton.AddToClassList("kit-button");
+            menuButton.AddToClassList("menu-button");
+            menuButton.AddToClassList("hidden");
+            quit.parent.Insert(quit.parent.IndexOf(quit), menuButton);
+        }
         quit.clicked += () => Application.Quit();
         quit.EnableInClassList("hidden", Application.platform == RuntimePlatform.WebGLPlayer); // a browser tab can't quit
         doc.Q<Button>("btn-confirm-yes").clicked += NewGame;
@@ -211,6 +214,8 @@ public class MainMenuUI : MonoBehaviour
         continueButton.RemoveFromClassList("hidden");
         newButton.text = "New Game";
         if (gm != null) saveLabel.text = $"Day {gm.day}  ·  {gm.ClockText}  ·  {gm.Coins} coins  ·  {GameManager.DifficultyNames[(int)gm.difficulty]}";
+        ShowPlaytime();
+        if (menuButton != null) { menuButton.RemoveFromClassList("hidden"); menuButton.text = "Main Menu"; menuConfirmUntil = 0f; }
         Show(main);
         root.RemoveFromClassList("hidden");
         root.RemoveFromClassList("fading");
@@ -218,6 +223,29 @@ public class MainMenuUI : MonoBehaviour
         book.AddToClassList("intro");
         book.schedule.Execute(() => book.RemoveFromClassList("intro")).ExecuteLater(30);
         // The camera stays on the librarian while paused (no swooping back and forth).
+    }
+
+    Label subtitleLabel;
+    Button menuButton;
+    float menuConfirmUntil;
+
+    /// <summary>Under the title: how long you've played this library (nothing before your first game).</summary>
+    void ShowPlaytime()
+    {
+        if (subtitleLabel == null) return;
+        var gm = GameManager.Instance;
+        bool show = gm != null && (hasSave || started) && gm.playSeconds >= 1f;
+        subtitleLabel.text = show ? $"Played for {GameManager.FormatPlaytime(gm.playSeconds)}" : "";
+        subtitleLabel.EnableInClassList("hidden", !show);
+    }
+
+    /// <summary>Pause menu: the first click asks (today's progress since this morning's save is lost), the second goes.</summary>
+    void BackToMenu()
+    {
+        if (Time.unscaledTime < menuConfirmUntil) { GameManager.Instance?.ReturnToMenu(); return; }
+        menuConfirmUntil = Time.unscaledTime + 4f;
+        menuButton.text = "Sure? Click again"; // today's progress since the morning save is lost
+        menuButton.schedule.Execute(() => { if (Time.unscaledTime >= menuConfirmUntil) menuButton.text = "Main Menu"; }).ExecuteLater(4100);
     }
 
     void Show(VisualElement panel)
@@ -336,6 +364,8 @@ public class MainMenuUI : MonoBehaviour
         settingsRows.Clear();
         Volume("Volume", GameSettings.Master, v => GameSettings.Master = v);
         Volume("Music", GameSettings.Music, v => GameSettings.Music = v);
+        Volume("Effects", GameSettings.Sfx, v => GameSettings.Sfx = v);
+        Volume("UI sounds", GameSettings.Ui, v => GameSettings.Ui = v);
         // The mode is only picked when a new game starts, never changed mid-game.
         var full = Row("Screen");
         full.Add(Value(Screen.fullScreen ? "Fullscreen" : "Window"));

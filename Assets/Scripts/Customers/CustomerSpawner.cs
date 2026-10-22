@@ -25,6 +25,13 @@ public class CustomerSpawner : MonoBehaviour
     [Range(0f, 1f)] public float signUpChance = 0.15f;
     [Tooltip("Chance (from day 3) a professor visits as a VIP scholar.")]
     [Range(0f, 1f)] public float vipChance = 0.08f;
+    [Header("Reading")]
+    [Tooltip("The open book a seated reader holds (OpenBook2).")]
+    public GameObject openBookPrefab;
+    [Tooltip("How far the open book tips up towards the reader's face, in degrees.")]
+    public float openBookTilt = 40f;
+    [Tooltip("Where the book sits, from the middle of the reader's hands (x right, y up, z forward).")]
+    public Vector3 openBookOffset = new Vector3(0f, 0.02f, 0.06f);
 
     [Header("Day rhythm: x = hour, y = how busy (1 = normal)")]
     public AnimationCurve busyness = new AnimationCurve(
@@ -143,6 +150,11 @@ public class CustomerSpawner : MonoBehaviour
         Spawn(queue, gm);
     }
 
+#if UNITY_EDITOR
+    /// <summary>Dev Tools only: the next visitor walks in now.</summary>
+    public void DevSpawnNow() => spawnTimer = 0f;
+#endif
+
     void Spawn(CounterQueue queue, GameManager gm)
     {
         if (customerPrefabs == null || customerPrefabs.Length == 0) return;
@@ -172,7 +184,7 @@ public class CustomerSpawner : MonoBehaviour
         customer.vip = vip;
         var member = Members.Find(prefab.name);
 
-        if (pickup != null) customer.kind = Customer.Kind.Pickup;
+        if (pickup != null) { customer.kind = Customer.Kind.Pickup; GameAudio.Play(a => a.pickupArrives); }
         else if (vip)
             // Scholars need a Rare Books card before they can read there.
             customer.kind = member != null && member.access == AccessLevel.Rare ? Customer.Kind.Reader : Customer.Kind.SignUp;
@@ -235,6 +247,7 @@ public class CustomerSpawner : MonoBehaviour
         var c = Bring(prefab);
         c.story = v;
         c.displayName = v.name;
+        c.vip = v.vip;
         c.kind = Customer.Kind.Buyer;
         c.gameObject.SetActive(true);
         return c;

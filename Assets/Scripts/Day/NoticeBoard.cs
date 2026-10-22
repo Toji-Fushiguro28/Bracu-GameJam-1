@@ -1,7 +1,11 @@
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 /// <summary>
-/// The notice board: one "Today's Notice" per day, going through every notice before repeating.
+/// The notice board: click it to open the board (NoticeBoardUI), with today's important papers pinned up
+/// (the day's events, rooms opening, pickups, deliveries, popular books, the Dean's goal) and a few of the
+/// joke notices below. It glows each morning until you've read it.
 /// </summary>
 public class NoticeBoard : ClickInteractable
 {
@@ -34,39 +38,140 @@ public class NoticeBoard : ClickInteractable
         "Whoever clogged the toilet, please use your problem-solving skills next time.",
         "The cat (Bagha) has been banned from the library. Again.",
     };
-    public float bubbleSeconds = 5f;
-    [Tooltip("Notices pinned each day; clicking cycles through them.")]
-    public int perDay = 6;
+    [Tooltip("Joke notices pinned up each day (around the important papers).")]
+    public int jokesPerDay = 4;
+    [Tooltip("The morning glow's colour (until you read the board).")]
+    public Color glowColor = new Color(1f, 0.78f, 0.3f, 1f);
 
-    protected override string DefaultVerb => "Read notice";
+    protected override string DefaultVerb => "Read the notices";
 
-    int[] order;
-    int reads, readsDay = -1;
+    int readDay = -1;
+    Material glowMaterial;
+    bool glowing;
 
-    /// <summary>Each click reads the next notice of a fixed shuffle; each day starts further along the list.</summary>
-    string Next()
-    {
-        if (notices == null || notices.Length == 0) return "";
-        if (order == null || order.Length != notices.Length)
-        {
-            order = new int[notices.Length];
-            for (int i = 0; i < order.Length; i++) order[i] = i;
-            var rng = new System.Random(489); // same order every playthrough
-            for (int i = order.Length - 1; i > 0; i--) { int j = rng.Next(i + 1); (order[i], order[j]) = (order[j], order[i]); }
-        }
-        int day = GameManager.Instance != null ? GameManager.Instance.day : 1;
-        if (day != readsDay) { readsDay = day; reads = 0; }
-        // In the first week, today's twist has its own notice, pinned first.
-        string pinned = DayStory.Instance != null ? DayStory.Instance.Notice : null;
-        int k = pinned != null ? reads++ % (perDay + 1) : reads++ % perDay;
-        if (pinned != null) { if (k == 0) return pinned; k--; }
-        // Each day pins its own set of notices; clicks cycle through that day's set.
-        int index = ((day - 1) * perDay + k) % order.Length;
-        return notices[order[index]];
-    }
+    static GameManager GM => GameManager.Instance;
 
     public override void Interact(GameObject player)
     {
-        WorldPrompts.Instance?.ShowBubble(this, "Today's Notice: " + Next(), bubbleSeconds);
+        if (GM != null) readDay = GM.day; // read: the glow goes until tomorrow
+        NoticeBoardUI.Open(this);
+    }
+
+    // ---------------- The morning glow ----------------
+
+    void Update()
+    {
+        var gm = GM;
+        bool want = gm != null && readDay != gm.day && gm.CurrentPhase != GameManager.Phase.Closed
+                    && !Tutorial.HoldsClock && !MainMenuUI.Active;
+        if (want && glowMaterial == null)
+        {
+            var ic = FindAnyObjectByType<InteractionController>();
+            if (ic == null || ic.outlineMaterial == null) return;
+            glowMaterial = new Material(ic.outlineMaterial) { name = "M_Outline_NoticeGlow" };
+        }
+        if (glowMaterial != null && glowMaterial.HasProperty("_OutlineColor"))
+        {
+            // A slow pulse (brighter, dimmer), so it reads as "new today" rather than "hovered".
+            float t = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 3f);
+            var c = Color.Lerp(glowColor * 0.55f, glowColor, t);
+            c.a = 1f;
+            glowMaterial.SetColor("_OutlineColor", c);
+        }
+        if (want == glowing) return;
+        glowing = want;
+        HoverOutline.SetGlow(this, want, glowMaterial);
+    }
+
+    void OnDestroy() { if (glowMaterial != null) Destroy(glowMaterial); }
+
+    // ---------------- What's pinned up today ----------------
+
+    /// <summary>A paper on the board: a heading and its text (rich text).</summary>
+    public struct Paper
+    {
+        public string title, body;
+        public bool main;
+        public Paper(string title, string body, bool main = false) { this.title = title; this.body = body; this.main = main; }
+    }
+
+    static string H(string s) => BookRequest.H(s);
+
+    /// <summary>Today's papers: the main one first, then the important ones, then the jokes.</summary>
+    public List<Paper> TodaysPapers()
+    {
+        var papers = new List<Paper>();
+        var gm = GM;
+        int day = gm != null ? gm.day : 1;
+
+        // The main paper: today's events (DayStory's notices), or a plain welcome.
+        string events = DayStory.Instance != null ? DayStory.Instance.Notice : null;
+        if (!string.IsNullOrEmpty(events))
+            papers.Add(new Paper($"TODAY  ·  Day {day}", string.Join("\n\n", events.Split(new[] { "\n\n" }, System.StringSplitOptions.RemoveEmptyEntries)), true));
+        else if (gm != null && gm.GoalActive)
+            papers.Add(new Paper($"TODAY  ·  Day {day}", day == 1
+                ? $"Welcome to the Whitmore. Doors open {H("9:00")}, close at {H("5:30")}. Be kind to the books."
+                : "A quiet day, by the look of it. Don't say that out loud.", true));
+        else
+            papers.Add(new Paper("LIBRARY NEWS", "Business as usual. Mind the cat.", true));
+
+        if (gm == null) return AddJokes(papers, day);
+
+        // Rooms opening today.
+        if (day == GameManager.ArchiveDay) papers.Add(new Paper("NOW OPEN", $"The {H("Archive")} opens today. Readers will ask for its old books and papers."));
+        if (day == GameManager.RareDay) papers.Add(new Paper("NOW OPEN", $"{H("Rare Books")} opens today. Watch for VIP scholars."));
+
+        // Coming in for reserved books.
+        var pickups = gm.reservations.Where(r => r.day == day).Take(3).ToList();
+        if (pickups.Count > 0)
+            papers.Add(new Paper("PICKUPS TODAY", string.Join("\n", pickups.Select(r =>
+                $"{r.name}: {H($"\"{r.title}\"")}{(r.urgent ? $" by {GameManager.FormatHour(r.dueHour)}" : "")}"))));
+
+        // Deliveries: on the cart already, and express copies still on their way.
+        var onCart = DeliveryCart.Instance != null ? DeliveryCart.Instance.Copies.Select(b => b.Title).Distinct().ToList() : new List<string>();
+        var coming = gm.ArrivingToday.Select(a => $"{H($"\"{a.book.Title}\"")} at {GameManager.FormatHour(a.hour)}").ToList();
+        if (onCart.Count > 0 || coming.Count > 0)
+        {
+            var lines = new List<string>();
+            if (onCart.Count > 0) lines.Add($"On the cart: {string.Join(", ", onCart.Take(3).Select(t => H($"\"{t}\"")))}{(onCart.Count > 3 ? " and more" : "")}");
+            lines.AddRange(coming.Take(2));
+            papers.Add(new Paper("DELIVERIES", string.Join("\n", lines)));
+        }
+
+        // What everyone's asking for.
+        if (gm.PopularToday.Count > 0)
+            papers.Add(new Paper("POPULAR TODAY", string.Join("\n", gm.PopularToday.Take(4).Select(t => H($"\"{t}\"")))));
+
+        // The Dean's goal.
+        if (gm.GoalActive && day >= 1)
+        {
+            int left = gm.ReputationGoal - gm.Reputation;
+            papers.Add(new Paper("THE DEAN'S GOAL", left <= 0
+                ? $"Reputation {H(gm.Reputation.ToString())} of {gm.ReputationGoal}. Goal reached. Keep it there."
+                : day >= gm.GoalDay
+                    ? $"Last day! Reputation {H(gm.Reputation.ToString())} of {gm.ReputationGoal}. {left} to go."
+                    : $"Reputation {H(gm.Reputation.ToString())} of {gm.ReputationGoal} by the end of Day {gm.GoalDay}. {left} to go."));
+        }
+
+        return AddJokes(papers, day);
+    }
+
+    int[] order;
+
+    /// <summary>A few joke notices, different each day (a fixed shuffle, each day further along it).</summary>
+    List<Paper> AddJokes(List<Paper> papers, int day)
+    {
+        if (notices == null || notices.Length == 0) return papers;
+        if (order == null || order.Length != notices.Length)
+        {
+            order = Enumerable.Range(0, notices.Length).ToArray();
+            var rng = new System.Random(489); // same order every playthrough
+            for (int i = order.Length - 1; i > 0; i--) { int j = rng.Next(i + 1); (order[i], order[j]) = (order[j], order[i]); }
+        }
+        // Room for 7 papers in all: the jokes fill what the important ones leave (at least 3, at most jokesPerDay).
+        int jokes = Mathf.Clamp(NoticeBoardUI.Slots - papers.Count, Mathf.Min(3, jokesPerDay), jokesPerDay);
+        for (int k = 0; k < jokes; k++)
+            papers.Add(new Paper("NOTICE", notices[order[(Mathf.Max(0, day - 1) * jokesPerDay + k) % order.Length]]));
+        return papers;
     }
 }

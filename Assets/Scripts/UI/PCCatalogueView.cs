@@ -46,14 +46,28 @@ public static class PCCatalogueView
     static int OnCart(BookData b) => DeliveryCart.Instance != null ? DeliveryCart.Instance.Copies.Count(c => c == b) : 0;
     static bool NotOwned(BookData b) => GM != null && (GM.IsNewTitle(b) || Dealer(b));
 
+    static bool listening;
+
+    /// <summary>The notebook changed (a note added or crossed out elsewhere): the open book's "Add to note" follows.</summary>
+    static void OnLogChanged()
+    {
+        if (root == null || root.panel == null || selected == null) return;
+        var note = root.Q<Button>("detail-select");
+        if (note == null || note.enabledSelf != RequestLog.IsNoted(selected)) return; // already right
+        if (!RequestLog.IsNoted(selected) && msgGood && msg != null && msg.StartsWith("Noted")) msg = null; // the "Noted" line no longer holds
+        ShowDetails(selected);
+    }
+
     public static void Wire(VisualElement page)
     {
+        if (!listening) { RequestLog.Changed += OnLogChanged; listening = true; }
         root = page;
         rowTemplate = Resources.Load<VisualTreeAsset>("PCBookItem");
         var field = root.Q<TextField>("book-search");
         var placeholder = root.Q<Label>("search-placeholder");
         if (field != null)
         {
+            field.maxLength = 40; // a search, not an essay
             field.SetValueWithoutNotify(search);
             void Placeholder() { if (placeholder != null) placeholder.style.display = string.IsNullOrEmpty(field.value) ? DisplayStyle.Flex : DisplayStyle.None; }
             field.RegisterValueChangedCallback(e => { search = e.newValue ?? ""; Placeholder(); Apply(); });

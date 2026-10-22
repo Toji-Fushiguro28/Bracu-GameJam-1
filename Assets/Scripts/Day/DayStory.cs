@@ -9,7 +9,8 @@ using UnityEngine.UIElements;
 /// twists in a random order (two days get two): an exam rush, a book thief, a leaky roof, an inspection, a book signing and a power cut.
 /// Around it, a handful of story moments: regulars who walk up to the desk with news, letters, and the twist
 /// playing out. The morning banner, the notice board and banners tell the player what's going on.
-/// After the ending the library has normal days again. Added to the GameManager at runtime.
+/// After the ending a second week (Days 6-10) brings all six twists again towards the board's next goal, with a
+/// letter from the Dean on Day 11; from then on each day rolls its own. Added to the GameManager at runtime.
 /// </summary>
 public class DayStory : MonoBehaviour
 {
@@ -33,11 +34,13 @@ public class DayStory : MonoBehaviour
         public string[] prefabs;    // who comes, first choice first (falls back to whoever is free)
         public string name;         // shown instead of their own name (people who aren't regulars)
         public string teaser;       // their bubble while they wait at the desk
+        public bool vip;            // a VIP scholar: gold name card and dialogue box, like any VIP
         public bool atDesk;         // essential (a twist starting, the inspector, the author, a job): they come to the counter.
                                     // Otherwise they only want a chat: they wait around the library with a "?" over their head.
         public Func<Customer, DialogueAsset> talk;    // built when you click, so it can mention how the day is going
         public Action<Customer, string> after;        // gets the id of the last line shown (which choice you picked)
         public float lingerUntil;   // with next: they look around the shelves until this hour...
+        public Func<Customer, bool> linger; // ...or do this instead (true = it's taken care of), e.g. the author at the signing table
         public Visit next;          // ...then come back to the desk for this
     }
 
@@ -57,6 +60,17 @@ public class DayStory : MonoBehaviour
         GM != null && GM.CurrentPhase == GameManager.Phase.Open && GM.Hour >= from && GM.Hour < to;
     static bool Rush => Is(Twist.ExamRush) && Between(RushStart, RushEnd);
     static bool Signing => Is(Twist.Signing) && Between(SignStart, SignEnd);
+
+    /// <summary>The signing's on and this is one of the author's books (a buyer takes it to the signing table).</summary>
+    public static bool SigningTitle(BookData b) => Signing && b != null && Instance.signTitles.Contains(b.Title);
+
+    /// <summary>One of the author's books while the signing's on (a fan's own copy), or null.</summary>
+    public static BookData SigningBook()
+    {
+        var s = Instance;
+        if (!Signing || s.signTitles.Count == 0) return null;
+        return GM.FindTitle(s.signTitles[UnityEngine.Random.Range(0, s.signTitles.Count)]);
+    }
 
     /// <summary>More visitors during the exam rush and the signing.</summary>
     public static float VisitorBoost => Rush ? 1.6f : Signing ? 1.5f : 1f;
@@ -87,7 +101,8 @@ public class DayStory : MonoBehaviour
 
     // ---------------- Which twist, which day ----------------
 
-    static bool StoryDay(GameManager gm) => gm != null && gm.GoalActive && gm.day >= 1 && gm.day <= GameManager.EndingDay;
+    /// <summary>Every day has its story now: the first week's, the second week's events, then random ones.</summary>
+    static bool StoryDay(GameManager gm) => gm != null && gm.day >= 1;
 
     /// <summary>Twists that can share a day without their busy hours or characters clashing. Left out on purpose:
     /// thief + leak (both start at 11:00), exam rush or signing + inspection (crowds during the inspection),
@@ -101,33 +116,92 @@ public class DayStory : MonoBehaviour
     };
     static bool Safe(List<Twist> g) => g.Count < 2 || SafePairs.Contains((g[0], g[1])) || SafePairs.Contains((g[1], g[0]));
 
-    /// <summary>Today's twists: none on Day 1 (a calm first day), one each on Days 2 and 3, two each on Days 4
-    /// and 5, so all six happen once. The order is shuffled once per game (saved as GameManager.storySeed);
-    /// pairs must be safe, and the thief stays off Day 4 (its writer and Bernard are busy with the week's story).</summary>
+    // How many twists each day gets: the first week (Days 2-5) and the second (Days 6-10). All six happen once in each.
+    static readonly int[] WeekOne = { 1, 1, 2, 2 };
+    static readonly int[] WeekTwo = { 1, 1, 1, 1, 2 };
+    const int WeekTwoSeed = 0x5EED2, EndlessSeed = 31;
+
+    /// <summary>Today's twists. Day 1: none (a calm first day). Days 2-5: all six once (one each on Days 2 and 3,
+    /// two each on 4 and 5; the thief stays off Day 4, where its writer and Bernard are busy with the week's story).
+    /// Days 6-10: all six again, reshuffled (two on Day 10). After that: 0, 1 or 2 at random each day, never one
+    /// that was on yesterday. Pairs are always safe; the order comes from GameManager.storySeed (saved).</summary>
     public static List<Twist> TwistsFor(GameManager gm)
     {
         if (!StoryDay(gm) || gm.day < 2) return new List<Twist>();
         if (gm.storySeed == 0) gm.storySeed = UnityEngine.Random.Range(1, int.MaxValue);
-        var rng = new System.Random(gm.storySeed);
-        var days = Schedule(rng);
-        return new List<Twist>(days[Mathf.Clamp(gm.day - 2, 0, days.Count - 1)]);
+        if (gm.day <= GameManager.EndingDay)
+            return new List<Twist>(Schedule(new System.Random(gm.storySeed))[gm.day - 2]);
+        if (gm.day <= GameManager.SecondEndingDay)
+            return new List<Twist>(Schedule(new System.Random(gm.storySeed ^ WeekTwoSeed), WeekTwo, -1)[gm.day - GameManager.EndingDay - 1]);
+        return EndlessDay(gm.day, gm.storySeed);
     }
 
-    /// <summary>Days 2 to 5 in order. Reshuffles until it's a valid week; a fixed week if it somehow never is.</summary>
-    public static List<List<Twist>> Schedule(System.Random rng)
+    /// <summary>The first week: Days 2 to 5 in order.</summary>
+    public static List<List<Twist>> Schedule(System.Random rng) => Schedule(rng, WeekOne, 2);
+
+    /// <summary>A week of twists, sizes[i] on its i-th day, all six once. Reshuffles until every pair is safe (and the
+    /// thief isn't on day thiefOff, if set); a fixed safe week if it somehow never is.</summary>
+    static List<List<Twist>> Schedule(System.Random rng, int[] sizes, int thiefOff)
     {
         var order = ((Twist[])Enum.GetValues(typeof(Twist))).ToList();
         for (int tries = 0; tries < 100; tries++)
         {
             for (int i = order.Count - 1; i > 0; i--) { int j = rng.Next(i + 1); (order[i], order[j]) = (order[j], order[i]); }
-            var week = new List<List<Twist>> { order.GetRange(0, 1), order.GetRange(1, 1), order.GetRange(2, 2), order.GetRange(4, 2) };
-            if (week.All(Safe) && !week[2].Contains(Twist.Thief)) return week;
+            var week = Split(order, sizes);
+            if (week.All(Safe) && (thiefOff < 0 || !week[thiefOff].Contains(Twist.Thief))) return week;
         }
-        return new List<List<Twist>>
+        return Split(new List<Twist> { Twist.Inspection, Twist.Thief, Twist.ExamRush, Twist.Signing, Twist.Leak, Twist.PowerCut }, sizes);
+    }
+
+    static List<List<Twist>> Split(List<Twist> order, int[] sizes)
+    {
+        var week = new List<List<Twist>>();
+        for (int d = 0, at = 0; d < sizes.Length; at += sizes[d], d++) week.Add(order.GetRange(at, sizes[d]));
+        return week;
+    }
+
+    /// <summary>After Day 10: each day rolls 0 (30%), 1 (50%) or 2 (20%) twists, none from yesterday, pairs safe, and
+    /// never three quiet days running. Worked out day by day from Day 11 so those rules always hold, the same on
+    /// every reload.</summary>
+    static List<Twist> EndlessDay(int day, int seed)
+    {
+        var yesterday = Schedule(new System.Random(seed ^ WeekTwoSeed), WeekTwo, -1)[WeekTwo.Length - 1];
+        var today = yesterday;
+        int quiet = 0;
+        for (int d = GameManager.SecondEndingDay + 1; d <= day; d++)
         {
-            new List<Twist> { Twist.Inspection }, new List<Twist> { Twist.Thief },
-            new List<Twist> { Twist.ExamRush, Twist.Signing }, new List<Twist> { Twist.Leak, Twist.PowerCut },
-        };
+            today = Roll(new System.Random(Mix(unchecked(seed * EndlessSeed + d * 7919))), yesterday, quiet >= 2);
+            quiet = today.Count == 0 ? quiet + 1 : 0;
+            yesterday = today;
+        }
+        return new List<Twist>(today);
+    }
+
+    /// <summary>Scrambles a seed, so neighbouring days don't get look-alike random numbers.</summary>
+    static int Mix(int x)
+    {
+        unchecked
+        {
+            uint h = (uint)x;
+            h ^= h >> 16; h *= 0x7feb352d; h ^= h >> 15; h *= 0x846ca68b; h ^= h >> 16;
+            return (int)(h & 0x7fffffff);
+        }
+    }
+
+    static List<Twist> Roll(System.Random rng, List<Twist> notThese, bool notQuiet)
+    {
+        double r = rng.NextDouble();
+        int want = r < 0.3 ? 0 : r < 0.8 ? 1 : 2;
+        if (notQuiet && want == 0) want = 1; // two quiet days in a row is enough
+        var pool = ((Twist[])Enum.GetValues(typeof(Twist))).Where(t => !notThese.Contains(t)).ToList();
+        for (int i = pool.Count - 1; i > 0; i--) { int j = rng.Next(i + 1); (pool[i], pool[j]) = (pool[j], pool[i]); }
+        var picked = new List<Twist>();
+        foreach (var t in pool)
+        {
+            if (picked.Count >= want) break;
+            if (Safe(new List<Twist>(picked) { t })) picked.Add(t);
+        }
+        return picked;
     }
 
     /// <summary>A line for the morning banner, so the player knows what kind of day it is.</summary>
@@ -206,8 +280,9 @@ public class DayStory : MonoBehaviour
         ResetTwistState();
         today.Clear();
         storyDay = StoryDay(GM);
-        if (!storyDay) return; // after the ending: an ordinary day
+        if (!storyDay) return;
         today.AddRange(TwistsFor(GM));
+        if (GM.day == GameManager.SecondEndingDay + 1 && GM.endingSeen && !GM.secondEndingSeen) SeasonLetter();
         foreach (var t in today)
             switch (t)
             {
@@ -221,11 +296,44 @@ public class DayStory : MonoBehaviour
         SetUpWeek(GM.day);
     }
 
+    /// <summary>The morning after Day 10: a letter from the Dean on how the second week went against the board's
+    /// number. Seen once (saved straight away); from then on every day brings whatever it brings.</summary>
+    void SeasonLetter()
+    {
+        var gm = GM;
+        gm.secondEndingSeen = true;
+        gm.Save();
+        int goal = gm.SecondGoal, rep = gm.Reputation, tier = gm.TierFor(goal);
+        Popup(() => new Script("Letter from the Dean")
+            .Say(tier >= 2 ? $"Two weeks. Reputation {rep}, and the board asked for {goal}. They've stopped asking questions altogether. One of them asked me for a library card."
+               : tier == 1 ? $"Reputation {rep}. The board wanted {goal}. They called it \"promising\", which from them is practically a parade."
+               : $"Reputation {rep}, and the board wanted {goal}. I won't dress it up. But the doors are open and people keep coming in. That counts for more than they think.")
+            .Say($"Margaret kept a tally of my hours at that desk. Forty-one years of them. I'd put yours at {Spoken(gm.playSeconds)} so far. You'll catch me up.")
+            .Say("No more numbers from me. The Whitmore is yours to run, for as long as you'll have it. Keep the lamps lit. - E.W.")
+            .Me("From here on, every day brings whatever it brings"));
+    }
+
+    /// <summary>Playtime the way the Dean would say it: "about half an hour", "about an hour and a quarter",
+    /// "a little over three hours".</summary>
+    static string Spoken(float seconds)
+    {
+        int q = Mathf.RoundToInt(seconds / 900f); // to the nearest quarter hour
+        if (q <= 1) return "a good few minutes";
+        if (q == 2) return "about half an hour";
+        if (q == 3) return "about three-quarters of an hour";
+        int whole = q / 4, rest = q % 4;
+        string hours = whole == 1 ? "an hour" : $"{whole} hours";
+        if (whole > 3) return rest == 0 ? $"about {whole} hours" : rest <= 2 ? $"a little over {whole} hours" : $"nearly {whole + 1} hours";
+        return rest == 0 ? $"about {hours}" : rest == 1 ? $"about {hours} and a quarter" : rest == 2 ? $"about {hours} and a half" : $"about {hours} and three-quarters";
+    }
+
     /// <summary>Closing time: the rain stops, the power's back, nobody's left half-way through.</summary>
     void OnPhase(GameManager.Phase phase)
     {
         if (phase == GameManager.Phase.Open) return;
         powerOut = false;
+        GameAudio.Loop(a => a.rainLoop, false);
+        GameAudio.Loop(a => a.candleLoop, false);
         if (leaking) { leaking = false; Unpoint(ref leakPointer); RequestLog.TaskDone("leak", "The rain stopped"); }
         inspecting = false;
     }
@@ -540,7 +648,7 @@ public class DayStory : MonoBehaviour
                 ThenRead(c, b => $"Right, starting with me. Have you got <color=#D67840>\"{b.Title}\"</color>? I need to read it here. Now. Immediately.", OnSubject);
             },
         });
-        Do(RushStart, () => Banner($"The exam rush has started! Keep the {s} books coming."));
+        Do(RushStart, () => { GameAudio.Play(a => a.examStart); Banner($"The exam rush has started! Keep the {s} books coming."); });
         VisitAt(11.75f, new Visit
         {
             prefabs = Student("PF_NPC_Student_Ravi", "PF_NPC_Student_Leo"), teaser = "Is it bad if I've only read the contents page?",
@@ -559,7 +667,7 @@ public class DayStory : MonoBehaviour
                                                             Line = $"Anything on {s}, please. Short. With pictures, if you've got it." }, false);
             },
         });
-        Do(RushEnd, () => { Banner("The exam rush is over. Deep breaths."); RequestLog.TaskDone("exam", "The students survived"); });
+        Do(RushEnd, () => { GameAudio.Play(a => a.eventDone); Banner("The exam rush is over. Deep breaths."); RequestLog.TaskDone("exam", "The students survived"); });
         VisitAt(15f, new Visit
         {
             prefabs = Student("PF_NPC_Student_Nadia", "PF_NPC_Student_Leila"), teaser = "Update. Big update.",
@@ -660,6 +768,7 @@ public class DayStory : MonoBehaviour
         thievesSeen++;
         Unpoint(ref thiefPointer);
         thiefPointer = Point("Thief!", () => c != null ? c.transform.position + Vector3.up * 2.1f : Vector3.zero);
+        GameAudio.Play(a => a.thiefAlert);
         Banner("The nervous stranger just pocketed a book! Catch them before the door!", 6f);
     }
 
@@ -668,6 +777,7 @@ public class DayStory : MonoBehaviour
     {
         thievesCaught++;
         Unpoint(ref thiefPointer);
+        GameAudio.Play(a => a.thiefCaught);
         thief = null;
         Reward(0, 1);
         string t = book != null ? $"<color=#D67840>\"{book.Title}\"</color>" : "the book";
@@ -716,6 +826,7 @@ public class DayStory : MonoBehaviour
 
     void SetUpLeak()
     {
+        GameAudio.Loop(a => a.rainLoop, true); // raining from the morning until Gus clears the gutter
         VisitAt(9.3f, new Visit
         {
             prefabs = Old(Gus), teaser = "Chucking it down out there.", atDesk = true,
@@ -757,6 +868,7 @@ public class DayStory : MonoBehaviour
                 .d,
             after = (c, _) =>
             {
+                GameAudio.Loop(a => a.rainLoop, false); // the rain's stopped
                 if (!leaking) return;
                 leaking = false;
                 Unpoint(ref leakPointer);
@@ -807,6 +919,7 @@ public class DayStory : MonoBehaviour
         book.AddCopy(BookCondition.Damaged);
         soaked++;
         GM.NotifyBooksChanged();
+        GameAudio.Play(a => a.soaked);
         Banner($"<color=#D67840>\"{book.Title}\"</color> got soaked!", 3f);
     }
 
@@ -897,6 +1010,7 @@ public class DayStory : MonoBehaviour
             {
                 int r = verdict == "satisfactory" ? 3 : verdict == "concerns" ? -2 : 1;
                 GM.AddReputation(r);
+                GameAudio.Play(a => a.eventDone);
                 Banner($"Inspection result: {verdict} ({(r > 0 ? "+" : "")}{r} reputation).", 6f);
                 RequestLog.TaskDone("inspection", $"Verdict: {verdict}");
             },
@@ -915,6 +1029,7 @@ public class DayStory : MonoBehaviour
             after = (c, _) =>
             {
                 inspecting = true;
+                GameAudio.Play(a => a.announcement);
                 angryAtStart = GM.Today.angry;
                 messTime = messSum = 0f;
                 Banner("The inspection has started! Keep it tidy until 2:30.");
@@ -1029,6 +1144,7 @@ public class DayStory : MonoBehaviour
             after = (c, _) =>
             {
                 RequestLog.TaskDone("signing", $"{signSold} sold");
+                GameAudio.Play(a => a.eventDone);
                 if (signSold >= 3) { Reward(25, 2); Banner($"{author} left a thank-you: +25 coins."); }
                 else if (signSold > 0) Reward(0, 1);
             },
@@ -1048,9 +1164,11 @@ public class DayStory : MonoBehaviour
                 GM.Today.Earn(GameManager.DayStats.Source.Other, SigningFee);
                 RequestLog.Money(author, "Paid for the signing table", "Signing fee", SigningFee);
                 HUD.SkillPop(c.transform.position + Vector3.up * 2.2f, $"Signing table fee  +{SigningFee}");
+                GameAudio.Play(a => a.signingStart);
                 Banner($"The book signing has started! {author}'s fans are on their way.");
             },
             lingerUntil = SignEnd,
+            linger = c => SigningTable.Instance != null && SigningTable.Instance.SeatAuthor(c, SignEnd), // signs at the table till 3:30
             next = farewell,
         });
     }
@@ -1089,15 +1207,7 @@ public class DayStory : MonoBehaviour
                 .d,
             after = (c, _) => ThenRead(c, b => $"Something old for the dark. <color=#D67840>\"{b.Title}\"</color>?"),
         });
-        Do(PowerOff, () =>
-        {
-            powerOut = true;
-            FindAnyObjectByType<PCOverlayTrigger>()?.ForceClose();
-            Banner("Power cut! No computer until 2:00 PM.");
-            Popup(() => new Script()
-                .Me("The lights die with a soft clunk. Somebody gasps. Somebody else says \"ooh\" like it's fireworks")
-                .Me("The computer's dead until two. People are being nice about it: they'll wait a little longer than usual"));
-        });
+        Do(PowerOff, CutPower);
         VisitAt(13f, new Visit
         {
             prefabs = Old(Walter), teaser = "This is nothing.",
@@ -1109,15 +1219,56 @@ public class DayStory : MonoBehaviour
                 .Say("Three days. We played cards by the fire. I lost a bicycle.", "three")
                 .d,
         });
-        Do(PowerOn, () =>
-        {
-            powerOut = false;
-            Banner("The power's back! The computer works again.");
-            RequestLog.TaskDone("power", "Power back");
-            Popup(() => new Script()
-                .Me("The lights stutter, buzz, and come back on. A small cheer from the reading chairs. Someone by the window looks genuinely disappointed"));
-        });
+        Do(PowerOn, RestorePower);
     }
+
+    void CutPower()
+    {
+        powerOut = true;
+        GameAudio.Play(a => a.powerOff);
+        GameAudio.Loop(a => a.candleLoop, true);
+        FindAnyObjectByType<PCOverlayTrigger>()?.ForceClose();
+        Banner("Power cut! No computer until 2:00 PM.");
+        Popup(() => new Script()
+            .Me("The lights die with a soft clunk. Somebody gasps. Somebody else says \"ooh\" like it's fireworks")
+            .Me("The computer's dead until two. People are being nice about it: they'll wait a little longer than usual"));
+    }
+
+    void RestorePower()
+    {
+        powerOut = false;
+        GameAudio.Play(a => a.powerOn);
+        GameAudio.Loop(a => a.candleLoop, false);
+        Banner("The power's back! The computer works again.");
+        RequestLog.TaskDone("power", "Power back");
+        Popup(() => new Script()
+            .Me("The lights stutter, buzz, and come back on. A small cheer from the reading chairs. Someone by the window looks genuinely disappointed"));
+    }
+
+#if UNITY_EDITOR
+    // ---------------- Dev Tools only ----------------
+
+    /// <summary>Adds a twist to today and sets it up; its moments then happen by the clock.</summary>
+    public void DevStartTwist(Twist t)
+    {
+        if (today.Contains(t)) return;
+        storyDay = true;
+        today.Add(t);
+        switch (t)
+        {
+            case Twist.ExamRush: SetUpExamRush(); break;
+            case Twist.Thief: SetUpThief(); break;
+            case Twist.Leak: SetUpLeak(); break;
+            case Twist.Inspection: SetUpInspection(); break;
+            case Twist.Signing: SetUpSigning(); break;
+            case Twist.PowerCut: SetUpPowerCut(); break;
+        }
+    }
+
+    public void DevLeakNow() { if (!leaking) StartLeak(); }
+    public void DevPower(bool on) { if (on) RestorePower(); else CutPower(); }
+    public void DevThiefNow() => SpawnThief(GM.Hour);
+#endif
 
     void ResetTwistState()
     {
@@ -1129,6 +1280,8 @@ public class DayStory : MonoBehaviour
         author = "the author"; signTitles.Clear(); signSold = 0;
         examSubject = "History";
         powerOut = false;
+        GameAudio.Loop(a => a.rainLoop, false);
+        GameAudio.Loop(a => a.candleLoop, false);
     }
 
     // ---------------- Small talk ----------------
@@ -1176,18 +1329,18 @@ public class DayStory : MonoBehaviour
         new[] { "Is there really an inspector coming today? Should I sit up straighter?", "I heard the inspector once failed a bakery. For flour.",
                 "I've ironed my shirt in case the inspector looks at me. Nobody ever looks at me." },
         new[] { "Is the author here yet? I've been practising being casual about it.", "My sister loves this author. I'm here so she doesn't have to talk to anyone.",
-                "I've brought my own copy to get signed. It's been in the bath a bit." },
+                "My aunt once queued two hours for this author. I've brought snacks, just in case." },
         new[] { "My whole street's talking about the power cut. My neighbour's bought forty candles. Forty.",
                 "I've brought a torch, just in case. And a spare torch for the torch.", "Is it true about the power? I've charged everything I own." },
     };
 
     /// <summary>Something a visitor says about their day before getting to the point, the first time you talk
-    /// (or null: plenty of people just get on with it). Only in the first week (Days 1 to 5): often about the
-    /// day's twist, otherwise one of that day's share of everyday lines (each day has its own, so none repeat).</summary>
+    /// (or null: plenty of people just get on with it). Often about the day's twist, otherwise one of that day's
+    /// share of everyday lines (each of five days has its own; each new week takes them in a different order).</summary>
     public static string Opener(string profileKey)
     {
         var s = Instance;
-        if (s == null || !s.storyDay || GM == null || Tutorial.HoldsClock) return null; // after the ending (or mid-tutorial): no small talk
+        if (s == null || !s.storyDay || GM == null || Tutorial.HoldsClock) return null; // mid-tutorial: no small talk
         IEnumerable<string> pool = null;
         if (s.today.Count > 0 && UnityEngine.Random.value < 0.5f)
         {
@@ -1195,9 +1348,10 @@ public class DayStory : MonoBehaviour
             var twist = s.today[UnityEngine.Random.Range(0, s.today.Count)];
             if (twist != Twist.ExamRush || student) pool = TwistOpeners[(int)twist];
         }
-        int day = Mathf.Clamp(GM.day, 1, GameManager.EndingDay);
+        // 28 lines in five shares of 5 or 6; week w starts w shares along, so Day 6 doesn't repeat Day 1.
+        int d = Mathf.Max(1, GM.day) - 1, share = (d + d / GameManager.EndingDay) % GameManager.EndingDay;
         if (pool == null && UnityEngine.Random.value < 0.35f)
-            pool = Openers.Where((l, i) => i % GameManager.EndingDay == day - 1); // 28 lines: 5 or 6 a day
+            pool = Openers.Where((l, i) => i % GameManager.EndingDay == share);
         if (pool == null) return null;
         var fresh = pool.Where(l => !s.usedOpeners.Contains(l)).ToList();
         if (fresh.Count == 0) return null;

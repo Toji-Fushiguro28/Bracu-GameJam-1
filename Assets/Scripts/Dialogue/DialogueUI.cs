@@ -43,6 +43,7 @@ public class DialogueUI : MonoBehaviour
         Instance = this;
         voice = gameObject.AddComponent<AudioSource>();
         voice.playOnAwake = false;
+        GameSettings.MarkUi(voice); // follows the UI sounds slider
         clickAction = InputSystem.actions?.FindAction("Attack");
     }
 
@@ -77,6 +78,9 @@ public class DialogueUI : MonoBehaviour
         lastInputFrame = Time.frameCount; // the click that opened us must not skip the first line
         PlayerLock.Lock(this);
         root.RemoveFromClassList("hidden");
+        // A VIP talking: gold box and name tab, like their name card.
+        root.Q(className: "dialogue-box")?.EnableInClassList("vip", dialogue.vip);
+        speakerLabel.EnableInClassList("vip", dialogue.vip);
         ShowLine(0);
     }
 

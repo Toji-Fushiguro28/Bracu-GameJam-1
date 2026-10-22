@@ -475,11 +475,25 @@ public class GameManager : MonoBehaviour
 
     /// <summary>The Dean's goal for the first week: this reputation by the end of Day 5 (Cozy / Standard / Busy).</summary>
     public static readonly int[] ReputationGoals = { 60, 100, 125 }; // Cozy, Standard, Busy (Busy: about the most a strong player can earn by Day 5)
-    public int ReputationGoal => ReputationGoals[(int)difficulty];
-    /// <summary>Still working towards the Dean's goal (the ending hasn't played yet).</summary>
-    public bool GoalActive => !endingSeen && day <= EndingDay;
-    /// <summary>How the first week went: 2 = goal reached, 1 = close (60% or more), 0 = short of it.</summary>
-    public int GoalTier => Reputation >= ReputationGoal ? 2 : Reputation >= Mathf.CeilToInt(ReputationGoal * 0.6f) ? 1 : 0;
+
+    /// <summary>The second week: the board's "one more season", set in the Dean's farewell. Ends after this day,
+    /// with a letter from the Dean the next morning; after that every day is open-ended (random events).</summary>
+    public const int SecondEndingDay = 10;
+    public static readonly int[] SecondReputationGoals = { 100, 150, 200 }; // Cozy, Standard, Busy
+    public int SecondGoal => SecondReputationGoals[(int)difficulty];
+    [NonSerialized] public bool secondEndingSeen;
+    /// <summary>Days 6 to 10, after the farewell and before the Dean's letter.</summary>
+    public bool SecondWeek => endingSeen && !secondEndingSeen && day > EndingDay && day <= SecondEndingDay;
+
+    /// <summary>Today's target: the first week's, or the second week's.</summary>
+    public int ReputationGoal => SecondWeek ? SecondGoal : ReputationGoals[(int)difficulty];
+    /// <summary>The day the current goal is due (5, or 10 in the second week).</summary>
+    public int GoalDay => SecondWeek ? SecondEndingDay : EndingDay;
+    /// <summary>Still working towards a goal: the first week (until the farewell) or the second (until Day 10).</summary>
+    public bool GoalActive => (!endingSeen && day <= EndingDay) || SecondWeek;
+    /// <summary>How the week went against its goal: 2 = reached, 1 = close (60% or more), 0 = short of it.</summary>
+    public int GoalTier => TierFor(ReputationGoal);
+    public int TierFor(int goal) => Reputation >= goal ? 2 : Reputation >= Mathf.CeilToInt(goal * 0.6f) ? 1 : 0;
     /// <summary>Something happens in the interview room before the next day (the ending, or applicants).</summary>
     public bool MorningVisitDue => EndingDue || interviews.Count > 0;
 
@@ -617,11 +631,11 @@ public class GameManager : MonoBehaviour
     public bool loadSave = true;
 
     [Serializable] class BookSave { public string title; public int good, worn, damaged; }
-    [Serializable] class SaveData { public int day, coins, reputation, difficulty = 1; public bool[] staff; public int[] upgrades; public List<BookSave> books = new List<BookSave>(); public List<Member> members = new List<Member>(); public List<Reservation> reservations = new List<Reservation>(); public List<RequestLog.Entry> log = new List<RequestLog.Entry>(); public List<int> interviews = new List<int>(); public bool endingSeen; public int[] staffLevel; public List<string> added = new List<string>(); public int storySeed; public float[] staffMood; public int[] staffRestedDay; public VipPromise vip; public int[] hirePaid; public bool rareDealerSeen; public List<ReturnedCard> returnedCards; }
+    [Serializable] class SaveData { public int day, coins, reputation, difficulty = 1; public bool[] staff; public int[] upgrades; public List<BookSave> books = new List<BookSave>(); public List<Member> members = new List<Member>(); public List<Reservation> reservations = new List<Reservation>(); public List<RequestLog.Entry> log = new List<RequestLog.Entry>(); public List<int> interviews = new List<int>(); public bool endingSeen, secondEndingSeen; public float playSeconds; public int[] staffLevel; public List<string> added = new List<string>(); public int storySeed; public float[] staffMood; public int[] staffRestedDay; public VipPromise vip; public int[] hirePaid; public bool rareDealerSeen; public List<ReturnedCard> returnedCards; }
 
     public void Save()
     {
-        var data = new SaveData { day = day, difficulty = (int)difficulty, coins = Coins, reputation = Reputation, staff = staff, upgrades = upgrades, members = members, reservations = reservations, log = RequestLog.All, interviews = interviews, endingSeen = endingSeen, staffLevel = staffLevel, added = addedTitles, storySeed = storySeed, staffMood = staffMood, staffRestedDay = staffRestedDay, vip = vipPromise, hirePaid = hirePaid, rareDealerSeen = rareDealerSeen, returnedCards = returnedCards };
+        var data = new SaveData { day = day, difficulty = (int)difficulty, coins = Coins, reputation = Reputation, staff = staff, upgrades = upgrades, members = members, reservations = reservations, log = RequestLog.All, interviews = interviews, endingSeen = endingSeen, secondEndingSeen = secondEndingSeen, playSeconds = playSeconds, staffLevel = staffLevel, added = addedTitles, storySeed = storySeed, staffMood = staffMood, staffRestedDay = staffRestedDay, vip = vipPromise, hirePaid = hirePaid, rareDealerSeen = rareDealerSeen, returnedCards = returnedCards };
         foreach (var b in Books) data.books.Add(new BookSave { title = b.Title, good = b.GoodCopies, worn = b.WornCopies, damaged = b.DamagedCopies });
         // Copies out of the shelves (returns, repair table, hands) still belong to the library.
         void Count(BookData b, BookCondition c)
@@ -660,6 +674,9 @@ public class GameManager : MonoBehaviour
         if (data.interviews != null) interviews = data.interviews;
         hirePaid = data.hirePaid != null && data.hirePaid.Length == 3 ? data.hirePaid : new int[3];
         endingSeen = data.endingSeen;
+        secondEndingSeen = data.secondEndingSeen;
+        // The save is from this morning; the half-minute key may be later (quit mid-day).
+        playSeconds = Mathf.Max(data.playSeconds, PlayerPrefs.GetFloat(PlayTimeKey, 0f));
         vipPromise = data.vip != null && !string.IsNullOrEmpty(data.vip.title) ? data.vip : null;
         rareDealerSeen = data.rareDealerSeen;
         storySeed = data.storySeed;
@@ -691,12 +708,13 @@ public class GameManager : MonoBehaviour
     /// <summary>Back to the title screen (progress since this morning's save is lost).</summary>
     public void ReturnToMenu()
     {
+        FlushPlaytime(); // the title screen shows it
         PlayerLock.Reset();
         UnityEngine.SceneManagement.SceneManager.LoadScene(gameObject.scene.name);
     }
 
     [ContextMenu("Delete Save")]
-    public void DeleteSave() { PlayerPrefs.DeleteKey(SaveKey); Tutorial.ResetProgress(); Debug.Log("[Game] Save deleted."); } // a new game: tutorial and tips again
+    public void DeleteSave() { PlayerPrefs.DeleteKey(SaveKey); PlayerPrefs.DeleteKey(PlayTimeKey); playSeconds = 0f; Tutorial.ResetProgress(); Debug.Log("[Game] Save deleted."); } // a new game: tutorial and tips again
 
     /// <summary>Wipes the save and starts again from day 1.</summary>
     public void NewGame()
@@ -817,6 +835,8 @@ public class GameManager : MonoBehaviour
             StaffInterview.EndingReputation = Reputation;
             StaffInterview.EndingGoal = ReputationGoal;
             StaffInterview.EndingTier = GoalTier;
+            StaffInterview.EndingNextGoal = SecondGoal;
+            StaffInterview.EndingPlaySeconds = playSeconds;
             StaffInterview.EndingStaff = names;
         }
 
@@ -902,8 +922,41 @@ public class GameManager : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
+    // ---------------- Playtime ----------------
+
+    /// <summary>Real seconds spent playing this save (not the title screen or pause, not with the window in the
+    /// background). Saved with the game, and every half minute under its own key so quitting mid-day loses little.</summary>
+    [NonSerialized] public float playSeconds;
+    const string PlayTimeKey = "PlayTime";
+    float playFlushAt;
+
+    void CountPlaytime()
+    {
+        if (!MainMenuUI.Playing || !Application.isFocused) return;
+        playSeconds += Time.unscaledDeltaTime;
+        if (Time.unscaledTime >= playFlushAt) FlushPlaytime();
+    }
+
+    void FlushPlaytime()
+    {
+        playFlushAt = Time.unscaledTime + 30f;
+        PlayerPrefs.SetFloat(PlayTimeKey, playSeconds);
+        PlayerPrefs.Save();
+    }
+
+    void OnApplicationQuit() => FlushPlaytime();
+
+    /// <summary>"38 min", "1 h 24 m", or "under a minute".</summary>
+    public static string FormatPlaytime(float seconds)
+    {
+        int min = Mathf.FloorToInt(seconds / 60f);
+        if (min < 1) return "under a minute";
+        return min < 60 ? $"{min} min" : $"{min / 60} h {min % 60} m";
+    }
+
     void Update()
     {
+        CountPlaytime();
         if (CurrentPhase == Phase.Closed || Paused) return;
         if (Tutorial.HoldsClock) return; // the guided first day: the clock waits for you
         if (orders.Count > 0) DeliverDue();
@@ -913,6 +966,17 @@ public class GameManager : MonoBehaviour
         if (CurrentPhase == Phase.Open && Hour >= closingHour) SetPhase(Phase.Closing);
         else if (CurrentPhase == Phase.Closing && Hour >= closeHour) SetPhase(Phase.Closed);
     }
+
+#if UNITY_EDITOR
+    /// <summary>Dev Tools only: jump the clock (anything due before then happens right away).</summary>
+    public void DevSetHour(float hour)
+    {
+        if (CurrentPhase == Phase.Closed) return;
+        Hour = Mathf.Clamp(hour, openHour, closeHour);
+        if (CurrentPhase == Phase.Open && Hour >= closingHour) SetPhase(Phase.Closing);
+        if (CurrentPhase == Phase.Closing && Hour >= closeHour) SetPhase(Phase.Closed);
+    }
+#endif
 
     void SetPhase(Phase phase)
     {

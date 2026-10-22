@@ -425,15 +425,21 @@
 }
 .field-key { font-size: 17px; letter-spacing: 1px; color: var(--ink-dim); margin: 6px 0 4px 0; padding: 0; }
 .dob { flex-direction: row; margin-bottom: 4px; }
-.dd {
-    flex-grow: 1; flex-basis: 0; margin: 0 8px 0 0; padding: 9px 12px 9px 12px; font-size: 22px; color: var(--ink);
-    -unity-text-align: middle-left; border-width: 0; border-radius: 0; background-color: rgba(0, 0, 0, 0);
+/* Birthday wheels: five rows of 26px, the middle one picked. Scroll, drag or click above / below to roll. */
+.wheel {
+    flex-grow: 1; flex-basis: 0; height: 96px; margin: 0 8px 0 0; overflow: hidden; justify-content: center;
     background-image: url("project://database/Assets/Art/UI/PC/T_PC_Input.png");
     -unity-slice-left: 1; -unity-slice-right: 1; -unity-slice-top: 2; -unity-slice-bottom: 1; -unity-slice-scale: 3px;
 }
-.dd:hover { background-color: rgba(0, 0, 0, 0); color: rgb(176, 88, 40); }
-.dd.empty { color: var(--ink-dim); }
-.dd.last { margin-right: 0; }
+.wheel.last { margin-right: 0; }
+.wheel-band { position: absolute; left: 6px; right: 6px; top: 34px; height: 28px; background-color: rgba(214, 120, 64, 0.16);
+    border-top-width: 2px; border-bottom-width: 2px; border-color: rgba(214, 120, 64, 0.7); }
+.wheel-strip { position: absolute; left: 0; right: 0; top: -17px; }
+.wheel-row { height: 26px; margin: 0; padding: 0; -unity-text-align: middle-center; color: var(--ink); font-size: 22px; }
+.wheel-row.near { font-size: 17px; opacity: 0.5; }
+.wheel-row.far { font-size: 14px; opacity: 0.22; }
+.wheel:hover .wheel-row.mid { color: rgb(176, 88, 40); }
+.wheel.empty .wheel-row.mid { color: var(--ink-dim); }
 .card-options { flex-direction: row; flex-wrap: wrap; }
 .card-options .pc-button { margin: 0 8px 8px 0; }
 .card-feedback { font-size: 19px; color: var(--bad); margin: 4px 0 0 0; padding: 0; white-space: normal; }
@@ -524,12 +530,27 @@
 .si-coin { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconCoin01a.png"); }
 .si-energy { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconEnergy01a.png"); }
 
-/* Birthday: Day / Month / Year are drop-downs (a pick list, no typing): the kit's arrow on the right. */
-.dd { padding-right: 40px; height: 44px; } /* a fixed height: with the arrow inside, the button no longer sizes to its text */
-.dd-arrow { position: absolute; right: 12px; top: 13px; width: 27px; height: 18px;
-    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_HandleDropdown01a.png"); -unity-background-scale-mode: stretch-to-fill;
-    -unity-background-image-tint-color: var(--ink); }
-.dd:hover .dd-arrow { -unity-background-image-tint-color: rgb(176, 88, 40); }
+/* The library card under the monitor (the SM_LibraryPass colours): fills in live, takes the ISSUED stamp. */
+.libpass { position: absolute; left: -262px; bottom: 70px; width: 280px; height: 150px; rotate: -5deg; /* peeks out from under the monitor's left edge */
+    background-color: rgb(208, 168, 115); border-width: 3px; border-color: rgb(66, 34, 18); }
+.pc-monitor.max .libpass { display: none; } /* maximised, the monitor fills the screen: no room under it */
+.libpass-head { height: 38px; flex-direction: row; justify-content: space-between; align-items: center; padding: 0 10px 0 10px; background-color: rgb(112, 30, 22); }
+.libpass-title { font-size: 15px; color: rgb(246, 226, 168); margin: 0; padding: 0; -unity-font-style: bold; }
+.libpass-no { font-size: 13px; color: rgb(214, 177, 154); margin: 0; padding: 0; }
+.libpass-body { flex-grow: 1; flex-direction: row; padding: 10px 10px 10px 12px; }
+.libpass-left { flex-grow: 1; flex-shrink: 1; justify-content: space-between; }
+.libpass-top { flex-direction: row; align-items: center; }
+.libpass-seal { width: 26px; height: 22px; margin-right: 8px; flex-shrink: 0; background-color: rgb(208, 160, 72); border-width: 2px; border-color: rgb(154, 101, 16); }
+.libpass-name { font-size: 20px; color: rgb(28, 28, 28); margin: 0; padding: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 1; }
+.libpass-line { font-size: 16px; color: rgb(28, 28, 28); margin: 0; padding: 0; }
+.libpass .blank { color: rgba(28, 28, 28, 0.35); }
+.libpass-photo { width: 76px; margin-left: 10px; flex-shrink: 0; background-color: rgb(66, 34, 18); justify-content: center; align-items: center; }
+.libpass-initial { font-size: 44px; color: rgb(208, 168, 115); margin: 0; padding: 0; }
+.libpass-stamp { position: absolute; left: 70px; top: 52px; padding: 2px 12px 4px 12px; rotate: -14deg; opacity: 0; display: none;
+    border-width: 4px; border-radius: 6px; border-color: rgba(170, 60, 40, 0.85); align-items: center; }
+.libpass-stamp.down { display: flex; }
+.stamp-word { font-size: 30px; color: rgba(170, 60, 40, 0.9); margin: 0; padding: 0; -unity-font-style: bold; letter-spacing: 3px; }
+.stamp-day { font-size: 14px; color: rgba(170, 60, 40, 0.9); margin: 0; padding: 0; letter-spacing: 2px; }
 
 /* ---------- Members: half hearts, titles, the Unhappy row, the card that opens under a row ---------- */
 .heart.half { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconHeart01e.png"); }

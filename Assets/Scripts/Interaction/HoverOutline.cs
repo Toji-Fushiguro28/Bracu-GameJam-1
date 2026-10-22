@@ -11,17 +11,25 @@ using UnityEngine.Rendering;
 public static class HoverOutline
 {
     static readonly Dictionary<ClickInteractable, GameObject[]> cache = new Dictionary<ClickInteractable, GameObject[]>();
+    // A second, separate outline for "look at me" (the notice board each morning), so hovering on and off doesn't switch it off.
+    static readonly Dictionary<ClickInteractable, GameObject[]> glowCache = new Dictionary<ClickInteractable, GameObject[]>();
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    static void ResetStatics() => cache.Clear();
+    static void ResetStatics() { cache.Clear(); glowCache.Clear(); }
 
-    public static void Set(ClickInteractable target, bool on, Material material)
+    public static void Set(ClickInteractable target, bool on, Material material) => Toggle(cache, target, on, material);
+
+    /// <summary>The attention glow: its own outline, independent of the hover one.</summary>
+    public static void SetGlow(ClickInteractable target, bool on, Material material) => Toggle(glowCache, target, on, material);
+
+    static void Toggle(Dictionary<ClickInteractable, GameObject[]> map, ClickInteractable target, bool on, Material material)
     {
         if (target == null || material == null) return;
-        if (!cache.TryGetValue(target, out var parts))
+        if (!map.TryGetValue(target, out var parts))
         {
+            if (!on) return; // nothing built yet, nothing to hide
             parts = Build(target, material);
-            cache[target] = parts;
+            map[target] = parts;
         }
         foreach (var p in parts)
             if (p != null) p.SetActive(on);

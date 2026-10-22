@@ -320,7 +320,7 @@ public static class PCHomeView
         var line = Row("meter-l");
         line.Add(Small($"{gm.Reputation} now"));
         int toGo = gm.ReputationGoal - gm.Reputation;
-        line.Add(Small(toGo > 0 ? $"{toGo} to go · {Mathf.Max(0, GameManager.EndingDay - gm.day + 1)} days left" : "Goal reached!"));
+        line.Add(Small(toGo > 0 ? $"{toGo} to go · {Mathf.Max(0, gm.GoalDay - gm.day + 1)} days left" : "Goal reached!"));
         panel.Add(line);
         return panel;
     }

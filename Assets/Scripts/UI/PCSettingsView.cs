@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -7,8 +8,13 @@ public static class GameSettings
 {
     public const int Steps = 10;
 
-    public static int Master { get => PlayerPrefs.GetInt("set_master", 8); set { PlayerPrefs.SetInt("set_master", Mathf.Clamp(value, 0, Steps)); Apply(); } }
+    public static int Master { get => PlayerPrefs.GetInt("set_master", 7); set { PlayerPrefs.SetInt("set_master", Mathf.Clamp(value, 0, Steps)); Apply(); } }
     public static int Music { get => PlayerPrefs.GetInt("set_music", 7); set { PlayerPrefs.SetInt("set_music", Mathf.Clamp(value, 0, Steps)); Apply(); } }
+    public static int Sfx { get => PlayerPrefs.GetInt("set_sfx", Steps); set { PlayerPrefs.SetInt("set_sfx", Mathf.Clamp(value, 0, Steps)); Apply(); } }
+    public static int Ui { get => PlayerPrefs.GetInt("set_ui", Steps); set { PlayerPrefs.SetInt("set_ui", Mathf.Clamp(value, 0, Steps)); Apply(); } }
+    public static float MusicScale => Music / (float)Steps;
+    public static float SfxScale => Sfx / (float)Steps;
+    public static float UiScale => Ui / (float)Steps;
 
     static float musicBase = -1f;
 
@@ -21,6 +27,40 @@ public static class GameSettings
         {
             if (musicBase < 0f) musicBase = bgm.volume;
             bgm.volume = musicBase * Music / Steps;
+        }
+        ScaleAllSources();
+    }
+
+    // Every other sound source keeps its own volume here, so the SFX and UI sliders can scale it.
+    // GameAudio's one-shot sources scale per clip instead (Skip), and the music has its own slider.
+    static readonly Dictionary<AudioSource, float> baseVolume = new Dictionary<AudioSource, float>();
+    static readonly HashSet<AudioSource> uiSources = new HashSet<AudioSource>(), skipped = new HashSet<AudioSource>();
+
+    /// <summary>A UI screen's own source (menus, dialogue blips, shelf, repair, report): follows the UI slider.</summary>
+    public static void MarkUi(AudioSource s) { if (s == null) return; uiSources.Add(s); ScaleSource(s); }
+    /// <summary>Left alone by the sweep (the source scales its sounds itself, or it's music).</summary>
+    public static void Skip(AudioSource s) { if (s != null) skipped.Add(s); }
+    /// <summary>A script just set this source's volume (a loop starting): remember it as the unscaled volume.</summary>
+    public static void SetBase(AudioSource s, float volume) { if (s == null) return; baseVolume[s] = volume; ScaleSource(s); }
+
+    static void ScaleSource(AudioSource s)
+    {
+        if (s == null || skipped.Contains(s) || s.gameObject.name == "Audio_BGM") return;
+        if (!baseVolume.TryGetValue(s, out float b)) baseVolume[s] = b = s.volume;
+        s.volume = b * (uiSources.Contains(s) ? UiScale : SfxScale);
+    }
+
+    /// <summary>Visitors and staff bring new sources as they spawn: GameAudio runs this every second.</summary>
+    public static void ScaleAllSources()
+    {
+        foreach (var s in UnityEngine.Object.FindObjectsByType<AudioSource>(FindObjectsInactive.Include)) ScaleSource(s);
+        if (baseVolume.Count > 300)
+        {
+            var gone = new List<AudioSource>();
+            foreach (var k in baseVolume.Keys) if (k == null) gone.Add(k);
+            foreach (var k in gone) baseVolume.Remove(k);
+            uiSources.RemoveWhere(k => k == null);
+            skipped.RemoveWhere(k => k == null);
         }
     }
 }
@@ -41,18 +81,12 @@ public static class PCSettingsView
         list.Clear();
         Volume(list, root, "Volume", GameSettings.Master, v => GameSettings.Master = v);
         Volume(list, root, "Music", GameSettings.Music, v => GameSettings.Music = v);
-
+        Volume(list, root, "Effects", GameSettings.Sfx, v => GameSettings.Sfx = v);
+        Volume(list, root, "UI sounds", GameSettings.Ui, v => GameSettings.Ui = v);
 
         var full = Row(list, "Fullscreen");
         full.Add(Value(Screen.fullScreen ? "On" : "Off"));
         full.Add(Button("Toggle", () => { Screen.fullScreen = !Screen.fullScreen; root.schedule.Execute(() => Refresh(root)).ExecuteLater(200); }));
-
-        var tut = Row(list, "Tutorial");
-        bool canReplay = GameManager.Instance != null && GameManager.Instance.CurrentPhase == GameManager.Phase.Open && !Tutorial.HoldsClock;
-        tut.Add(Value(canReplay ? "Play the short tutorial again." : "Only while the library is open."));
-        var replay = Button("Replay", () => { Tutorial.RequestReplay(); UnityEngine.Object.FindAnyObjectByType<PCOverlayTrigger>()?.ForceClose(); });
-        replay.SetEnabled(canReplay);
-        tut.Add(replay);
 
         var menu = Row(list, "Main menu");
         bool leaving = Time.unscaledTime < menuConfirmUntil;

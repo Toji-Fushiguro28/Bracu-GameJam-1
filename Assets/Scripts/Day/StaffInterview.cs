@@ -37,6 +37,10 @@ public class StaffInterview : MonoBehaviour
     /// <summary>The story's ending: the Dean comes back to thank you (set by the library, with its numbers).</summary>
     public static bool Ending;
     public static int EndingDays, EndingMembers, EndingReputation, EndingGoal, EndingTier = 2;
+    /// <summary>The board's goal for the second week (by Day 10), which the Dean passes on.</summary>
+    public static int EndingNextGoal;
+    /// <summary>Real time played so far, for the End page.</summary>
+    public static float EndingPlaySeconds;
     public static List<string> EndingStaff = new List<string>();
     /// <summary>Set when the player picks "Back to main menu" on the End page: the day is saved, then the title screen.</summary>
     public static bool EndingToMenu;
@@ -66,6 +70,8 @@ public class StaffInterview : MonoBehaviour
     [Tooltip("Scene to load after hiring (empty = stay here).")]
     public string returnScene = "MainGame";
     public AudioClip doorSound, hireSound, clickSound, music;
+    [Tooltip("Key press for the name box (the intro has no GameAudio of its own).")]
+    public AudioClip typingSound;
 
     DialogueUI ui;
     AudioSource sfx;
@@ -94,10 +100,12 @@ public class StaffInterview : MonoBehaviour
         ui = GetComponentInChildren<DialogueUI>();
         foreach (var d in FindObjectsByType<DialogueUI>()) if (d.gameObject.scene == gameObject.scene) ui = d;
         sfx = gameObject.AddComponent<AudioSource>();
+        GameSettings.MarkUi(sfx); // clicks, door, hire: the UI sounds slider
         if (music != null && !Overlay) // the library's music keeps playing in the morning
         {
             var m = gameObject.AddComponent<AudioSource>();
-            m.clip = music; m.loop = true; m.volume = 0.25f; m.Play();
+            m.clip = music; m.loop = true; m.volume = 0.25f * GameSettings.MusicScale; m.Play();
+            GameSettings.Skip(m); // music: its own slider
         }
 
         var root = ui.GetComponent<UIDocument>().rootVisualElement;
@@ -370,6 +378,11 @@ public class StaffInterview : MonoBehaviour
         yield return Say(Dean, "I was so afraid that when I stepped down, they'd finally go out.");
         yield return Say(Dean, EndingTier >= 1 ? $"They didn't. Because of you, {Me}." : $"They're flickering, {Me}. But they haven't gone out. Keep them lit.");
         yield return Say(Me, "...Thank you, Dean.");
+        // The second week: the board's next number, due at the end of Day 10.
+        if (EndingNextGoal > 0)
+            yield return Say(Dean, EndingTier >= 2
+                ? $"Mind you, the board likes to see things last. <color=#D67840>Reputation {EndingNextGoal}</color> by the end of <color=#D67840>Day {GameManager.SecondEndingDay}</color>. Humour them. I'll write to you then."
+                : $"One more season, then. <color=#D67840>Reputation {EndingNextGoal}</color> by the end of <color=#D67840>Day {GameManager.SecondEndingDay}</color>. I'll write to you when it's done.");
         yield return Say(Dean, "Edgar. Please. Now, enough of an old man's sniffling. The doors open at nine, and someone has to keep the lamps lit.");
 
         // The End page.
@@ -377,7 +390,8 @@ public class StaffInterview : MonoBehaviour
         var stats = ending.Q<Label>("ending-stats");
         if (stats != null) stats.text = $"{EndingDays} days at the Whitmore\n{EndingMembers} members\nReputation {EndingReputation} of {EndingGoal}" +
                                          (EndingTier >= 2 ? " - goal reached!" : EndingTier == 1 ? " - so close" : " - goal missed") +
-                                         (EndingStaff.Count > 0 ? $"\nStaff: {string.Join(", ", EndingStaff)}" : "");
+                                         (EndingStaff.Count > 0 ? $"\nStaff: {string.Join(", ", EndingStaff)}" : "") +
+                                         (EndingPlaySeconds >= 60f ? $"\nPlayed for {GameManager.FormatPlaytime(EndingPlaySeconds)}" : "");
         bool go = false;
         var cont = ending.Q<Button>("ending-continue");
         if (cont != null) cont.clicked += () => { go = true; Play(clickSound); };
@@ -405,6 +419,8 @@ public class StaffInterview : MonoBehaviour
         var field = root.Q<TextField>("name-field");
         var ok = root.Q<Button>("name-ok");
         if (panel == null || field == null || ok == null) yield break;
+        GameAudio.UseIntroKey(typingSound);
+        GameAudio.HookTyping(root); // key presses as you type your name
         field.maxLength = 16;
         field.value = ""; // a new game starts with an empty box; the name is saved once you press OK
         bool done = false;

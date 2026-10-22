@@ -27,11 +27,11 @@
                     <ui:TextField name="card-name" max-length="30" class="pc-input" />
                     <ui:Label name="card-name-placeholder" text="type the name they told you" picking-mode="Ignore" class="pc-placeholder" />
                 </ui:VisualElement>
-                <ui:Label text="DATE OF BIRTH" class="field-key" />
+                <ui:Label text="DATE OF BIRTH  (scroll or drag)" class="field-key" />
                 <ui:VisualElement name="card-dob" class="dob">
-                    <ui:Button name="dob-day" class="dd" />
-                    <ui:Button name="dob-month" class="dd" />
-                    <ui:Button name="dob-year" class="dd" />
+                    <ui:VisualElement name="dob-day" class="wheel" />
+                    <ui:VisualElement name="dob-month" class="wheel" />
+                    <ui:VisualElement name="dob-year" class="wheel last" />
                 </ui:VisualElement>
                 <ui:Label text="ACCESS" class="field-key" />
                 <ui:VisualElement name="card-access" class="card-options" />

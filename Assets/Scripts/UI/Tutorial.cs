@@ -450,6 +450,7 @@ public class Tutorial : MonoBehaviour
     {
         if (ticked[i]) return;
         ticked[i] = true;
+        GameAudio.Play(a => a.tutorialTick);
         checks[i].AddToClassList("done");
         checks[i].RemoveFromClassList("current");
         GameAudio.Play(a => a.served, 0.7f);

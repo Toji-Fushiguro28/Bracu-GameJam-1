@@ -39,6 +39,8 @@ Script paths are under `Assets/Scripts/`. After editing code, let Unity recompil
 | Which characters visit | Inspector → `CustomerSpawner` → **Customer Prefabs**. Professors only come as VIPs (`Pick()` in `CustomerSpawner.cs`) |
 | Who someone is (name, birthday, card access) | `Customers/Members.cs` → `Profiles` (keyed by prefab name) |
 | How much members' hearts boost tips and patience | `Customers/Members.cs` → `TipFactor`, `PatienceFactor` |
+| How fast members gain hearts (all gains, not losses) | `Customers/Members.cs` → `GainScale` (0.7: Friend around Day 2-3, Patron around Day 3-4; 1 = the old speed) |
+| Most hearts a member can lose in one visit | `Customers/Members.cs` → `MaxVisitLoss` (1.5) |
 | The mood face pictures | `Assets/Art/UI/Mood/T_Mood_*.png` (13×13, Point filter). The thresholds are in `Customer.cs` → `SetMood()` |
 | The "?" before you talk to them | `Customers/Customer.cs` → `heard`, `AskMark`. Style: `GameUI.uss` → `.customer-speech.ask` |
 
@@ -99,6 +101,8 @@ All of it is in `Core/GameManager.cs`, in the *Play mode* section:
 | Staff cut | `Day/StaffTalk.cs` → `CutPercent` (25, never 0): what staff keep of their day's earnings at the end-of-day report |
 | Skill rewards | Right shelf: 10% of the book's value (3-10) as a tip, paid at once (no reputation); talking to a "?" story visitor: +1 rep (`Customer.Chat`); perfect repair +5 coins + 1 rep (`RepairDesk.PerfectBonus`) |
 | The Dean's reputation goal | `Core/GameManager.cs` → `ReputationGoals` (Cozy 60 / Standard 100 / Busy 125), checked at the end of `EndingDay` (5). `GoalTier`: reached, close (60%+), missed |
+| The second week's goal | `Core/GameManager.cs` → `SecondReputationGoals` (Cozy 100 / Standard 150 / Busy 200), due at the end of `SecondEndingDay` (10); the Dean's letter the next morning |
+| Twists after Day 10 | `Day/DayStory.cs` → `Roll` (30% none, 50% one, 20% two) and `EndlessDay` (no repeat from yesterday, at most two quiet days running) |
 | Patience by day | `Core/GameManager.cs` → `PatienceDayFactor` (100% Days 1-2, 85% Day 3, 75% after) |
 | Reputation changes | `Customers/Customer.cs`: +1 per served visitor, read or card. Wrong book -1, walked out -3, never ordered -3, "we can't get that" when you could -2, waited for nothing -2 |
 | Regulars staying away | `Customers/Members.cs` → `LetDown()`: a let-down member skips the next day (`awayUntil`, checked in `CustomerSpawner.Pick`) |

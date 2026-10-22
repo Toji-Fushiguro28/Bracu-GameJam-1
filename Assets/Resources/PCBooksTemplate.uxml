@@ -2,7 +2,7 @@
     <ui:VisualElement name="catalogue" class="cat">
         <ui:VisualElement class="cat-col">
             <ui:VisualElement name="search-wrap" class="pc-search">
-                <ui:TextField name="book-search" class="pc-input" />
+                <ui:TextField name="book-search" max-length="40" class="pc-input" />
                 <ui:Label name="search-placeholder" text="search title, author or tag" picking-mode="Ignore" class="pc-placeholder" />
             </ui:VisualElement>
             <ui:VisualElement class="pc-filters">

@@ -45,6 +45,7 @@ public class RepairUI : MonoBehaviour
         Instance = this;
         sfx = gameObject.AddComponent<AudioSource>();
         sfx.playOnAwake = false;
+        GameSettings.MarkUi(sfx); // follows the UI sounds slider
         cancelAction = InputSystem.actions?.FindAction("UI/Cancel");
     }
 

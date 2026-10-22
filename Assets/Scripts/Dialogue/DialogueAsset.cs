@@ -14,6 +14,8 @@ public class DialogueAsset : ScriptableObject
     public string speaker = "???";
     [Tooltip("Pitch of this character's voice blips.")]
     [Range(0.5f, 2f)] public float voicePitch = 1f;
+    [Tooltip("A VIP is speaking: the box and name tab turn gold.")]
+    public bool vip;
     public List<Line> lines = new List<Line>();
 
     [Serializable]

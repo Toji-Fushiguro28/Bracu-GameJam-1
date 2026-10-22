@@ -45,6 +45,7 @@ public class EndDayDoor : ClickInteractable
             Bubble($"Still {what}. Click again to leave anyway.");
             return;
         }
+        GameAudio.Play(a => a.doorCreak);
         if (DayReportUI.Instance != null) HUD.FadeThen(() => DayReportUI.Instance.Open());
     }
 

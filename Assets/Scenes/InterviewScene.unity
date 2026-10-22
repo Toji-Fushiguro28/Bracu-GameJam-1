@@ -2582,6 +2582,7 @@ MonoBehaviour:
   hireSound: {fileID: 8300000, guid: 6c1d2ca9b1850c4478e8add4e5476f92, type: 3}
   clickSound: {fileID: 8300000, guid: aa2396911d0ed5d43b702f77bb5fb00e, type: 3}
   music: {fileID: 8300000, guid: 9550e7d2fbb88f25f8bd0d383bf8b957, type: 3}
+  typingSound: {fileID: 8300000, guid: 383a9b7a305dad94882151e4f98264b4, type: 3}
 --- !u!4 &1690626700
 Transform:
   m_ObjectHideFlags: 0

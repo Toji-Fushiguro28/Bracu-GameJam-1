@@ -91,6 +91,12 @@ public class StaffWorker : MonoBehaviour
         agent.radius = 0.3f;
         agent.stoppingDistance = 0.1f;
         anim = GetComponent<CharacterAnimator>();
+        var animator = GetComponentInChildren<Animator>();
+        if (animator != null && animator.isHuman)
+        {
+            leftHand = animator.GetBoneTransform(HumanBodyBones.LeftHand);
+            rightHand = animator.GetBoneTransform(HumanBodyBones.RightHand);
+        }
     }
 
     void Start()
@@ -397,6 +403,45 @@ public class StaffWorker : MonoBehaviour
         foreach (var (b, c) in extra) ReturnBin.Instance?.Add(b, c);
         extra.Clear();
         if (anim) anim.SetCarrying(false);
+    }
+
+    // ---------------- The books in their arms ----------------
+
+    // The same book prop as the librarian's, side by side between the hands: one per book they're carrying,
+    // so an upgraded archivist or cleaner visibly carries more.
+    readonly System.Collections.Generic.List<GameObject> bookProps = new System.Collections.Generic.List<GameObject>();
+    Transform leftHand, rightHand;
+    GameObject bookPrefab;
+    const float BookStep = 0.07f; // a book is ~6 cm thick
+    static readonly Vector3 BookOffset = new Vector3(0f, 0.02f, 0.06f);
+
+    /// <summary>Books in their arms right now: the one they're taking somewhere, plus the extras.</summary>
+    int Held => carried != null ? 1 + extra.Count : 0;
+
+    void LateUpdate()
+    {
+        int n = Held;
+        if (n > 0 && bookPrefab == null)
+        {
+            var player = GameObject.FindWithTag("Player");
+            var carry = player != null ? player.GetComponent<PlayerCarry>() : null;
+            if (carry != null) bookPrefab = carry.bookPropPrefab;
+        }
+        while (bookProps.Count < n && bookPrefab != null)
+        {
+            var p = Instantiate(bookPrefab, transform);
+            foreach (var c in p.GetComponentsInChildren<Collider>()) Destroy(c);
+            bookProps.Add(p);
+        }
+        for (int i = 0; i < bookProps.Count; i++) bookProps[i].SetActive(i < n);
+        if (n == 0 || leftHand == null || rightHand == null) return;
+        var hold = (leftHand.position + rightHand.position) * 0.5f;
+        int shown = Mathf.Min(n, bookProps.Count);
+        for (int i = 0; i < shown; i++)
+        {
+            float side = (i - (shown - 1) * 0.5f) * BookStep;
+            bookProps[i].transform.SetPositionAndRotation(hold + transform.rotation * (BookOffset + Vector3.right * side), transform.rotation);
+        }
     }
 
     void FaceTowards(Vector3 p)

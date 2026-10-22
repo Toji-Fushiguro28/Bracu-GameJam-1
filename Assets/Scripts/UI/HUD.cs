@@ -493,7 +493,7 @@ public class HUD : MonoBehaviour
     }
 
     /// <summary>A gold line that rises from a spot in the world and fades: a reward for doing something well
-    /// (the right shelf in a chat, a perfect repair, a special order).</summary>
+    /// (a good recommendation in a chat, a perfect repair, a special order).</summary>
     public static void SkillPop(Vector3 world, string text, string style = null)
     {
         if (instance == null || instance.hudLayer == null || !instance.isActiveAndEnabled) return;
@@ -556,9 +556,9 @@ public class HUD : MonoBehaviour
         else if (gm.day == GameManager.RareDay) text += "\nThe Rare Books room is open from today. Watch for VIP scholars!";
         else if (gm.day < GameManager.ArchiveDay) text += $"\nThe Archive opens on Day {GameManager.ArchiveDay}, Rare Books on Day {GameManager.RareDay}.";
         if (gm.GoalActive)
-            text += gm.day == GameManager.EndingDay
+            text += gm.day == gm.GoalDay
                 ? $"\nLast day! The Dean's goal: reputation {gm.ReputationGoal} by tonight (now {gm.Reputation})."
-                : $"\nThe Dean's goal: reputation {gm.ReputationGoal} by the end of Day {GameManager.EndingDay} (now {gm.Reputation}).";
+                : $"\nThe Dean's goal: reputation {gm.ReputationGoal} by the end of Day {gm.GoalDay} (now {gm.Reputation}).";
         text += DayStory.MorningLine(gm);
         int due = gm.reservations.FindAll(r => r.day <= gm.day).Count;
         if (due > 0) text += due == 1 ? "\nSomeone is coming for a reserved book today." : $"\n{due} people are coming for reserved books during the day.";

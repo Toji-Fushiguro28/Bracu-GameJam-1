@@ -20,7 +20,8 @@ public class Customer : ClickInteractable
     // Seeker: looks around for a book the library doesn't have, then asks you to order it.
     public enum Kind { Buyer, Reader, Returner, SignUp, Browser, Pickup, Seeker }
     // ToSpot: walking to somewhere in the library to wait for you (a shelf, a rack, a chair, the notice board).
-    enum State { Queueing, Waiting, ToSeat, Reading, CheckIn, Leaving, ToShelf, Browsing, Checkout, WaitingForBook, ToSpot }
+    // AtTable: the visiting author, walking to and sitting at the signing table. ToSigning: a fan in the signing line.
+    enum State { Queueing, Waiting, ToSeat, Reading, CheckIn, Leaving, ToShelf, Browsing, Checkout, WaitingForBook, ToSpot, AtTable, ToSigning }
 
     public Kind kind;
     [Tooltip("Dean / professors: read Rare Books in the Rare Books room.")]
@@ -50,7 +51,7 @@ public class Customer : ClickInteractable
     const int VipCardFee = 50, VipCardTip = 10;     // normal cards: 10 + 6
     const float VipFeeMultiplier = 1.5f;            // on top of the reading fee
     const float RareShare = 0.06f; const int RareMinFee = 15;
-    const int MaxChatBonus = 10;                    // "right shelf" bonus, was 10% of the book's value (up to 50 on rare books)
+    const int MaxChatBonus = 10;                    // good-recommendation bonus, was 10% of the book's value (up to 50 on rare books)
 
     NavMeshAgent agent;
     CharacterAnimator anim;
@@ -177,6 +178,10 @@ public class Customer : ClickInteractable
             if (errand != Errand.None) { kind = Kind.Buyer; JoinQueue(); return; }
             if (Members.BringsFriend(member)) StartCoroutine(BringFriend(FirstName));
         }
+        // The book signing: about a third of ordinary visitors bring their own copy of the author's book and go
+        // straight to the signing table (if the author's sitting and the line has room); otherwise in as normal.
+        if (!vip && !Tutorial.HoldsClock && (kind == Kind.Buyer || kind == Kind.Browser || kind == Kind.Reader)
+            && Random.value < 0.33f && GoToSigning(DayStory.SigningBook())) return;
         if (kind == Kind.Returner)
         {
             // A copy they borrowed some days ago, in whatever state they kept it.
@@ -210,6 +215,7 @@ public class Customer : ClickInteractable
         DayStory.Unpoint(ref askPointer);
         if (seat != null) seat.Release(this);
         if (WaitingForCard == this) WaitingForCard = null;
+        if (table != null) { table.Remove(this); table.AuthorLeft(this); }
     }
 
     /// <summary>Lights out (checked every frame until they've gone): readers stop and come to check their book in,
@@ -231,6 +237,7 @@ public class Customer : ClickInteractable
             case State.ToShelf:
             case State.Browsing:
             case State.ToSpot:
+            case State.ToSigning:
                 Say("Oh, closing already!", 2.5f);
                 Leave();
                 return;
@@ -295,6 +302,8 @@ public class Customer : ClickInteractable
                 Destroy(gameObject);
                 break;
             case State.WaitingForBook: UpdateWaitingForBook(); break;
+            case State.AtTable: UpdateAtTable(); break;
+            case State.ToSigning: UpdateSigning(); break;
         }
 
         UpdateRequestIcon();
@@ -425,10 +434,11 @@ public class Customer : ClickInteractable
         RequestLog.Paid(this, price + tip, FirstName, $"Stamped out <color=#D67840>\"{heldBook.Title}\"</color>");
         GM.AddReputation(1);
         DayStory.Instance?.Sold(heldBook);
+        var bought = heldBook;
         heldBook = null; // it leaves with them
         GameAudio.Play(a => a.served);
         Say(tip > 0 ? $"Thank you!  +{price + tip}" : $"Thanks!  +{price}", 2.5f);
-        Leave();
+        if (!GoToSigning(bought)) Leave();
     }
 
     // ---------------- Counter ----------------
@@ -606,6 +616,7 @@ public class Customer : ClickInteractable
 
         var d = ScriptableObject.CreateInstance<DialogueAsset>();
         d.speaker = vip ? $"{FullName} (VIP)" : FirstName;
+        d.vip = vip;
         var start = new DialogueAsset.Line { id = "start", text = RequestText };
         // The first time you talk, some mention their day before getting to the point.
         if (!openerSaid && kind != Kind.Pickup)
@@ -917,7 +928,9 @@ public class Customer : ClickInteractable
 
     bool chatted;
 
-    /// <summary>A short talk with a seated reader. Pointing them to the right shelf earns a bigger tip.</summary>
+    /// <summary>The first talk with a seated reader: they gush about what they're reading (and let slip what they
+    /// love), and two times in three ask you to recommend their next read from three titles. A title that suits them
+    /// earns a tip; any other gets a reaction, never a penalty. Books, journals, magazines and newspapers alike.</summary>
     void Chat()
     {
         var ui = DialogueUI.Instance;
@@ -932,57 +945,154 @@ public class Customer : ClickInteractable
         if (ui == null || ui.IsOpen) return;
         chatted = true;
 
-        string shelf = ShelfInteractable.NameOf(heldBook.ShelfLocation);
-        var shelves = new List<string>();
-        foreach (var b in GM.Books)
-        {
-            if (!BookRequest.Available(b)) continue; // no shelves from rooms that are still locked
-            string n = ShelfInteractable.NameOf(b.ShelfLocation);
-            if (n != shelf && !shelves.Contains(n) && !string.IsNullOrEmpty(n)) shelves.Add(n);
-        }
-        // Right answer plus two others, shuffled.
-        var options = new List<string> { shelf };
-        while (options.Count < 3 && shelves.Count > 0) { int i = Random.Range(0, shelves.Count); options.Add(shelves[i]); shelves.RemoveAt(i); }
-        for (int i = options.Count - 1; i > 0; i--) { int j = Random.Range(0, i + 1); (options[i], options[j]) = (options[j], options[i]); }
-
         var d = ScriptableObject.CreateInstance<DialogueAsset>();
         d.speaker = vip ? $"{FullName} (VIP)" : FirstName;
-        string opinion = heldBook.Format == BookFormat.Book
-            ? Pick($"<color=#D67840>\"{heldBook.Title}\"</color> is wonderful. I can't put it down!",
-                   BookRequest.HasAuthor(heldBook) ? $"I love {heldBook.Author}'s writing." : "Whoever wrote this knew their stuff.",
-                   $"This is the best thing on {heldBook.SubjectName} I've read in ages.")
-            : Pick($"This {heldBook.FormatName.ToLower()} is fascinating.", $"So much in <color=#D67840>\"{heldBook.Title}\"</color>!", "I could read these all afternoon.");
-        d.lines.Add(new DialogueAsset.Line { id = "start", text = opinion });
-        var q = new DialogueAsset.Line { id = "q", text = "When I'm done, where would I find more like this?" };
-        foreach (var o in options) q.choices.Add(new DialogueAsset.Choice { text = o, next = o == shelf ? "right" : "wrong" });
-        q.choices.Add(new DialogueAsset.Choice { text = "Enjoy your read!", next = "bye" });
-        d.lines.Add(q);
-        d.lines.Add(new DialogueAsset.Line { id = "right", text = $"The {shelf}, of course! Thank you, you know this place so well.", next = "end" });
-        d.lines.Add(new DialogueAsset.Line { id = "wrong", text = "Hmm... are you sure? I don't think that's right.", next = "end" });
-        d.lines.Add(new DialogueAsset.Line { id = "bye", text = "Thank you! Back to my book, then.", next = "end" });
+        d.vip = vip;
+        d.lines.Add(new DialogueAsset.Line { id = "start", text = Gush(heldBook) });
+
+        // Their next read: one title that suits them and two that don't (none from locked rooms).
+        var options = Random.value < 0.67f ? NextReadOptions(heldBook, out _) : null;
+        if (options == null)
+        {
+            d.lines.Add(new DialogueAsset.Line { id = "bye", text = Pick("Anyway, I'll let you get on. Back to it!", "Right. Where was I...", "Don't let me keep you. This chapter won't read itself!"), next = DialogueAsset.End });
+        }
+        else
+        {
+            var q = new DialogueAsset.Line { id = "q", text = Pick("What should I read after this?", "Any idea what I should read next?", "You must know these shelves. What would you read next, in my shoes?") };
+            for (int i = 0; i < options.Count; i++)
+                q.choices.Add(new DialogueAsset.Choice { text = $"\"{options[i].book.Title}\"", next = "r" + i });
+            q.choices.Add(new DialogueAsset.Choice { text = "Enjoy your read!", next = "bye" });
+            d.lines.Add(q);
+            for (int i = 0; i < options.Count; i++)
+            {
+                string t = $"<color=#D67840>\"{options[i].book.Title}\"</color>";
+                d.lines.Add(new DialogueAsset.Line
+                {
+                    id = "r" + i, next = DialogueAsset.End,
+                    text = options[i].match
+                        ? Pick($"{t}? Oh, that's exactly my kind of thing. Thank you!", $"Ooh, {t}. You've got me sussed.", $"{t}... yes. Yes! Going on my list right now.", $"You're good at this. {t} it is.")
+                        : Pick($"{t}? Huh. Not really my thing... but I'll have a look.", $"{t}... interesting choice. Maybe one day.", $"Hm, {t}? I'll trust you. Probably.", $"{t}? Ha! Well, I've always meant to branch out."),
+                });
+            }
+            d.lines.Add(new DialogueAsset.Line { id = "bye", text = "Thank you! Back to my book, then.", next = DialogueAsset.End });
+        }
 
         string outcome = null;
-        System.Action<string> seen = id => { if (id == "right" || id == "wrong" || id == "bye") outcome = id; };
+        System.Action<string> seen = id => { if (id == "bye" || (id.Length == 2 && id[0] == 'r')) outcome = id; };
         ui.LineShown += seen;
         ui.Play(d, () =>
         {
             ui.LineShown -= seen;
             Destroy(d);
-            if (outcome == "right")
+            int pick = outcome != null && outcome[0] == 'r' ? outcome[1] - '0' : -1;
+            if (options != null && pick >= 0 && pick < options.Count && options[pick].match)
             {
-                // Knowing your shelves pays, right now and where you can see it.
+                // A recommendation that suits them pays, right now and where you can see it.
                 int bonus = Mathf.Clamp(Mathf.RoundToInt(heldBook != null ? heldBook.BaseValue * 0.1f : 3), 3, MaxChatBonus);
                 GM.AddCoins(bonus);
-                RequestLog.Paid(this, bonus, FirstName, "Knew the right shelf: chat bonus");
+                RequestLog.Paid(this, bonus, FirstName, "Good recommendation: chat bonus");
                 GM.Today.Earn(vip ? GameManager.DayStats.Source.Vip : GameManager.DayStats.Source.Reading, bonus);
                 GM.Today.tips += bonus; // a tip, as before (reputation comes from hearing out "?" visitors)
                 Members.Satisfy(Membership, 0.5f);
                 GameAudio.Play(a => a.cardIssued, 0.7f);
-                HUD.SkillPop(transform.position + Vector3.up * 2.2f, $"Right shelf! +{bonus} coins");
+                HUD.SkillPop(transform.position + Vector3.up * 2.2f, $"Good pick! +{bonus} coins");
             }
-            else if (outcome == "wrong") { Members.Satisfy(Membership, -0.25f); Members.Complain(Membership, Members.Gripe.WrongShelf); GameAudio.Play(a => a.wrongBook, 0.6f); }
+            else if (pick >= 0) Members.Satisfy(Membership, 0.05f); // not their thing, but they liked being asked
             else Members.Satisfy(Membership, 0.15f);
         });
+    }
+
+    // ---------------- What a reader loves (for the gush and the next-read pick) ----------------
+
+    // Each topic as something a reader would say they love: "I'm a sucker for the night sky."
+    static readonly Dictionary<string, string> TopicLoves = new Dictionary<string, string>
+    {
+        { "Astronomy", "the night sky" }, { "Engineering", "how things get built" }, { "Biology", "living things" },
+        { "Physics", "how the world works" }, { "Trade", "merchants and markets" }, { "Geography", "far-off places" },
+        { "Empires", "kings and empires" }, { "Local history", "this town's past" }, { "Culture", "how other people live" },
+        { "Reflection", "a good quiet think" }, { "Wellbeing", "a bit of calm" }, { "Big questions", "the big why-are-we-here questions" },
+        { "Poetry", "a good poem" }, { "Ethics", "right and wrong" }, { "Arithmetic", "a good sum" }, { "Geometry", "shapes and angles" },
+        { "Paradoxes", "a proper brain-twister" }, { "Probability", "chance and odds" },
+        { "Home & leisure", "a cosy, lazy afternoon" }, { "Science & nature", "nature" }, { "Puzzles", "a good puzzle" },
+        { "Essays", "a long think-piece" }, { "Local news", "knowing how the town ticks" }, { "Regional news", "what's going on round the region" },
+        { "Weekend", "a lazy weekend read" }, { "Archaeology", "digging up the past" }, { "Mathematics", "numbers" },
+        { "Chemistry", "what things are made of" }, { "Philosophy", "the big questions" },
+        { "Town records", "old town records" }, { "Old maths", "old-fashioned sums" }, { "Letters & logs", "other people's old letters" },
+        { "Almanacs", "old almanacs and weather lore" }, { "Faith", "matters of faith" }, { "Maps", "old maps" },
+        { "Star charts", "old star charts" }, { "Maps & charts", "old maps" }, { "Herbals", "old plant lore" },
+        { "Early prints", "very old printing" }, { "Manuscripts", "old handwriting" },
+    };
+
+    // Topics that suit each other (both ways): close neighbours you could guess from a title, and links from
+    // newspapers and magazines to books. Tags aren't used: they're too general ("Reference", "Classic").
+    static readonly Dictionary<string, string[]> RelatedTopics = new Dictionary<string, string[]>
+    {
+        { "Physics", new[] { "Engineering", "Astronomy" } }, { "Biology", new[] { "Herbals" } },
+        { "Culture", new[] { "Empires", "Local history", "Geography" } }, { "Trade", new[] { "Geography" } },
+        { "Poetry", new[] { "Reflection", "Wellbeing" } }, { "Ethics", new[] { "Big questions", "Reflection" } },
+        { "Wellbeing", new[] { "Reflection" } }, { "Paradoxes", new[] { "Probability", "Geometry" } },
+        { "Probability", new[] { "Arithmetic" } }, { "Arithmetic", new[] { "Geometry" } },
+        { "Faith", new[] { "Big questions", "Reflection" } }, { "Maps", new[] { "Geography", "Maps & charts" } },
+        { "Local news", new[] { "Local history", "Town records" } }, { "Regional news", new[] { "Geography", "Trade" } },
+        { "Weekend", new[] { "Wellbeing", "Home & leisure" } }, { "Home & leisure", new[] { "Wellbeing" } },
+        { "Science & nature", new[] { "Biology", "Astronomy" } }, { "Puzzles", new[] { "Paradoxes", "Probability", "Geometry" } },
+        { "Essays", new[] { "Reflection", "Big questions", "Ethics" } }, { "Archaeology", new[] { "Local history", "Empires", "Culture" } },
+        { "Mathematics", new[] { "Arithmetic", "Geometry", "Probability", "Paradoxes", "Old maths" } },
+        { "Chemistry", new[] { "Physics", "Biology" } }, { "Philosophy", new[] { "Big questions", "Reflection", "Ethics" } },
+        { "Old maths", new[] { "Arithmetic" } }, { "Star charts", new[] { "Astronomy" } }, { "Herbals", new[] { "Biology" } },
+        { "Town records", new[] { "Local history" } }, { "Letters & logs", new[] { "Local history", "Culture" } }, { "Almanacs", new[] { "Astronomy" } },
+    };
+
+    static string Loves(BookData b) => TopicLoves.TryGetValue(b.SubjectName ?? "", out var s) ? s : (b.SubjectName ?? "a good read").ToLowerInvariant();
+
+    /// <summary>Their opening line: how much they're enjoying it, then what they love, without naming the shelf.</summary>
+    static string Gush(BookData b)
+    {
+        string t = $"<color=#D67840>\"{b.Title}\"</color>";
+        string opinion = b.Format == BookFormat.Book
+            ? Pick($"{t} is wonderful. I can't put it down!", BookRequest.HasAuthor(b) ? $"I love {b.Author}'s writing." : "Whoever wrote this knew their stuff.", "I've read this page three times. On purpose.")
+            : b.Format == BookFormat.Newspaper
+                ? Pick("I always read the paper cover to cover. Even the adverts.", "There's more in today's paper than you'd think.", "Don't tell anyone, but I read the paper for the gossip.")
+                : Pick($"This {b.FormatName.ToLower()} is a proper treat.", $"So much in {t}!", "I could read these all afternoon.");
+        string love = Loves(b);
+        return opinion + " " + Pick($"Give me {love} and I'm happy.", $"I'm a sucker for {love}.", $"I just love {love}.");
+    }
+
+    /// <summary>Would this reader enjoy that one? The same topic, or a closely related one.</summary>
+    static bool Suits(BookData reading, BookData other)
+    {
+        string a = reading.SubjectName ?? "", b = other.SubjectName ?? "";
+        if (a == b) return true;
+        if (RelatedTopics.TryGetValue(a, out var ra) && System.Array.IndexOf(ra, b) >= 0) return true;
+        return RelatedTopics.TryGetValue(b, out var rb) && System.Array.IndexOf(rb, a) >= 0;
+    }
+
+    /// <summary>Three titles to recommend: one that suits them and two that don't, shuffled. Null if the library
+    /// can't make a fair three (then they just chat). Books, journals, magazines and papers from open rooms only.</summary>
+    List<(BookData book, bool match)> NextReadOptions(BookData reading, out int matchIndex)
+    {
+        matchIndex = -1;
+        var pool = new List<BookData>();
+        var titles = new HashSet<string> { reading.Title };
+        foreach (var b in GM.Books)
+        {
+            if (b == null || b.Format == BookFormat.Newspaper || !BookRequest.Available(b) || (BookRequest.IsRare(b) && !vip)) continue;
+            if (titles.Add(b.Title)) pool.Add(b);
+        }
+        var good = pool.FindAll(b => Suits(reading, b));
+        var bad = pool.FindAll(b => !Suits(reading, b));
+        if (good.Count == 0 || bad.Count < 2) return null;
+        var options = new List<(BookData book, bool match)> { (good[Random.Range(0, good.Count)], true) };
+        // Two misses from different topics, so the choice isn't two of a kind.
+        var first = bad[Random.Range(0, bad.Count)];
+        options.Add((first, false));
+        var second = bad.FindAll(b => b.SubjectName != first.SubjectName);
+        if (second.Count == 0) second = bad.FindAll(b => b != first);
+        if (second.Count == 0) return null;
+        options.Add((second[Random.Range(0, second.Count)], false));
+        for (int i = options.Count - 1; i > 0; i--) { int j = Random.Range(0, i + 1); (options[i], options[j]) = (options[j], options[i]); }
+        matchIndex = options.FindIndex(o => o.match);
+        return options;
     }
 
     static string Pick(params string[] lines) => lines[Random.Range(0, lines.Length)];
@@ -1058,6 +1168,7 @@ public class Customer : ClickInteractable
 
         var d = ScriptableObject.CreateInstance<DialogueAsset>();
         d.speaker = vip ? $"{FullName} (VIP)" : FirstName;
+        d.vip = vip;
         var start = new DialogueAsset.Line { id = "start", text = F(t[0]) };
         start.choices.Add(new DialogueAsset.Choice { text = F(t[1]), next = "a" });
         start.choices.Add(new DialogueAsset.Choice { text = F(t[2]), next = "b" });
@@ -1069,8 +1180,9 @@ public class Customer : ClickInteractable
 
     // ---------------- Library card ----------------
 
-    /// <summary>Called by the PC Members form. Returns what was wrong, or null if the card is right.</summary>
-    public string ReceiveCard(string name, string dob, AccessLevel access)
+    /// <summary>Called by the PC Members form. Returns what was wrong, or null if the card is right.
+    /// chime false: the form plays the "issued" chime itself, after its stamp lands.</summary>
+    public string ReceiveCard(string name, string dob, AccessLevel access, bool chime = true)
     {
         if (kind != Kind.SignUp || state != State.Waiting || !Members.TryProfile(profileKey, out var p)) return "Nobody is waiting for a card.";
         string wrong = name != p.name ? "That's not my name..."
@@ -1095,7 +1207,7 @@ public class Customer : ClickInteractable
         GM.Today.Earn(vip ? GameManager.DayStats.Source.Vip : GameManager.DayStats.Source.Cards, fee + tip); GM.Today.tips += tip; GM.Today.served++; GM.Today.signups++;
         GM.AddReputation(1);
         if (WaitingForCard == this) WaitingForCard = null;
-        GameAudio.Play(a => a.cardIssued);
+        if (chime) GameAudio.Play(a => a.cardIssued);
         RefreshNameplate();
         // Most new members have a book in mind straight away.
         var wish = !vip && !Tutorial.HoldsClock && Random.value < 0.6f ? PickWish() : null;
@@ -1195,7 +1307,7 @@ public class Customer : ClickInteractable
         GameAudio.Play(a => a.served);
         RequestLog.Finish(this, kind == Kind.Pickup ? "Collected" : $"Sold <color=#D67840>\"{book.Title}\"</color>");
         Say(tip > 0 ? $"Perfect, thank you!  +{price + tip}" : $"Thanks.  +{price}", 2.5f);
-        Leave();
+        if (!GoToSigning(book)) Leave();
     }
 
     // ---------------- Reading ----------------
@@ -1206,6 +1318,7 @@ public class Customer : ClickInteractable
         GetUp(); // they may have been waiting in a chair: pick a proper reading seat
         heldBook = book;
         heldCondition = condition;
+        GameAudio.Play(a => a.pageTurn);
         // Scholars read in the Rare Books room whatever the book (a main hall chair only if every rare seat is taken).
         bool rareRoom = BookRequest.IsRare(book) || (vip && GM.RareOpen);
         CounterQueue.Instance.Leave(this);
@@ -1223,7 +1336,7 @@ public class Customer : ClickInteractable
             return;
         }
         RequestLog.Finish(this, $"Reading <color=#D67840>\"{book.Title}\"</color> here");
-        Tutorial.Show("reader", "Readers sit and read, then check the book back in at the counter. Click them while they read for a chat, and a bonus if you know your shelves.");
+        Tutorial.Show("reader", "Readers sit and read, then check the book back in at the counter. Click them while they read for a chat, and a tip if you recommend something they'll love.");
         Say(seat.rareBooksOnly ? "Wonderful. I'll read it in the Rare Books room." : "Lovely, I'll find a seat.", 2.5f);
         state = State.ToSeat;
         agent.SetDestination(NearestOnNavMesh(seat.ApproachPosition(seatIndex)));
@@ -1235,12 +1348,45 @@ public class Customer : ClickInteractable
         agent.enabled = false;
         transform.SetPositionAndRotation(seat.SitPosition(seatIndex), seat.SeatRotation);
         if (anim) { anim.SetSpeed(0f); anim.SetActivity(CharacterAnimator.Activity.SitRead); }
+        ShowReadingBook(true);
         timer = Random.Range(readSeconds.x, readSeconds.y);
         if (GM.CurrentPhase != GameManager.Phase.Open) timer = Mathf.Min(timer, 8f); // closing bell: a quick look only
     }
 
+    // ---------------- The open book in a seated reader's hands ----------------
+
+    GameObject readingBook;
+    Transform leftHand, rightHand;
+
+    void ShowReadingBook(bool on)
+    {
+        if (on && readingBook == null)
+        {
+            var prefab = CustomerSpawner.Instance != null ? CustomerSpawner.Instance.openBookPrefab : null;
+            var animator = GetComponentInChildren<Animator>();
+            if (prefab == null || animator == null || !animator.isHuman) return;
+            leftHand = animator.GetBoneTransform(HumanBodyBones.LeftHand);
+            rightHand = animator.GetBoneTransform(HumanBodyBones.RightHand);
+            readingBook = Instantiate(prefab, transform);
+            foreach (var c in readingBook.GetComponentsInChildren<Collider>()) Destroy(c);
+        }
+        if (readingBook != null) readingBook.SetActive(on);
+    }
+
+    void LateUpdate()
+    {
+        if (readingBook == null || !readingBook.activeSelf || leftHand == null || rightHand == null) return;
+        if (state != State.Reading) { readingBook.SetActive(false); return; } // up and about (closing, a chat that ended it...)
+        var sp = CustomerSpawner.Instance;
+        var hold = (leftHand.position + rightHand.position) * 0.5f;
+        // Lying flat facing the reader's way, then tipped up towards their face.
+        var rot = Quaternion.AngleAxis(-(sp != null ? sp.openBookTilt : 40f), transform.right) * transform.rotation * Quaternion.Euler(270f, 0f, 0f);
+        readingBook.transform.SetPositionAndRotation(hold + transform.rotation * (sp != null ? sp.openBookOffset : Vector3.zero), rot);
+    }
+
     void StandUp()
     {
+        ShowReadingBook(false);
         if (anim) anim.SetActivity(CharacterAnimator.Activity.None);
         transform.position = NearestOnNavMesh(seat.ApproachPosition(seatIndex));
         if (Housekeeping.Instance != null) Housekeeping.Instance.ReaderLeft(seat.SeatPosition(seatIndex));
@@ -1547,7 +1693,8 @@ public class Customer : ClickInteractable
         DayStory.Unpoint(ref askPointer);
         var d = visit.talk != null ? visit.talk(this) : null;
         if (d == null) { FinishStory(visit, null); return; }
-        if (string.IsNullOrEmpty(d.speaker)) d.speaker = FullName;
+        if (string.IsNullOrEmpty(d.speaker)) d.speaker = vip ? $"{FullName} (VIP)" : FullName;
+        d.vip = vip;
         string last = null;
         System.Action<string> seen = id => last = id;
         ui.LineShown += seen;
@@ -1573,12 +1720,13 @@ public class Customer : ClickInteractable
         if (request != null || kind == Kind.SignUp || state != State.Waiting) return; // now asking for something like anyone else
         if (visit.next != null)
         {
-            // Off to look round the shelves; back to the desk later for their next scene.
+            // Off to look round the shelves (or wherever the visit sends them); back to the desk later for their next scene.
             story = visit.next;
             lingerUntil = visit.lingerUntil;
             lingering = true;
             CounterQueue.Instance.Leave(this);
             speech.AddToClassList("hidden");
+            if (GM.Hour < lingerUntil && visit.linger != null && visit.linger(this)) return;
             if (GM.Hour >= lingerUntil || !GoBrowse()) EndLinger();
             return;
         }
@@ -1590,6 +1738,114 @@ public class Customer : ClickInteractable
         lingering = false;
         JoinQueue();
     }
+
+    // ---------------- The book signing (SigningTable) ----------------
+
+    SigningTable table;
+    float tableUntil;
+    bool atTable;       // the author: sitting down (not still walking over)
+    int signStep;       // a fan at the front of the signing line: 0 asks, 1 the author answers, 2 thanks and goes
+    float signTimer;
+
+    /// <summary>The author sits down here.</summary>
+    public bool SeatedAtTable => state == State.AtTable && atTable;
+
+    /// <summary>The visiting author: walk to the signing table's chair and sit there until the hour, then back to the desk.</summary>
+    public void SitAtTable(SigningTable t, float until)
+    {
+        table = t;
+        tableUntil = until;
+        atTable = false;
+        state = State.AtTable;
+        if (!agent.enabled) agent.enabled = true;
+        agent.SetDestination(NearestOnNavMesh(t.AuthorApproach, 2.5f));
+    }
+
+    void UpdateAtTable()
+    {
+        if (table == null) { EndLinger(); return; }
+        if (!atTable)
+        {
+            if (GM.Hour >= tableUntil) { LeaveTable(); EndLinger(); return; } // never made it in time
+            if (!Arrived()) return;
+            atTable = true;
+            agent.enabled = false;
+            transform.SetPositionAndRotation(table.AuthorSeat, table.AuthorFacing);
+            if (anim) { anim.SetSpeed(0f); anim.SetActivity(CharacterAnimator.Activity.SitIdle); }
+            return;
+        }
+        transform.rotation = table.AuthorFacing;
+        if (GM.Hour >= tableUntil) { LeaveTable(); EndLinger(); }
+    }
+
+    /// <summary>Up out of the signing chair (time's up, or closing).</summary>
+    void LeaveTable()
+    {
+        if (anim) anim.SetActivity(CharacterAnimator.Activity.None);
+        if (atTable && table != null) transform.position = NearestOnNavMesh(table.AuthorApproach, 2.5f);
+        atTable = false;
+        if (!agent.enabled) agent.enabled = true;
+        if (table != null) table.AuthorLeft(this);
+    }
+
+    /// <summary>A fan who just bought one of the author's books during the signing: off to the table to get it signed
+    /// (if the author's there and the line isn't full; otherwise they just go home).</summary>
+    bool GoToSigning(BookData book)
+    {
+        var t = SigningTable.Instance;
+        if (book == null || t == null || vip || state == State.Leaving || !t.Join(this, book)) return false; // VIP scholars don't queue for autographs
+        table = t;
+        signStep = 0;
+        signTimer = 0f;
+        StopImpatient(true);
+        mood.AddToClassList("hidden");
+        CounterQueue.Instance.Leave(this);
+        state = State.ToSigning;
+        return true;
+    }
+
+    void UpdateSigning()
+    {
+        int i = table != null ? table.IndexOf(this) : -1;
+        if (i < 0) { Leave(); return; }
+        // The author's gone (the signing's over): nothing to wait for.
+        if (table.Author == null || !table.Author.SeatedAtTable)
+        {
+            table.Remove(this);
+            Say("Oh, they've packed up. Never mind.", 2.5f);
+            Leave();
+            return;
+        }
+        var spot = table.SlotPosition(i);
+        if ((agent.destination - spot).sqrMagnitude > 0.04f) agent.SetDestination(NearestOnNavMesh(spot, 1.5f));
+        if (!Arrived()) return;
+        if (i > 0) { FaceTowards(table.SlotPosition(i - 1)); return; }
+        transform.rotation = Quaternion.RotateTowards(transform.rotation, table.FanFacing, 360f * Time.deltaTime);
+        signTimer -= Dt;
+        if (signTimer > 0f) return;
+        switch (signStep++)
+        {
+            case 0:
+                var (fan, author, thanks) = table.NextChat();
+                pendingReply = author;
+                pendingThanks = thanks;
+                Say(fan, 4f);
+                signTimer = 4f;
+                break;
+            case 1:
+                table.Author.Say(pendingReply, 4f);
+                signTimer = 4f;
+                break;
+            default:
+                Say(pendingThanks, 2.5f);
+                table.Signed(this); // the author's bonus for each fan
+                table.Remove(this);
+                Leave();
+                break;
+        }
+    }
+
+    string pendingReply, pendingThanks;
 
     /// <summary>A story visitor who, having said their piece, asks for a book like anyone else.</summary>
     public void ContinueWithRequest(BookRequest r, bool reading)
@@ -1727,6 +1983,8 @@ public class Customer : ClickInteractable
 
     void Leave()
     {
+        if (state == State.AtTable) LeaveTable(); // the author, out of the signing chair
+        if (table != null) table.Remove(this);    // out of the signing line
         StopRoaming();
         RequestLog.Finish(this, "Left"); // anything not already closed above
         if (WaitingForCard == this) WaitingForCard = null;
@@ -1779,7 +2037,7 @@ public class Customer : ClickInteractable
         if (stuckFor < StuckAfter) return;
         Vector3 dest = agent.destination;
         bool close = agent.remainingDistance < 1.5f;
-        if (state == State.Queueing)
+        if (state == State.Queueing || state == State.ToSigning)
         {
             // Their place in line is set every frame, so hop there rather than stopping short.
             if (close || stuckFor >= HopAfter) { agent.Warp(dest); stuckFor = 0f; }
