@@ -18,7 +18,17 @@ public static class GameSettings
 
     static float musicBase = -1f;
 
+    // Every scene load, not just the first (the intro → MainGame switch brings a fresh music source).
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    static void Hook()
+    {
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
+        Apply();
+    }
+
+    static void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode) => Apply();
+
     public static void Apply()
     {
         AudioListener.volume = Master / (float)Steps;

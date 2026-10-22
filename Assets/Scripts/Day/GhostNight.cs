@@ -12,7 +12,7 @@ using UnityEngine.AI;
 /// </summary>
 public class GhostNight : MonoBehaviour
 {
-    const int MaxGhosts = 3;
+    const int MaxGhosts = 5;
     const float WalkSpeed = 0.7f, FadeSeconds = 2f;
 
     class Ghost
@@ -36,7 +36,18 @@ public class GhostNight : MonoBehaviour
     static readonly int AlphaId = Shader.PropertyToID("_Alpha");
     static GameManager GM => GameManager.Instance;
 
+    // Not just the first scene: a new game goes menu → intro (InterviewScene) → MainGame again, and the
+    // run-once hook alone would leave that MainGame without ghosts.
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    static void Hook()
+    {
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
+        Create();
+    }
+
+    static void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode) => Create();
+
     static void Create()
     {
         if (FindAnyObjectByType<GameManager>() == null || FindAnyObjectByType<GhostNight>() != null) return;
@@ -65,8 +76,14 @@ public class GhostNight : MonoBehaviour
 
     /// <summary>Closed, and nobody left: no visitors in the building, and the staff have reported and gone home
     /// (off-duty staff are switched off).</summary>
-    static bool EveryoneGone() => GM != null && GM.CurrentPhase == GameManager.Phase.Closed
-        && FindAnyObjectByType<Customer>() == null && FindAnyObjectByType<StaffWorker>() == null;
+    static bool EveryoneGone()
+    {
+        if (GM == null || GM.CurrentPhase != GameManager.Phase.Closed) return false;
+        // Only active objects count here: off-duty staff are disabled when they leave, and FindAnyObjectByType
+        // can still see those objects, which keeps the ghost from ever spawning.
+        return FindObjectsByType<Customer>(FindObjectsInactive.Exclude).Length == 0
+            && FindObjectsByType<StaffWorker>(FindObjectsInactive.Exclude).Length == 0;
+    }
 
     // ---------------- Appearing ----------------
 

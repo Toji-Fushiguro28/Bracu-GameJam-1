@@ -677,7 +677,7 @@ Small, contained edits. Please check them when merging:
 - Notebook: talking to a visitor again after you cleared their note puts the same note back, never twice (`RequestLog.Begin`). It comes back without the books you'd noted for it; books the visitor turned down (struck through) stay.
 - Pause menu: pressing Esc again while the menu was still fading out (650 ms) reopened it and then the fade's delayed hide fired anyway, leaving a locked game with no HUD and no menu. The delayed hide now skips if the menu is showing again (`MainMenuUI.BeginPlay`).
 - "In your hands" box moves onto the notebook's panel (sort 25) at runtime (`NotebookHUD.Adopt`), so it shows above the PC, shelf and repair backdrops. Books are listed one per row: slot icon, name on the right (24px).
-- Notes and Reserved sit top right, stacked under the coin purse (`Notebook.uss`).
+- Notes and Reserved sit top right, stacked under the coin purse (`Notebook.uss`). While a shelf, cart, return bin, repair desk or the notice board is open they drop lower (`.below-close`, padding-top 280) so the screen's × in its top-right corner isn't half covered by the notebook on narrower screens.
 - With Notes collapsed, the notebook is only the tab's height (`#notebook.collapsed { max-height: 80px; }`), so Reserved moves up right under it; opening Notes pushes Reserved down.
 - Notes and Reserved pages are 430px wide. `NotebookHUD.FitLists` sizes the lists from the screen height: Notes and Reserved get half each of the space below the coin purse. A folded box takes only its tab's height.
 

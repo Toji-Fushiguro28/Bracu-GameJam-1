@@ -104,7 +104,8 @@ public class NotebookHUD : MonoBehaviour
         float h = layer.layout.height;
         if (float.IsNaN(h) || h <= 0f || Mathf.Abs(h - fittedHeight) < 1f) return;
         fittedHeight = h;
-        float half = (h - 104f - 24f - 10f) * 0.5f; // the purse above, a margin at the bottom, the gap between
+        float top = layer.ClassListContains("below-close") ? 280f : 104f; // same as padding-top in Notebook.uss
+        float half = (h - top - 24f - 10f) * 0.5f; // the purse (or a work screen's ×) above, a margin at the bottom, the gap between
         if (list != null) list.style.maxHeight = Mathf.Max(140f, half - 100f);
         if (reserveList != null) reserveList.style.maxHeight = Mathf.Max(100f, half - 80f);
     }
@@ -145,6 +146,10 @@ public class NotebookHUD : MonoBehaviour
         // Out of the way on the title screen and behind the Day Report.
         bool show = !MainMenuUI.Active && (DayReportUI.Instance == null || !DayReportUI.Instance.IsOpen);
         layer.EnableInClassList("hidden", !show);
+        // A work screen's × sits on its top-right corner, right where the notebook starts on narrower screens:
+        // while one is open, the notebook drops below it so the × is fully clickable.
+        bool working = (ShelfUI.Instance != null && ShelfUI.Instance.IsOpen) || (RepairUI.Instance != null && RepairUI.Instance.IsOpen) || NoticeBoardUI.IsOpen;
+        if (working != layer.ClassListContains("below-close")) { layer.EnableInClassList("below-close", working); fittedHeight = -1f; }
         PointerOver = show && MouseOver();
         FitLists();
         if (dirty) Rebuild();

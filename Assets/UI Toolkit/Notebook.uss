@@ -5,6 +5,8 @@
     align-items: flex-end;
     padding-top: 104px; /* under the coin purse */
 }
+/* A shelf, cart, return bin, repair desk or notice board is open: start below its × (NotebookHUD). */
+.notebook-layer.below-close { padding-top: 280px; }
 .notebook {
     flex-direction: row;
     align-items: flex-start;

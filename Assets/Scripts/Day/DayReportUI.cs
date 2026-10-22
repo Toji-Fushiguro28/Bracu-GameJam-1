@@ -350,7 +350,8 @@ public class DayReportUI : MonoBehaviour
         return "The popular books change every morning. Check the catalogue first thing and stock up on the ones that glow.";
     }
 
-    void AddRow(string title, string sub, string button, bool enabled, System.Action onClick, bool popular = false, bool glow = false)
+    /// <summary>buySound false: onClick plays its own (the shop buys through PCCatalogueView.Buy).</summary>
+    void AddRow(string title, string sub, string button, bool enabled, System.Action onClick, bool popular = false, bool glow = false, bool buySound = true)
     {
         var row = new VisualElement();
         row.AddToClassList("shelf-row");
@@ -360,7 +361,8 @@ public class DayReportUI : MonoBehaviour
         text.Add(PopularGlow.TitleRow(new Label(title) { name = "row-title" }, popular, row));
         text.Add(new Label(sub) { name = "row-sub" });
         row.Add(text);
-        var b = new Button(() => { onClick(); if (!GameAudio.JustSpent) { if (buySound != null) sfx.PlayOneShot(buySound, 0.7f); else GameAudio.Play(a => a.buy); } RefreshReport(); RefreshPlan(); }) { text = button }; // after a payment the coin clink plays instead
+        bool sound = buySound;
+        var b = new Button(() => { onClick(); if (sound && !GameAudio.JustSpent) { if (this.buySound != null) sfx.PlayOneShot(this.buySound, 0.7f); else GameAudio.Play(a => a.buy); } RefreshReport(); RefreshPlan(); }) { text = button }; // after a payment the coin clink plays instead
         b.AddToClassList("kit-button");
         b.SetEnabled(enabled);
         row.Add(b);
@@ -369,24 +371,48 @@ public class DayReportUI : MonoBehaviour
 
     int Price(BookData b) => GameManager.OrderPrice(b, false);
 
+    string shopMsg; // the last purchase, like the PC's message line
+    int shopMsgDay = -1;
+
+    /// <summary>The same shop as the PC catalogue (PCCatalogueView.Buy): the rare dealer's book while a VIP wants it,
+    /// then every book you can order, with what's on order and on the cart. Orders arrive in the morning.</summary>
     void BuildShop(GameManager gm)
     {
         // Titles the library doesn't have yet are in the list too: ordering one adds it to the library.
         var catalogue = new System.Collections.Generic.List<BookData>(gm.Books);
         catalogue.AddRange(gm.NewTitles);
-        catalogue.Sort((x, y) => gm.IsPopular(x) != gm.IsPopular(y) ? (gm.IsPopular(x) ? -1 : 1) : string.Compare(x.Title, y.Title, System.StringComparison.Ordinal));
+        var wanted = SpecialJobs.Instance != null ? SpecialJobs.Instance.WantedRare : null;
+        if (wanted != null && !catalogue.Contains(wanted)) catalogue.Add(wanted);
+        catalogue.Sort((x, y) =>
+        {
+            bool dx = PCCatalogueView.IsDealerBook(x), dy = PCCatalogueView.IsDealerBook(y);
+            if (dx != dy) return dx ? -1 : 1; // a VIP's rare book on top, as on the PC
+            return gm.IsPopular(x) != gm.IsPopular(y) ? (gm.IsPopular(x) ? -1 : 1) : string.Compare(x.Title, y.Title, System.StringComparison.Ordinal);
+        });
+        if (shopMsg != null && shopMsgDay == gm.day)
+        {
+            var note = new Label(shopMsg);
+            note.AddToClassList("summary-note");
+            list.Add(note);
+        }
         foreach (var b in catalogue)
         {
-            if (BookRequest.IsRare(b) || !BookRequest.Available(b)) continue; // rare / locked-room books can't be bought
+            if (!PCCatalogueView.ForSale(b)) continue; // rare / locked-room books can't be bought (except the dealer's)
             if (filter != null && !filter.Matches(b)) continue;
             var book = b;
-            int price = Price(book);
+            bool dealer = PCCatalogueView.IsDealerBook(book);
+            int price = dealer ? GameManager.RarePrice(book) : Price(book);
             var req = gm.reservations.Find(r => r.title == book.Title);
-            string who = req != null ? $"  ·  requested by {req.name}" : "";
-            AddRow(book.Title, (gm.IsNewTitle(book) ? $"New to the library  ·  {book.SubjectName}  ·  by {book.Author}" : $"{book.TypeName}  ·  {book.SubjectName}  ·  in stock {book.GoodCopies + book.WornCopies}")
-                   + $"  ·  {price} coins · arrives tomorrow{who}",
-                   "Buy", gm.Coins >= price,
-                   () => gm.OrderBook(book, false), gm.IsPopular(book)); // arrives in the morning
+            int onOrder = gm.OnOrder(book), onCart = PCCatalogueView.CopiesOnCart(book);
+            string sub = dealer ? $"VIP request  ·  rare dealer  ·  by {book.Author}"
+                       : gm.IsNewTitle(book) ? $"New to the library  ·  {book.SubjectName}  ·  by {book.Author}"
+                       : $"{book.TypeName}  ·  {book.SubjectName}  ·  in stock {book.GoodCopies + book.WornCopies}";
+            if (onOrder > 0) sub += $"  ·  {onOrder} on order";
+            if (onCart > 0) sub += $"  ·  {onCart} on the cart";
+            sub += $"  ·  {price} coins · arrives tomorrow" + (req != null ? $"  ·  requested by {req.name}" : "");
+            AddRow(book.Title, sub, "Buy", gm.Coins >= price,
+                   () => { var done = PCCatalogueView.Buy(book, false); if (done != null) { shopMsg = done; shopMsgDay = gm.day; } },
+                   gm.IsPopular(book), buySound: false);
         }
     }
 

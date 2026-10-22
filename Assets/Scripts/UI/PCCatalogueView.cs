@@ -109,29 +109,38 @@ public static class PCCatalogueView
 
     static void Order(bool express)
     {
-        var gm = GM;
         var b = selected;
         if (!express && Tutorial.ExpressOnly) return;
-        if (gm == null) return;
-        if (Dealer(b))
-        {
-            if (!gm.BuyRare(b)) return;
-            GameAudio.Play(a => a.buy);
-            msg = "Ordered from the rare dealer! It arrives on the book cart tomorrow morning.";
-            msgGood = true;
-            Apply();
-            ShowDetails(b);
-            return;
-        }
-        if (!CanOrder(b)) return;
-        if (!gm.OrderBook(b, express)) return;
-        GameAudio.Play(a => a.buy);
-        msg = express ? $"Express ordered! It reaches the book cart at {GameManager.FormatHour(gm.Hour + GameManager.ExpressHours)}."
-                      : $"Ordered! It arrives on the book cart tomorrow morning ({gm.OnOrder(b)} on order).";
+        string done = Buy(b, express);
+        if (done == null) return;
+        msg = done;
         msgGood = true;
         Apply();
         ShowDetails(b);
     }
+
+    /// <summary>The one way to buy a book (the PC catalogue and the Day Report shop): the rare dealer's book for a
+    /// VIP, or a copy of a normal one. Plays the sound and returns the message, or null if it couldn't be bought.</summary>
+    public static string Buy(BookData b, bool express)
+    {
+        var gm = GM;
+        if (gm == null || b == null) return null;
+        if (Dealer(b))
+        {
+            if (!gm.BuyRare(b)) return null;
+            GameAudio.Play(a => a.buy);
+            return "Ordered from the rare dealer! It arrives on the book cart tomorrow morning.";
+        }
+        if (!CanOrder(b) || !gm.OrderBook(b, express)) return null;
+        GameAudio.Play(a => a.buy);
+        return express ? $"Express ordered! It reaches the book cart at {GameManager.FormatHour(gm.Hour + GameManager.ExpressHours)}."
+                       : $"Ordered! It arrives on the book cart tomorrow morning ({gm.OnOrder(b)} on order).";
+    }
+
+    /// <summary>What the shops list: the rare dealer's book while a VIP wants it, or any normal book you can order.</summary>
+    public static bool ForSale(BookData b) => Dealer(b) || CanOrder(b);
+    public static bool IsDealerBook(BookData b) => Dealer(b);
+    public static int CopiesOnCart(BookData b) => OnCart(b);
 
     // ---------------- Filters and list ----------------
 

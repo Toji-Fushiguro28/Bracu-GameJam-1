@@ -722,7 +722,7 @@
 }
 
 /* ---------- Day Report: Summary tab (income by source, what went wrong, a tip for tomorrow) ---------- */
-.plan-tab { margin: 0 3px; font-size: 20px; }
+.plan-tab { margin: 0 2px; font-size: 18px; padding-left: 8px; padding-right: 8px; } /* five tabs on one row */
 .summary-head { color: var(--accent); font-size: 23px; margin: 12px 4px 4px 4px; }
 .summary-note { color: var(--ink); font-size: 20px; white-space: normal; margin: 2px 6px; }
 .summary-note.bad { color: rgb(190, 70, 50); }
