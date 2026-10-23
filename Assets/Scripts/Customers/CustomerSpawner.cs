@@ -188,7 +188,8 @@ public class CustomerSpawner : MonoBehaviour
         else if (vip)
             // Scholars need a Rare Books card before they can read there.
             customer.kind = member != null && member.access == AccessLevel.Rare ? Customer.Kind.Reader : Customer.Kind.SignUp;
-        else if (member == null && Members.TryProfile(prefab.name, out var profile) && profile.access != AccessLevel.Rare && Members.CanSignUp(prefab.name) && Random.value < signUpChance)
+        else if (member == null && !DayStory.PowerOut // power cut: the computer can't make cards, so nobody comes for one
+                 && Members.TryProfile(prefab.name, out var profile) && profile.access != AccessLevel.Rare && Members.CanSignUp(prefab.name) && Random.value < signUpChance)
             customer.kind = Customer.Kind.SignUp;
         else
         {

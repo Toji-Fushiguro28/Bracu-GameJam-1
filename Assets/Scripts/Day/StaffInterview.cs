@@ -248,7 +248,8 @@ public class StaffInterview : MonoBehaviour
             var text = new VisualElement();
             text.AddToClassList("pick-text");
             text.Add(new Label(c.name) { name = "pick-name" });
-            text.Add(new Label(Notes(c)) { name = "pick-notes" });
+            text.Add(Stats(c));
+            text.Add(new Label(PriceLine(c)) { name = "pick-notes" });
             row.Add(text);
             var cc = c;
             int price = FinalPrice(c);
@@ -649,9 +650,9 @@ public class StaffInterview : MonoBehaviour
     {
         switch (q)
         {
-            case Q.Experience: return Tier(c.speed, "(Slow and steady.", "(Keeps a decent pace.", "(Quick on their feet!") + $" Speed {Stars(c.speed)})";
-            case Q.Accident: return Tier(c.care, "(Hmm, a bit careless.", "(Careful enough.", "(Very careful with books.") + $" Care {Stars(c.care)})";
-            case Q.Grumpy: return Tier(c.charm, "(Not great with people.", "(Polite enough.", "(Lovely with visitors.") + $" Manner {Stars(c.charm)})";
+            case Q.Experience: return Tier(c.speed, "(Slow and steady.", "(Keeps a decent pace.", "(Quick on their feet!") + ")"; // the stars go on the card
+            case Q.Accident: return Tier(c.care, "(Hmm, a bit careless.", "(Careful enough.", "(Very careful with books.") + ")";
+            case Q.Grumpy: return Tier(c.charm, "(Not great with people.", "(Polite enough.", "(Lovely with visitors.") + ")";
             default: return c.flexible ? "(They really want this job. They might be open about the price.)" : "(They know what they're worth.)";
         }
     }
@@ -714,17 +715,29 @@ public class StaffInterview : MonoBehaviour
         resumeName.text = c.name;
         resumeRole.text = $"Applying for: {RoleName}";
         resumeBio.text = c.background;
-        resumeNotes.text = Notes(c);
+        // Speed, Care and Manner as gold stars, above the price line.
+        var stats = resume.Q("resume-stats");
+        if (stats == null) { stats = new VisualElement { name = "resume-stats", pickingMode = PickingMode.Ignore }; resume.Insert(resume.IndexOf(resumeNotes), stats); }
+        stats.Clear();
+        stats.Add(Stats(c));
+        resumeNotes.text = PriceLine(c);
         resumeLeft.text = $"Questions left: {questionsLeft}";
         resume.RemoveFromClassList("hidden");
+        // A little bump so you notice the card change after an answer.
+        resume.AddToClassList("bump");
+        resume.schedule.Execute(() => resume.RemoveFromClassList("bump")).ExecuteLater(180);
     }
 
-    static string Stars(int v) => new string('*', v) + new string('-', 5 - v);
+    static VisualElement Stats(Candidate c)
+    {
+        var box = new VisualElement { pickingMode = PickingMode.Ignore };
+        box.Add(GoldStars.Stat("Speed", c.speed, c.knowSpeed));
+        box.Add(GoldStars.Stat("Care", c.care, c.knowCare));
+        box.Add(GoldStars.Stat("Manner", c.charm, c.knowCharm));
+        return box;
+    }
 
-    static string Notes(Candidate c) =>
-        $"Speed   {(c.knowSpeed ? Stars(c.speed) : "?")}\n" +
-        $"Care    {(c.knowCare ? Stars(c.care) : "?")}\n" +
-        $"Manner  {(c.knowCharm ? Stars(c.charm) : "?")}\n" +
+    static string PriceLine(Candidate c) =>
         $"Price   {c.wage} coins{(c.agreed ? " (agreed)" : c.knowFloor ? $" (lowest {c.floor})" : " (asking)")}";
 
     void Play(AudioClip clip) { if (clip != null) sfx.PlayOneShot(clip, 0.8f); }

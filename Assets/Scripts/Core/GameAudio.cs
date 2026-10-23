@@ -138,6 +138,22 @@ public class GameAudio : MonoBehaviour
         s.PlayOneShot(clip, vol * GameSettings.UiScale); // typing and wheel clicks are UI sounds
     }
 
+    /// <summary>Plays this a moment from now (real time), e.g. a stamp sound on the animation's down-hit.</summary>
+    public static void PlayLater(Func<GameAudio, Sfx> pick, float seconds)
+    {
+        if (Instance != null) Instance.StartCoroutine(Instance.Later(pick, seconds));
+    }
+
+    System.Collections.IEnumerator Later(Func<GameAudio, Sfx> pick, float seconds)
+    {
+        yield return new WaitForSecondsRealtime(seconds);
+        Play(pick);
+    }
+
+    /// <summary>The librarian's desk stamp (check-ins and stamp-outs): the card stamp sound, on the down-hit of the
+    /// 0.5 s Stamp animation.</summary>
+    public static void DeskStamp() => PlayLater(a => a.cardStamp, 0.22f);
+
     /// <summary>The intro has no GameAudio: its name box types with this clip.</summary>
     public static void UseIntroKey(AudioClip clip) => introKey = clip;
 

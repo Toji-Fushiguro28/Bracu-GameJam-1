@@ -82,7 +82,12 @@ public class DayReportUI : MonoBehaviour
         }
         PlayerLock.Lock(this);
         GameAudio.Play(a => a.panelOpen, 0.6f);
-        if (root.ClassListContains("hidden")) tab = SummaryTab; // each evening opens on the summary
+        if (root.ClassListContains("hidden"))
+        {
+            tab = SummaryTab; // each evening opens on the summary
+            filter?.Reset();  // ...and a fresh shop: All, no search (yesterday's "Reserved" mustn't stick)
+            shopMsg = null;
+        }
         root.RemoveFromClassList("hidden");
         RefreshReport();
         RefreshPlan();
@@ -190,7 +195,11 @@ public class DayReportUI : MonoBehaviour
         Tile("tips", d.tips, "Tips");
         rows.Add(grid);
         int s = Stars(d);
-        stars.text = new string('*', s) + new string('-', 5 - s);
+        // The day's rating as the kit's gold stars (text stars don't show in the web build's font).
+        stars.text = "";
+        stars.Clear();
+        var row = GoldStars.Row(s);
+        while (row.childCount > 0) stars.Add(row[0]); // moves each star across
         int delta = gm.Reputation - gm.ReputationAtStart;
         repLabel.text = $"Reputation {gm.Reputation} ({(delta >= 0 ? "+" : "")}{delta})" +
                         (cleanBonus > 0 ? "\nThe library is spotless!" : cleanBonus < 0 ? "\nThe library was left messy." : "") +

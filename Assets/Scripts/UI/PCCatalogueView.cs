@@ -188,12 +188,8 @@ public static class PCCatalogueView
         if (keep >= 0) list.SetSelectionWithoutNotify(new[] { keep });
     }
 
-    /// <summary>The search looks at the title, author, tags, subject and the description (so a word from an
-    /// "about" request finds the book).</summary>
-    static bool Matches(BookData b, string q) =>
-        (b.Title ?? "").ToLowerInvariant().Contains(q) || (b.Author ?? "").ToLowerInvariant().Contains(q) ||
-        (b.Tag ?? "").ToLowerInvariant().Contains(q) || (b.SubjectName ?? "").ToLowerInvariant().Contains(q) ||
-        (b.Abstract ?? "").ToLowerInvariant().Contains(q);
+    /// <summary>Everything on the book is searchable (BookFilterBar.SearchMatches): every word typed, anywhere.</summary>
+    static bool Matches(BookData b, string q) => BookFilterBar.SearchMatches(b, q);
 
     static void BindRow(VisualElement el, int i)
     {

@@ -34,7 +34,7 @@ public class BookFilterBar
 
         search = new TextField { name = pcStyle ? "book-search" : "page-search", maxLength = 40 }; // longest title is well under 40
         search.AddToClassList("filter-search");
-        search.textEdition.placeholder = "search title, author or tag";
+        search.textEdition.placeholder = "search anything: title, author, subject, words...";
         search.RegisterValueChangedCallback(_ => changed?.Invoke());
         Root.Add(search);
 
@@ -165,10 +165,32 @@ public class BookFilterBar
     /// <summary>Starts with this in the search box.</summary>
     public void SetSearch(string text) => search.SetValueWithoutNotify(text ?? "");
 
-    public bool Matches(BookData b)
+    public bool Matches(BookData b) => SearchMatches(b, search.value) && TypeMatches(b, TypeNames[type], subject) && ShowMatches(show, b);
+
+    /// <summary>The one search (PC catalogue, Day Report shop): every word typed must appear somewhere in the book's
+    /// text: title, author, subject, topic, tags, description, type, shelf code and name, room, tier. Any order;
+    /// case, apostrophes and punctuation don't matter. Empty: everything.</summary>
+    public static bool SearchMatches(BookData b, string query)
     {
-        string q = (search.value ?? "").Trim().ToLowerInvariant();
-        if (q.Length > 0 && !(b.Title ?? "").ToLowerInvariant().Contains(q) && !(b.Author ?? "").ToLowerInvariant().Contains(q) && !(b.Tag ?? "").ToLowerInvariant().Contains(q)) return false;
-        return TypeMatches(b, TypeNames[type], subject) && ShowMatches(show, b);
+        var words = Plain(query).Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        if (words.Length == 0) return true;
+        string hay = Plain(string.Join(" ", b.Title, b.Author, b.Subject, b.Topic, b.Tag, b.Abstract, b.FormatName, b.TypeName,
+            b.ShelfLocation, ShelfInteractable.NameOf(b.ShelfLocation), b.Rarity,
+            BookRequest.IsArchive(b) ? "archive" : "", BookRequest.IsRare(b) ? "rare books" : ""));
+        foreach (var w in words) if (!hay.Contains(w)) return false;
+        return true;
+    }
+
+    /// <summary>Lower case, apostrophes dropped ("Shakespeare's" = "shakespeares"), other punctuation as spaces.</summary>
+    static string Plain(string s)
+    {
+        if (string.IsNullOrEmpty(s)) return "";
+        var sb = new System.Text.StringBuilder(s.Length);
+        foreach (char c in s.ToLowerInvariant())
+        {
+            if (c == '\'' || c == '’') continue;
+            sb.Append(char.IsLetterOrDigit(c) ? c : ' ');
+        }
+        return sb.ToString();
     }
 }

@@ -290,7 +290,8 @@ public static class Members
         foreach (var c in UnityEngine.Object.FindObjectsByType<Customer>())
             if (c.profileKey == m.key)
             {
-                HUD.SkillPop(c.transform.position + Vector3.up * 1.45f, up ? "+\u00BD" : "-\u00BD", up ? "heart-up" : "heart-down");
+                // Just the heart (no "+\u00BD": the font has no \u00BD, and it showed as "+0").
+                HUD.SkillPop(c.transform.position + Vector3.up * 1.45f, "", up ? "heart-up" : "heart-down");
                 GameAudio.Play(a => up ? a.heartUp : a.heartDown, 0.6f);
                 return;
             }

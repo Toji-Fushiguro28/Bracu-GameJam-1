@@ -42,6 +42,9 @@ public class DayStory : MonoBehaviour
         public float lingerUntil;   // with next: they look around the shelves until this hour...
         public Func<Customer, bool> linger; // ...or do this instead (true = it's taken care of), e.g. the author at the signing table
         public Visit next;          // ...then come back to the desk for this
+        public bool direct;         // no desk and no talk: after runs as they walk in, then straight to linger (the author
+                                    // to the table at two, the inspector to his rounds), and to the desk for next
+        public Action<Customer> unheard; // the library closes before you hear them out: this runs instead (the author still pays)
     }
 
     static GameManager GM => GameManager.Instance;
@@ -944,6 +947,7 @@ public class DayStory : MonoBehaviour
     int angryAtStart;
     float messTime, messSum;
     string verdict;
+    int judgeWalkouts;
     const float InspectFrom = 13f, InspectUntil = 14.5f;
 
     void SetUpInspection()
@@ -977,62 +981,73 @@ public class DayStory : MonoBehaviour
                 .Say("Hiding them in my stomach. Problem solved.", "hide")
                 .d,
         });
+        var pryce = new[] { "PF_NPC_Visitor_Arthur", "PF_NPC_Scholar_Omar", "PF_NPC_Professor_Victor", "PF_NPC_Professor_Edmund" };
+        // Mid-morning: Pryce comes in to introduce himself, then leaves until one.
+        VisitAt(10.25f, new Visit
+        {
+            prefabs = pryce, name = "Mr. Pryce", teaser = "Pryce. From the board.", atDesk = true,
+            talk = c => new Script()
+                .Say("Pryce. Board of Governors. I'll be back at one with a clipboard and ninety minutes.")
+                .Say("Carry on as normal when I do. I'll just be looking. Don't mind me. Everyone minds me.")
+                .Choose("Can I get you anything?", "get", "Look all you like.", "look")
+                .Say("A pencil that hasn't been chewed would be a start.", "get", DialogueAsset.End)
+                .Say("I will. That's the job.", "look")
+                .d,
+        });
+        bool judged = false;
+        void Judge()
+        {
+            if (judged) return;
+            judged = true;
+            inspecting = false;
+            int walkouts = GM.Today.angry - angryAtStart;
+            float mess = messTime > 0f ? messSum / messTime : 0f;
+            verdict = walkouts == 0 && mess < 1.5f ? "satisfactory" : walkouts >= 2 || mess >= 3.5f ? "concerns" : "adequate";
+            judgeWalkouts = walkouts;
+        }
+        void Verdict(bool spoken)
+        {
+            Judge();
+            int r = verdict == "satisfactory" ? 3 : verdict == "concerns" ? -2 : 1;
+            GM.AddReputation(r);
+            GameAudio.Play(a => a.eventDone);
+            Banner(spoken ? $"Inspection result: {verdict} ({(r > 0 ? "+" : "")}{r} reputation)."
+                          : $"Mr. Pryce left his report on the desk: {verdict} ({(r > 0 ? "+" : "")}{r} reputation).", 6f);
+            RequestLog.TaskDone("inspection", $"Verdict: {verdict}");
+        }
         var verdictVisit = new Visit
         {
             name = "Mr. Pryce", teaser = "Right. I've seen enough.", atDesk = true,
             talk = c =>
             {
-                inspecting = false;
-                int walkouts = GM.Today.angry - angryAtStart;
-                float mess = messTime > 0f ? messSum / messTime : 0f;
+                Judge();
                 var s = new Script();
-                if (walkouts == 0 && mess < 1.5f)
-                {
-                    verdict = "satisfactory";
+                if (verdict == "satisfactory")
                     s.Say("Floor's tidy. Nobody stormed out. One gentleman told me, unprompted, that you're \"alright, actually\".")
                      .Say("I'll be writing \"satisfactory\". From me, that's practically a love letter.");
-                }
-                else if (walkouts >= 2 || mess >= 3.5f)
-                {
-                    verdict = "concerns";
+                else if (verdict == "concerns")
                     s.Say("Cups on the tables, books on the floor, and I watched people walk out muttering.")
                      .Say("I'm writing \"concerns\". The board loves the word \"concerns\".");
-                }
                 else
-                {
-                    verdict = "adequate";
-                    s.Say(walkouts > 0 ? "Mostly fine. But somebody left in a huff, and I wrote down what they called you." : "Mostly fine. A few things left lying about, and I noticed every one of them.")
+                    s.Say(judgeWalkouts > 0 ? "Mostly fine. But somebody left in a huff, and I wrote down what they called you." : "Mostly fine. A few things left lying about, and I noticed every one of them.")
                      .Say("\"Adequate\", I'll write. Don't look pleased. Adequate is a warning.");
-                }
                 return s.d;
             },
-            after = (c, _) =>
-            {
-                int r = verdict == "satisfactory" ? 3 : verdict == "concerns" ? -2 : 1;
-                GM.AddReputation(r);
-                GameAudio.Play(a => a.eventDone);
-                Banner($"Inspection result: {verdict} ({(r > 0 ? "+" : "")}{r} reputation).", 6f);
-                RequestLog.TaskDone("inspection", $"Verdict: {verdict}");
-            },
+            after = (c, _) => Verdict(true),
+            unheard = c => Verdict(false), // closing before he reaches the desk: the report is left behind
         };
         VisitAt(InspectFrom, new Visit
         {
-            prefabs = new[] { "PF_NPC_Visitor_Arthur", "PF_NPC_Scholar_Omar", "PF_NPC_Professor_Victor", "PF_NPC_Professor_Edmund" },
-            name = "Mr. Pryce", teaser = "Pryce. From the board.", atDesk = true,
-            talk = c => new Script()
-                .Say("Pryce. Board of Governors. I have a clipboard and ninety minutes.")
-                .Say("Carry on as normal. I'll just be looking. Don't mind me. Everyone minds me.")
-                .Choose("Can I get you anything?", "get", "Look all you like.", "look")
-                .Say("A pencil that hasn't been chewed would be a start.", "get", DialogueAsset.End)
-                .Say("I will. That's the job.", "look")
-                .d,
+            // One o'clock: straight in and straight to his rounds, no queue.
+            prefabs = pryce, name = "Mr. Pryce", direct = true,
             after = (c, _) =>
             {
                 inspecting = true;
                 GameAudio.Play(a => a.announcement);
                 angryAtStart = GM.Today.angry;
                 messTime = messSum = 0f;
-                Banner("The inspection has started! Keep it tidy until 2:30.");
+                c.Say("Don't mind me.", 3f);
+                Banner("Mr. Pryce is back, and the inspection has started! Keep it tidy until 2:30.");
             },
             lingerUntil = InspectUntil,
             next = verdictVisit,
@@ -1110,6 +1125,9 @@ public class DayStory : MonoBehaviour
             {
                 Banner($"Book signing at 2:00 PM! {author}'s fans will want {TitlesText}.", 7f);
                 RequestLog.Task("signing", "Book signing", $"{BookRequest.H(author)} signs at 2:00 PM. Have {TitlesText} on the shelves (order more in the Catalogue).");
+                // A look at the table on the way out ("this'll do nicely"), then home until two.
+                var t = SigningTable.Instance;
+                if (t != null && t.desk != null) { c.PeekThenLeave(t.SlotPosition(0), t.desk.position, 4f); c.Say("This'll do nicely.", 3f); }
             },
         });
         VisitAt(12.25f, new Visit
@@ -1125,6 +1143,23 @@ public class DayStory : MonoBehaviour
                 if (b != null) c.ContinueWithRequest(ByTitle(b, $"Could I buy <color=#D67840>\"{b.Title}\"</color>? For the signing."), false);
             },
         });
+        // Half past three: one trip to the desk to settle up, the table fee and a thank-you together.
+        bool paid = false;
+        void SettleUp(Customer c, bool atDesk)
+        {
+            if (paid) return;
+            paid = true;
+            int thanks = signSold >= 3 ? 25 : 0;
+            GM.AddCoins(SigningFee + thanks);
+            GM.Today.Earn(GameManager.DayStats.Source.Other, SigningFee + thanks);
+            RequestLog.Money(author, thanks > 0 ? "The signing table, and a thank-you" : "Paid for the signing table", "Signing fee", SigningFee + thanks);
+            if (c != null) HUD.SkillPop(c.transform.position + Vector3.up * 2.2f, $"Signing  +{SigningFee + thanks}");
+            RequestLog.TaskDone("signing", $"{signSold} sold");
+            GameAudio.Play(a => a.eventDone);
+            if (signSold >= 3) GM.AddReputation(2);
+            else if (signSold > 0) GM.AddReputation(1);
+            if (!atDesk) Banner($"{author} left {SigningFee + thanks} coins on the desk on the way out, for the table{(thanks > 0 ? " and a thank-you" : "")}.", 6f);
+        }
         var farewell = new Visit
         {
             name = author, teaser = "That's me done!", atDesk = true,
@@ -1134,38 +1169,26 @@ public class DayStory : MonoBehaviour
                 var s = new Script();
                 if (n >= 3)
                     s.Say($"{n} copies! I signed one \"to Pip\" and it turned out Pip was a dog. Best signing I've had in years.")
-                     .Say("This is for the library. Don't argue, I've already let go of it.");
+                     .Say($"Here's {BookRequest.H($"{SigningFee} coins")} for the table, and a little extra for the library. Don't argue, I've already let go of it.");
                 else if (n > 0)
-                    s.Say($"We sold {n}. Which is {n} more than the garden centre last month. I'll take it.");
+                    s.Say($"We sold {n}. Which is {n} more than the garden centre last month. I'll take it.")
+                     .Say($"And {BookRequest.H($"{SigningFee} coins")} for the table. I always pay my way. Mostly in coins, once in jam.");
                 else
-                    s.Say("Nobody bought one, but a little girl asked if I was famous. I said \"a bit\", and she said \"which bit\". I'll be thinking about that all week.");
+                    s.Say("Nobody bought one, but a little girl asked if I was famous. I said \"a bit\", and she said \"which bit\". I'll be thinking about that all week.")
+                     .Say($"Here's {BookRequest.H($"{SigningFee} coins")} for the table anyway. I always pay my way.");
                 return s.d;
             },
-            after = (c, _) =>
-            {
-                RequestLog.TaskDone("signing", $"{signSold} sold");
-                GameAudio.Play(a => a.eventDone);
-                if (signSold >= 3) { Reward(25, 2); Banner($"{author} left a thank-you: +25 coins."); }
-                else if (signSold > 0) Reward(0, 1);
-            },
+            after = (c, _) => SettleUp(c, true),
+            unheard = c => SettleUp(c, false), // closing before they reach the desk: they still pay on the way out
         };
         VisitAt(SignStart, new Visit
         {
-            prefabs = who, name = author, teaser = "Right! Where do you want me?", atDesk = true,
-            talk = c => new Script()
-                .Say("Right! Where do you want me? Near the door so people see me, but not so near they feel trapped.")
-                .Say($"And here's {BookRequest.H($"{SigningFee} coins")} for the table. I always pay my way. Mostly in coins, once in jam.")
-                .Say("I've brought my own pen. Last time somebody lent me one and it was a crayon.")
-                .d,
+            // Two o'clock: straight to the table and sits down, no queue.
+            prefabs = who, name = author, direct = true,
             after = (c, _) =>
             {
-                // The author pays the library for her table.
-                GM.AddCoins(SigningFee);
-                GM.Today.Earn(GameManager.DayStats.Source.Other, SigningFee);
-                RequestLog.Money(author, "Paid for the signing table", "Signing fee", SigningFee);
-                HUD.SkillPop(c.transform.position + Vector3.up * 2.2f, $"Signing table fee  +{SigningFee}");
                 GameAudio.Play(a => a.signingStart);
-                Banner($"The book signing has started! {author}'s fans are on their way.");
+                Banner($"The book signing has started! {author} is at the signing table, and the fans are on their way.");
             },
             lingerUntil = SignEnd,
             linger = c => SigningTable.Instance != null && SigningTable.Instance.SeatAuthor(c, SignEnd), // signs at the table till 3:30
@@ -1232,6 +1255,24 @@ public class DayStory : MonoBehaviour
         Popup(() => new Script()
             .Me("The lights die with a soft clunk. Somebody gasps. Somebody else says \"ooh\" like it's fireworks")
             .Me("The computer's dead until two. People are being nice about it: they'll wait a little longer than usual"));
+    }
+
+    /// <summary>A card visitor during the power cut (the computer's dead): they went home and come back to the desk
+    /// a quarter of an hour after the power returns, to try again.</summary>
+    public void CardVisitorAfterPower(string key, bool vip)
+    {
+        VisitAt(Mathf.Max(GM.Hour, PowerOn) + 0.25f, new Visit
+        {
+            prefabs = new[] { key }, atDesk = true, vip = vip, teaser = "Is the computer back on?",
+            talk = c => new Script()
+                .Say("The lights are back! Shall we try that library card again?")
+                .d,
+            after = (c, _) =>
+            {
+                // Only the same person (if someone else came instead, or they joined meanwhile, there's nothing to do).
+                if (c.profileKey == key && Members.Find(key) == null && Members.TryProfile(key, out Members.Profile _)) c.ContinueAsSignUp();
+            },
+        });
     }
 
     void RestorePower()

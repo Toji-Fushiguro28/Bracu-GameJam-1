@@ -85,8 +85,12 @@ public class ShelfUI : MonoBehaviour
         putBack = doc.Q<Button>("put-back");
         doc.Q<Button>("shelf-close")?.RegisterCallback<ClickEvent>(_ => Close());
         putBack?.RegisterCallback<ClickEvent>(_ => PutBack());
+        // Like the computer: a click on the dim backdrop outside the book closes it (not the click that opened it).
+        root?.RegisterCallback<ClickEvent>(e => { if (e.target == root && Time.unscaledTime - openedAt > 0.3f) Close(); });
         root?.AddToClassList("hidden");
     }
+
+    float openedAt;
 
     public void Open(ShelfInteractable target, PlayerCarry playerCarry)
     {
@@ -95,6 +99,7 @@ public class ShelfUI : MonoBehaviour
         carry = playerCarry;
         PlayerLock.Lock(this);
         root.RemoveFromClassList("hidden");
+        openedAt = Time.unscaledTime;
         GameAudio.Play(a => a.panelOpen, 0.6f);
         note.text = ""; picked = null; ShowAbout(); // a fresh shelf: nothing picked yet
         Refresh();
@@ -108,6 +113,7 @@ public class ShelfUI : MonoBehaviour
         carry = playerCarry;
         PlayerLock.Lock(this);
         root.RemoveFromClassList("hidden");
+        openedAt = Time.unscaledTime;
         GameAudio.Play(a => a.panelOpen, 0.6f);
         note.text = ""; picked = null; ShowAbout();
         Refresh();
@@ -121,6 +127,7 @@ public class ShelfUI : MonoBehaviour
         carry = playerCarry;
         PlayerLock.Lock(this);
         root.RemoveFromClassList("hidden");
+        openedAt = Time.unscaledTime;
         GameAudio.Play(a => a.panelOpen, 0.6f);
         note.text = ""; picked = null; ShowAbout();
         Refresh();
@@ -388,7 +395,7 @@ public class ShelfUI : MonoBehaviour
         Pips(book.WornCopies, "worn");
         Pips(book.DamagedCopies, "damaged");
         meta.Add(pips);
-        var count = new Label(book.Quantity == 0 ? "none left" : book.Quantity > shown ? $"x{book.Quantity}" : "");
+        var count = new Label(book.Quantity == 0 ? "none left" : $"x{book.Quantity}"); // always the number, like the computer's catalogue
         count.AddToClassList("row-meta-text");
         count.EnableInClassList("bad", book.Quantity == 0);
         meta.Add(count);

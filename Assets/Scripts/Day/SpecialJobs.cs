@@ -196,7 +196,7 @@ public class SpecialJobs : MonoBehaviour
         if (GM == null) return;
         if (loanBook != null && GM.CurrentPhase == GameManager.Phase.Open) CheckLoanBack();
         // Closing time: a visitor's own book still on the repair desk goes home with them (it never joins the library).
-        if (deskJob != null && GM.CurrentPhase != GameManager.Phase.Open) ClearDeskJob(job == Job.Restoration);
+        if (deskJob != null && GM.CurrentPhase == GameManager.Phase.Closed) ClearDeskJob(job == Job.Restoration);
         if (job == Job.None || GM.CurrentPhase != GameManager.Phase.Open) return;
         float h = GM.Hour;
         if (buying && !taskShown)
@@ -211,7 +211,8 @@ public class SpecialJobs : MonoBehaviour
         if (job == Job.BookClub && h >= ClubAt) { done = true; BookClubMeets(); }
         if (job == Job.Collector && h >= vipAt) { if (CollectorReturns() || h >= vipAt + 1.5f) { done = true; ClearDeskJob(false); } }
         if (job == Job.ReadingList && (h >= ListAt || dueNow)) { done = true; ListCheck(); }
-        if (job == Job.Restoration && (h >= OwnerBack || dueNow)) { if (OwnerReturns() || h >= OwnerBack + 0.75f) { done = true; ClearDeskJob(true); } }
+        // The owner's book stays on the desk until they've collected it (their visit settles it, or closing does).
+        if (job == Job.Restoration && (h >= OwnerBack || dueNow)) { if (OwnerReturns() || h >= OwnerBack + 0.75f) done = true; }
     }
 
     bool dueNow; // Dev Tools: today's deadline is now
@@ -861,7 +862,8 @@ public class SpecialJobs : MonoBehaviour
         var sp = CustomerSpawner.Instance;
         if (sp == null) return true;
         var b = book;
-        var visit = new DayStory.Visit
+        DayStory.Visit visit = null;
+        visit = new DayStory.Visit
         {
             prefabs = new[] { ownerKey }, name = ownerName, teaser = "Is my book ready?", atDesk = true,
             talk = c =>
@@ -872,19 +874,38 @@ public class SpecialJobs : MonoBehaviour
                 else if (deskFinished)
                     s.Say("You can tell it's been mended. But it holds together, and that's what matters.").Say("Here, for your trouble.");
                 else
-                    s.Say("Not done? Never mind. I'll take it home as it is.");
+                {
+                    // Not finished yet: you can go and check (they wait at the desk), or own up.
+                    if (HeldCondition(b) != null)
+                        s.Say("That's not mine, I'm afraid. Mine has my grandmother's name inside the cover.");
+                    s.Say($"Is my <color=#D67840>\"{b.Title}\"</color> ready?")
+                     .Choose("Let me check.", "check", "Sorry, it isn't done.", "notdone")
+                     .Say("Of course. I'll wait right here.", "check", "tip")
+                     .Me($"It's on the {Red("repair desk")}. Repair it, then talk to {ownerName} again", "tip", DialogueAsset.End)
+                     .Say("Never mind. I'll take it home as it is.", "notdone");
+                }
                 return s.d;
             },
-            after = (c, _) =>
+            after = (c, last) =>
             {
+                visit.next = null;
+                if (!deskFinished && (last == "check" || last == "tip"))
+                {
+                    // Back in the line at the desk with the same scene; talk to them once it's repaired.
+                    visit.next = visit;
+                    visit.lingerUntil = 0f;
+                    return;
+                }
                 RequestLog.TaskDone("job-restore", !deskFinished ? "Not repaired" : deskResult == BookCondition.Good ? "Good as new" : "Mended");
                 if (!deskFinished)
                 {
+                    ClearDeskJob(true); // it goes home with them as it is
                     GM.AddReputation(-1);
                     GM.Today.letDown++;
                     HUD.SkillPop(c.transform.position + Vector3.up * 2.2f, "Not repaired: -1 reputation");
                     return;
                 }
+                ClearDeskJob(true);
                 bool perfect = deskResult == BookCondition.Good;
                 int fee = perfect ? RestoreFee : RestoreFee / 2;
                 GM.AddCoins(fee);
@@ -894,6 +915,8 @@ public class SpecialJobs : MonoBehaviour
                 GameAudio.Play(a => a.served);
                 HUD.SkillPop(c.transform.position + Vector3.up * 2.2f, $"+{fee} coins, +{(perfect ? 2 : 1)} reputation");
             },
+            // Closing while they're still waiting: they take it home as it is (mended or not, no fee).
+            unheard = c => { RequestLog.TaskDone("job-restore", "Closed before they collected it"); ClearDeskJob(true); },
         };
         return sp.SpawnStory(visit, false) != null;
     }

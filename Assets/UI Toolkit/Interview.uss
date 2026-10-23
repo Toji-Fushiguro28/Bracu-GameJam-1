@@ -58,3 +58,9 @@
     --unity-cursor-color: rgb(235, 200, 120);
     --unity-selection-color: rgba(214, 120, 64, 0.35);
 }
+
+/* The card bumps a little when an answer updates it (StaffInterview.ShowResume). */
+.resume { transition-property: scale; transition-duration: 0.15s; }
+.resume.bump { scale: 1.04 1.04; }
+.resume .gold-stat-name { font-size: 20px; }
+.resume .gold-star { width: 18px; height: 18px; }

@@ -88,6 +88,7 @@ public class HUD : MonoBehaviour
         pin = new Label { name = "hud-pin", pickingMode = PickingMode.Ignore };
         pin.AddToClassList("hud-pin");
         pin.AddToClassList("hidden");
+        pin.Add(GoldStars.Row(1, 1, "pin-star")); // the kit's gold star in front of the text (not a text "★")
         root.Q("hud")?.Add(pin);
 
         // Phase banner and the little "+12" next to the coins.
@@ -692,8 +693,8 @@ public class HUD : MonoBehaviour
         TickCoins(gm);
         if (gm != null && pin != null)
         {
-            string text = gm.Hour < 10f && gm.day == GameManager.ArchiveDay ? "★ The Archive is open today! Readers will ask for its old books."
-                        : gm.Hour < 10f && gm.day == GameManager.RareDay ? "★ Rare Books is open today! A VIP scholar is coming."
+            string text = gm.Hour < 10f && gm.day == GameManager.ArchiveDay ? "The Archive is open today! Readers will ask for its old books."
+                        : gm.Hour < 10f && gm.day == GameManager.RareDay ? "Rare Books is open today! A VIP scholar is coming."
                         : null;
             bool show = text != null && !MainMenuUI.Active && (RoomReveal.Instance == null || !PlayerLock.IsLocked);
             pin.EnableInClassList("hidden", !show);

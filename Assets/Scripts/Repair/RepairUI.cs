@@ -39,6 +39,7 @@ public class RepairUI : MonoBehaviour
     };
 
     public bool IsOpen => desk != null;
+    float openedAt;
 
     void Awake()
     {
@@ -77,6 +78,9 @@ public class RepairUI : MonoBehaviour
         skip = doc.Q<Button>("rg-skip");
 
         doc.Q<Button>("repair-close")?.RegisterCallback<ClickEvent>(_ => Close());
+        // Like the computer: a click on the backdrop outside the book closes it, except mid-repair (a stray click
+        // mustn't throw the minigame away) and the click that opened it.
+        root?.RegisterCallback<ClickEvent>(e => { if (e.target == root && gameJob == null && Time.unscaledTime - openedAt > 0.3f) Close(); });
         repairAll?.RegisterCallback<ClickEvent>(_ => { desk?.RepairAll(); Refresh(); });
         skip?.RegisterCallback<ClickEvent>(_ => FinishGame(0f));
         // Hold-to-glue needs press and release, so listen before the button eats the events.
@@ -96,7 +100,7 @@ public class RepairUI : MonoBehaviour
             desk.Finished += OnFinished;
         }
         PlayerLock.Lock(this);
-        if (root.ClassListContains("hidden")) GameAudio.Play(a => a.panelOpen, 0.6f);
+        if (root.ClassListContains("hidden")) { GameAudio.Play(a => a.panelOpen, 0.6f); openedAt = Time.unscaledTime; }
         root.RemoveFromClassList("hidden");
         resultLabel.text = "";
         ShowStatus();
@@ -210,6 +214,18 @@ public class RepairUI : MonoBehaviour
             head.AddToClassList("ready-head");
             workList.Add(head);
             var carry = GameObject.FindWithTag("Player")?.GetComponent<PlayerCarry>();
+            if (desk.Done.Count > 1)
+            {
+                // As many as your hands can hold, oldest first.
+                var all = new Button(() =>
+                {
+                    while (carry != null && !carry.IsFull && desk.TakeDone(out var b, out var c)) carry.PickUp(b, c);
+                    Refresh();
+                }) { text = "Take all" };
+                all.AddToClassList("kit-button");
+                all.SetEnabled(carry != null && !carry.IsFull);
+                workList.Add(all);
+            }
             for (int d = 0; d < desk.Done.Count; d++)
             {
                 var (book, cond) = desk.Done[d];

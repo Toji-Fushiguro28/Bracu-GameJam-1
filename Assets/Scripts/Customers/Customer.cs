@@ -21,7 +21,7 @@ public class Customer : ClickInteractable
     public enum Kind { Buyer, Reader, Returner, SignUp, Browser, Pickup, Seeker }
     // ToSpot: walking to somewhere in the library to wait for you (a shelf, a rack, a chair, the notice board).
     // AtTable: the visiting author, walking to and sitting at the signing table. ToSigning: a fan in the signing line.
-    enum State { Queueing, Waiting, ToSeat, Reading, CheckIn, Leaving, ToShelf, Browsing, Checkout, WaitingForBook, ToSpot, AtTable, ToSigning }
+    enum State { Queueing, Waiting, ToSeat, Reading, CheckIn, Leaving, ToShelf, Browsing, Checkout, WaitingForBook, ToSpot, AtTable, ToSigning, Peek }
 
     public Kind kind;
     [Tooltip("Dean / professors: read Rare Books in the Rare Books room.")]
@@ -162,7 +162,12 @@ public class Customer : ClickInteractable
     {
         BuildOverhead();
         Members.StartVisit(Membership);
-        if (story != null) { if (story.atDesk || !GoRoam()) JoinQueue(); return; }
+        if (story != null)
+        {
+            if (story.direct) { StartDirect(); return; } // no desk: straight to what they came for
+            if (story.atDesk || !GoRoam()) JoinQueue();
+            return;
+        }
         if (thief)
         {
             if (GoBrowse()) return;
@@ -222,8 +227,17 @@ public class Customer : ClickInteractable
     /// browsers with a book get it stamped, everyone else heads home. Nobody is left sitting in the dark.</summary>
     void HandleClosed()
     {
-        // Story visitors (still waiting, or looking around) just head home.
-        if ((story != null || lingering) && state != State.Leaving) { lingering = false; Leave(); return; }
+        // Story visitors (still waiting, or looking around) just head home, settling up first if their scene says so
+        // (the author still pays for the table).
+        if ((story != null || lingering) && state != State.Leaving)
+        {
+            var unheard = story?.unheard;
+            story = null;
+            lingering = false;
+            unheard?.Invoke(this);
+            Leave();
+            return;
+        }
         switch (state)
         {
             case State.Reading: if (timer > 0f) timer = 0f; return; // stands up and queues to check in
@@ -238,6 +252,7 @@ public class Customer : ClickInteractable
             case State.Browsing:
             case State.ToSpot:
             case State.ToSigning:
+            case State.Peek:
                 Say("Oh, closing already!", 2.5f);
                 Leave();
                 return;
@@ -263,6 +278,9 @@ public class Customer : ClickInteractable
         if (agent.avoidancePriority != priority) agent.avoidancePriority = priority;
         if (storming && overhead != null) overhead.style.rotate = new Rotate(new Angle(stomping ? Mathf.Sin(Time.time * 45f) * 6f : 0f));
         if (GM != null && GM.CurrentPhase == GameManager.Phase.Closed) HandleClosed();
+        else if (DayStory.PowerOut && !wentForPower && kind == Kind.SignUp && story == null && (state == State.Queueing || state == State.Waiting)
+                 && Members.Find(profileKey) == null && !Tutorial.HoldsClock)
+            ComeBackAfterPower();
         Watchdog();
         if (agent.enabled && anim) anim.SetSpeed(Mathf.Clamp01(agent.velocity.magnitude / walkSpeed) * 0.5f);
 
@@ -290,6 +308,9 @@ public class Customer : ClickInteractable
                 break;
             case State.ToSeat:
                 if (Arrived()) SitDown();
+                break;
+            case State.Peek:
+                UpdatePeek();
                 break;
             case State.Reading:
                 timer -= Dt;
@@ -425,6 +446,7 @@ public class Customer : ClickInteractable
     {
         var playerAnim = player.GetComponent<CharacterAnimator>();
         if (playerAnim) playerAnim.PlayStamp();
+        GameAudio.DeskStamp();
         bool worn = heldCondition == BookCondition.Worn;
         int price = Mathf.RoundToInt(heldBook.SaleValue * (worn ? 0.8f : 1f));
         int tip = Mathf.RoundToInt(heldBook.BaseValue * 0.15f * PatienceLeft * Members.TipFactor(Membership));
@@ -992,10 +1014,11 @@ public class Customer : ClickInteractable
                 GM.AddCoins(bonus);
                 RequestLog.Paid(this, bonus, FirstName, "Good recommendation: chat bonus");
                 GM.Today.Earn(vip ? GameManager.DayStats.Source.Vip : GameManager.DayStats.Source.Reading, bonus);
-                GM.Today.tips += bonus; // a tip, as before (reputation comes from hearing out "?" visitors)
+                GM.Today.tips += bonus; // a tip, as before
+                GM.AddReputation(1); // a reader who's been well advised tells their friends
                 Members.Satisfy(Membership, 0.5f);
                 GameAudio.Play(a => a.cardIssued, 0.7f);
-                HUD.SkillPop(transform.position + Vector3.up * 2.2f, $"Good pick! +{bonus} coins");
+                HUD.SkillPop(transform.position + Vector3.up * 2.2f, $"Good pick! +{bonus} coins, +1 reputation");
             }
             else if (pick >= 0) Members.Satisfy(Membership, 0.05f); // not their thing, but they liked being asked
             else Members.Satisfy(Membership, 0.15f);
@@ -1450,6 +1473,7 @@ public class Customer : ClickInteractable
         ReturnHeldCopy(kind == Kind.Reader);
         var stamper = GameObject.FindWithTag("Player")?.GetComponent<CharacterAnimator>();
         if (stamper) stamper.PlayStamp(); // check-ins get stamped too
+        GameAudio.DeskStamp();
         GameAudio.Play(a => a.served);
         Say(fee > 0 ? $"Thank you!  +{fee + tip}" : "Thanks, see you!", 2.5f);
         Leave();
@@ -1739,6 +1763,43 @@ public class Customer : ClickInteractable
         JoinQueue();
     }
 
+    /// <summary>A visit that skips the desk (the author at two, the inspector at one): its after runs as they walk in,
+    /// then they go straight to their linger (the signing table, looking round) and come to the desk for next.</summary>
+    void StartDirect()
+    {
+        var visit = story;
+        visit.after?.Invoke(this, null);
+        story = visit.next;
+        lingerUntil = visit.lingerUntil;
+        lingering = true;
+        if (speech != null) speech.AddToClassList("hidden");
+        if (GM.Hour < lingerUntil && visit.linger != null && visit.linger(this)) return;
+        if (GM.Hour >= lingerUntil || !GoBrowse()) EndLinger();
+    }
+
+    // ---------------- A quick look somewhere, then home (the author checking the signing table) ----------------
+
+    Vector3 peekLook;
+
+    /// <summary>Walk over, stand looking at it for a few seconds, then leave.</summary>
+    public void PeekThenLeave(Vector3 spot, Vector3 look, float seconds)
+    {
+        CounterQueue.Instance?.Leave(this);
+        if (!agent.enabled) agent.enabled = true;
+        peekLook = look;
+        timer = seconds;
+        state = State.Peek;
+        agent.SetDestination(NearestOnNavMesh(spot, 2.5f));
+    }
+
+    void UpdatePeek()
+    {
+        if (!Arrived()) return;
+        FaceTowards(peekLook);
+        timer -= Dt;
+        if (timer <= 0f) Leave();
+    }
+
     // ---------------- The book signing (SigningTable) ----------------
 
     SigningTable table;
@@ -1892,6 +1953,20 @@ public class Customer : ClickInteractable
     }
 
     /// <summary>A story visitor who wants a library card (filled in on the PC as usual).</summary>
+    bool wentForPower;
+
+    /// <summary>The power's out, so the computer can't make their card: no fault of yours, so no penalty. They go
+    /// home and come back after two to try again (DayStory.CardVisitorAfterPower).</summary>
+    void ComeBackAfterPower()
+    {
+        wentForPower = true;
+        if (WaitingForCard == this) WaitingForCard = null;
+        RequestLog.Finish(this, "Power cut: coming back after two");
+        Say("The computer's down? I'll pop back after two.", 3f);
+        DayStory.Instance?.CardVisitorAfterPower(profileKey, vip);
+        Leave();
+    }
+
     public void ContinueAsSignUp()
     {
         story = null;
@@ -2054,7 +2129,7 @@ public class Customer : ClickInteractable
         NavMesh.SamplePosition(p, out var hit, radius, NavMesh.AllAreas) ? hit.position : p;
 
     /// <summary>Show a line overhead. seconds = 0 keeps it until replaced.</summary>
-    void Say(string text, float seconds = 0f)
+    public void Say(string text, float seconds = 0f)
     {
         SetSpeech(text); // an empty line hides the bubble
         reactionLeft = seconds;

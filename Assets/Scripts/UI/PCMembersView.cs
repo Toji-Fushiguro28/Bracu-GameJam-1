@@ -20,6 +20,9 @@ public static class PCMembersView
 
     static string typedName = "";
     static int pickDay, pickMonth, pickYear; // 0 = not picked yet
+    // The day you rolled to. Rolling the month or year past a shorter month (31 -> April, 29 Feb -> 1987) shows the
+    // last day that month has, and your day comes back when the month can hold it again: it's never wiped.
+    static int wantDay;
     static AccessLevel? pickAccess;
     static Customer formFor;
     static Wheel dayWheel, monthWheel, yearWheel;
@@ -186,7 +189,7 @@ public static class PCMembersView
     /// <summary>Day / Month / Year wheels. Day and month wrap round; the year stops at both ends.</summary>
     static void BuildDatePicker(VisualElement root)
     {
-        dayWheel = new Wheel(root.Q("dob-day"), "Day", 1, () => pickDay, v => { pickDay = v; UpdateForm(root); },
+        dayWheel = new Wheel(root.Q("dob-day"), "Day", 1, () => pickDay, v => { wantDay = pickDay = v; UpdateForm(root); },
             (v, d) => { int n = DaysIn(pickMonth, pickYear); return (v - 1 + d + n) % n + 1; }, v => v.ToString("00")); // no 31 Apr
         monthWheel = new Wheel(root.Q("dob-month"), "Month", 1, () => pickMonth, v => { pickMonth = v; UpdateForm(root); },
             (v, d) => (v - 1 + d + 12) % 12 + 1, v => Months[v - 1]);
@@ -402,7 +405,7 @@ public static class PCMembersView
         {
             formFor = who;
             typedName = "";
-            pickDay = pickMonth = pickYear = 0;
+            pickDay = pickMonth = pickYear = wantDay = 0;
             pickAccess = null;
             root.Q<TextField>("card-name")?.SetValueWithoutNotify("");
             root.Q<Label>("card-feedback").text = "";
@@ -416,7 +419,7 @@ public static class PCMembersView
     static void UpdateForm(VisualElement root)
     {
         int days = DaysIn(pickMonth, pickYear);
-        if (pickDay > days) pickDay = 0; // 31 Apr can't exist: pick the day again
+        pickDay = wantDay == 0 ? 0 : Mathf.Min(wantDay, days); // 31 Apr can't exist: 30 for now, 31 again in May
         DateLabels();
 
         bool nameOk = NameReady(typedName.Trim());

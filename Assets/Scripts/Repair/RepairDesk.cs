@@ -84,16 +84,8 @@ public class RepairDesk : ClickInteractable
             }
             if (dropped == 0 && Done.Count == 0) { Bubble("Those copies are fine - they don't need repairs."); return; }
         }
-        // Pick up whatever's finished, as much as your hands can hold.
-        int taken = 0;
-        while (Done.Count > 0 && carry != null && !carry.IsFull)
-        {
-            var (book, cond) = Done[0];
-            Done.RemoveAt(0);
-            carry.PickUp(book, cond);
-            taken++;
-        }
-        if (taken > 0) { Bubble(taken == 1 ? "Picked up the repaired book." : $"Picked up {taken} repaired books."); Changed?.Invoke(); }
+        // Finished books stay on the table until you press Take (or Take all) on the repair screen: clicking the desk
+        // just to check on a repair mustn't fill your hands.
         if (RepairUI.Instance != null) RepairUI.Instance.Open(this);
     }
 
