@@ -82,7 +82,7 @@ public static class PCCatalogueView
                 var row = rowTemplate.CloneTree();
                 row.style.flexGrow = 1;
                 // Clicking a row always shows it, even if the list thinks it's already selected.
-                row.RegisterCallback<ClickEvent>(_ => { if (row.userData is BookData b) { msg = null; ShowDetails(b); } });
+                row.RegisterCallback<ClickEvent>(_ => { if (row.userData is BookData b) { GameAudio.BookSelect(); msg = null; ShowDetails(b); } });
                 return row;
             };
             list.bindItem = BindRow;

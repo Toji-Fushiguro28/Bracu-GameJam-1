@@ -323,6 +323,7 @@ public class ShelfUI : MonoBehaviour
         row.RegisterCallback<ClickEvent>(e =>
         {
             for (var t = e.target as VisualElement; t != null && t != row; t = t.parent) if (t is Button) return;
+            if (picked != book) GameAudio.BookSelect();
             picked = book;
             ShowAbout();
             Refresh();

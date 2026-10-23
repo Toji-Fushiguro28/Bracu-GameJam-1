@@ -86,6 +86,8 @@ public class GameAudio : MonoBehaviour
     [Range(0f, 1f)] public float scrollVolume = 0.5f;
     [Header("UI")]
     public AudioClip uiClick;
+    [Tooltip("Picking a book from a list (shelf, PC catalogue, return bin, delivery cart).")]
+    public AudioClip bookSelect;
     public AudioClip panelOpen;
     public AudioClip panelClose;
     public AudioClip pcOpen;
@@ -229,6 +231,9 @@ public class GameAudio : MonoBehaviour
         HookTyping(root);
     }
 
+    /// <summary>The soft sound of picking a book in a list.</summary>
+    public static void BookSelect() => Play(a => a.bookSelect, 0.7f);
+
     /// <summary>Every text box under this root plays a key press per character typed (and for Backspace / Delete).</summary>
     public static void HookTyping(VisualElement root)
     {
@@ -261,7 +266,7 @@ public class GameAudio : MonoBehaviour
         if (clip == a.lastClip && Time.unscaledTime - a.lastPlay < 0.05f) return;
         a.lastClip = clip;
         a.lastPlay = Time.unscaledTime;
-        bool ui = clip == a.uiClick || clip == a.panelOpen || clip == a.panelClose || clip == a.pcOpen || clip == a.pcClose;
+        bool ui = clip == a.uiClick || clip == a.bookSelect || clip == a.panelOpen || clip == a.panelClose || clip == a.pcOpen || clip == a.pcClose;
         a.source.PlayOneShot(clip, a.volume * volumeScale * (ui ? GameSettings.UiScale : GameSettings.SfxScale));
     }
 
