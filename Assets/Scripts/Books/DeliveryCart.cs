@@ -90,7 +90,7 @@ public class DeliveryCart : ClickInteractable
     {
         var carry = player.GetComponent<PlayerCarry>();
         bool holdingCartBooks = carry != null && carry.Find((b, c) => takenOut.Contains(b)) >= 0;
-        if (copies.Count == 0 && !holdingCartBooks) { Bubble("No deliveries. Order books on the PC (Shop)."); return; }
+        if (copies.Count == 0 && !holdingCartBooks) { Bubble("No deliveries. Order books on the Computer (Catalogue)."); return; }
         if (carry != null && ShelfUI.Instance != null) { ShelfUI.Instance.OpenCart(this, carry); return; }
         if (copies.Count == 0) return;
         if (carry == null || carry.IsFull) { Bubble("Your hands are full."); return; }

@@ -705,9 +705,6 @@
     border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;
     overflow: hidden;
 }
-.mood-bar-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; background-color: rgb(120, 200, 90); }
-.mood-bar-fill.ok { background-color: rgb(240, 186, 92); }
-.mood-bar-fill.sad { background-color: rgb(225, 80, 60); }
 .mood.angry { -unity-background-image-tint-color: rgb(255, 110, 90); }
 .customer-speech.angry { color: rgb(200, 45, 35); }
 
@@ -860,12 +857,13 @@
 .feed-tip-head { color: var(--accent); font-size: 16px; letter-spacing: 1px; margin: 0 0 2px 0; padding: 0; }
 .nf-tip { background-image: url("project://database/Assets/Art/UI/PC/T_IconLamp.png"); }
 
-/* Patience: one pixel bar in the mood faces' style: dark-brown outline, flat fill with a light top edge and a
-   darker bottom edge; green, then the faces' yellow, then red. Drains in tenths (Customer.SetMood). */
-.mood-bar { flex-direction: row; overflow: hidden; width: 48px; height: 12px;
-    background-color: rgb(58, 40, 32); border-width: 2px; border-color: rgb(74, 48, 38);
-    border-top-left-radius: 0; border-top-right-radius: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
-.mood-bar-fill { position: absolute; left: 0; top: 0; bottom: 0; background-color: rgb(120, 200, 90);
+/* Patience: the kit's pixel-art bar frame (same sprite as the stamina bar) with a flat fill inside it that has a light
+   top edge and a darker bottom edge; green, then the faces' yellow, then red. Drains in tenths (Customer.SetMood). */
+.mood-bar { flex-direction: row; overflow: hidden; width: 60px; height: 15px; padding: 3px;
+    background-color: rgba(0, 0, 0, 0); border-width: 0;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Bar01a.png");
+    -unity-slice-left: 2; -unity-slice-right: 2; -unity-slice-top: 1; -unity-slice-bottom: 1; -unity-slice-scale: 3px; }
+.mood-bar-fill { background-color: rgb(120, 200, 90);
     border-top-width: 2px; border-top-color: rgb(180, 235, 150); border-bottom-width: 2px; border-bottom-color: rgb(80, 150, 60); }
 .mood-bar.ok .mood-bar-fill { background-color: rgb(250, 214, 96); border-top-color: rgb(255, 240, 170); border-bottom-color: rgb(205, 160, 60); }
 .mood-bar.sad .mood-bar-fill { background-color: rgb(232, 128, 96); border-top-color: rgb(245, 175, 150); border-bottom-color: rgb(185, 80, 60); }

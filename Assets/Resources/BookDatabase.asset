@@ -83,7 +83,7 @@ MonoBehaviour:
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
-  - Title: The Salt Road Chronicles
+  - Title: The Salt Road Cities
     Format: 0
     Author: Amara Diallo
     Subject: History
@@ -97,7 +97,7 @@ MonoBehaviour:
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
-  - Title: Rivers of Bengal
+  - Title: Rivers of Bangladesh
     Format: 0
     Author: Kai Hossain
     Subject: History
@@ -251,7 +251,7 @@ MonoBehaviour:
     GoodCopies: 2
     WornCopies: 1
     DamagedCopies: 0
-  - Title: The Shape of Space
+  - Title: Triangles to Terra
     Format: 0
     Author: Leo Park
     Subject: Math
@@ -279,7 +279,7 @@ MonoBehaviour:
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
-  - Title: Ledgers and Luck
+  - Title: The Doctrine of Chances
     Format: 0
     Author: Ravi Menon
     Subject: Math
@@ -307,7 +307,7 @@ MonoBehaviour:
     GoodCopies: 0
     WornCopies: 1
     DamagedCopies: 0
-  - Title: Lost Proofs of Euclid
+  - Title: Lost Proofs of a Monk
     Format: 0
     Author: Unknown
     Subject: Math
@@ -321,7 +321,7 @@ MonoBehaviour:
     GoodCopies: 0
     WornCopies: 0
     DamagedCopies: 1
-  - Title: The Star Codex
+  - Title: The Mariners Star Chart
     Format: 0
     Author: Anonymous
     Subject: Science
@@ -335,7 +335,7 @@ MonoBehaviour:
     GoodCopies: 1
     WornCopies: 0
     DamagedCopies: 0
-  - Title: First Folio Fragment
+  - Title: The Gutenberg Fragment
     Format: 0
     Author: William Shakespeare
     Subject: History
@@ -363,7 +363,7 @@ MonoBehaviour:
     GoodCopies: 0
     WornCopies: 1
     DamagedCopies: 0
-  - Title: Ship Logs of the Meghna
+  - Title: Ship Logs of the Padma
     Format: 0
     Author: Capt. R. Sen
     Subject: History
@@ -391,7 +391,7 @@ MonoBehaviour:
     GoodCopies: 1
     WornCopies: 0
     DamagedCopies: 0
-  - Title: Letters from the Front
+  - Title: Letters from the Front, 1971
     Format: 0
     Author: Various
     Subject: History
@@ -475,7 +475,7 @@ MonoBehaviour:
     GoodCopies: 5
     WornCopies: 0
     DamagedCopies: 0
-  - Title: Bengal Morning Post
+  - Title: The Dawn Gazette
     Format: 1
     Author: Morning Post Co.
     Subject: History
@@ -489,13 +489,13 @@ MonoBehaviour:
     GoodCopies: 4
     WornCopies: 0
     DamagedCopies: 0
-  - Title: The Sunday Ledger
+  - Title: The Friday News
     Format: 1
-    Author: Ledger House
+    Author: Banshi House
     Subject: History
     Topic: Weekend
     Tag: Weekly
-    Abstract: A fat weekend paper full of long stories and crosswords.
+    Abstract: A fat weekend paper full of long stories, politics and crosswords.
     ShelfLocation: NEWS
     Tier: 0
     BaseValue: 8
@@ -503,9 +503,9 @@ MonoBehaviour:
     GoodCopies: 3
     WornCopies: 0
     DamagedCopies: 0
-  - Title: Cozy Corners Monthly
+  - Title: 'Cozy Corners '
     Format: 2
-    Author: Hearth Media
+    Author: Golap Media
     Subject: History
     Topic: Home & leisure
     Tag: New Arrival
@@ -573,7 +573,7 @@ MonoBehaviour:
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
-  - Title: Philosophy Quarterly
+  - Title: The Quarterly Quarrel
     Format: 3
     Author: The Thinking Guild
     Subject: Philosophy
@@ -587,7 +587,7 @@ MonoBehaviour:
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
-  - Title: Annals of Old Cities
+  - Title: The Archaeological Review
     Format: 3
     Author: Historical Trust
     Subject: History
@@ -601,7 +601,7 @@ MonoBehaviour:
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
-  - Title: Proceedings in Pure Numbers
+  - Title: The Chalkboard Review
     Format: 3
     Author: Numerical Society
     Subject: Math
@@ -629,7 +629,7 @@ MonoBehaviour:
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
-  - Title: Counting Without Zero
+  - Title: The Zeroless Ledger
     Format: 4
     Author: Maya Chen
     Subject: Math
@@ -657,7 +657,7 @@ MonoBehaviour:
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
-  - Title: Salt, Silk and Stamps
+  - Title: Routes on Stamps
     Format: 4
     Author: Amara Diallo
     Subject: History
@@ -685,7 +685,7 @@ MonoBehaviour:
     GoodCopies: 1
     WornCopies: 0
     DamagedCopies: 0
-  - Title: Sea Charts of the Delta
+  - Title: The Sandbank Chart
     Format: 0
     Author: Capt. Ivo Marsh
     Subject: History
@@ -699,13 +699,13 @@ MonoBehaviour:
     GoodCopies: 1
     WornCopies: 0
     DamagedCopies: 0
-  - Title: The Whitmore Book of Hours
+  - Title: GoldLeaf Devotions
     Format: 0
     Author: Brother Anselm
     Subject: Philosophy
     Topic: Manuscripts
     Tag: Rare
-    Abstract: A tiny prayer book with gold-leaf margins and a cat doodled in one corner.
+    Abstract: A tiny prayer book with gold-leaf margins.
     ShelfLocation: RARE-II
     Tier: 2
     BaseValue: 480
@@ -715,11 +715,11 @@ MonoBehaviour:
     DamagedCopies: 0
   - Title: The Printer's First Proof
     Format: 0
-    Author: Whitmore Press
+    Author: Raquib Whitmore
     Subject: History
     Topic: Early prints
     Tag: Rare
-    Abstract: The first page ever printed in Whitmore, typo and all.
+    Abstract: "Whitmore\u2019s very first printed page, with the printer\u2019s mistake left in, pressed into history."
     ShelfLocation: RARE-II
     Tier: 1
     BaseValue: 240
@@ -728,7 +728,7 @@ MonoBehaviour:
     WornCopies: 0
     DamagedCopies: 0
   newTitles:
-  - Title: The Lighthouse Keeper's Almanac
+  - Title: Tidal and Celestial Observations
     Format: 0
     Author: Mira Solberg
     Subject: Science
@@ -826,7 +826,7 @@ MonoBehaviour:
     GoodCopies: 0
     WornCopies: 0
     DamagedCopies: 0
-  - Title: Kind Arguments
+  - Title: Agreeing to Differ
     Format: 0
     Author: Hana Kobayashi
     Subject: Philosophy
@@ -896,6 +896,314 @@ MonoBehaviour:
     GoodCopies: 0
     WornCopies: 0
     DamagedCopies: 0
+  - Title: 'Why Your Toast Lands Butter-Side Down'
+    Format: 2
+    Author: 'Marcus Pell'
+    Subject: Science
+    Topic: 'Science & nature'
+    Tag: 'Best Seller'
+    Abstract: 'A serious study of breakfast, gravity and why the carpet always wins.'
+    ShelfLocation: MAG
+    Tier: 0
+    BaseValue: 10
+    Sellable: 1
+    GoodCopies: 2
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: 'The Cat, the Box and the Bill'
+    Format: 3
+    Author: 'Ingrid Voss'
+    Subject: Science
+    Topic: 'Physics'
+    Tag: 'New Arrival'
+    Abstract: 'Quantum physics explained with one stubborn cat and an unpaid invoice.'
+    ShelfLocation: JRNL
+    Tier: 0
+    BaseValue: 15
+    Sellable: 1
+    GoodCopies: 2
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: 'Dinosaurs Were Probably Fine'
+    Format: 0
+    Author: 'Dr. Tobias Wren'
+    Subject: Science
+    Topic: 'Biology'
+    Tag: 'Classic'
+    Abstract: 'A cheerful look at deep time, and why the meteor gets all the blame.'
+    ShelfLocation: SCI
+    Tier: 0
+    BaseValue: 22
+    Sellable: 1
+    GoodCopies: 2
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: 'Empires and Their Unfortunate Hats'
+    Format: 2
+    Author: 'Beatrice Lang'
+    Subject: History
+    Topic: 'Essays'
+    Tag: 'Weekly, New Arrival'
+    Abstract: 'Rise and fall of great powers, as told through their questionable headwear.'
+    ShelfLocation: MAG
+    Tier: 0
+    BaseValue: 10
+    Sellable: 1
+    GoodCopies: 2
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: 'The Great Whitmore Pie Dispute'
+    Format: 1
+    Author: 'Harold Finch'
+    Subject: History
+    Topic: 'Local news'
+    Tag: 'Daily, New Arrival'
+    Abstract: 'The town''s longest argument, over whose pie was best, finally put on record.'
+    ShelfLocation: NEWS
+    Tier: 0
+    BaseValue: 5
+    Sellable: 1
+    GoodCopies: 2
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: 'Famous Last Words, Collected'
+    Format: 1
+    Author: 'Edith Marlowe'
+    Subject: History
+    Topic: 'Weekend'
+    Tag: 'Weekly'
+    Abstract: 'Final remarks of the great and the not-so-great, ranked by how awkward they were.'
+    ShelfLocation: NEWS
+    Tier: 0
+    BaseValue: 8
+    Sellable: 1
+    GoodCopies: 2
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: 'If a Tree Falls and Nobody Files a Complaint'
+    Format: 0
+    Author: 'Prof. Silas Quill'
+    Subject: Philosophy
+    Topic: 'Big questions'
+    Tag: 'Best Seller'
+    Abstract: 'Big questions about sound, silence and paperwork.'
+    ShelfLocation: PHI
+    Tier: 0
+    BaseValue: 22
+    Sellable: 1
+    GoodCopies: 2
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: 'Ethics for the Mildly Inconvenienced'
+    Format: 2
+    Author: 'Anna Okafor'
+    Subject: Philosophy
+    Topic: 'Essays'
+    Tag: 'New Arrival'
+    Abstract: 'Is it wrong to take the last biscuit? Three thousand years of thinking, applied to snacks.'
+    ShelfLocation: MAG
+    Tier: 0
+    BaseValue: 9
+    Sellable: 1
+    GoodCopies: 2
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: 'Should You Return the Library Book?'
+    Format: 0
+    Author: 'Pip Alder'
+    Subject: Philosophy
+    Topic: 'Reflection'
+    Tag: 'Classic'
+    Abstract: 'A gentle moral debate with a very obvious answer, and a late fee.'
+    ShelfLocation: PHI
+    Tier: 0
+    BaseValue: 18
+    Sellable: 1
+    GoodCopies: 2
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: 'Fractions, and Other Ways to Split a Pie'
+    Format: 0
+    Author: 'Gwen Archer'
+    Subject: Math
+    Topic: 'Arithmetic'
+    Tag: 'Textbook'
+    Abstract: 'Halves, quarters and why everyone argues over the bigger slice.'
+    ShelfLocation: MATH
+    Tier: 0
+    BaseValue: 18
+    Sellable: 1
+    GoodCopies: 3
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: 'Geometry Is Just Triangles Being Dramatic'
+    Format: 4
+    Author: 'Felix Draper'
+    Subject: Math
+    Topic: 'Mathematics'
+    Tag: 'New Release'
+    Abstract: 'Angles, arguments and the proofs behind them, with a lot of sulking from the hypotenuse.'
+    ShelfLocation: PAPR
+    Tier: 0
+    BaseValue: 12
+    Sellable: 1
+    GoodCopies: 2
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: 'The Last Digit of Pi (A Rumour)'
+    Format: 0
+    Author: 'Oswin Tate'
+    Subject: Math
+    Topic: 'Mathematics'
+    Tag: 'Best Seller'
+    Abstract: 'A completely unreliable search for the number that never ends.'
+    ShelfLocation: MATH
+    Tier: 0
+    BaseValue: 26
+    Sellable: 1
+    GoodCopies: 2
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: 'Gravity Is Only a Suggestion'
+    Format: 0
+    Author: 'Marta Quint'
+    Subject: Science
+    Topic: 'Physics'
+    Tag: 'New Release'
+    Abstract: 'Why everything falls, and the few brave things that refuse.'
+    ShelfLocation: SCI
+    Tier: 0
+    BaseValue: 24
+    Sellable: 1
+    GoodCopies: 2
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: 'The Octopus Has Three Hearts and No Time'
+    Format: 0
+    Author: 'Dr. Lena Moss'
+    Subject: Science
+    Topic: 'Biology'
+    Tag: 'New Arrival'
+    Abstract: 'An eight-armed look at intelligence, with far too many hearts.'
+    ShelfLocation: SCI
+    Tier: 0
+    BaseValue: 22
+    Sellable: 1
+    GoodCopies: 2
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: 'Notes on Exploding Kitchens'
+    Format: 4
+    Author: 'Prof. A. Burnett'
+    Subject: Science
+    Topic: 'Chemistry'
+    Tag: 'New Release'
+    Abstract: 'A careful study of what not to mix, written after several accidents.'
+    ShelfLocation: PAPR
+    Tier: 0
+    BaseValue: 12
+    Sellable: 1
+    GoodCopies: 2
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: 'A Short History of Long Wars'
+    Format: 0
+    Author: 'Gideon Hart'
+    Subject: History
+    Topic: 'Empires'
+    Tag: 'New Release'
+    Abstract: 'Every great war, summarised, and almost none of them avoidable.'
+    ShelfLocation: HIS
+    Tier: 0
+    BaseValue: 25
+    Sellable: 1
+    GoodCopies: 2
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: 'Kings Who Lost Their Keys'
+    Format: 0
+    Author: 'Rosalind Dray'
+    Subject: History
+    Topic: 'Empires'
+    Tag: 'New Arrival'
+    Abstract: 'Royal mishaps, misplaced crowns and the servants who found them.'
+    ShelfLocation: HIS
+    Tier: 0
+    BaseValue: 22
+    Sellable: 1
+    GoodCopies: 2
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: 'The Papyrus Post'
+    Format: 1
+    Author: 'The Delta Press'
+    Subject: History
+    Topic: 'Regional news'
+    Tag: 'Daily'
+    Abstract: 'All the news of the ancient world, delivered by a very tired messenger.'
+    ShelfLocation: NEWS
+    Tier: 0
+    BaseValue: 5
+    Sellable: 1
+    GoodCopies: 2
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: 'Do Robots Dream of Overdue Books?'
+    Format: 0
+    Author: 'Sylvie Marsh'
+    Subject: Philosophy
+    Topic: 'Big questions'
+    Tag: 'New Release'
+    Abstract: 'Machines, minds and a very long library fine.'
+    ShelfLocation: PHI
+    Tier: 0
+    BaseValue: 24
+    Sellable: 1
+    GoodCopies: 2
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: 'Thinking Out Loud Monthly'
+    Format: 2
+    Author: 'The Debating Society'
+    Subject: Philosophy
+    Topic: 'Essays'
+    Tag: 'Weekly, New Arrival'
+    Abstract: 'Essays and arguments on everything, mostly from people who cannot stop talking.'
+    ShelfLocation: MAG
+    Tier: 0
+    BaseValue: 10
+    Sellable: 1
+    GoodCopies: 2
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: 'Zero, Hero or Nothing'
+    Format: 0
+    Author: 'Ptolemy Grange'
+    Subject: Math
+    Topic: 'Arithmetic'
+    Tag: 'New Arrival'
+    Abstract: 'The story of the number that was once banned for being too empty.'
+    ShelfLocation: MATH
+    Tier: 0
+    BaseValue: 20
+    Sellable: 1
+    GoodCopies: 2
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: 'Proceedings of Very Large Numbers'
+    Format: 3
+    Author: 'The Society of Big Counters'
+    Subject: Math
+    Topic: 'Mathematics'
+    Tag: 'New Release'
+    Abstract: 'New results on numbers so big nobody can say them out loud.'
+    ShelfLocation: JRNL
+    Tier: 0
+    BaseValue: 15
+    Sellable: 1
+    GoodCopies: 2
+    WornCopies: 0
+    DamagedCopies: 0
   rareFinds:
   - Title: The Astronomer's Lost Ledger
     Format: 0
@@ -903,7 +1211,7 @@ MonoBehaviour:
     Subject: Science
     Topic: Star charts
     Tag: Rare
-    Abstract: Night-by-night notes on a comet nobody else ever saw.
+    Abstract: Night by night notes on a comet nobody else ever saw.
     ShelfLocation: RARE-I
     Tier: 2
     BaseValue: 520
@@ -945,7 +1253,7 @@ MonoBehaviour:
     Subject: Math
     Topic: Early prints
     Tag: Rare
-    Abstract: The first Bengali printing of Euclid, its margins full of a student's notes.
+    Abstract: The first Bengali printing of Euclid, its margins full of a vip's notes.
     ShelfLocation: RARE-II
     Tier: 1
     BaseValue: 320
