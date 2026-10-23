@@ -52,11 +52,13 @@ public class NotebookHUD : MonoBehaviour
         list = root.Q<ScrollView>("notebook-list");
         tab = root.Q<Button>("notebook-tab");
         tab?.RegisterCallback<ClickEvent>(_ => SetCollapsed(!book.ClassListContains("collapsed")));
+        tab?.RegisterCallback<GeometryChangedEvent>(_ => FitTab(tab));
 
         reserves = root.Q("reservations");
         reserveList = root.Q<ScrollView>("reservations-list");
         reserveTab = root.Q<Button>("reservations-tab");
         reserveTab?.RegisterCallback<ClickEvent>(_ => SetReservesOpen(reserves.ClassListContains("collapsed")));
+        reserveTab?.RegisterCallback<GeometryChangedEvent>(_ => FitTab(reserveTab));
         reserveSignature = null;
         GameAudio.HookClicks(root);
         current = this;
@@ -132,6 +134,19 @@ public class NotebookHUD : MonoBehaviour
         tucked = tuck;
         if (current != null && current.book != null)
             current.book.EnableInClassList("collapsed", tuck || PlayerPrefs.GetInt(CollapsedKey, 0) == 1);
+    }
+
+    /// <summary>The tab is the normal kit button turned on its side: its holder takes the turned size, and the
+    /// button sits centred in it (it turns round its own centre). Runs again whenever the text changes its width.</summary>
+    static void FitTab(Button b)
+    {
+        var holder = b.parent;
+        float w = b.layout.width, h = b.layout.height;
+        if (holder == null || float.IsNaN(w) || w <= 0f) return;
+        holder.style.width = h;
+        holder.style.height = w;
+        b.style.left = (h - w) * 0.5f;
+        b.style.top = (w - h) * 0.5f;
     }
 
     void SetCollapsed(bool collapsed)

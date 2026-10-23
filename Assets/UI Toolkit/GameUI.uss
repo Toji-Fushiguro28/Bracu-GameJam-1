@@ -61,7 +61,7 @@
 .dialogue {
     justify-content: flex-end;
     align-items: center;
-    padding-bottom: 104px;
+    padding-bottom: 150px; /* above the desk plate (bottom bar) */
 }
 .dialogue-box {
     width: 70%;
@@ -236,19 +236,60 @@
 
 /* ---------- HUD ---------- */
 .hud { justify-content: flex-end; }
+/* ---------- The desk plate (bottom bar): day, clock and reputation, all pixel art from the kit ----------
+   Plate: the dark bordered slot (Slot01b). Windows: the frame (Frame01a) tinted gold, no white.
+   Bars: the kit's pixel track (Bar01a) and fills (Fill01a gold, Fill01b red). Point-filtered, 9-sliced at 4px. */
 .hud-bar {
     position: absolute;
-    bottom: 18px;
+    bottom: 8px;
     align-self: center;
+    max-width: 92%;
     flex-direction: row;
-    align-items: center;
-    padding: 6px 24px 10px 24px;
-    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Popup01a.png");
-    -unity-slice-left: 4; -unity-slice-right: 4; -unity-slice-top: 4; -unity-slice-bottom: 4;
-    -unity-slice-scale: 4px;
+    align-items: stretch;
+    padding: 10px 12px 12px 12px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Slot01b.png");
+    -unity-slice-left: 3; -unity-slice-right: 3; -unity-slice-top: 3; -unity-slice-bottom: 3; -unity-slice-scale: 4px;
+    transition-property: scale, -unity-background-image-tint-color; transition-duration: 0.35s;
 }
+/* Day 1: a soft glow so new players notice it (HUD.UpdatePlate). */
+.hud-bar.notice { -unity-background-image-tint-color: rgb(255, 214, 150); scale: 1.04 1.04; }
+
+/* The windows: the kit's frame, tinted the gold of the old day badge */
+.plate-cell { justify-content: center; margin: 0 5px; padding: 6px 16px 8px 16px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Frame01a.png");
+    -unity-background-image-tint-color: rgb(235, 200, 120);
+    -unity-slice-left: 3; -unity-slice-right: 3; -unity-slice-top: 3; -unity-slice-bottom: 4; -unity-slice-scale: 4px; }
+.plate-row { flex-direction: row; align-items: center; }
+
+/* Day */
+.plate-day { min-width: 128px; align-items: center; transition-property: scale; transition-duration: 0.3s; }
+.plate-day.flip { scale: 1.12 1.12; }
+.plate-day-label { margin: 0 8px 0 0; padding: 0; font-size: 24px; color: rgb(110, 50, 30); }
+.hud-bar .hud-day { margin: 0; padding: 0; font-size: 48px; color: rgb(74, 30, 22); }
+.plate-week { margin: 0; padding: 0; font-size: 16px; color: rgb(110, 50, 30); -unity-text-align: middle-center; }
+
+/* Clock */
+.plate-clock { min-width: 280px; }
+.plate-rep { min-width: 220px; }
+.icon-clock { width: 36px; height: 36px; margin-right: 10px; -unity-background-scale-mode: scale-to-fit;
+    background-image: url("project://database/Assets/Art/UI/PC/T_IconClock.png"); }
+.hud-bar .hud-clock { margin: 0; padding: 0; font-size: 42px; color: rgb(74, 30, 22); }
+.plate-tag { margin: 0 0 0 12px; padding: 4px 12px 6px 12px; font-size: 24px; color: rgb(250, 230, 190);
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Slot01b.png");
+    -unity-slice-left: 3; -unity-slice-right: 3; -unity-slice-top: 3; -unity-slice-bottom: 3; -unity-slice-scale: 3px;
+    -unity-text-align: middle-center; }
+
+/* Bars: pixel track with a pixel fill inside */
+.plate-track { height: 16px; margin-top: 6px; padding: 4px 8px;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Bar01a.png");
+    -unity-slice-left: 2; -unity-slice-right: 2; -unity-slice-top: 1; -unity-slice-bottom: 1; -unity-slice-scale: 4px; }
+.plate-fill { height: 100%; width: 0;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Fill01a.png");
+    -unity-background-scale-mode: stretch-to-fill; -unity-background-image-tint-color: rgb(235, 150, 60); }
+.plate-goal { margin: 4px 0 0 0; padding: 0; font-size: 16px; color: rgb(110, 50, 30); }
+.plate-rep.goal-done .plate-goal { color: rgb(170, 60, 30); }
+
 .hud-day, .hud-clock, .hud-coins Label { color: var(--ink); font-size: 30px; }
-.hud-clock { margin: 0 28px; }
 .hud-coins { flex-direction: row; align-items: center; }
 .hud-coins Label { margin-left: 8px; }
 .hud-carry {
@@ -269,6 +310,7 @@
 
 /* ---------- Shelf (open book) ---------- */
 .modal {
+    padding-bottom: 136px; /* centred above the desk plate (bottom bar) */
     background-color: rgba(30, 18, 14, 0.45);
     justify-content: center;
     align-items: center;
@@ -959,3 +1001,14 @@
 .pin-star .gold-star { width: 18px; height: 18px; }
 /* A heart pop with no text: just the heart (Members.Pop). */
 .hud Label.skill-pop.heart-up, .hud Label.skill-pop.heart-down { padding-left: 0; min-width: 28px; min-height: 22px; }
+
+/* The desk plate's reputation (beats the older .hud-rep rules above). */
+.hud-bar .hud-rep { margin-left: 0; }
+.hud-bar .hud-rep Label { font-size: 42px; margin-left: 10px; }
+.hud-bar .icon-rep { width: 38px; height: 38px; transition-property: scale; transition-duration: 0.18s; }
+.hud-bar .icon-rep.bounce { scale: 1.35 1.35; }
+
+/* "+2 more in the Log" under the notification cards (HUD.ShowMore): older cards pushed out by newer ones. */
+.feed-more { align-self: flex-start; margin: 2px 0 0 4px; padding: 2px 10px 4px 10px; font-size: 16px; color: var(--ink-soft);
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_Popup01a.png");
+    -unity-slice-left: 4; -unity-slice-right: 4; -unity-slice-top: 4; -unity-slice-bottom: 4; -unity-slice-scale: 2px; }

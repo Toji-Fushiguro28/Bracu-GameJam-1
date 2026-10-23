@@ -38,6 +38,7 @@ Shader "Game/Ghost"
             Blend SrcAlpha OneMinusSrcAlpha
             ZWrite Off
             ZTest LEqual
+            Offset -1, -1 // a hair toward the camera, so it never loses to its own depth pass (Mac/Metal flicker)
             Cull Back
             HLSLPROGRAM
             #pragma vertex vert
@@ -59,7 +60,7 @@ Shader "Game/Ghost"
             {
                 Varyings o;
                 float3 positionWS = TransformObjectToWorld(i.positionOS.xyz);
-                o.positionCS = TransformWorldToHClip(positionWS);
+                o.positionCS = TransformObjectToHClip(i.positionOS.xyz); // same maths as the depth pass, so depths match exactly
                 o.normalWS = TransformObjectToWorldNormal(i.normalOS);
                 o.viewWS = GetWorldSpaceViewDir(positionWS);
                 return o;

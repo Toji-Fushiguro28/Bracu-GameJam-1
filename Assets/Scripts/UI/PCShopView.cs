@@ -14,8 +14,19 @@ public static class PCShopView
     /// <summary>Upgrade icon classes in PC.uss, in GameManager.UpgradeKind order (kit icons and ones drawn to match).</summary>
     static readonly string[] UpgradeIcons = { "hammer", "glue", "heart", "shoe", "lamp", "armchair", "flyer", "bag", "energy" };
 
+    /// <summary>Upgrades page order: your own first (shoes, bag, stamina), then visitors, tips and fees, repairs.
+    /// Ones not unlocked yet move to the end (Refresh).</summary>
+    static readonly GameManager.UpgradeKind[] UpgradeOrder =
+    {
+        GameManager.UpgradeKind.RunningShoes, GameManager.UpgradeKind.BookBag, GameManager.UpgradeKind.Stamina,
+        GameManager.UpgradeKind.ComfyQueue, GameManager.UpgradeKind.TownFlyers, GameManager.UpgradeKind.CozyLamps,
+        GameManager.UpgradeKind.ReadingNooks, GameManager.UpgradeKind.RepairTools, GameManager.UpgradeKind.RestorationKit,
+    };
+
     /// <summary>The next time the Shop opens, start on Upgrades (0) or Staff (1).</summary>
     public static void OpenOn(int subTab) => tab = subTab;
+    /// <summary>The sub-tab showing: Upgrades (0) or Staff (1).</summary>
+    public static int Tab => tab;
 
     public static void Wire(VisualElement root)
     {
@@ -45,7 +56,8 @@ public static class PCShopView
             note.text = "Upgrades last forever and are saved with your library.";
             var grid = new VisualElement();
             grid.AddToClassList("ugrid");
-            for (int i = 0; i < GameManager.UpgradeNames.Length; i++) grid.Add(UpgradeCard(root, gm, (GameManager.UpgradeKind)i));
+            foreach (var k in UpgradeOrder) if (gm.UpgradeUnlocked(k)) grid.Add(UpgradeCard(root, gm, k));
+            foreach (var k in UpgradeOrder) if (!gm.UpgradeUnlocked(k)) grid.Add(UpgradeCard(root, gm, k)); // locked: last
             list.Add(grid);
         }
         else
@@ -65,7 +77,7 @@ public static class PCShopView
         int lvl = gm.Upgrade(kind);
         bool maxed = lvl >= GameManager.MaxUpgrade;
         bool unlocked = gm.UpgradeUnlocked(kind);
-        int cost = GameManager.UpgradeCost(lvl);
+        int cost = GameManager.UpgradeCost(kind, lvl);
         bool canBuy = gm.CanBuyUpgrade(kind);
 
         var card = new VisualElement();
@@ -96,7 +108,7 @@ public static class PCShopView
         foot.Add(pips);
         var b = maxed ? PlainButton("Max") : !unlocked ? PlainButton($"Day {GameManager.UpgradeUnlockDay[i]}")
                       : PriceButton("Buy", cost, () => { if (gm.BuyUpgrade(kind)) GameAudio.Play(a => a.buy); Refresh(root); });
-        b.SetEnabled(canBuy);
+        b.SetEnabled(canBuy && !Tutorial.HoldsClock); // the tutorial only shows the Shop: no buying in practice
         foot.Add(b);
         card.Add(foot);
         return card;
@@ -194,7 +206,7 @@ public static class PCShopView
         else if (booked) b = PlainButton("Booked");
         else if (!unlocked) b = PlainButton($"Day {GameManager.StaffUnlockDay[i]}");
         else b = PriceButton("Interview", fee, click);
-        b.SetEnabled(hired ? cost >= 0 && gm.Coins >= cost : !booked && unlocked && gm.Coins >= fee);
+        b.SetEnabled(!Tutorial.HoldsClock && (hired ? cost >= 0 && gm.Coins >= cost : !booked && unlocked && gm.Coins >= fee));
         foot.Add(b);
         card.Add(foot);
         return card;

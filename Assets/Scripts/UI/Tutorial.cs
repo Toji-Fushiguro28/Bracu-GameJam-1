@@ -26,7 +26,7 @@ public class Tutorial : MonoBehaviour
     const string DoneKey = "TutorialDone", HintPrefix = "Hint_", GiftKey = "TutorialGift";
     const int WelcomeGift = 20;
 
-    enum Step { Waiting, Tour, Talk, LookUp, Fetch, Give, CardTalk, CardFill, OrderTalk, OrderBuy, CartTake, CartGive, Ready, Finished }
+    enum Step { Waiting, Tour, Talk, LookUp, Fetch, Give, CardTalk, CardFill, OrderTalk, OrderBuy, CartTake, CartGive, Upgrades, Staff, Ready, Finished }
     Step step = Step.Waiting;
 
     /// <summary>A tutorial card is on screen (the notification feed waits until it's gone).</summary>
@@ -48,6 +48,7 @@ public class Tutorial : MonoBehaviour
     readonly bool[] ticked = new bool[3]; // served, card, order
     bool finishing;
     bool noteSaid; // the card says "Press Add to note" (the right book is picked on the computer)
+    bool shopShown; // the Shop's Upgrades and Staff pages have been shown (once, just before "You're ready!")
 
     VisualElement root, card, checklist, spot;
     Label title, text, spotLabel;
@@ -166,6 +167,7 @@ public class Tutorial : MonoBehaviour
     {
         replayRequested = false;
         finishing = false;
+        shopShown = false;
         coinsBefore = GM.Coins; repBefore = GM.Reputation; todayBefore = GM.Today.Copy();
         membersBefore = GM.members.Select(m => m.key).ToList();
         GM.RememberBooksForTutorial();
@@ -194,6 +196,8 @@ public class Tutorial : MonoBehaviour
     void OnOk()
     {
         if (step == Step.Tour) NextStop();
+        else if (step == Step.Upgrades) GoTo(Step.Staff);
+        else if (step == Step.Staff) { FindAnyObjectByType<PCOverlayTrigger>()?.ForceClose(); GoTo(Step.Ready); }
         else if (step == Step.Ready) Finish(true);
         else HideCard();
     }
@@ -378,6 +382,22 @@ public class Tutorial : MonoBehaviour
                 if (Gone(seeker)) { GoTo(Step.Ready); break; } // collected
                 Point(seeker, "Hand it over");
                 break;
+            case Step.Upgrades:
+            case Step.Staff:
+            {
+                // Just a look: open the computer (it opens on the Shop), then Next. Buying is off in the tutorial.
+                bool onShop = PCOverlayTrigger.OpenTab == "shop";
+                if (!onShop) { Point(PC, "Computer"); ok.style.display = DisplayStyle.None; break; }
+                Unpoint();
+                if (step == Step.Upgrades && PCShopView.Tab == 1) { GoTo(Step.Staff); break; } // went to Staff on their own
+                bool ready = step == Step.Upgrades || PCShopView.Tab == 1;
+                if (ready && ok.style.display == DisplayStyle.None)
+                {
+                    ok.text = step == Step.Upgrades ? "Next" : "Got it";
+                    ok.style.display = DisplayStyle.Flex;
+                }
+                break;
+            }
         }
     }
 
@@ -385,13 +405,15 @@ public class Tutorial : MonoBehaviour
 
     void GoTo(Step next)
     {
+        if (next == Step.Ready && !shopShown) next = Step.Upgrades; // a quick look at the Shop first
+        if (next == Step.Upgrades) { shopShown = true; PCShopView.OpenOn(0); }
         step = next;
         Unpoint();
         ClearSpot();
-        string head = next == Step.Ready ? "Tutorial" : $"Tutorial  ·  {VisitorNo(next)} of 3";
+        string head = next >= Step.Upgrades ? "Tutorial" : $"Tutorial  ·  {VisitorNo(next)} of 3";
         string shelf = wanted != null ? ShelfInteractable.NameOf(wanted.ShelfLocation) : "the right";
         checklist.style.display = DisplayStyle.Flex;
-        for (int i = 0; i < checks.Length; i++) checks[i].EnableInClassList("current", next != Step.Ready && i == VisitorNo(next) - 1 && !ticked[i]);
+        for (int i = 0; i < checks.Length; i++) checks[i].EnableInClassList("current", next < Step.Upgrades && i == VisitorNo(next) - 1 && !ticked[i]);
         ok.style.display = DisplayStyle.None;
         ok.RemoveFromClassList("primary");
         skip.style.display = DisplayStyle.Flex;
@@ -430,6 +452,12 @@ public class Tutorial : MonoBehaviour
             case Step.CartGive:
                 Say(head, "Now hand it to them at the desk.");
                 break;
+            case Step.Upgrades:
+                Say("The Shop", $"One last look. Open the {H("computer")}: coins buy {H("Upgrades")} in the {H("Shop")}, and they last forever.");
+                break;
+            case Step.Staff:
+                Say("The Shop", $"Now the {H("Staff")} tab. Book an interview and helpers arrive the next morning to shelve, tidy and repair.");
+                break;
             case Step.Ready:
                 Say("You're ready!", $"Serve visitors for coins and {H("reputation")}. {H("Order")} what you don't have. At {H("closing")}, lock the {H("front ropes")}.");
                 ok.text = "Start Day 1";
@@ -467,7 +495,7 @@ public class Tutorial : MonoBehaviour
         switch (t.step)
         {
             case Step.Talk: case Step.Give: return target == t.buyer;
-            case Step.LookUp: case Step.CardFill: case Step.OrderBuy: return target is ComputerClick;
+            case Step.LookUp: case Step.CardFill: case Step.OrderBuy: case Step.Upgrades: case Step.Staff: return target is ComputerClick;
             case Step.Fetch: return target == ShelfOf(t.wanted);
             case Step.CardTalk: return target == t.signer;
             case Step.OrderTalk: case Step.CartGive: return target == t.seeker;
@@ -483,7 +511,8 @@ public class Tutorial : MonoBehaviour
         {
             var t = Instance;
             if (t == null || !HoldsClock) return null;
-            return t.step == Step.CardFill ? "members" : t.step == Step.LookUp || t.step == Step.OrderBuy ? "catalogue" : "home";
+            return t.step == Step.CardFill ? "members" : t.step == Step.LookUp || t.step == Step.OrderBuy ? "catalogue"
+                 : t.step == Step.Upgrades || t.step == Step.Staff ? "shop" : "home";
         }
     }
 
@@ -698,7 +727,7 @@ public class Tutorial : MonoBehaviour
             if (pcEl != null) { if (spotUi != pcEl) SetSpot(null, pcEl, null); }
             else
             {
-                Component t = step == Step.LookUp || step == Step.CardFill || step == Step.OrderBuy ? PC
+                Component t = step == Step.LookUp || step == Step.CardFill || step == Step.OrderBuy || step == Step.Upgrades || step == Step.Staff ? PC
                             : step == Step.Fetch ? ShelfOf(wanted)
                             : step == Step.CartTake ? DeliveryCart.Instance : null;
                 bool screenOpen = PlayerLock.IsLocked;
@@ -755,7 +784,9 @@ public class Tutorial : MonoBehaviour
     {
         string[] names = s == Step.LookUp ? (NoteOnly ? new[] { "detail-select" } : new[] { "book-search", "tab-catalogue" })
                        : s == Step.CardFill ? new[] { "tab-members" }
-                       : s == Step.OrderBuy ? new[] { "detail-express", "tab-catalogue" } : null;
+                       : s == Step.OrderBuy ? new[] { "detail-express", "tab-catalogue" }
+                       : s == Step.Upgrades ? new[] { "shop-list" }
+                       : s == Step.Staff ? (PCShopView.Tab == 1 ? new[] { "shop-list" } : new[] { "tab-staff" }) : null;
         if (names == null) return null;
         foreach (var doc in FindObjectsByType<UIDocument>())
         {
@@ -806,7 +837,7 @@ public class Tutorial : MonoBehaviour
 
     /// <summary>Every tip key (so a new game can forget them all).</summary>
     static readonly string[] HintKeys =
-        { "seeker", "soldout", "damaged", "staffhelp", "pickup", "vip", "delivery", "mess", "reader", "checkout", "returns", "wrongbook", "express", "ask", "lockup" };
+        { "seeker", "soldout", "damaged", "staffhelp", "pickup", "vip", "delivery", "mess", "reader", "checkout", "returns", "wrongbook", "express", "ask", "lockup", "desk-plate" };
 
     readonly Queue<(string key, string text)> hints = new Queue<(string, string)>();
 
@@ -820,13 +851,20 @@ public class Tutorial : MonoBehaviour
         t.hints.Enqueue((key, text));
     }
 
+    // Play testers didn't read tips that came three at once: one at a time, well spaced, never at a busy counter.
+    const float TipGap = 45f;
+    float lastTipAt = -TipGap;
+
     void ShowQueuedHint()
     {
         if (hints.Count == 0 || card == null || HoldsClock || PlayerLock.IsLocked) return; // not over a conversation or the PC
         if (MainMenuUI.Active) return;
+        if (Time.unscaledTime - lastTipAt < TipGap || HUD.TipShowing) return;
+        if (CounterQueue.Instance != null && CounterQueue.Instance.Count >= 3) return; // busy: it waits
         var (key, body) = hints.Dequeue();
         if (PlayerPrefs.GetInt(HintPrefix + key, 0) == 1) return;
         PlayerPrefs.SetInt(HintPrefix + key, 1);
-        HUD.Tip(body); // in the notification feed, until clicked
+        lastTipAt = Time.unscaledTime;
+        HUD.Tip(body); // in the notification feed for a few seconds
     }
 }

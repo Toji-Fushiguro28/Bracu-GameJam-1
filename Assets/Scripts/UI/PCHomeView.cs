@@ -62,19 +62,18 @@ public static class PCHomeView
         home.Clear();
         signature = Signature();
 
-        // Six numbers
-        var owned = gm.Books;
-        var tiles = Row("tiles6");
-        tiles.Add(Tile(owned.Count.ToString(), "titles"));
-        tiles.Add(Tile(owned.Sum(b => b.Quantity).ToString(), "copies on shelf"));
-        int soldOut = owned.Count(b => b.Sellable && !BookRequest.InStock(b));
-        tiles.Add(Tile(soldOut.ToString(), "sold out", soldOut > 0 ? "bad" : null));
-        tiles.Add(Tile(gm.Today.served.ToString(), "visitors served"));
-        tiles.Add(Tile(gm.Today.income.ToString(), "coins earned today", "ok"));
-        tiles.Add(Tile(Members.All.Count.ToString(), "members"));
-        home.Add(tiles);
-
+        // "Needs you" first: the one thing on this page worth reading every time
         home.Add(NeedsPanel());
+
+        // Four numbers, each with its pixel icon
+        var owned = gm.Books;
+        var tiles = Row("tiles4");
+        tiles.Add(Tile(gm.Today.served.ToString(), "visitors served", "si-heart"));
+        tiles.Add(Tile(gm.Today.income.ToString(), "coins today", "si-coin", "ok"));
+        tiles.Add(Tile(owned.Sum(b => b.Quantity).ToString(), "copies on shelf", "si-shelf"));
+        int soldOut = owned.Count(b => b.Sellable && !BookRequest.InStock(b));
+        tiles.Add(Tile(soldOut.ToString(), "sold out", "si-cart", soldOut > 0 ? "bad" : null));
+        home.Add(tiles);
 
         // Day bar and reputation on the left, popular books on the right
         var mid = Row("mid");
@@ -89,25 +88,6 @@ public static class PCHomeView
         mid.Add(right);
         home.Add(mid);
 
-        // Ledgers
-        var t = gm.Today;
-        var cols = Row("cols3");
-        cols.Add(Ledger("TODAY", $"Day {gm.day}", ("Visitors served", t.served.ToString(), null), ("Books sold", t.booksSold.ToString(), null),
-            ("Read here", t.booksRead.ToString(), null), ("Returns", t.returns.ToString(), null), ("Earned", t.income + " coins", "ok"),
-            ("Left angry", t.angry.ToString(), t.angry > 0 ? "bad" : null)));
-        int worn = owned.Sum(b => b.WornCopies), damaged = owned.Sum(b => b.DamagedCopies);
-        cols.Add(Ledger("COLLECTION", null, ("Titles", owned.Count.ToString(), null), ("Copies on shelves", owned.Sum(b => b.Quantity).ToString(), null),
-            ("Sold out", soldOut.ToString(), soldOut > 0 ? "bad" : null), ("Worn / damaged", $"{worn} / {damaged}", damaged > 0 ? "warn" : null),
-            ("On order", owned.Sum(b => gm.OnOrder(b)).ToString(), null), ("Reserved", gm.reservations.Count.ToString(), null)));
-        int hired = Enumerable.Range(0, gm.staff.Length).Count(i => gm.staff[i]);
-        int rooms = 1 + (gm.ArchiveOpen ? 1 : 0) + (gm.RareOpen ? 1 : 0);
-        int levels = gm.upgrades.Sum(), maxLevels = gm.upgrades.Length * GameManager.MaxUpgrade;
-        var lib = Ledger("LIBRARY", null, ("Members", Members.All.Count.ToString(), null), ("Staff", $"{hired} of {gm.staff.Length}", null),
-            ("Rooms open", $"{rooms} of 3", null), ("Upgrades", $"{levels} of {maxLevels}", null));
-        lib.AddToClassList("last");
-        cols.Add(lib);
-        home.Add(cols);
-
         home.schedule.Execute(() => home.scrollOffset = new Vector2(0, scroll));
     }
 
@@ -116,36 +96,39 @@ public static class PCHomeView
     static VisualElement NeedsPanel()
     {
         var gm = GM;
-        var items = new List<(string colour, string text, string button, Action go)>();
+        var items = new List<(string icon, string text, string button, Action go)>();
         var pc = PCOverlayTrigger.Current;
         foreach (var r in gm.reservations.Where(NeedsOrder))
         {
             bool today = r.urgent && r.day == gm.day;
-            items.Add((today ? "bad" : "warn",
+            items.Add((today ? "si-clock" : "si-cart",
                 $"{r.name} needs <b>\"{r.title}\"</b> {(today ? "by " + GameManager.FormatHour(r.dueHour) : "tomorrow")}  <color=#7D6650>· not ordered yet{(today ? " · use Express" : "")}</color>",
                 "Order", () => pc?.ShowTab("catalogue", true)));
         }
         if (Customer.WaitingForCard != null)
-            items.Add(("warn", "A visitor is waiting for a library card  <color=#7D6650>· at the counter</color>", "Fill in card", () => pc?.ShowTab("members")));
+            items.Add(("si-scroll", "A visitor is waiting for a library card  <color=#7D6650>· at the counter</color>", "Fill in card", () => pc?.ShowTab("members")));
         if (gm.UpgradeReady)
-            items.Add(("ok", $"An upgrade is affordable  <color=#7D6650>· {gm.Coins} coins</color>", "See upgrades", () => pc?.ShowShop(0)));
+            items.Add(("si-hammer", $"An upgrade is affordable  <color=#7D6650>· {gm.Coins} coins</color>", "See upgrades", () => pc?.ShowShop(0)));
         if (gm.StaffReady)
-            items.Add(("ok", "Staff: an interview or training you can afford", "See staff", () => pc?.ShowShop(1)));
+            items.Add(("si-broom", "Staff: an interview or training you can afford", "See staff", () => pc?.ShowShop(1)));
 
-        var panel = Panel("NEEDS YOU", items.Count > 0 ? items.Count + " to do" : null, true);
+        // Nothing to do: one slim green line. Something to do: the warm card, bigger, with a count.
         if (items.Count == 0)
         {
-            var clear = new Label("All clear. Nothing needs you right now.");
-            clear.AddToClassList("allclear");
-            panel.Add(clear);
+            var clear = Row("needs-clear");
+            clear.AddToClassList("panel");
+            clear.Add(Icon("si-tick"));
+            var l = new Label("All clear. Nothing needs you right now.");
+            l.AddToClassList("allclear");
+            clear.Add(l);
+            return clear;
         }
+        var panel = Panel("NEEDS YOU", items.Count + " to do", true);
+        panel.AddToClassList("needs-hot");
         foreach (var it in items.Take(MaxNeeds))
         {
             var row = Row("need");
-            var mark = new VisualElement();
-            mark.AddToClassList("need-mark");
-            mark.style.backgroundColor = Colour(it.colour);
-            row.Add(mark);
+            row.Add(Icon(it.icon));
             var text = new Label(it.text) { enableRichText = true };
             text.AddToClassList("need-text");
             row.Add(text);
@@ -181,10 +164,9 @@ public static class PCHomeView
     static VisualElement DayPanel()
     {
         var gm = GM;
-        var panel = new VisualElement();
-        panel.AddToClassList("panel");
+        var panel = Panel("TODAY", null, false, "si-clock");
         left = Small(LeftText());
-        panel.Add(left);
+        panel.Q(className: "panel-head").Add(left);
         var tl = new VisualElement();
         tl.AddToClassList("tl");
         var track = new VisualElement();
@@ -304,7 +286,7 @@ public static class PCHomeView
     static VisualElement ReputationPanel()
     {
         var gm = GM;
-        var panel = Panel("REPUTATION", gm.GoalActive ? $"goal {gm.ReputationGoal}" : null, false);
+        var panel = Panel("REPUTATION", gm.GoalActive ? $"goal {gm.ReputationGoal}" : null, false, "si-star");
         if (!gm.GoalActive) { panel.Add(Small($"{gm.Reputation} reputation")); return panel; }
         var meter = new VisualElement();
         meter.AddToClassList("meter");
@@ -328,7 +310,7 @@ public static class PCHomeView
     static VisualElement PopularPanel()
     {
         var gm = GM;
-        var panel = Panel("POPULAR TODAY", "sell well today", false);
+        var panel = Panel("POPULAR TODAY", "sell well today", false, "si-books");
         bool first = true;
         foreach (var title in gm.PopularToday)
         {
@@ -373,11 +355,20 @@ public static class PCHomeView
         return l;
     }
 
-    static VisualElement Panel(string title, string small, bool strong)
+    static VisualElement Icon(string cls)
+    {
+        var i = new VisualElement { pickingMode = PickingMode.Ignore };
+        i.AddToClassList("si");
+        i.AddToClassList(cls);
+        return i;
+    }
+
+    static VisualElement Panel(string title, string small, bool strong, string icon = null)
     {
         var panel = new VisualElement();
         panel.AddToClassList("panel");
         var head = Row("panel-head");
+        if (icon != null) head.Add(Icon(icon));
         var t = new Label(title);
         t.AddToClassList("panel-title");
         t.AddToClassList("font-title");
@@ -388,37 +379,24 @@ public static class PCHomeView
         return panel;
     }
 
-    static VisualElement Tile(string n, string label, string cls = null)
+    static VisualElement Tile(string n, string label, string icon, string cls = null)
     {
         var tile = new VisualElement();
         tile.AddToClassList("stile");
+        var i = Icon(icon);
+        i.AddToClassList("stile-icon");
+        tile.Add(i);
+        var text = new VisualElement();
         var big = new Label(n);
         big.AddToClassList("stile-n");
         big.AddToClassList("font-title");
         if (cls != null) big.AddToClassList(cls);
-        tile.Add(big);
+        text.Add(big);
         var l = new Label(label);
         l.AddToClassList("stile-l");
-        tile.Add(l);
+        text.Add(l);
+        tile.Add(text);
         return tile;
-    }
-
-    static VisualElement Ledger(string title, string small, params (string k, string v, string cls)[] rows)
-    {
-        var panel = Panel(title, small, false);
-        foreach (var (k, v, cls) in rows)
-        {
-            var r = Row("kv");
-            var a = new Label(k);
-            a.AddToClassList("kv-k");
-            r.Add(a);
-            var b = new Label(v);
-            b.AddToClassList("kv-v");
-            if (cls != null) b.AddToClassList(cls);
-            r.Add(b);
-            panel.Add(r);
-        }
-        return panel;
     }
 
     static Color Colour(string state) => state == "bad" ? new Color32(142, 59, 50, 255)

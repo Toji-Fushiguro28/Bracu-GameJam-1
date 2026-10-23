@@ -2,15 +2,15 @@
     <Style src="../UI Toolkit/GameUI.uss" />
     <Style src="../UI Toolkit/Notebook.uss" />
     <ui:VisualElement name="notebook-layer" class="layer notebook-layer" picking-mode="Ignore">
-        <ui:VisualElement name="notebook" class="notebook">
-            <ui:Button name="notebook-tab" class="kit-button notebook-tab" text="Notes" />
+        <ui:VisualElement name="notebook" class="notebook" picking-mode="Ignore">
+            <ui:VisualElement class="notebook-tab-holder" picking-mode="Ignore"><ui:Button name="notebook-tab" class="kit-button notebook-tab" text="Notes" /></ui:VisualElement>
             <ui:VisualElement name="notebook-page" class="notebook-page">
                 <ui:Label text="Notebook" class="notebook-title font-title" />
                 <ui:ScrollView name="notebook-list" class="shelf-list notebook-list" />
             </ui:VisualElement>
         </ui:VisualElement>
-        <ui:VisualElement name="reservations" class="notebook reservations collapsed">
-            <ui:Button name="reservations-tab" class="kit-button notebook-tab" text="Reserved" />
+        <ui:VisualElement name="reservations" class="notebook reservations collapsed" picking-mode="Ignore">
+            <ui:VisualElement class="notebook-tab-holder" picking-mode="Ignore"><ui:Button name="reservations-tab" class="kit-button notebook-tab" text="Reserved" /></ui:VisualElement>
             <ui:VisualElement class="notebook-page">
                 <ui:Label text="Reservations" class="notebook-title font-title" />
                 <ui:ScrollView name="reservations-list" class="shelf-list notebook-list" />

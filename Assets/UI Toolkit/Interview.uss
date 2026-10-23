@@ -64,3 +64,6 @@
 .resume.bump { scale: 1.04 1.04; }
 .resume .gold-stat-name { font-size: 20px; }
 .resume .gold-star { width: 18px; height: 18px; }
+
+/* No desk plate in the interview room: the dialogue keeps its usual height. */
+.dialogue { padding-bottom: 104px; }

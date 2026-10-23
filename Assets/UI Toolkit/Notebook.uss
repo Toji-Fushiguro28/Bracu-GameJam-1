@@ -17,12 +17,19 @@
 /* Collapsed: the page slides off the right edge, only the tab stays. */
 .notebook.collapsed { translate: 446px 0; }
 /* Collapsed, a box takes only its tab's height: Reserved moves up under the Notes tab, and Notes get the room. */
-.notebook.collapsed { max-height: 80px; }
+.notebook.collapsed { max-height: 150px; }
 
-.notebook-tab {
+/* Upright tabs: the same kit button, turned on its side inside a narrow holder, so it never reaches over the
+   computer. NotebookHUD.FitTab sizes the holder to the turned button and centres it. */
+.notebook-tab-holder {
     margin-top: 28px;
     margin-right: -6px;
+}
+.notebook-tab {
+    position: absolute;
+    rotate: -90deg;
     font-size: 22px;
+    white-space: nowrap;
 }
 .notebook-page {
     width: 430px;
@@ -52,7 +59,7 @@
 .reservations {
     margin-top: 10px;
 }
-.reservations .notebook-tab { margin-top: 14px; }
+.reservations .notebook-tab-holder { margin-top: 14px; }
 .reservations .notebook-page { padding-top: 16px; }
 .reservations .notebook-title { font-size: 26px; margin-bottom: 2px; }
 /* New reservation: gold tab that pulses until you open the list. */

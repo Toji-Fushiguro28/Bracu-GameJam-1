@@ -40,6 +40,10 @@ public class PCOverlayTrigger : MonoBehaviour
 
     /// <summary>The open computer (views use it to switch tabs, e.g. Home's "Order" button).</summary>
     public static PCOverlayTrigger Current { get; private set; }
+    /// <summary>The computer is open and maximised (the monitor fills the screen: the HUD's clock bar steps aside).</summary>
+    /// <summary>The tab showing on the open computer; null while it's closed.</summary>
+    public static string OpenTab => Current != null && Current.isOpen ? Current.currentTab : null;
+    public static bool MaximisedOpen =>maximised && Current != null && Current.isOpen;
     /// <summary>The last book looked at in the catalogue (the tutorial checks you found it).</summary>
     public static BookData LastViewed;
     /// <summary>Minimised: the next open comes back to the same tab (and the catalogue keeps its search).</summary>
@@ -152,8 +156,8 @@ public class PCOverlayTrigger : MonoBehaviour
         page = root.Q("page");
         root.Q<Button>("win-close")?.RegisterCallback<ClickEvent>(_ => { if (!JustOpened) Hide(); });
         root.Q<Button>("win-min")?.RegisterCallback<ClickEvent>(_ => { if (JustOpened) return; resume = true; Hide(); });
-        root.Q<Button>("win-max")?.RegisterCallback<ClickEvent>(_ => { maximised = !maximised; root.Q("monitor")?.EnableInClassList("max", maximised); });
-        root.Q("monitor")?.EnableInClassList("max", maximised);
+        root.Q<Button>("win-max")?.RegisterCallback<ClickEvent>(_ => { maximised = !maximised; root.Q("monitor")?.EnableInClassList("max", maximised); root.Q("container")?.EnableInClassList("max", maximised); });
+        root.Q("monitor")?.EnableInClassList("max", maximised); root.Q("container")?.EnableInClassList("max", maximised);
         foreach (var t in Tabs)
         {
             string tab = t;

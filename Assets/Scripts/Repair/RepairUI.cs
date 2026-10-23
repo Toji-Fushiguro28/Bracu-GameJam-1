@@ -368,7 +368,7 @@ public class RepairUI : MonoBehaviour
         var job = gameJob;
         gameJob = null;
         ShowStatus();
-        if (job != null && desk.StartRepair(job, finalScore))
+        if (job != null && desk.StartRepair(job, finalScore, byHand: true))
             resultLabel.text = finalScore > 0f ? $"Nice work! +{Mathf.RoundToInt(finalScore * desk.minigameBonus * 100)}% Perfect chance." : "Repair started.";
         else if (job != null)
             resultLabel.text = "Not enough coins for that repair.";

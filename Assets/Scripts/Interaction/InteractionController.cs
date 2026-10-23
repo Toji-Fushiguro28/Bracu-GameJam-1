@@ -84,9 +84,9 @@ public class InteractionController : MonoBehaviour
     void SetHovered(ClickInteractable next)
     {
         if (next == hovered) return;
-        HoverOutline.Set(hovered, false, outlineMaterial);
+        if (hovered != null) HoverOutline.Set(hovered, false, outlineMaterial);
         hovered = next;
-        HoverOutline.Set(hovered, true, outlineMaterial);
+        if (hovered != null) HoverOutline.Set(hovered, true, outlineMaterial);
         HoveringSomething = hovered != null;
     }
 }

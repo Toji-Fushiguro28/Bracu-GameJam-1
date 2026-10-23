@@ -496,9 +496,9 @@ public class Customer : ClickInteractable
             return;
         }
         // First times at the desk: a one-line tip (once per game).
-        if (kind == Kind.Seeker) Tutorial.Show("seeker", "This visitor wants a book the library doesn't have. Ask when they need it, reserve it, then order it from the computer's Catalogue.");
-        if (kind == Kind.Pickup) Tutorial.Show("pickup", "Back for a reserved book: take it off the book cart (or its shelf) and hand it over.");
-        if (vip) Tutorial.Show("vip", "VIP scholars read in the Rare Books room. Give them a Rare Books card on the computer first; then they pay well to read.");
+        if (kind == Kind.Seeker) Tutorial.Show("seeker", "Not in the library? Reserve it, then order it on the computer.");
+        if (kind == Kind.Pickup) Tutorial.Show("pickup", "Back for a reserved book: take it off the book cart and hand it over.");
+        if (vip) Tutorial.Show("vip", "VIPs need a Rare Books card (computer, Members). Then they pay well.");
 
         if (kind == Kind.Browser && heldBook != null)
         {
@@ -656,7 +656,7 @@ public class Customer : ClickInteractable
 
         bool pickup = kind == Kind.Pickup;
         bool soldOut = !pickup && request.OutOfStock(GM.Books);
-        if (soldOut) Tutorial.Show("soldout", "Sold out! Ask when they need it: reserve it, then order more from the computer's Catalogue. Express gets here in 2 hours.");
+        if (soldOut) Tutorial.Show("soldout", "Sold out? Reserve it, then order more on the computer.");
         bool seeker = kind == Kind.Seeker;
         // After any book in your hands: go and find it, ask for a hint, then the "we haven't got it" answers.
         bool tutorial = Tutorial.HoldsClock; // the tutorial: only the way forward
@@ -757,7 +757,7 @@ public class Customer : ClickInteractable
                 Members.Satisfy(Membership, -0.25f);
                 Members.Complain(Membership, Members.Gripe.WrongBook);
             }
-            Tutorial.Show("wrongbook", "Not what they asked for. Check their request in your Notes (right edge) and look it up on the computer.");
+            Tutorial.Show("wrongbook", "Not what they asked for. Check your Notes, then the computer.");
             Penalise(wrongBookPenalty);
             return;
         }
@@ -832,7 +832,7 @@ public class Customer : ClickInteractable
         Members.Satisfy(Membership, 0.2f);
         GameAudio.Play(a => a.cardIssued, 0.7f);
         RequestLog.Note(this, $"Waiting in the library for <color=#D67840>\"{request.Target.Title}\"</color> (express)");
-        Tutorial.Show("express", "They're waiting in the library: order it with Express from the Catalogue (2 hours), or they'll leave unhappy.");
+        Tutorial.Show("express", "They're waiting here: order it Express (2 hours).");
         StopImpatient(true);
         CounterQueue.Instance.Leave(this);
         state = State.WaitingForBook;
@@ -1359,7 +1359,7 @@ public class Customer : ClickInteractable
             return;
         }
         RequestLog.Finish(this, $"Reading <color=#D67840>\"{book.Title}\"</color> here");
-        Tutorial.Show("reader", "Readers sit and read, then check the book back in at the counter. Click them while they read for a chat, and a tip if you recommend something they'll love.");
+        Tutorial.Show("reader", "Readers love a chat. Suggest a book they'll like for a bonus.");
         Say(seat.rareBooksOnly ? "Wonderful. I'll read it in the Rare Books room." : "Lovely, I'll find a seat.", 2.5f);
         state = State.ToSeat;
         agent.SetDestination(NearestOnNavMesh(seat.ApproachPosition(seatIndex)));
@@ -1431,7 +1431,7 @@ public class Customer : ClickInteractable
 
     void BeginCheckIn()
     {
-        if (kind == Kind.Returner) Tutorial.Show("returns", "Returning a book: click them to check it in. Worn or damaged copies go in the return bin for repair.");
+        if (kind == Kind.Returner) Tutorial.Show("returns", "Click them to check the book in. Worn copies go to the return bin.");
         state = State.CheckIn;
         StartPatience(45f);
         Say(CheckInLine);
@@ -1590,7 +1590,7 @@ public class Customer : ClickInteractable
         roamLook = look;
         roaming = true;
         CounterQueue.Instance.Leave(this);
-        Tutorial.Show("ask", "A \"?\" over someone's head means they'd like a word. Walk over and click them.");
+        Tutorial.Show("ask", "A \"?\" means they'd like a word. Click them.");
         if (story != null) { state = State.Waiting; Say(WaitingText); }
         else BeginRequest();
         if (state == State.Waiting && !heard)

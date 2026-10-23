@@ -224,7 +224,11 @@ public class GameManager : MonoBehaviour
         "Run longer and catch your breath faster.",
     };
     public const int MaxUpgrade = 3;
-    public static int UpgradeCost(int level) => 60 + level * 40; // 60 / 100 / 140: the first one is just out of reach of the starting coins
+    /// <summary>First-level price per upgrade (UpgradeKind order). The ones that pay off most cost a bit more;
+    /// all are above the 50 starting coins.</summary>
+    public static readonly int[] UpgradeBaseCost = { 60, 80, 70, 60, 70, 70, 90, 80, 60 };
+    /// <summary>Price of the next level: the base, +40 per level already bought (e.g. 60 / 100 / 140).</summary>
+    public static int UpgradeCost(UpgradeKind u, int level) => UpgradeBaseCost[(int)u] + level * 40;
 
     [NonSerialized] public List<Member> members = new List<Member>();
     /// <summary>Cards handed back, and when (they can't sign up again for two days). Saved.</summary>
@@ -292,7 +296,7 @@ public class GameManager : MonoBehaviour
     public static readonly int[] UpgradeUnlockDay = { 1, 2, 1, 1, 2, 2, 3, 1, 1 };
     public bool UpgradeUnlocked(UpgradeKind u) => day >= UpgradeUnlockDay[(int)u];
     /// <summary>Unlocked, not maxed and affordable.</summary>
-    public bool CanBuyUpgrade(UpgradeKind u) => UpgradeUnlocked(u) && upgrades[(int)u] < MaxUpgrade && Coins >= UpgradeCost(upgrades[(int)u]);
+    public bool CanBuyUpgrade(UpgradeKind u) => UpgradeUnlocked(u) && upgrades[(int)u] < MaxUpgrade && Coins >= UpgradeCost(u, upgrades[(int)u]);
 
     /// <summary>True when at least one upgrade can be bought right now.</summary>
     public bool UpgradeReady
@@ -563,9 +567,9 @@ public class GameManager : MonoBehaviour
     public bool BuyUpgrade(UpgradeKind u)
     {
         int lvl = upgrades[(int)u];
-        if (!UpgradeUnlocked(u) || lvl >= MaxUpgrade || !TrySpend(UpgradeCost(lvl), "Upgrades")) return false;
+        if (!UpgradeUnlocked(u) || lvl >= MaxUpgrade || !TrySpend(UpgradeCost(u, lvl), "Upgrades")) return false;
         upgrades[(int)u]++;
-        RequestLog.Money("You", $"Bought {UpgradeNames[(int)u]} (level {upgrades[(int)u]})", "Upgrade", -UpgradeCost(lvl));
+        RequestLog.Money("You", $"Bought {UpgradeNames[(int)u]} (level {upgrades[(int)u]})", "Upgrade", -UpgradeCost(u, lvl));
         ApplyUpgrades();
         return true;
     }

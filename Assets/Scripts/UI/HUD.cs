@@ -106,6 +106,129 @@ public class HUD : MonoBehaviour
         repDelta = new Label { name = "hud-rep-delta", pickingMode = PickingMode.Ignore };
         repDelta.AddToClassList("hidden");
         root.Q(className: "hud-rep")?.Add(repDelta);
+        // The desk plate's other parts.
+        weekLabel = root.Q<Label>("hud-week");
+        clockTag = root.Q<Label>("hud-clock-tag");
+        repFill = root.Q("hud-rep-fill");
+        repTrack = root.Q("hud-rep-track");
+        goalLabel = root.Q<Label>("hud-goal");
+        clockCell = root.Q(className: "plate-clock");
+        repCell = root.Q(className: "plate-rep");
+        dayBadge = root.Q(className: "plate-day");
+        repIcon = root.Q(className: "icon-rep");
+        BuildTopLayer(root);
+    }
+
+    // ---------------- The desk plate (bottom bar): day, clock and reputation ----------------
+
+    Label weekLabel, clockTag, goalLabel;
+    VisualElement repFill, repTrack, clockCell, repCell, dayBadge, repIcon;
+    int plateRep = int.MinValue;
+    float noticeUntil = -1f, nextNoticeBlink;
+    bool noticeShown;
+
+    /// <summary>The day (bumps on a new day), the clock
+    /// and a tag for slowed / paused / closed, and a soft glow on Day 1 so new players notice it.</summary>
+    void UpdatePlate(GameManager gm)
+    {
+        bool training = Tutorial.HoldsClock;
+        string day = training ? "0" : gm.day.ToString();
+        if (dayLabel != null && dayLabel.text != day)
+        {
+            bool wasSet = !string.IsNullOrEmpty(dayLabel.text);
+            dayLabel.text = day;
+            if (wasSet && dayBadge != null)
+            {
+                dayBadge.AddToClassList("flip");
+                dayBadge.schedule.Execute(() => dayBadge.RemoveFromClassList("flip")).ExecuteLater(350);
+            }
+        }
+        string week = training ? "Training" : $"Week {(gm.day - 1) / 5 + 1}";
+        if (weekLabel != null && weekLabel.text != week) weekLabel.text = week;
+
+        bool closed = gm.CurrentPhase != GameManager.Phase.Open;
+        string clock = gm.CurrentPhase == GameManager.Phase.Closed ? "Closed" : gm.ClockText;
+        if (clock != lastClock) clockLabel.text = lastClock = clock;
+        string tag = gm.CurrentPhase == GameManager.Phase.Closed ? "tidy up, then the front ropes"
+                   : gm.Paused ? "paused" : gm.Slowed ? "slowed" : null;
+        if (clockTag != null)
+        {
+            clockTag.EnableInClassList("hidden", tag == null);
+            clockTag.EnableInClassList("closed", gm.CurrentPhase == GameManager.Phase.Closed);
+            if (tag != null && clockTag.text != tag) clockTag.text = tag;
+        }
+        clockCell?.EnableInClassList("closed", closed);
+
+        // Day 1, once play has started: glow for about 20 seconds, with a one-time tip.
+        if (!noticeShown && gm.day == 1 && !training && MainMenuUI.Playing && !MainMenuUI.Active)
+        {
+            noticeShown = true;
+            noticeUntil = Time.unscaledTime + 20f;
+            Tutorial.Show("desk-plate", "Your day, clock and reputation live on the plate at the bottom.");
+        }
+        bool noticing = noticeUntil > 0f && Time.unscaledTime < noticeUntil;
+        if (noticing && Time.unscaledTime >= nextNoticeBlink) { nextNoticeBlink = Time.unscaledTime + 0.6f; hudBar?.ToggleInClassList("notice"); }
+        if (!noticing && hudBar != null && hudBar.ClassListContains("notice")) hudBar.RemoveFromClassList("notice");
+    }
+
+    // ---------------- The clock bar and the purse, above the work screens ----------------
+
+    // The clock bar (day, time, reputation) and the coin purse live on their own panel above the shelf / repair
+    // backdrops and the PC (20), below the notebook (25) and the menus (30): the clock still runs on those screens
+    // and coins are spent there, so they stay bright instead of dimmed. Display only, so clicks pass through.
+    const int TopSortOrder = 22;
+    static UIDocument topDoc;
+    VisualElement topLayer, hudBar;
+
+    void BuildTopLayer(VisualElement root)
+    {
+        hudBar = root.Q(className: "hud-bar");
+        if (hudBar == null || purse == null) return;
+        var doc = GetComponent<UIDocument>();
+        if (topDoc == null && doc.panelSettings != null)
+        {
+            // A root object on purpose: a UIDocument under another one joins that one's panel and sort order.
+            var go = new GameObject("HUD Top");
+            go.SetActive(false);
+            var ps = Instantiate(doc.panelSettings);
+            ps.name = "PS_HUDTop";
+            ps.sortingOrder = TopSortOrder;
+            topDoc = go.AddComponent<UIDocument>();
+            topDoc.panelSettings = ps;
+            go.SetActive(true);
+        }
+        if (topDoc == null) return;
+        var top = topDoc.rootVisualElement;
+        top.Clear();
+        top.pickingMode = PickingMode.Ignore;
+        // Same styles as the game UI (they come with its template).
+        for (var e = hudLayer; e != null; e = e.parent)
+            for (int i = 0; i < e.styleSheets.count; i++)
+                if (!top.styleSheets.Contains(e.styleSheets[i])) top.styleSheets.Add(e.styleSheets[i]);
+        topLayer = new VisualElement { name = "hud-top", pickingMode = PickingMode.Ignore };
+        topLayer.AddToClassList("layer");
+        topLayer.AddToClassList("hud");
+        topLayer.Add(hudBar);
+        topLayer.Add(purse);
+        top.Add(topLayer);
+    }
+
+    /// <summary>Shown whenever the game HUD is: not on the title / pause menu, the interview, the Day Report or a fade.
+    /// The clock bar steps aside while the PC is maximised (the monitor fills the screen there).</summary>
+    void UpdateTopLayer()
+    {
+        if (topLayer == null) return;
+        var root = GetComponent<UIDocument>().rootVisualElement;
+        bool show = root.style.display != DisplayStyle.None && hudLayer != null && !hudLayer.ClassListContains("hidden")
+                    && (DayReportUI.Instance == null || !DayReportUI.Instance.IsOpen) && (fade == null || !fade.ClassListContains("on"));
+        topLayer.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
+        hudBar?.EnableInClassList("hidden", PCOverlayTrigger.MaximisedOpen);
+    }
+
+    void OnDestroy()
+    {
+        if (topDoc != null) Destroy(topDoc.gameObject);
+        topDoc = null;
     }
 
     /// <summary>Puts a message in the notification feed (top-left). Each line becomes its own short card; long ones
@@ -123,8 +246,12 @@ public class HUD : MonoBehaviour
     class Note { public VisualElement el; public float until, born; public bool urgent, tip; }
     readonly List<Note> notes = new List<Note>();
     VisualElement feed;
-    const int MaxNotes = 6; // room for the whole morning summary
-    const float NoteSeconds = 14f, UrgentSeconds = 30f, StaffSeconds = 6f;
+    const int MaxNotes = 3; // a corner, not half the screen: older cards are still in the PC's Log
+    const float NoteSeconds = 14f, UrgentSeconds = 30f, StaffSeconds = 6f, TipSeconds = 8f;
+    int overflow;      // cards pushed out by newer ones since the feed was last empty
+    Label moreChip;    // "+2 more in the Log" under the cards
+    /// <summary>A tip is on screen (Tutorial paces them: one at a time).</summary>
+    public static bool TipShowing => instance != null && instance.notes.Exists(n => n.tip);
     /// <summary>True while the pointer is over a notification (so the click doesn't also reach the library).</summary>
     public static bool PointerOverFeed { get; private set; }
 
@@ -187,7 +314,7 @@ public class HUD : MonoBehaviour
             // "TIP" heading over the text.
             var col = new VisualElement { pickingMode = PickingMode.Ignore };
             col.AddToClassList("feed-col");
-            var head = new Label("TIP  ·  click to close") { pickingMode = PickingMode.Ignore };
+            var head = new Label("TIP") { pickingMode = PickingMode.Ignore };
             head.AddToClassList("feed-tip-head");
             col.Add(head);
             col.Add(label);
@@ -195,7 +322,7 @@ public class HUD : MonoBehaviour
         }
         else card.Add(label);
         var note = new Note { el = card, urgent = urgent, tip = tip, born = Time.unscaledTime + notes.Count * 0.0001f,
-                              until = tip ? float.MaxValue : Time.unscaledTime + (urgent ? UrgentSeconds : seconds) };
+                              until = Time.unscaledTime + (tip ? TipSeconds : urgent ? UrgentSeconds : seconds) }; // tips fade on their own too
         card.RegisterCallback<ClickEvent>(_ => Dismiss(note));
         card.RegisterCallback<PointerEnterEvent>(_ => PointerOverFeed = true);
         card.RegisterCallback<PointerLeaveEvent>(_ => PointerOverFeed = false);
@@ -207,10 +334,31 @@ public class HUD : MonoBehaviour
         {
             // The oldest ordinary message goes (an earlier line of a multi-line message counts as older).
             Note old = null;
-            foreach (var n in notes) if (!n.urgent && !n.tip && (old == null || n.born < old.born)) old = n; // tips stay until clicked
+            foreach (var n in notes) if (!n.urgent && !n.tip && (old == null || n.born < old.born)) old = n;
             if (old == null) old = notes[notes.Count - 1];
             Remove(old);
+            overflow++;
         }
+        ShowMore();
+    }
+
+    /// <summary>"+N more in the Log" under the cards while newer ones have pushed some out; click it away.</summary>
+    void ShowMore()
+    {
+        if (moreChip == null)
+        {
+            moreChip = new Label { pickingMode = PickingMode.Position };
+            moreChip.AddToClassList("feed-more");
+            moreChip.RegisterCallback<ClickEvent>(_ => { overflow = 0; ShowMore(); });
+            moreChip.RegisterCallback<PointerEnterEvent>(_ => PointerOverFeed = true);
+            moreChip.RegisterCallback<PointerLeaveEvent>(_ => PointerOverFeed = false);
+        }
+        if (overflow > 0 && notes.Count > 0)
+        {
+            moreChip.text = $"+{overflow} more in the Log";
+            feed.Add(moreChip); // always last, under the cards
+        }
+        else moreChip.RemoveFromHierarchy();
     }
 
     void Dismiss(Note n) { if (notes.Contains(n)) Remove(n); }
@@ -220,7 +368,7 @@ public class HUD : MonoBehaviour
         notes.Remove(n);
         n.el.RemoveFromClassList("in");
         n.el.schedule.Execute(() => n.el.RemoveFromHierarchy()).ExecuteLater(250); // fade out
-        if (notes.Count == 0) PointerOverFeed = false;
+        if (notes.Count == 0) { PointerOverFeed = false; overflow = 0; ShowMore(); }
     }
 
     void UpdateFeed()
@@ -284,7 +432,20 @@ public class HUD : MonoBehaviour
         var gm = GameManager.Instance;
         if (gm == null || repLabel == null) return;
         repLabel.text = gm.GoalActive ? $"{gm.Reputation}/{gm.ReputationGoal}" : gm.Reputation.ToString();
-        repLabel.parent.EnableInClassList("goal-met", gm.GoalActive && gm.Reputation >= gm.ReputationGoal);
+        bool met = gm.GoalActive && gm.Reputation >= gm.ReputationGoal;
+        repLabel.parent.EnableInClassList("goal-met", met);
+        // The goal bar under it (gone after the Dean's goals end, Day 11 on).
+        repTrack?.EnableInClassList("hidden", !gm.GoalActive);
+        if (repFill != null && gm.GoalActive) repFill.style.width = Length.Percent(100f * Mathf.Clamp01(gm.Reputation / (float)Mathf.Max(1, gm.ReputationGoal)));
+        if (goalLabel != null) goalLabel.text = !gm.GoalActive ? "" : met ? "Goal met!" : $"Goal: Day {gm.GoalDay}";
+        repCell?.EnableInClassList("goal-done", met);
+        // The star bounces when it changes.
+        if (plateRep != int.MinValue && plateRep != gm.Reputation && repIcon != null)
+        {
+            repIcon.AddToClassList("bounce");
+            repIcon.schedule.Execute(() => repIcon.RemoveFromClassList("bounce")).ExecuteLater(200);
+        }
+        plateRep = gm.Reputation;
     }
 
     float nextRepSound, repFlushAt;
@@ -573,7 +734,7 @@ public class HUD : MonoBehaviour
         if (phase == GameManager.Phase.Closing)
         {
             ShowBanner("Closing time! No new visitors.");
-            Tutorial.Show("lockup", "Closing time: tidy any cups and books left out (it earns reputation), then click the front ropes to lock up.");
+            Tutorial.Show("lockup", "Closing time: tidy up, then click the front ropes.");
         }
         else if (phase == GameManager.Phase.Closed) ShowBanner("The library is closed. Tidy up, then click the front ropes to lock up.", 6f);
     }
@@ -588,7 +749,7 @@ public class HUD : MonoBehaviour
             gm.DayStarted += () => ShowBanner(MorningText(gm), 6f);
             gm.Delivered += n =>
             {
-                Tutorial.Show("delivery", "Your order arrived on the book cart. Click the cart to take books, then shelve them or hand them over.");
+                Tutorial.Show("delivery", "Your order is on the book cart. Click the cart to take books.");
                 GameAudio.Play(a => a.delivery);
                 ShowBanner(n == 1 ? "Delivery! A book is waiting at the book cart." : $"Delivery! {n} books are waiting at the book cart.", 6f);
             };
@@ -597,7 +758,6 @@ public class HUD : MonoBehaviour
             gm.DayStarted += ShowReputation;
             if (!MainMenuUI.Active) ShowBanner(MorningText(gm), 6f); // with the title menu up, Play/Continue shows it
             SnapCoins(gm.Coins);
-            dayLabel.text = "Day " + gm.day;
             ShowReputation();
         }
         var player = GameObject.FindWithTag("Player");
@@ -689,6 +849,7 @@ public class HUD : MonoBehaviour
     void Update()
     {
         UpdateStamina();
+        UpdateTopLayer();
         var gm = GameManager.Instance;
         TickCoins(gm);
         if (gm != null && pin != null)
@@ -718,9 +879,6 @@ public class HUD : MonoBehaviour
         }
         if (repDeltaUntil > 0f && Time.time > repDeltaUntil) { repDeltaUntil = 0f; repDelta.AddToClassList("hidden"); }
         if (gm == null || clockLabel == null) return;
-        string clock = gm.CurrentPhase == GameManager.Phase.Closed ? "Closed - tidy up, then click the front ropes" : gm.Paused ? gm.ClockText + "  (paused)" : gm.Slowed ? gm.ClockText + "  (slowed)" : gm.ClockText;
-        string day = Tutorial.HoldsClock ? "Day 0 - Training day" : $"Day {gm.day}";
-        if (dayLabel != null && dayLabel.text != day) dayLabel.text = day;
-        if (clock != lastClock) clockLabel.text = lastClock = clock;
+        UpdatePlate(gm);
     }
 }

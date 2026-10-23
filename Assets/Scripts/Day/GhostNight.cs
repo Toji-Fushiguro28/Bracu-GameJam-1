@@ -6,8 +6,8 @@ using UnityEngine.AI;
 /// <summary>
 /// Night ghosts: once the library has closed and every visitor and staff member has gone home, 1-3 see-through,
 /// softly glowing readers fade in. Some drift
-/// between the shelves, the others sit in an empty chair and read. They have no colliders and no click,
-/// and other characters don't step around them, so the librarian walks straight through. They fade out
+/// between the shelves, the others sit in an empty chair and read.
+/// Other characters don't step around them, and the librarian walks straight through. They fade out
 /// when the next day opens. Made at runtime (no scene edits); the look is Resources/M_Ghost (Game/Ghost).
 /// </summary>
 public class GhostNight : MonoBehaviour

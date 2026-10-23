@@ -8,11 +8,29 @@
     </ui:VisualElement>
     <ui:VisualElement name="hud" class="layer hud" picking-mode="Ignore">
         <ui:VisualElement class="hud-bar" picking-mode="Ignore">
-            <ui:Label name="hud-day" class="hud-day" text="Day 1" picking-mode="Ignore" />
-            <ui:Label name="hud-clock" class="hud-clock" text="09:00" picking-mode="Ignore" />
-            <ui:VisualElement class="hud-rep" picking-mode="Ignore">
-                <ui:VisualElement class="icon-rep" picking-mode="Ignore" />
-                <ui:Label name="hud-rep" text="0" picking-mode="Ignore" />
+            <ui:VisualElement class="plate-cell plate-day" picking-mode="Ignore">
+                <ui:VisualElement class="plate-row" picking-mode="Ignore">
+                    <ui:Label text="DAY" class="plate-day-label" picking-mode="Ignore" />
+                    <ui:Label name="hud-day" class="hud-day" text="1" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:Label name="hud-week" class="plate-week" text="Week 1" picking-mode="Ignore" />
+            </ui:VisualElement>
+            <ui:VisualElement class="plate-cell plate-clock" picking-mode="Ignore">
+                <ui:VisualElement class="plate-row" picking-mode="Ignore">
+                    <ui:VisualElement class="icon-clock" picking-mode="Ignore" />
+                    <ui:Label name="hud-clock" class="hud-clock" text="9:00 AM" picking-mode="Ignore" />
+                    <ui:Label name="hud-clock-tag" class="plate-tag hidden" picking-mode="Ignore" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement class="plate-cell plate-rep" picking-mode="Ignore">
+                <ui:VisualElement class="plate-row hud-rep" picking-mode="Ignore">
+                    <ui:VisualElement class="icon-rep" picking-mode="Ignore" />
+                    <ui:Label name="hud-rep" text="0" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:VisualElement name="hud-rep-track" class="plate-track" picking-mode="Ignore">
+                    <ui:VisualElement name="hud-rep-fill" class="plate-fill rep" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:Label name="hud-goal" class="plate-goal" picking-mode="Ignore" />
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement name="hud-purse" class="hud-coins hud-purse" picking-mode="Ignore">

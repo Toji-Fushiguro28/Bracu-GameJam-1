@@ -453,7 +453,7 @@ public class DayReportUI : MonoBehaviour
             var kind = (GameManager.UpgradeKind)i;
             int lvl = gm.Upgrade(kind);
             bool maxed = lvl >= GameManager.MaxUpgrade;
-            int cost = GameManager.UpgradeCost(lvl);
+            int cost = GameManager.UpgradeCost(kind, lvl);
             bool unlocked = gm.UpgradeUnlocked(kind);
             bool canBuy = gm.CanBuyUpgrade(kind);
             AddRow($"{GameManager.UpgradeNames[i]}  (Lv {lvl}/{GameManager.MaxUpgrade})",

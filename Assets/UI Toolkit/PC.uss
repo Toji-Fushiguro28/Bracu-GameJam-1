@@ -30,8 +30,10 @@
     flex-grow: 1;
     justify-content: center;
     align-items: center;
+    padding-bottom: 136px; /* the monitor sits above the desk plate (bottom bar) */
     background-color: rgba(10, 8, 6, 0.55);
 }
+#container.max { padding-bottom: 0; } /* maximised: the plate's clock steps aside instead (HUD) */
 
 /* ---------- Monitor ---------- */
 .pc-monitor {
@@ -230,29 +232,29 @@
 
 /* ---------- Home ---------- */
 .home { flex-grow: 1; }
-.tiles6 { flex-direction: row; justify-content: space-between; margin-bottom: 12px; }
-.stile { width: 16%; padding: 6px 10px 10px 10px; }
+.tiles4 { flex-direction: row; justify-content: space-between; margin-bottom: 12px; }
+.stile { width: 24%; flex-direction: row; align-items: center; padding: 8px 12px 10px 12px; }
+.stile-icon { width: 40px; height: 40px; margin-right: 12px; }
 .stile-n { font-size: 32px; margin: 0; padding: 0; color: var(--ink); }
 .stile-l { font-size: 17px; margin: 0; padding: 0; color: var(--ink-dim); white-space: normal; }
 .panel { padding: 10px 14px 14px 14px; margin-bottom: 12px; }
 .panel-head { flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-.panel-title { font-size: 22px; letter-spacing: 1px; color: var(--ink-dim); margin: 0; padding: 0; }
+.panel-title { flex-grow: 1; font-size: 22px; letter-spacing: 1px; color: var(--ink-dim); margin: 0; padding: 0; }
 .panel-title.strong { color: var(--ink); font-size: 26px; }
 .panel-small { font-size: 17px; color: var(--ink-dim); margin: 0; padding: 0; }
 .need { flex-direction: row; align-items: center; padding: 6px 0 6px 0; border-top-width: 2px; border-top-color: var(--rule); }
-.need-mark { width: 12px; height: 12px; margin-right: 12px; }
+.need .si { width: 30px; height: 30px; margin-right: 12px; }
+/* "Needs you": the warm card while something waits, a slim green line when not */
+.needs-hot { background-image: url("project://database/Assets/Art/UI/PC/T_PC_CardReady.png"); padding: 12px 16px 14px 16px; }
+.needs-hot .panel-title.strong { color: var(--accent); font-size: 30px; }
+.needs-hot .need-text { font-size: 23px; }
+.needs-clear { flex-direction: row; align-items: center; padding: 8px 14px 8px 14px; }
 .need-text { flex-grow: 1; flex-shrink: 1; font-size: 21px; margin: 0; padding: 0; white-space: normal; }
 .allclear { font-size: 21px; color: var(--ok); margin: 0; padding: 4px 0; }
 .mid { flex-direction: row; margin-bottom: 0; }
 .mid-left { flex-grow: 1.4; flex-basis: 0; margin-right: 12px; }
 .mid-right { flex-grow: 1; flex-basis: 0; }
 .mid-right .panel { flex-grow: 1; }
-.cols3 { flex-direction: row; }
-.cols3 > .panel { flex-grow: 1; flex-basis: 0; margin-right: 12px; }
-.cols3 > .panel.last { margin-right: 0; }
-.kv { flex-direction: row; justify-content: space-between; }
-.kv-k { font-size: 20px; color: var(--ink-dim); margin: 1px 0; padding: 0; }
-.kv-v { font-size: 20px; color: var(--ink); margin: 1px 0; padding: 0; }
 .meter { height: 18px; margin: 6px 0 4px 0; background-color: var(--page-2); border-width: 2px; border-color: var(--rule); }
 .meter-fill { position: absolute; left: 0; top: 0; bottom: 0; background-color: var(--accent); }
 .meter-tier { position: absolute; top: 0; bottom: 0; width: 2px; background-color: rgba(125, 102, 80, 0.6); }
@@ -527,6 +529,12 @@
 .si-key { background-image: url("project://database/Assets/Art/UI/PC/T_IconKey.png"); }
 .si-bag { background-image: url("project://database/Assets/Art/UI/PC/T_IconBag.png"); }
 .si-ask { background-image: url("project://database/Assets/Art/UI/PC/T_IconAsk.png"); }
+.si-heart { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconHeart01a.png"); }
+.si-cart { background-image: url("project://database/Assets/Art/UI/PC/T_IconCart.png"); }
+.si-clock { background-image: url("project://database/Assets/Art/UI/PC/T_IconClock.png"); }
+.si-scroll { background-image: url("project://database/Assets/Art/UI/PC/T_IconScroll.png"); }
+.si-star { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconStar01a.png"); }
+.si-tick { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconTick01a.png"); }
 .si-coin { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconCoin01a.png"); }
 .si-energy { background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconEnergy01a.png"); }
 

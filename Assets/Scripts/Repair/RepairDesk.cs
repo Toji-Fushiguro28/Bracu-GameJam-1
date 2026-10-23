@@ -34,6 +34,7 @@ public class RepairDesk : ClickInteractable
         public float bonus;        // from the minigame
         public float duration, elapsed;
         public bool started;
+        public bool byHand;        // started one at a time on the repair screen (not Repair all, not the archivist)
         public float Progress => duration > 0f ? Mathf.Clamp01(elapsed / duration) : 0f;
     }
 
@@ -130,8 +131,9 @@ public class RepairDesk : ClickInteractable
     /// <summary>Value of the copy after a Normal repair, as a share of the original.</summary>
     public float NormalValueShare(BookData b) => b.Tier == BookTier.Normal ? 0.8f : b.Tier == BookTier.Epic ? 0.7f : 0.6f;
 
-    /// <summary>Pays and starts a repair. bonus = 0..1 minigame score.</summary>
-    public bool StartRepair(Job job, float minigameScore)
+    /// <summary>Pays and starts a repair. bonus = 0..1 minigame score. byHand: the librarian's own repair on the
+    /// repair screen; only those earn reputation when they come out perfect.</summary>
+    public bool StartRepair(Job job, float minigameScore, bool byHand = false)
     {
         int cost = Cost(job);
         if (!Waiting.Contains(job) || GameManager.Instance == null || !GameManager.Instance.TrySpend(cost, "Repairs")) return false;
@@ -140,6 +142,7 @@ public class RepairDesk : ClickInteractable
         job.bonus = minigameBonus * Mathf.Clamp01(minigameScore);
         job.duration = repairSeconds[Tier(job.book)] / Mathf.Max(0.1f, speedMultiplier);
         job.started = true;
+        job.byHand = byHand;
         Working.Add(job);
         Changed?.Invoke();
         return true;
@@ -178,12 +181,13 @@ public class RepairDesk : ClickInteractable
             gm.NotifyBooksChanged();
             if (perfect)
             {
-                // A perfect job gets noticed: a small donation from the Friends of the Whitmore, and the word gets round.
+                // A perfect job gets noticed: a small donation from the Friends of the Whitmore. The word only gets
+                // round (+1 reputation) for your own careful work, not Repair all or the archivist's.
                 gm.AddCoins(PerfectBonus);
                 gm.Today.Earn(GameManager.DayStats.Source.Other, PerfectBonus);
                 RequestLog.Money("Friends of the Whitmore", $"Perfect repair of \"{job.book.Title}\"", "Donation", PerfectBonus);
-                gm.AddReputation(1);
-                HUD.SkillPop(transform.position + Vector3.up * 1.6f, $"Perfect repair! +{PerfectBonus} coins, +1 reputation");
+                if (job.byHand) gm.AddReputation(1);
+                HUD.SkillPop(transform.position + Vector3.up * 1.6f, job.byHand ? $"Perfect repair! +{PerfectBonus} coins, +1 reputation" : $"Perfect repair! +{PerfectBonus} coins");
             }
         }
         if (doneSound != null) AudioSource.PlayClipAtPoint(doneSound, transform.position, 0.8f);

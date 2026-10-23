@@ -150,7 +150,7 @@ public class StaffHelp : MonoBehaviour
         remind = 30f;
         worker.SetHold(true);
         ShowPointer("Help!");
-        Tutorial.Show("staffhelp", "A staff member needs help! Click them: a paid fix keeps them happy and faster; a free one slows them down.");
+        Tutorial.Show("staffhelp", "Staff need help! A paid fix keeps them happy and fast.");
         if (talk != null && WorldPrompts.Instance != null) WorldPrompts.Instance.ShowBubble(talk, Open.line, 4f);
         StartCoroutine(Ring()); // its own sound, three rings (the counter bell means a visitor)
     }

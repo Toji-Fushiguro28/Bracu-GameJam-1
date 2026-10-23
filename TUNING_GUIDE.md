@@ -89,7 +89,7 @@ All of it is in `Core/GameManager.cs`, in the *Play mode* section:
 | I want to change... | Where |
 |---|---|
 | Upgrade names and descriptions | `Core/GameManager.cs` → `UpgradeNames`, `UpgradeInfo` |
-| Upgrade cost and max level | `Core/GameManager.cs` → `UpgradeCost()` (60 / 100 / 140), `MaxUpgrade` (3) |
+| Upgrade cost and max level | `Core/GameManager.cs` → `UpgradeBaseCost` (first level, `UpgradeKind` order: Repair tools 60, Restoration kit 80, Comfy queue 70, Running shoes 60, Cozy lamps 70, Reading nooks 70, Town flyers 90, Book bag 80, Stamina 60), +40 per level in `UpgradeCost()` (e.g. 60 / 100 / 140), `MaxUpgrade` (3) |
 | Seeker days | `Customers/CustomerSpawner.cs` → `SeekerDay` (Day 1, then 20% a day, at most 3 days without), one seeker between 10:15 and 2:30 |
 | Tutorial | `UI/Tutorial.cs`: patience x2 and no walk-outs while guiding (`GameManager.PatienceMultiplier`, `NoStormingOut`), camera zoom 0.7x for 2.4 s |
 | Pickup times | `Customers/CustomerSpawner.cs` → `QueuePickups()`: 9:30 to 4:15 cut into one slot per pickup, random moment in each |
