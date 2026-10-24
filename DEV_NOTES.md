@@ -395,7 +395,7 @@ Small, contained edits. Please check them when merging:
   - They pick a new title (or a sold-out book), check 1–2 shelves (the right one first), then queue and say they couldn't find it.
   - Only on seeker days (`CustomerSpawner.SeekerDay`): Day 1 always, then about one day in three (20% a day, the same days for a given game via `storySeed`), never more than 3 days in a row without one. Just one that day, at a random time between 10:15 and 2:30.
 - **At the counter:** "When do you need it?" → they answer "As soon as possible" or "I'll come back tomorrow", and you pick "I'll order it for you" or "Sorry".
-  - **ASAP** (`ReserveAndWait`): they sit in the library (`State.WaitingForBook`).
+  - **ASAP** (`ReserveAndWait`): they sit in the library (`State.WaitingForBook`). They get up and queue as soon as a good copy is on a shelf, on the book cart or in your hands (the "ordered" flag no longer matters; before, a copy taken off the cart first, or one delivered before they reserved, left them sitting for ever).
     - When the ordered copy arrives (in stock or on the cart), they come to the desk to collect it.
     - About 30 minutes past their time (or at closing): if it's on order they come back tomorrow; if you never ordered it they leave unhappy (−reputation).
   - **Tomorrow:** a normal reservation and a pickup the next morning.
@@ -425,6 +425,8 @@ Small, contained edits. Please check them when merging:
 - **VIPs:** cards cost 50 (+ up to 10 tip) and reading fees are ×1.5 (see the VIP income note below). VIPs stay after getting a card and go to read.
 - **Dialogue:** half-typed rich text is auto-closed, so coloured hints type in instead of popping in.
 - **Notebook and Reserved lists:** they scroll instead of running off the screen.
+- **Reservations are counted per person** (`GameManager.ReservationCovered`): copies on order + on shelves + on the cart, handed out in reservation order, so two people after one title need two copies. Used by the Reserved list (everyone stays listed until they collect: covered = grey, missing = red), `PCHomeView.NeedsOrder` (Home, PC tab count, catalogue) and the Day Report's unordered count.
+- **Web scrolling** (`UI/WebScroll.cs`, made at runtime): browsers send ~100 per wheel notch and UI Toolkit multiplies by 18, so lists jumped top to bottom. On WebGL a trickle-down wheel handler on every UI panel moves the list under the mouse by |delta|×0.5, clamped 18–60 px, and stops the default. The library-card date wheels (`.wheel`) are left alone. `WebScroll.ForceOn` tries it in the editor.
 - **Click guard** (`Interaction/ClickGuard.cs`): for 0.25 s after a panel opens (`PlayerLock.Lock`), after choices appear, or after the interview hire and end pages show, button presses are swallowed, so one click can't also press a button that just appeared under the cursor. It's attached to the game UI, the PC overlay and the interview UI.
 - **Interview:** pay is discussed automatically after the questions ("Before you go, let's talk about pay."); it's no longer in the question menu.
 

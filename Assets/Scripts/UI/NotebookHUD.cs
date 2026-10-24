@@ -200,11 +200,11 @@ public class NotebookHUD : MonoBehaviour
         var gm = GameManager.Instance;
         if (gm == null || reserveList == null) return;
         var lines = new System.Collections.Generic.List<(string who, string when, bool coming)>();
+        // Everyone stays on the list until they collect: covered ones go grey, ones still missing a copy stay red.
+        // Counted per person, so two people after one title need two copies.
         foreach (var r in gm.reservations)
         {
-            var rb = gm.Books.Find(x => x.Title == r.title);
-            bool coming = rb != null && (gm.OnOrder(rb) > 0 || BookRequest.InStock(rb) || (DeliveryCart.Instance != null && DeliveryCart.Instance.Has(rb)));
-            if (coming) continue; // ordered (or on the shelf): nothing left to do, so it leaves the list
+            bool coming = gm.ReservationCovered(r);
             string when = r.urgent ? $"Today by {GameManager.FormatHour(r.dueHour)} (express!)" : r.day <= gm.day ? "Today" : "Tomorrow";
             lines.Add(($"{r.name}: \"{r.title}\"", $"{when}  ·  {(coming ? "ready or on its way" : "NOT ORDERED YET")}", coming));
         }

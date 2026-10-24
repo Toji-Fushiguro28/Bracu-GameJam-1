@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Whitmore Bug Fixes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jersey+10&family=Jersey+15&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --page: #f3e4c4;
+    --card: #ead3a0;
+    --ink: #3b2a1d;
+    --ink-dim: #6b5238;
+    --rule: #a6844a;
+    --accent: #d67840;
+    --gold: rgb(235, 200, 120);
+    --walnut: #4a2e1f;
+    --ok: #4f6b3a;
+    --bad: #8e3b32;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page: #2a1d15;
+      --card: #3a2a1e;
+      --ink: #f0dfbf;
+      --ink-dim: #c9b08a;
+      --rule: #7a5f36;
+      --walnut: #1c120c;
+      --ok: #9cbf7f;
+      --bad: #e08a7e;
+    }
+  }
+  :root[data-theme="dark"] {
+    --page: #2a1d15; --card: #3a2a1e; --ink: #f0dfbf; --ink-dim: #c9b08a;
+    --rule: #7a5f36; --walnut: #1c120c; --ok: #9cbf7f; --bad: #e08a7e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--walnut);
+    color: var(--ink);
+    font-family: "Jersey 15", system-ui, sans-serif;
+    font-size: 21px;
+    line-height: 1.45;
+  }
+  .page {
+    max-width: 760px;
+    margin: 32px auto;
+    padding: 36px 40px 40px;
+    background: var(--page);
+    border: 4px solid var(--rule);
+    box-shadow: 0 6px 0 rgba(0, 0, 0, 0.35);
+  }
+  header { text-align: center; border-bottom: 3px dashed var(--rule); padding-bottom: 18px; margin-bottom: 26px; }
+  .kicker { font-family: "Jersey 10", sans-serif; letter-spacing: 3px; color: var(--accent); font-size: 20px; margin: 0; }
+  h1 { font-family: "Jersey 10", sans-serif; font-weight: normal; font-size: 52px; line-height: 1; margin: 6px 0 10px; }
+  .sub { color: var(--ink-dim); margin: 0; }
+  h2 { font-family: "Jersey 10", sans-serif; font-weight: normal; font-size: 32px; margin: 0 0 6px; }
+  p { margin: 0 0 12px; }
+  .fix {
+    background: var(--card);
+    border: 3px solid var(--rule);
+    padding: 18px 22px 8px;
+    margin-bottom: 18px;
+  }
+  .tag {
+    display: inline-block;
+    font-family: "Jersey 10", sans-serif;
+    font-size: 17px;
+    letter-spacing: 2px;
+    color: #fff6e8;
+    background: var(--accent);
+    padding: 1px 10px 3px;
+    margin-bottom: 8px;
+  }
+  .label { color: var(--ink-dim); font-size: 18px; letter-spacing: 1px; text-transform: uppercase; margin: 10px 0 2px; }
+  .before { color: var(--bad); }
+  .after { color: var(--ok); }
+  ul { margin: 0 0 12px; padding-left: 22px; }
+  li { margin-bottom: 4px; }
+  .also { border-top: 3px dashed var(--rule); margin-top: 26px; padding-top: 18px; }
+  .note {
+    background: var(--gold);
+    color: #3b2a1d;
+    border: 3px solid var(--rule);
+    padding: 12px 18px;
+    margin-top: 22px;
+  }
+  footer { text-align: center; color: var(--ink-dim); margin-top: 26px; font-size: 18px; }
+  @media (max-width: 600px) {
+    .page { margin: 0; padding: 22px 16px 26px; border-left: 0; border-right: 0; }
+    h1 { font-size: 40px; }
+    .fix { padding: 14px 14px 6px; }
+  }
+</style>
+</head>
+<body>
+<main class="page">
+  <header>
+    <p class="kicker">DEVLOG · PATCH NOTES</p>
+    <h1>Lost books, runaway lists and a missing reservation</h1>
+    <p class="sub">Thank you to everyone who played The Whitmore Library and wrote in. You found three bugs, and all three are fixed in this update.</p>
+  </header>
+
+  <section class="fix">
+    <span class="tag">BUG 1</span>
+    <h2>"The book was in my hands, but they wouldn't take it"</h2>
+    <p class="label">What happened</p>
+    <p class="before">A visitor reserved a book and waited in the library for it. The book arrived, you picked it up, and they kept sitting there asking whether you had ordered it yet.</p>
+    <p class="label">Why</p>
+    <p>A waiting visitor only came to the desk once they saw their book on a shelf or on the book cart, and only if the reservation was marked as ordered. If you had already taken the copy off the cart, or it had arrived before they reserved it, they never noticed and waited for ever.</p>
+    <p class="label">Now</p>
+    <p class="after">They come to the desk as soon as a copy is anywhere they can have it: on a shelf, on the cart, or in your hands. How it got there doesn't matter.</p>
+  </section>
+
+  <section class="fix">
+    <span class="tag">BUG 2</span>
+    <h2>Lists jumping from the top to the bottom</h2>
+    <p class="label">What happened</p>
+    <p class="before">In the browser, one turn of the mouse wheel threw the shelf lists, the catalogue and the notebook all the way to the top or the bottom.</p>
+    <p class="label">Why</p>
+    <p>Browsers report one wheel notch as about 100 pixels. The game then multiplied that by its own scroll step, so a single notch moved a list about 1,800 pixels, and up to 3,600 in our tests.</p>
+    <p class="label">Now</p>
+    <p class="after">In the web version, every list moves about one row per notch. Trackpads move in small steps. The birthday wheels on the library card still click one day at a time.</p>
+  </section>
+
+  <section class="fix">
+    <span class="tag">BUG 3</span>
+    <h2>A reservation that never showed up in the notes</h2>
+    <p class="label">What happened</p>
+    <p class="before">Three people reserved books for the next day, but only two appeared in the Reserved list. The third came back, found nothing and left angry.</p>
+    <p class="label">Why</p>
+    <p>The list hid a reservation as soon as its book looked covered, and it checked by title, not by person. Two people after the same book could both disappear from the list after one order. A copy that came back to the shelf from a reader could also hide a reservation, even though nobody was saving that copy.</p>
+    <p class="label">Now</p>
+    <p class="after">Copies are counted per person, so two people need two copies, and whoever reserved first gets the first one. Everyone stays in the Reserved list until they collect: <b>grey</b> means their copy is ordered or on the shelf, <b>red</b> means you still need to order one. The computer's Home page, its tab badge and the Day Report count the same way.</p>
+  </section>
+
+  <section class="also">
+    <h2>Also in this update</h2>
+    <ul>
+      <li><b>Ghosts on Mac:</b> the night visitors no longer flicker or break into stripes in Safari and Chrome on Mac.</li>
+      <li><b>A tidier computer Home page:</b> "Needs you" now sits at the top and lights up when something is waiting. Below it are four numbers with pixel icons, then the day timeline and your reputation.</li>
+      <li><b>The tutorial shows you the Shop:</b> before your first day starts, it points you to the Upgrades and Staff pages. Nothing is spent.</li>
+      <li><b>Upgrades in a sensible order:</b> your own upgrades come first (shoes, book bag, stamina) and locked ones sit at the end. The bigger upgrades now cost a little more, from 60 to 90 coins.</li>
+      <li><b>Perfect repairs:</b> the +1 reputation now only comes from repairs you start yourself. Repair All and the archivist still earn the 5-coin donation.</li>
+      <li><b>Notes and Reserved tabs</b> now stand upright at the edge of the screen, so they don't cover the computer.</li>
+    </ul>
+  </section>
+
+  <div class="note">
+    <b>About the night visitors:</b> a few of you asked whether the ghosts have a backstory. For now they're just there for atmosphere: a few quiet readers who never quite left. We'd love to tell their story one day.
+  </div>
+
+  <footer>Keep the reports coming. Every one of them makes the Whitmore a little cosier.</footer>
+</main>
+</body>
+</html>

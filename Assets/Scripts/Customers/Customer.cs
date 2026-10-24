@@ -845,6 +845,8 @@ public class Customer : ClickInteractable
         Say("I'll wait over here!", 2.5f);
     }
 
+    static PlayerCarry playerCarry;
+
     void UpdateWaitingForBook()
     {
         // Walk to the seat, then sit and wait.
@@ -855,9 +857,12 @@ public class Customer : ClickInteractable
             if (anim) { anim.SetSpeed(0f); anim.SetActivity(CharacterAnimator.Activity.SitIdle); }
         }
         if (reservation == null || !GM.reservations.Contains(reservation)) { GetUp(); Leave(); return; }
+        // A copy anywhere they can have it: on a shelf, on the book cart, or already in your hands (taken off the
+        // cart before they asked, or before they noticed). Whether it was "ordered" doesn't matter any more.
         var cart = DeliveryCart.Instance;
-        bool arrived = reservation.ordered && GM.OnOrder(request.Target) == 0
-                    && (BookRequest.InStock(request.Target) || (cart != null && cart.Has(request.Target)));
+        if (playerCarry == null) playerCarry = GameObject.FindWithTag("Player")?.GetComponent<PlayerCarry>();
+        bool arrived = BookRequest.InStock(request.Target) || (cart != null && cart.Has(request.Target))
+                    || (playerCarry != null && playerCarry.Find((b, c) => b == request.Target && c != BookCondition.Damaged) >= 0);
         if (arrived)
         {
             // It's here: off to the desk to collect it.

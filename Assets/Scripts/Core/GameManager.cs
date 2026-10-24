@@ -461,6 +461,23 @@ public class GameManager : MonoBehaviour
 
     public Reservation ReservationFor(string key) => reservations.Find(r => r.key == key);
 
+    /// <summary>Is there a copy for this person: on order, on a shelf or on the book cart? Counted per person, so
+    /// two people waiting for one title need two copies (whoever reserved first is covered first).</summary>
+    public bool ReservationCovered(Reservation r)
+    {
+        var b = FindTitle(r.title);
+        if (b == null) return false;
+        int supply = OnOrder(b) + b.GoodCopies + b.WornCopies;
+        if (DeliveryCart.Instance != null) foreach (var c in DeliveryCart.Instance.Copies) if (c == b) supply++;
+        int place = 0;
+        foreach (var o in reservations)
+        {
+            if (o == r) break;
+            if (o.title == r.title) place++;
+        }
+        return place < supply;
+    }
+
     public void Reserve(string key, string name, BookData b, bool urgent = false, bool requested = false)
     {
         reservations.RemoveAll(r => r.key == key);

@@ -18,14 +18,11 @@ public static class PCHomeView
 
     static GameManager GM => GameManager.Instance;
 
-    /// <summary>A reservation nobody has ordered yet (and no copy is on the shelf or the cart): it needs you.</summary>
+    /// <summary>A reservation with no copy for this person (none on order, on the shelf or the cart): it needs you.</summary>
     public static bool NeedsOrder(GameManager.Reservation r)
     {
         var gm = GM;
-        if (gm == null || r.ordered) return false;
-        var b = gm.FindTitle(r.title);
-        if (b == null) return false;
-        return gm.OnOrder(b) == 0 && !BookRequest.InStock(b) && !(DeliveryCart.Instance != null && DeliveryCart.Instance.Has(b));
+        return gm != null && gm.FindTitle(r.title) != null && !gm.ReservationCovered(r);
     }
 
     public static void Wire(VisualElement page)

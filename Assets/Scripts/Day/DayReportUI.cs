@@ -256,11 +256,7 @@ public class DayReportUI : MonoBehaviour
     }
 
     /// <summary>Reservations nobody has ordered yet (they'll be let down tomorrow).</summary>
-    static int UnorderedReservations(GameManager gm) => gm.reservations.FindAll(r =>
-    {
-        var b = gm.FindTitle(r.title);
-        return b != null && gm.OnOrder(b) == 0 && !BookRequest.InStock(b) && !(DeliveryCart.Instance != null && DeliveryCart.Instance.Has(b));
-    }).Count;
+    static int UnorderedReservations(GameManager gm) => gm.reservations.FindAll(PCHomeView.NeedsOrder).Count;
 
     /// <summary>Where the money came from, what went wrong, and one thing to do better tomorrow.</summary>
     void BuildSummary(GameManager gm)
