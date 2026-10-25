@@ -43,11 +43,23 @@
         </ui:VisualElement>
     </ui:VisualElement>
     <ui:VisualElement name="name-entry" class="layer modal" picking-mode="Position">
-        <ui:VisualElement class="page page-left name-page">
-            <ui:Label text="What's your name?" class="page-title" />
-            <ui:Label text="The new head librarian of the Whitmore Library." class="name-hint" />
-            <ui:TextField name="name-field" class="name-field" />
-            <ui:Button name="name-ok" class="kit-button wide" text="That's me" />
+        <ui:VisualElement class="book-spread name-spread">
+            <ui:VisualElement class="page page-left look-page">
+                <ui:Label text="Who are you?" class="page-title" />
+                <ui:VisualElement name="look-preview" class="look-preview" picking-mode="Ignore" />
+                <ui:VisualElement class="look-row">
+                    <ui:Button name="look-prev" class="kit-button look-arrow"><ui:VisualElement class="look-arrow-icon flip" picking-mode="Ignore" /></ui:Button>
+                    <ui:Label name="look-name" class="look-name" text="Your name" />
+                    <ui:Button name="look-next" class="kit-button look-arrow"><ui:VisualElement class="look-arrow-icon" picking-mode="Ignore" /></ui:Button>
+                </ui:VisualElement>
+                <ui:Label name="look-count" class="look-count" text="1 of 2" />
+            </ui:VisualElement>
+            <ui:VisualElement class="page page-right name-page">
+                <ui:Label text="What's your name?" class="page-title" />
+                <ui:Label text="The new head librarian of the Whitmore Library." class="name-hint" />
+                <ui:TextField name="name-field" class="name-field" />
+                <ui:Button name="name-ok" class="kit-button wide" text="That's me" />
+            </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
     <ui:Button name="skip" class="kit-button skip-intro" text="Skip intro" />

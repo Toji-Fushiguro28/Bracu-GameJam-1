@@ -127,6 +127,7 @@ public class StaffInterview : MonoBehaviour
         if (fade != null) { fade.style.opacity = 1f; fade.AddToClassList("on"); } // start dark, then fade in
 
         if (librarian != null) SeatLibrarian(prologue ? candidateSeat : librarianSeat);
+        if (librarian != null) PlayerLooks.Apply(librarian.gameObject, PlayerLooks.Current); // the look picked in the intro
         StartCoroutine(Run());
     }
 
@@ -142,8 +143,16 @@ public class StaffInterview : MonoBehaviour
     IEnumerator Run()
     {
         yield return null;
+        if (!Overlay)
+        {
+            // A new game: the name card is up before the fade-in, so the room (and whoever's in the chair) is never
+            // seen without it.
+            var ask = StartCoroutine(AskName());
+            yield return Fade(false);
+            yield return ask;
+            yield return Prologue(); yield return Finish(null); yield break;
+        }
         yield return Fade(false);
-        if (!Overlay) { yield return AskName(); yield return Prologue(); yield return Finish(null); yield break; }
 
         if (Ending) yield return Farewell();
         if (Morning) skip?.RemoveFromClassList("hidden");
@@ -432,6 +441,37 @@ public class StaffInterview : MonoBehaviour
         field.RegisterCallback<KeyDownEvent>(e => { if (e.keyCode == KeyCode.Return || e.keyCode == KeyCode.KeypadEnter) Submit(); });
         field.RegisterValueChangedCallback(e => ok.SetEnabled(Clean(e.newValue).Length > 0));
         ok.SetEnabled(Clean(field.value).Length > 0);
+
+        // The left page: pick the librarian's look (a turning preview, arrows, your name under it).
+        int look = PlayerLooks.Current;
+        var preview = PlayerLooks.Count > 1 ? LookPreview.Create() : null;
+        var lookPage = root.Q(className: "look-page");
+        var lookName = root.Q<Label>("look-name");
+        var lookCount = root.Q<Label>("look-count");
+        if (preview == null) lookPage?.AddToClassList("hidden");
+        else
+        {
+            root.Q("look-preview").style.backgroundImage = Background.FromRenderTexture(preview.Texture);
+            void ShowLook(int i)
+            {
+                look = (i + PlayerLooks.Count) % PlayerLooks.Count;
+                preview.Show(look);
+                if (librarian != null) PlayerLooks.Apply(librarian.gameObject, look); // the one in the room too
+                if (lookCount != null) lookCount.text = $"{look + 1} of {PlayerLooks.Count}";
+            }
+            root.Q<Button>("look-prev")?.RegisterCallback<ClickEvent>(_ => { ShowLook(look - 1); field.Focus(); });
+            root.Q<Button>("look-next")?.RegisterCallback<ClickEvent>(_ => { ShowLook(look + 1); field.Focus(); });
+            ShowLook(look);
+        }
+        // Your name under the preview as you type it (dim "Your name" until then).
+        void NameUnder(string v)
+        {
+            if (lookName == null) return;
+            lookName.text = Clean(v).Length > 0 ? Clean(v) : "Your name";
+            lookName.EnableInClassList("empty", Clean(v).Length == 0);
+        }
+        field.RegisterValueChangedCallback(e => NameUnder(e.newValue));
+        NameUnder(field.value);
         panel.RemoveFromClassList("hidden");
         skip?.AddToClassList("hidden"); // name first; then you may skip the rest
         field.Focus();
@@ -441,6 +481,9 @@ public class StaffInterview : MonoBehaviour
         skip?.RemoveFromClassList("hidden");
         Play(clickSound);
         PlayerPrefs.SetString("PlayerName", Clean(field.value));
+        PlayerLooks.Save(look);
+        if (librarian != null) PlayerLooks.Apply(librarian.gameObject, look);
+        if (preview != null) Destroy(preview.gameObject);
         PlayerPrefs.Save();
     }
 

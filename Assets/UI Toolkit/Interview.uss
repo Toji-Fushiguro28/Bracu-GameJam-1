@@ -41,6 +41,21 @@
 
 /* Name entry at the start of a new game */
 .name-page { height: auto; justify-content: center; padding-bottom: 40px; }
+/* Picking the librarian's look: the left page of the name spread (LookPreview films the turning body). */
+.name-spread .name-page { height: 588px; }
+.look-page { align-items: center; padding-top: 30px; }
+.look-page .page-title { margin-bottom: 0; }
+.look-preview { width: 300px; height: 375px; -unity-background-scale-mode: scale-to-fit; }
+.look-row { flex-direction: row; align-items: center; justify-content: center; width: 100%; margin-top: 4px; }
+.look-arrow { width: 52px; height: 48px; padding: 0; align-items: center; justify-content: center; }
+.look-arrow-icon {
+    width: 22px; height: 22px; -unity-background-scale-mode: scale-to-fit;
+    background-image: url("project://database/Assets/Art/UI/01_TravelBookLite/Sprites/UI_TravelBook_IconArrow01a.png");
+}
+.look-arrow-icon.flip { scale: -1 1; }
+.look-name { flex-grow: 1; margin: 0 10px; font-size: 28px; color: var(--ink); -unity-text-align: middle-center; overflow: hidden; }
+.look-name.empty { color: var(--ink-soft); }
+.look-count { font-size: 18px; color: var(--ink-soft); margin-top: 4px; }
 .name-hint { color: var(--ink-soft); font-size: 20px; white-space: normal; -unity-text-align: middle-center; margin-bottom: 18px; }
 .name-field { margin: 0 8px 20px 8px; font-size: 30px; }
 /* The TravelBook slot sprite as the text box, in the kit's ink and font */

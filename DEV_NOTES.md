@@ -378,6 +378,11 @@ Small, contained edits. Please check them when merging:
 ## Player name
 - Before the intro starts, a name box asks your name (`name-entry` in `InterviewUI.uxml`, max 16 characters, OK or Enter).
 - Saved as PlayerPrefs `PlayerName` and read with `GameManager.PlayerName` (default "Librarian").
+- **Choosing your look** (the left page of the same name spread, which is up before the intro fades in, so the room and the librarian in the chair are never seen without it): a still preview of the librarian, ◀ ▶ arrows, your name under it as you type ("Your name" until then) and "1 of 2". The name box still starts empty and must be filled.
+  - `Core/PlayerLooks.cs` + `Resources/PlayerLooks.asset`: the list of bodies (`looks`: name + a character prefab on the shared rig; now the librarian and `PF_CH_Main_Librarian_Female`) and `previewRig` (the female prefab, a plain rig with no player scripts). Saved as PlayerPrefs `PlayerLook` (default 0, so old saves keep the original librarian).
+  - `PlayerLooks.Apply` only swaps the skinned mesh (and its bounds) on the character: every body shares the librarian's 36-bone skeleton, so animations, hands, carrying and collisions don't change. It refuses a mesh whose bone count differs. Applied to the Player on every scene load, and to the intro's `StaffInterview.librarian` (live while you browse, and at Start for later visits).
+  - `UI/LookPreview.cs`: the preview copy stands at y −200 on layer 31, filmed by its own camera into a 512×640 RenderTexture with a see-through background. It stands still facing straight at you, seen a little from above (camera at 1.45 m looking down to 0.66 m), and waves on each switch. Light probes are off on it (scene ambient light), so the face is lit evenly (the room's probes made a dark "beard" on the lower face). Destroyed when you press "That's me".
+  - To add a body: export it on the shared rig, make a prefab like `PF_CH_Main_Librarian_Female`, and add it to `PlayerLooks.asset`. No dialogue calls the librarian he or she (checked), so any body works with every line.
 - It replaces "You" as your speaker name in all interview dialogue, and the Dean uses it in his lines and in the ending.
 
 ## More visitors (15 recoloured NPCs)
