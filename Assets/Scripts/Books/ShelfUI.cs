@@ -216,6 +216,7 @@ public class ShelfUI : MonoBehaviour
             string sub = $"{book.Author}  ·  x{n}  ·  ";
             sub += atDesk.Contains(book) ? "<color=#D67840>Someone at the desk wants this!</color>"
                  : res != null ? $"Reserved for {res.name}{(res.urgent ? " (needs it today)" : "")}"
+                 : book.QuestOnly ? "The empty case in the Archive"
                  : $"Goes on {ShelfInteractable.NameOf(book.ShelfLocation)}";
             var row = Row(book.Title, sub, gm != null && gm.IsPopular(book));
             Pickable(row, book);

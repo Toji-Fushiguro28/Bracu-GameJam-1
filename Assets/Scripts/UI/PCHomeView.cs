@@ -47,7 +47,7 @@ public static class PCHomeView
         var spawner = CustomerSpawner.Instance;
         return string.Join("|", gm.Coins, gm.Reputation, t.served, t.income, t.booksSold, t.booksRead, t.returns, t.angry, Members.All.Count,
             gm.Books.Count, gm.Books.Sum(b => b.Quantity), gm.Books.Sum(b => gm.OnOrder(b)), gm.reservations.Count, gm.reservations.Count(NeedsOrder),
-            Customer.WaitingForCard != null, gm.UpgradeReady, gm.StaffReady, spawner != null ? spawner.PickupTimes.Count : 0, gm.ArrivingToday.Count());
+            Customer.WaitingForCard != null, gm.UpgradeReady, gm.StaffReady, GhostLetter.CanSell, spawner != null ? spawner.PickupTimes.Count : 0, gm.ArrivingToday.Count());
     }
 
     static void Build()
@@ -108,6 +108,8 @@ public static class PCHomeView
             items.Add(("si-hammer", $"An upgrade is affordable  <color=#7D6650>· {gm.Coins} coins</color>", "See upgrades", () => pc?.ShowShop(0)));
         if (gm.StaffReady)
             items.Add(("si-broom", "Staff: an interview or training you can afford", "See staff", () => pc?.ShowShop(1)));
+        if (GhostLetter.CanSell)
+            items.Add(("si-coin", $"A collector will pay <b>1000 coins</b> for <b>\"{GhostLetter.ChapterTitle}\"</b>", "Sell", GhostLetter.Sell));
 
         // Nothing to do: one slim green line. Something to do: the warm card, bigger, with a count.
         if (items.Count == 0)

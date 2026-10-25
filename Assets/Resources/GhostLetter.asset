@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f38ce09ff8291d3468283d47419c3ecd, type: 3}
+  m_Name: GhostLetter
+  m_EditorClassIdentifier: Assembly-CSharp::GhostLetterData
+  stranger: {fileID: 3868137282619552095, guid: 04fae240cd05e1b47b843456d25167c0, type: 3}
+  adaBody: {fileID: 7348313090465165828, guid: 4c7cb9c4948e95e4b91c331fb8577608, type: 3}
+  folio: {fileID: 3087211878297235408, guid: d4a90606cff6ee1408cb24ec66e8eff0, type: 3}
+  displayCase: {fileID: 919132149155446097, guid: bcce2991854600b41b8cc1038d43238a, type: 3}
+  styles:
+  - {fileID: 7433441132597879392, guid: b1a323757899fd649a5244a2f6b7f8cf, type: 3}
+  - {fileID: 7433441132597879392, guid: 8fc23a4856c6ff749944f9dba0d285d0, type: 3}
+  - {fileID: 7433441132597879392, guid: 6d72d795d22e2dc4bbac48514745bf2c, type: 3}

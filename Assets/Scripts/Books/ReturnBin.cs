@@ -94,6 +94,7 @@ public class ReturnBin : ClickInteractable
 
     public override void Interact(GameObject player)
     {
+        if (GhostLetter.TakeLetter()) return; // a folded letter on top of the pile: you read that first
         var carry = player.GetComponent<PlayerCarry>();
         // Forget copies you've since shelved or handed over: only ones still in your hands can go back in.
         if (carry != null) takenOut.RemoveAll(t => carry.Find((b, c) => b == t.book && c == t.condition) < 0);

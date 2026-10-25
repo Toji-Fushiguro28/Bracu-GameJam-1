@@ -37,7 +37,7 @@ public class DeliveryCart : ClickInteractable
     static bool Shelvable(BookData b)
     {
         var gm = GameManager.Instance;
-        return !BookRequest.IsRare(b) && (gm == null || !gm.reservations.Exists(r => r.title == b.Title));
+        return !b.QuestOnly && !BookRequest.IsRare(b) && (gm == null || !gm.reservations.Exists(r => r.title == b.Title));
     }
 
     /// <summary>The cleaner takes one unreserved copy off the cart to shelve it. False if every copy is reserved.</summary>
@@ -78,6 +78,9 @@ public class DeliveryCart : ClickInteractable
         copies.Clear(); takenOut.Clear();
         copies.AddRange(books);
     }
+
+    /// <summary>Takes this copy off the cart for good (the night letter's book, sold).</summary>
+    public bool Remove(BookData book) => copies.Remove(book);
 
     public void Add(BookData book)
     {

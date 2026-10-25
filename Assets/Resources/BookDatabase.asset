@@ -24,6 +24,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 25
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 1
     DamagedCopies: 0
@@ -38,6 +39,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 30
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
@@ -52,6 +54,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 20
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 3
     WornCopies: 0
     DamagedCopies: 0
@@ -66,6 +69,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 22
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
@@ -80,6 +84,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 18
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
@@ -94,6 +99,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 28
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
@@ -108,6 +114,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 25
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 1
@@ -122,6 +129,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 30
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
@@ -136,6 +144,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 20
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 1
     WornCopies: 0
     DamagedCopies: 0
@@ -150,6 +159,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 22
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 0
     WornCopies: 2
     DamagedCopies: 0
@@ -164,6 +174,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 26
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
@@ -178,6 +189,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 24
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 0
     WornCopies: 1
     DamagedCopies: 0
@@ -192,6 +204,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 20
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 1
     WornCopies: 1
     DamagedCopies: 1
@@ -206,6 +219,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 22
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
@@ -220,6 +234,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 30
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
@@ -234,6 +249,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 18
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 1
     WornCopies: 0
     DamagedCopies: 0
@@ -248,6 +264,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 18
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 1
     DamagedCopies: 0
@@ -262,6 +279,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 26
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
@@ -276,6 +294,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 20
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
@@ -290,6 +309,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 24
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 1
     WornCopies: 0
     DamagedCopies: 0
@@ -304,6 +324,7 @@ MonoBehaviour:
     Tier: 1
     BaseValue: 140
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 0
     WornCopies: 1
     DamagedCopies: 0
@@ -318,6 +339,7 @@ MonoBehaviour:
     Tier: 1
     BaseValue: 180
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 0
     WornCopies: 0
     DamagedCopies: 1
@@ -332,6 +354,7 @@ MonoBehaviour:
     Tier: 2
     BaseValue: 500
     Sellable: 0
+    QuestOnly: 0
     GoodCopies: 1
     WornCopies: 0
     DamagedCopies: 0
@@ -346,6 +369,7 @@ MonoBehaviour:
     Tier: 1
     BaseValue: 300
     Sellable: 0
+    QuestOnly: 0
     GoodCopies: 1
     WornCopies: 0
     DamagedCopies: 0
@@ -360,6 +384,7 @@ MonoBehaviour:
     Tier: 1
     BaseValue: 250
     Sellable: 0
+    QuestOnly: 0
     GoodCopies: 0
     WornCopies: 1
     DamagedCopies: 0
@@ -374,6 +399,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 60
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 0
     WornCopies: 1
     DamagedCopies: 0
@@ -388,6 +414,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 45
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 1
     WornCopies: 0
     DamagedCopies: 0
@@ -402,6 +429,7 @@ MonoBehaviour:
     Tier: 1
     BaseValue: 160
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 0
     WornCopies: 1
     DamagedCopies: 0
@@ -416,6 +444,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 50
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
@@ -430,6 +459,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 55
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 0
     WornCopies: 0
     DamagedCopies: 1
@@ -444,6 +474,7 @@ MonoBehaviour:
     Tier: 1
     BaseValue: 150
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 1
     WornCopies: 0
     DamagedCopies: 0
@@ -458,6 +489,7 @@ MonoBehaviour:
     Tier: 2
     BaseValue: 450
     Sellable: 0
+    QuestOnly: 0
     GoodCopies: 1
     WornCopies: 0
     DamagedCopies: 0
@@ -472,6 +504,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 5
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 5
     WornCopies: 0
     DamagedCopies: 0
@@ -486,6 +519,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 5
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 4
     WornCopies: 0
     DamagedCopies: 0
@@ -500,6 +534,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 8
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 3
     WornCopies: 0
     DamagedCopies: 0
@@ -514,6 +549,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 10
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 3
     WornCopies: 0
     DamagedCopies: 0
@@ -528,6 +564,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 10
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 3
     WornCopies: 0
     DamagedCopies: 0
@@ -542,6 +579,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 9
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 3
     WornCopies: 0
     DamagedCopies: 0
@@ -556,6 +594,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 9
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
@@ -570,6 +609,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 15
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
@@ -584,6 +624,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 15
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
@@ -598,6 +639,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 15
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
@@ -612,6 +654,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 15
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
@@ -626,6 +669,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 12
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
@@ -640,6 +684,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 12
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
@@ -654,6 +699,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 12
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
@@ -668,6 +714,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 12
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
@@ -682,6 +729,7 @@ MonoBehaviour:
     Tier: 1
     BaseValue: 280
     Sellable: 0
+    QuestOnly: 0
     GoodCopies: 1
     WornCopies: 0
     DamagedCopies: 0
@@ -696,6 +744,7 @@ MonoBehaviour:
     Tier: 1
     BaseValue: 260
     Sellable: 0
+    QuestOnly: 0
     GoodCopies: 1
     WornCopies: 0
     DamagedCopies: 0
@@ -710,6 +759,7 @@ MonoBehaviour:
     Tier: 2
     BaseValue: 480
     Sellable: 0
+    QuestOnly: 0
     GoodCopies: 1
     WornCopies: 0
     DamagedCopies: 0
@@ -724,6 +774,22 @@ MonoBehaviour:
     Tier: 1
     BaseValue: 240
     Sellable: 0
+    QuestOnly: 0
+    GoodCopies: 1
+    WornCopies: 0
+    DamagedCopies: 0
+  - Title: Notes on Clockwork
+    Format: 0
+    Author: E. Harrow
+    Subject: History
+    Topic: Craft records
+    Tag: Archive
+    Abstract: 'A craftsman''s workbook: gears, springs and escapements, sketched by hand and annotated in a small, careful script.'
+    ShelfLocation: ARC-B
+    Tier: 0
+    BaseValue: 30
+    Sellable: 0
+    QuestOnly: 1
     GoodCopies: 1
     WornCopies: 0
     DamagedCopies: 0
@@ -739,6 +805,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 28
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 0
     WornCopies: 0
     DamagedCopies: 0
@@ -753,6 +820,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 32
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 0
     WornCopies: 0
     DamagedCopies: 0
@@ -767,6 +835,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 26
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 0
     WornCopies: 0
     DamagedCopies: 0
@@ -781,6 +850,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 30
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 0
     WornCopies: 0
     DamagedCopies: 0
@@ -795,6 +865,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 24
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 0
     WornCopies: 0
     DamagedCopies: 0
@@ -809,6 +880,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 27
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 0
     WornCopies: 0
     DamagedCopies: 0
@@ -823,6 +895,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 29
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 0
     WornCopies: 0
     DamagedCopies: 0
@@ -837,6 +910,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 25
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 0
     WornCopies: 0
     DamagedCopies: 0
@@ -851,6 +925,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 31
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 0
     WornCopies: 0
     DamagedCopies: 0
@@ -865,6 +940,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 23
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 0
     WornCopies: 0
     DamagedCopies: 0
@@ -879,6 +955,7 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 28
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 0
     WornCopies: 0
     DamagedCopies: 0
@@ -893,314 +970,337 @@ MonoBehaviour:
     Tier: 0
     BaseValue: 26
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 0
     WornCopies: 0
     DamagedCopies: 0
-  - Title: 'Why Your Toast Lands Butter-Side Down'
+  - Title: Why Your Toast Lands Butter-Side Down
     Format: 2
-    Author: 'Marcus Pell'
+    Author: Marcus Pell
     Subject: Science
-    Topic: 'Science & nature'
-    Tag: 'Best Seller'
-    Abstract: 'A serious study of breakfast, gravity and why the carpet always wins.'
+    Topic: Science & nature
+    Tag: Best Seller
+    Abstract: A serious study of breakfast, gravity and why the carpet always wins.
     ShelfLocation: MAG
     Tier: 0
     BaseValue: 10
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
-  - Title: 'The Cat, the Box and the Bill'
+  - Title: The Cat, the Box and the Bill
     Format: 3
-    Author: 'Ingrid Voss'
+    Author: Ingrid Voss
     Subject: Science
-    Topic: 'Physics'
-    Tag: 'New Arrival'
-    Abstract: 'Quantum physics explained with one stubborn cat and an unpaid invoice.'
+    Topic: Physics
+    Tag: New Arrival
+    Abstract: Quantum physics explained with one stubborn cat and an unpaid invoice.
     ShelfLocation: JRNL
     Tier: 0
     BaseValue: 15
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
-  - Title: 'Dinosaurs Were Probably Fine'
+  - Title: Dinosaurs Were Probably Fine
     Format: 0
-    Author: 'Dr. Tobias Wren'
+    Author: Dr. Tobias Wren
     Subject: Science
-    Topic: 'Biology'
-    Tag: 'Classic'
-    Abstract: 'A cheerful look at deep time, and why the meteor gets all the blame.'
+    Topic: Biology
+    Tag: Classic
+    Abstract: A cheerful look at deep time, and why the meteor gets all the blame.
     ShelfLocation: SCI
     Tier: 0
     BaseValue: 22
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
-  - Title: 'Empires and Their Unfortunate Hats'
+  - Title: Empires and Their Unfortunate Hats
     Format: 2
-    Author: 'Beatrice Lang'
+    Author: Beatrice Lang
     Subject: History
-    Topic: 'Essays'
-    Tag: 'Weekly, New Arrival'
-    Abstract: 'Rise and fall of great powers, as told through their questionable headwear.'
+    Topic: Essays
+    Tag: Weekly, New Arrival
+    Abstract: Rise and fall of great powers, as told through their questionable headwear.
     ShelfLocation: MAG
     Tier: 0
     BaseValue: 10
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
-  - Title: 'The Great Whitmore Pie Dispute'
+  - Title: The Great Whitmore Pie Dispute
     Format: 1
-    Author: 'Harold Finch'
+    Author: Harold Finch
     Subject: History
-    Topic: 'Local news'
-    Tag: 'Daily, New Arrival'
-    Abstract: 'The town''s longest argument, over whose pie was best, finally put on record.'
+    Topic: Local news
+    Tag: Daily, New Arrival
+    Abstract: The town's longest argument, over whose pie was best, finally put on record.
     ShelfLocation: NEWS
     Tier: 0
     BaseValue: 5
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
-  - Title: 'Famous Last Words, Collected'
+  - Title: Famous Last Words, Collected
     Format: 1
-    Author: 'Edith Marlowe'
+    Author: Edith Marlowe
     Subject: History
-    Topic: 'Weekend'
-    Tag: 'Weekly'
-    Abstract: 'Final remarks of the great and the not-so-great, ranked by how awkward they were.'
+    Topic: Weekend
+    Tag: Weekly
+    Abstract: Final remarks of the great and the not-so-great, ranked by how awkward they were.
     ShelfLocation: NEWS
     Tier: 0
     BaseValue: 8
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
-  - Title: 'If a Tree Falls and Nobody Files a Complaint'
+  - Title: If a Tree Falls and Nobody Files a Complaint
     Format: 0
-    Author: 'Prof. Silas Quill'
+    Author: Prof. Silas Quill
     Subject: Philosophy
-    Topic: 'Big questions'
-    Tag: 'Best Seller'
-    Abstract: 'Big questions about sound, silence and paperwork.'
+    Topic: Big questions
+    Tag: Best Seller
+    Abstract: Big questions about sound, silence and paperwork.
     ShelfLocation: PHI
     Tier: 0
     BaseValue: 22
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
-  - Title: 'Ethics for the Mildly Inconvenienced'
+  - Title: Ethics for the Mildly Inconvenienced
     Format: 2
-    Author: 'Anna Okafor'
+    Author: Anna Okafor
     Subject: Philosophy
-    Topic: 'Essays'
-    Tag: 'New Arrival'
-    Abstract: 'Is it wrong to take the last biscuit? Three thousand years of thinking, applied to snacks.'
+    Topic: Essays
+    Tag: New Arrival
+    Abstract: Is it wrong to take the last biscuit? Three thousand years of thinking, applied to snacks.
     ShelfLocation: MAG
     Tier: 0
     BaseValue: 9
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
-  - Title: 'Should You Return the Library Book?'
+  - Title: Should You Return the Library Book?
     Format: 0
-    Author: 'Pip Alder'
+    Author: Pip Alder
     Subject: Philosophy
-    Topic: 'Reflection'
-    Tag: 'Classic'
-    Abstract: 'A gentle moral debate with a very obvious answer, and a late fee.'
+    Topic: Reflection
+    Tag: Classic
+    Abstract: A gentle moral debate with a very obvious answer, and a late fee.
     ShelfLocation: PHI
     Tier: 0
     BaseValue: 18
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
-  - Title: 'Fractions, and Other Ways to Split a Pie'
+  - Title: Fractions, and Other Ways to Split a Pie
     Format: 0
-    Author: 'Gwen Archer'
+    Author: Gwen Archer
     Subject: Math
-    Topic: 'Arithmetic'
-    Tag: 'Textbook'
-    Abstract: 'Halves, quarters and why everyone argues over the bigger slice.'
+    Topic: Arithmetic
+    Tag: Textbook
+    Abstract: Halves, quarters and why everyone argues over the bigger slice.
     ShelfLocation: MATH
     Tier: 0
     BaseValue: 18
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 3
     WornCopies: 0
     DamagedCopies: 0
-  - Title: 'Geometry Is Just Triangles Being Dramatic'
+  - Title: Geometry Is Just Triangles Being Dramatic
     Format: 4
-    Author: 'Felix Draper'
+    Author: Felix Draper
     Subject: Math
-    Topic: 'Mathematics'
-    Tag: 'New Release'
-    Abstract: 'Angles, arguments and the proofs behind them, with a lot of sulking from the hypotenuse.'
+    Topic: Mathematics
+    Tag: New Release
+    Abstract: Angles, arguments and the proofs behind them, with a lot of sulking from the hypotenuse.
     ShelfLocation: PAPR
     Tier: 0
     BaseValue: 12
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
-  - Title: 'The Last Digit of Pi (A Rumour)'
+  - Title: The Last Digit of Pi (A Rumour)
     Format: 0
-    Author: 'Oswin Tate'
+    Author: Oswin Tate
     Subject: Math
-    Topic: 'Mathematics'
-    Tag: 'Best Seller'
-    Abstract: 'A completely unreliable search for the number that never ends.'
+    Topic: Mathematics
+    Tag: Best Seller
+    Abstract: A completely unreliable search for the number that never ends.
     ShelfLocation: MATH
     Tier: 0
     BaseValue: 26
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
-  - Title: 'Gravity Is Only a Suggestion'
+  - Title: Gravity Is Only a Suggestion
     Format: 0
-    Author: 'Marta Quint'
+    Author: Marta Quint
     Subject: Science
-    Topic: 'Physics'
-    Tag: 'New Release'
-    Abstract: 'Why everything falls, and the few brave things that refuse.'
+    Topic: Physics
+    Tag: New Release
+    Abstract: Why everything falls, and the few brave things that refuse.
     ShelfLocation: SCI
     Tier: 0
     BaseValue: 24
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
-  - Title: 'The Octopus Has Three Hearts and No Time'
+  - Title: The Octopus Has Three Hearts and No Time
     Format: 0
-    Author: 'Dr. Lena Moss'
+    Author: Dr. Lena Moss
     Subject: Science
-    Topic: 'Biology'
-    Tag: 'New Arrival'
-    Abstract: 'An eight-armed look at intelligence, with far too many hearts.'
+    Topic: Biology
+    Tag: New Arrival
+    Abstract: An eight-armed look at intelligence, with far too many hearts.
     ShelfLocation: SCI
     Tier: 0
     BaseValue: 22
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
-  - Title: 'Notes on Exploding Kitchens'
+  - Title: Notes on Exploding Kitchens
     Format: 4
-    Author: 'Prof. A. Burnett'
+    Author: Prof. A. Burnett
     Subject: Science
-    Topic: 'Chemistry'
-    Tag: 'New Release'
-    Abstract: 'A careful study of what not to mix, written after several accidents.'
+    Topic: Chemistry
+    Tag: New Release
+    Abstract: A careful study of what not to mix, written after several accidents.
     ShelfLocation: PAPR
     Tier: 0
     BaseValue: 12
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
-  - Title: 'A Short History of Long Wars'
+  - Title: A Short History of Long Wars
     Format: 0
-    Author: 'Gideon Hart'
+    Author: Gideon Hart
     Subject: History
-    Topic: 'Empires'
-    Tag: 'New Release'
-    Abstract: 'Every great war, summarised, and almost none of them avoidable.'
+    Topic: Empires
+    Tag: New Release
+    Abstract: Every great war, summarised, and almost none of them avoidable.
     ShelfLocation: HIS
     Tier: 0
     BaseValue: 25
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
-  - Title: 'Kings Who Lost Their Keys'
+  - Title: Kings Who Lost Their Keys
     Format: 0
-    Author: 'Rosalind Dray'
+    Author: Rosalind Dray
     Subject: History
-    Topic: 'Empires'
-    Tag: 'New Arrival'
-    Abstract: 'Royal mishaps, misplaced crowns and the servants who found them.'
+    Topic: Empires
+    Tag: New Arrival
+    Abstract: Royal mishaps, misplaced crowns and the servants who found them.
     ShelfLocation: HIS
     Tier: 0
     BaseValue: 22
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
-  - Title: 'The Papyrus Post'
+  - Title: The Papyrus Post
     Format: 1
-    Author: 'The Delta Press'
+    Author: The Delta Press
     Subject: History
-    Topic: 'Regional news'
-    Tag: 'Daily'
-    Abstract: 'All the news of the ancient world, delivered by a very tired messenger.'
+    Topic: Regional news
+    Tag: Daily
+    Abstract: All the news of the ancient world, delivered by a very tired messenger.
     ShelfLocation: NEWS
     Tier: 0
     BaseValue: 5
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
-  - Title: 'Do Robots Dream of Overdue Books?'
+  - Title: Do Robots Dream of Overdue Books?
     Format: 0
-    Author: 'Sylvie Marsh'
+    Author: Sylvie Marsh
     Subject: Philosophy
-    Topic: 'Big questions'
-    Tag: 'New Release'
-    Abstract: 'Machines, minds and a very long library fine.'
+    Topic: Big questions
+    Tag: New Release
+    Abstract: Machines, minds and a very long library fine.
     ShelfLocation: PHI
     Tier: 0
     BaseValue: 24
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
-  - Title: 'Thinking Out Loud Monthly'
+  - Title: Thinking Out Loud Monthly
     Format: 2
-    Author: 'The Debating Society'
+    Author: The Debating Society
     Subject: Philosophy
-    Topic: 'Essays'
-    Tag: 'Weekly, New Arrival'
-    Abstract: 'Essays and arguments on everything, mostly from people who cannot stop talking.'
+    Topic: Essays
+    Tag: Weekly, New Arrival
+    Abstract: Essays and arguments on everything, mostly from people who cannot stop talking.
     ShelfLocation: MAG
     Tier: 0
     BaseValue: 10
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
-  - Title: 'Zero, Hero or Nothing'
+  - Title: Zero, Hero or Nothing
     Format: 0
-    Author: 'Ptolemy Grange'
+    Author: Ptolemy Grange
     Subject: Math
-    Topic: 'Arithmetic'
-    Tag: 'New Arrival'
-    Abstract: 'The story of the number that was once banned for being too empty.'
+    Topic: Arithmetic
+    Tag: New Arrival
+    Abstract: The story of the number that was once banned for being too empty.
     ShelfLocation: MATH
     Tier: 0
     BaseValue: 20
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
-  - Title: 'Proceedings of Very Large Numbers'
+  - Title: Proceedings of Very Large Numbers
     Format: 3
-    Author: 'The Society of Big Counters'
+    Author: The Society of Big Counters
     Subject: Math
-    Topic: 'Mathematics'
-    Tag: 'New Release'
-    Abstract: 'New results on numbers so big nobody can say them out loud.'
+    Topic: Mathematics
+    Tag: New Release
+    Abstract: New results on numbers so big nobody can say them out loud.
     ShelfLocation: JRNL
     Tier: 0
     BaseValue: 15
     Sellable: 1
+    QuestOnly: 0
     GoodCopies: 2
     WornCopies: 0
     DamagedCopies: 0
@@ -1216,6 +1316,7 @@ MonoBehaviour:
     Tier: 2
     BaseValue: 520
     Sellable: 0
+    QuestOnly: 0
     GoodCopies: 0
     WornCopies: 0
     DamagedCopies: 0
@@ -1230,6 +1331,7 @@ MonoBehaviour:
     Tier: 1
     BaseValue: 300
     Sellable: 0
+    QuestOnly: 0
     GoodCopies: 0
     WornCopies: 0
     DamagedCopies: 0
@@ -1244,6 +1346,7 @@ MonoBehaviour:
     Tier: 1
     BaseValue: 340
     Sellable: 0
+    QuestOnly: 0
     GoodCopies: 0
     WornCopies: 0
     DamagedCopies: 0
@@ -1258,6 +1361,7 @@ MonoBehaviour:
     Tier: 1
     BaseValue: 320
     Sellable: 0
+    QuestOnly: 0
     GoodCopies: 0
     WornCopies: 0
     DamagedCopies: 0
@@ -1272,6 +1376,7 @@ MonoBehaviour:
     Tier: 2
     BaseValue: 450
     Sellable: 0
+    QuestOnly: 0
     GoodCopies: 0
     WornCopies: 0
     DamagedCopies: 0

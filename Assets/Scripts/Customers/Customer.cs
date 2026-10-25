@@ -231,6 +231,12 @@ public class Customer : ClickInteractable
         // (the author still pays for the table).
         if ((story != null || lingering) && state != State.Leaving)
         {
+            // Some won't leave until you've talked to them: back to the desk, and they wait there (no patience).
+            if (story != null && story.staysAfterClosing)
+            {
+                if (lingering) EndLinger();
+                return;
+            }
             var unheard = story?.unheard;
             story = null;
             lingering = false;
@@ -740,6 +746,12 @@ public class Customer : ClickInteractable
     {
         if (carry == null || index >= carry.Count) return;
         var (book, condition) = carry.Items[index];
+        if (book.QuestOnly)
+        {
+            // The night letter's books aren't for visitors: a polite no, and no penalty.
+            Say("That's not mine, I'm afraid.", 2.5f);
+            return;
+        }
         if (kind != Kind.Reader && kind != Kind.Pickup && !book.Sellable && request.Matches(book))
         {
             RequestLog.Note(this, $"Handed <color=#D67840>\"{book.Title}\"</color>: not for sale");

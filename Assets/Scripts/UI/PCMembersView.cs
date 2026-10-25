@@ -208,7 +208,8 @@ public static class PCMembersView
 
     /// <summary>One date wheel: scroll it, drag it, or click the row above or below. Each step rolls the numbers
     /// and ticks. 0 means nothing picked: the box shows its name until the first roll.</summary>
-    class Wheel
+    /// <summary>A rolling wheel of values (also the night letter's display-case lock).</summary>
+    public class Wheel
     {
         const float Row = 26f;
         static float lastTick;

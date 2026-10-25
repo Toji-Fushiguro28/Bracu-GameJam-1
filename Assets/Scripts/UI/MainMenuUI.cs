@@ -100,7 +100,7 @@ public class MainMenuUI : MonoBehaviour
         settingsRows = doc.Q("settings-rows");
         saveLabel = doc.Q<Label>("menu-save");
         doc.Q<Label>("menu-title").text = gameTitle;
-        doc.Q<Label>("menu-tip").text = Tips[Random.Range(0, Tips.Length)];
+        doc.Q<Label>("menu-tip").text = GhostLetter.MenuTip ?? Tips[Random.Range(0, Tips.Length)];
 
         var gm = GameManager.Instance;
         hasSave = gm != null && gm.HasSave;

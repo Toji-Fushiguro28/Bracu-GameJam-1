@@ -45,6 +45,7 @@ public class DayStory : MonoBehaviour
         public bool direct;         // no desk and no talk: after runs as they walk in, then straight to linger (the author
                                     // to the table at two, the inspector to his rounds), and to the desk for next
         public Action<Customer> unheard; // the library closes before you hear them out: this runs instead (the author still pays)
+        public bool staysAfterClosing;   // doesn't go home at closing: waits at the desk until you've talked (the night letter's stranger)
     }
 
     static GameManager GM => GameManager.Instance;

@@ -37,7 +37,7 @@ public class InteractionController : MonoBehaviour
 
     void Update()
     {
-        var picked = PlayerLock.IsLocked || NotebookHUD.PointerOver || HUD.PointerOverFeed ? null : Pick();
+        var picked = PlayerLock.IsLocked || NotebookHUD.PointerOver || HUD.PointerOverFeed || GhostLetterUI.PointerOver ? null : Pick();
         if (picked != null && !Tutorial.Allows(picked)) picked = null; // the tutorial: only the next thing responds
         SetHovered(picked);
 

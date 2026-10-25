@@ -254,6 +254,20 @@ public class CustomerSpawner : MonoBehaviour
         return c;
     }
 
+    /// <summary>A story visitor who isn't one of the regular visitors (the night letter's stranger): this exact
+    /// character, never a stand-in.</summary>
+    public Customer SpawnStory(DayStory.Visit v, GameObject prefab)
+    {
+        if (CounterQueue.Instance == null || prefab == null || Present(prefab.name)) return null;
+        var c = Bring(prefab);
+        c.story = v;
+        c.displayName = v.name;
+        c.vip = v.vip;
+        c.kind = Customer.Kind.Buyer;
+        c.gameObject.SetActive(true);
+        return c;
+    }
+
     /// <summary>One of the tutorial's visitors: a buyer (with the request it gives), someone after a card (a
     /// stranger with no card yet), or a seeker. Null if nobody suitable is free.</summary>
     public Customer SpawnTutorial(Customer.Kind kind, BookRequest request = null)

@@ -823,7 +823,7 @@ public class SpecialJobs : MonoBehaviour
 
     static BookData RestoreBook()
     {
-        var pool = GM.Books.Where(b => b.Format == BookFormat.Book && !BookRequest.IsRare(b)).ToList();
+        var pool = GM.Books.Where(b => b.Format == BookFormat.Book && !BookRequest.IsRare(b) && !b.QuestOnly).ToList();
         return pool.Count > 0 ? pool[Random.Range(0, pool.Count)] : null;
     }
 

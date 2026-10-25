@@ -213,6 +213,10 @@ public class HUD : MonoBehaviour
         top.Add(topLayer);
     }
 
+    /// <summary>The desk plate is on screen, and where (the night letter's scroll sits beside it).</summary>
+    public static bool BarShown { get; private set; }
+    public static Rect BarRect { get; private set; }
+
     /// <summary>Shown whenever the game HUD is: not on the title / pause menu, the interview, the Day Report or a fade.
     /// The clock bar steps aside while the PC is maximised (the monitor fills the screen there).</summary>
     void UpdateTopLayer()
@@ -223,6 +227,8 @@ public class HUD : MonoBehaviour
                     && (DayReportUI.Instance == null || !DayReportUI.Instance.IsOpen) && (fade == null || !fade.ClassListContains("on"));
         topLayer.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
         hudBar?.EnableInClassList("hidden", PCOverlayTrigger.MaximisedOpen);
+        BarShown = show && !PCOverlayTrigger.MaximisedOpen;
+        if (hudBar != null && hudBar.panel != null) BarRect = hudBar.worldBound;
     }
 
     void OnDestroy()

@@ -19,8 +19,12 @@ public class InspectInteractable : ClickInteractable
     int nextLine;
     bool used;
 
+    /// <summary>The night letter (GhostLetter) takes over some props while its trail is on: true = it handled the click.</summary>
+    public static System.Func<InspectInteractable, bool> Intercept;
+
     public override void Interact(GameObject player)
     {
+        if (Intercept != null && Intercept(this)) return;
         if ((onceOnly && used) || lines == null || lines.Length == 0) return;
         used = true;
 

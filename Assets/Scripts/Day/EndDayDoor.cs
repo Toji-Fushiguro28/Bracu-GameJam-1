@@ -31,6 +31,8 @@ public class EndDayDoor : ClickInteractable
             return;
         }
         if (FindObjectsByType<Customer>().Length > 0) { Bubble("Wait until the last visitor has left."); return; }
+        // The night letter: the ropes stay open for Elias until he has been and gone.
+        if (GhostLetter.StrangerDue) { Bubble("The ropes won't latch. Someone is still coming tonight."); return; }
         // Staff hand over their report (and the day's takings) before you can lock up.
         var waiting = StaffManager.Instance != null ? StaffManager.Instance.PendingReport() : null;
         if (waiting != null) { Bubble($"{GameManager.StaffPerson[(int)waiting.role]} is waiting by the gate with their report."); return; }

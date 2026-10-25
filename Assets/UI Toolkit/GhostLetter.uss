@@ -1,0 +1,55 @@
+/* The night letter (GhostLetterUI): a loose sheet of aged paper, the scroll beside the desk plate, the case lock and
+   the typewriter. Plain colours on purpose: a letter, not one of the game's menus. */
+
+.gl-icon {
+    position: absolute;
+    width: 60px; height: 60px; padding: 0;
+    align-items: center; justify-content: center;
+}
+.gl-icon-img {
+    width: 38px; height: 38px;
+    -unity-background-scale-mode: scale-to-fit;
+    background-image: url("project://database/Assets/Art/UI/PC/T_IconScroll.png");
+}
+.gl-icon.new { scale: 1.12 1.12; }
+
+.gl-modal {
+    position: absolute; left: 0; top: 0; right: 0; bottom: 0;
+    padding-bottom: 136px; /* above the desk plate */
+    background-color: rgba(20, 12, 8, 0.55);
+    align-items: center; justify-content: center;
+}
+
+/* Yellowed paper, a darker edge, dropped a little crooked on the desk */
+.gl-sheet {
+    width: 540px;
+    padding: 36px 44px 30px 44px;
+    background-color: rgb(229, 203, 146); /* old, yellowed paper */
+    border-width: 3px; border-color: rgb(170, 128, 68);
+    border-bottom-width: 6px; border-bottom-color: rgb(146, 106, 54);
+    rotate: -2deg;
+}
+.gl-close { position: absolute; right: -16px; top: -16px; width: 40px; height: 40px; padding: 0; font-size: 22px; -unity-text-align: middle-center; }
+
+.gl-body { color: rgb(72, 44, 22); font-size: 24px; white-space: normal; margin: 0; padding: 0; }
+.gl-sign { color: rgb(140, 46, 30); font-size: 28px; -unity-text-align: middle-right; margin: 22px 0 0 0; padding: 0; letter-spacing: 2px; }
+.gl-title { color: rgb(70, 46, 30); font-size: 28px; -unity-text-align: middle-center; margin: 0 0 16px 0; padding: 0; }
+.gl-note { color: rgb(120, 70, 40); font-size: 21px; -unity-text-align: middle-center; margin: 12px 0 0 0; padding: 0; min-height: 26px; white-space: normal; }
+.gl-action { align-self: center; margin-top: 16px; }
+
+/* Three brass wheels (the library card's date wheels, PC.uss) */
+.gl-wheels { flex-direction: row; justify-content: center; }
+.gl-wheel { flex-grow: 0; flex-basis: auto; width: 76px; }
+
+/* The typewriter's page and the box you type into */
+.gl-typed {
+    min-height: 120px; margin: 0 0 14px 0; padding: 12px 16px;
+    background-color: rgb(238, 217, 166);
+    border-width: 2px; border-color: rgb(184, 146, 86);
+    color: rgb(50, 34, 24); font-size: 24px; white-space: normal;
+}
+.gl-field { margin: 0; font-size: 26px; }
+.gl-field .unity-base-text-field__input {
+    background-color: rgb(242, 226, 184); border-width: 2px; border-color: rgb(170, 128, 68);
+    color: rgb(50, 34, 24); min-height: 44px; padding: 4px 12px;
+}

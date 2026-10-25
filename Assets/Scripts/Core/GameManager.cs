@@ -363,6 +363,8 @@ public class GameManager : MonoBehaviour
     [NonSerialized] public VipPromise vipPromise;
     /// <summary>The rare dealer's VIP request has been offered once (SpecialJobs guarantees it on Day 3 or 4). Saved.</summary>
     [NonSerialized] public bool rareDealerSeen;
+    /// <summary>The night letter's progress (GhostLetter), saved with the library.</summary>
+    [NonSerialized] public GhostLetter.State quest = new GhostLetter.State();
 
     [Serializable]
     public class Reservation
@@ -659,11 +661,11 @@ public class GameManager : MonoBehaviour
     public bool loadSave = true;
 
     [Serializable] class BookSave { public string title; public int good, worn, damaged; }
-    [Serializable] class SaveData { public int day, coins, reputation, difficulty = 1; public bool[] staff; public int[] upgrades; public List<BookSave> books = new List<BookSave>(); public List<Member> members = new List<Member>(); public List<Reservation> reservations = new List<Reservation>(); public List<RequestLog.Entry> log = new List<RequestLog.Entry>(); public List<int> interviews = new List<int>(); public bool endingSeen, secondEndingSeen; public float playSeconds; public int[] staffLevel; public List<string> added = new List<string>(); public int storySeed; public float[] staffMood; public int[] staffRestedDay; public VipPromise vip; public int[] hirePaid; public bool rareDealerSeen; public List<ReturnedCard> returnedCards; }
+    [Serializable] class SaveData { public int day, coins, reputation, difficulty = 1; public bool[] staff; public int[] upgrades; public List<BookSave> books = new List<BookSave>(); public List<Member> members = new List<Member>(); public List<Reservation> reservations = new List<Reservation>(); public List<RequestLog.Entry> log = new List<RequestLog.Entry>(); public List<int> interviews = new List<int>(); public bool endingSeen, secondEndingSeen; public float playSeconds; public int[] staffLevel; public List<string> added = new List<string>(); public int storySeed; public float[] staffMood; public int[] staffRestedDay; public VipPromise vip; public int[] hirePaid; public bool rareDealerSeen; public List<ReturnedCard> returnedCards; public GhostLetter.State quest; }
 
     public void Save()
     {
-        var data = new SaveData { day = day, difficulty = (int)difficulty, coins = Coins, reputation = Reputation, staff = staff, upgrades = upgrades, members = members, reservations = reservations, log = RequestLog.All, interviews = interviews, endingSeen = endingSeen, secondEndingSeen = secondEndingSeen, playSeconds = playSeconds, staffLevel = staffLevel, added = addedTitles, storySeed = storySeed, staffMood = staffMood, staffRestedDay = staffRestedDay, vip = vipPromise, hirePaid = hirePaid, rareDealerSeen = rareDealerSeen, returnedCards = returnedCards };
+        var data = new SaveData { day = day, difficulty = (int)difficulty, coins = Coins, reputation = Reputation, staff = staff, upgrades = upgrades, members = members, reservations = reservations, log = RequestLog.All, interviews = interviews, endingSeen = endingSeen, secondEndingSeen = secondEndingSeen, playSeconds = playSeconds, staffLevel = staffLevel, added = addedTitles, storySeed = storySeed, staffMood = staffMood, staffRestedDay = staffRestedDay, vip = vipPromise, hirePaid = hirePaid, rareDealerSeen = rareDealerSeen, returnedCards = returnedCards, quest = quest };
         foreach (var b in Books) data.books.Add(new BookSave { title = b.Title, good = b.GoodCopies, worn = b.WornCopies, damaged = b.DamagedCopies });
         // Copies out of the shelves (returns, repair table, hands) still belong to the library.
         void Count(BookData b, BookCondition c)
@@ -707,6 +709,7 @@ public class GameManager : MonoBehaviour
         playSeconds = Mathf.Max(data.playSeconds, PlayerPrefs.GetFloat(PlayTimeKey, 0f));
         vipPromise = data.vip != null && !string.IsNullOrEmpty(data.vip.title) ? data.vip : null;
         rareDealerSeen = data.rareDealerSeen;
+        if (data.quest != null) quest = data.quest;
         storySeed = data.storySeed;
         if (data.staffLevel != null && data.staffLevel.Length == 3) staffLevel = data.staffLevel;
         if (data.staffMood != null && data.staffMood.Length == 3) staffMood = data.staffMood;
@@ -742,7 +745,7 @@ public class GameManager : MonoBehaviour
     }
 
     [ContextMenu("Delete Save")]
-    public void DeleteSave() { PlayerPrefs.DeleteKey(SaveKey); PlayerPrefs.DeleteKey(PlayTimeKey); playSeconds = 0f; Tutorial.ResetProgress(); Debug.Log("[Game] Save deleted."); } // a new game: tutorial and tips again
+    public void DeleteSave() { PlayerPrefs.DeleteKey(SaveKey); PlayerPrefs.DeleteKey(PlayTimeKey); GhostLetter.ForgetLive(); playSeconds = 0f; Tutorial.ResetProgress(); Debug.Log("[Game] Save deleted."); } // a new game: tutorial and tips again
 
     /// <summary>Wipes the save and starts again from day 1.</summary>
     public void NewGame()
@@ -773,6 +776,7 @@ public class GameManager : MonoBehaviour
         ReputationAtStart = Reputation;
         if (GetComponent<DayStory>() == null) gameObject.AddComponent<DayStory>(); // the first week's twists and story
         if (GetComponent<SpecialJobs>() == null) gameObject.AddComponent<SpecialJobs>(); // bigger jobs once staff do the busywork
+        if (GetComponent<GhostLetter>() == null) gameObject.AddComponent<GhostLetter>(); // the night letter (from Day 3)
     }
 
     /// <summary>Books everyone wants today: visitors ask for them far more often, and they glow on the

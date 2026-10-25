@@ -33,6 +33,8 @@ public class BookData
     public int BaseValue = 20;
     [Tooltip("Rare books can only be read in the library, never sold.")]
     public bool Sellable = true;
+    [Tooltip("Part of the night letter (GhostLetter): nobody asks for it, sells it, takes it or shelves it but you.")]
+    public bool QuestOnly;
 
     [Header("Copies on the shelf, by condition")]
     public int GoodCopies;

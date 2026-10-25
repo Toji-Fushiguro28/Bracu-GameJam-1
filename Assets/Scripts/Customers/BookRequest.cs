@@ -144,6 +144,7 @@ public class BookRequest
     public static bool Available(BookData b)
     {
         var gm = GameManager.Instance;
+        if (b != null && b.QuestOnly) return false; // the night letter's books are nobody's request
         if (gm == null) return true;
         if (IsArchive(b) && !gm.ArchiveOpen) return false;
         if (IsRare(b) && !gm.RareOpen) return false;
@@ -160,6 +161,7 @@ public class BookRequest
     {
         var gm = GameManager.Instance;
         int day = gm != null ? gm.day : 3;
+        items = items.Where(b => !b.QuestOnly).ToList(); // nobody asks for the night letter's books
 
         // Sometimes a buyer wants a title that's sold out: check the catalogue, then order and reserve it.
         if (!forReading && Random.value < (gm != null ? gm.OutOfStockChance : OutOfStockChance(day)))

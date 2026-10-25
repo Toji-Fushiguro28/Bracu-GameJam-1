@@ -26,7 +26,14 @@ public class GhostNight : MonoBehaviour
         public int seatIndex;
         public float alpha, targetAlpha = 1f, nextMoveAt, phase;
         public Vector3 seatedAt, seatTarget;
+        // The night letter (GhostLetter): Ada shelving the returns, or reading at her shelf.
+        public Job job;
+        public BookData held;
+        public BookCondition heldCondition;
+        public bool toBin;
     }
+
+    enum Job { None, Shelver, ShelfReader }
 
     readonly List<Ghost> ghosts = new List<Ghost>();
     bool spawnedTonight;
@@ -71,7 +78,11 @@ public class GhostNight : MonoBehaviour
     {
         if (phase != GameManager.Phase.Open) return;
         spawnedTonight = false;
-        foreach (var g in ghosts) g.targetAlpha = 0f; // morning: fade away
+        foreach (var g in ghosts)
+        {
+            g.targetAlpha = 0f; // morning: fade away
+            if (g.held != null) { g.held.AddCopy(g.heldCondition); g.held = null; } // a book still in Ada's hands goes back
+        }
     }
 
     /// <summary>Closed, and nobody left: no visitors in the building, and the staff have reported and gone home
@@ -89,6 +100,8 @@ public class GhostNight : MonoBehaviour
 
     void Spawn()
     {
+        if (GhostLetter.GhostsGone) return; // you kept Ada's book: they never come back
+        SpawnAda();
         var prefabs = CustomerSpawner.Instance != null ? CustomerSpawner.Instance.customerPrefabs : null;
         if (material == null || prefabs == null || prefabs.Length == 0) return;
         int n = Random.Range(1, MaxGhosts + 1);
@@ -175,7 +188,7 @@ public class GhostNight : MonoBehaviour
         if (!spawnedTonight && Time.unscaledTime >= nextCheck)
         {
             nextCheck = Time.unscaledTime + 1f;
-            if (EveryoneGone()) { spawnedTonight = true; Spawn(); }
+            if (EveryoneGone() && !GhostLetter.StrangerDue) { spawnedTonight = true; Spawn(); } // Elias comes first
         }
         for (int i = ghosts.Count - 1; i >= 0; i--)
         {
@@ -196,6 +209,8 @@ public class GhostNight : MonoBehaviour
             g.agent.baseOffset = bob;
             if (g.anim != null) g.anim.SetSpeed(Mathf.Clamp01(g.agent.velocity.magnitude / 1.5f) * 0.5f);
             bool stopped = !g.agent.pathPending && g.agent.remainingDistance <= 0.15f;
+            if (g.job == Job.Shelver) { Shelve(g, stopped); continue; }
+            if (g.job == Job.ShelfReader) { ReadAtShelf(g, stopped); continue; }
             if (g.reader && g.seat != null && stopped)
             {
                 // Only sit once actually at the chair; a chair it can't reach: forget it and drift on.
@@ -248,6 +263,104 @@ public class GhostNight : MonoBehaviour
         g.seatedAt = g.seat.SitPosition(g.seatIndex);
         g.go.transform.SetPositionAndRotation(g.seatedAt, g.seat.SeatRotation);
         if (g.anim != null) { g.anim.SetSpeed(0f); g.anim.SetActivity(CharacterAnimator.Activity.SitRead); }
+    }
+
+    // ---------------- Ada Whitmore (the night letter) ----------------
+
+    /// <summary>Ada joins the readers: shelving the returns once she has her book back, or reading at her own shelf
+    /// the night before Elias comes for it.</summary>
+    void SpawnAda()
+    {
+        var body = GhostLetter.AdaBody;
+        var job = GhostLetter.AdaHelps ? Job.Shelver : GhostLetter.ReaderAtShelf ? Job.ShelfReader : Job.None;
+        if (body == null || material == null || job == Job.None || !RandomSpot(out var at)) return;
+        var g = Make(body, at);
+        if (g == null) return;
+        g.go.name = "Ghost (Ada)";
+        g.job = job;
+        g.phase = Random.value * 10f;
+        g.nextMoveAt = Time.time + Random.Range(1f, 3f);
+        ghosts.Add(g);
+    }
+
+    static bool FloorNear(Vector3 p, out Vector3 at)
+    {
+        bool ok = NavMesh.SamplePosition(p, out var hit, 1.6f, NavMesh.AllAreas);
+        at = ok ? hit.position : p;
+        return ok;
+    }
+
+    /// <summary>One book at a time, slowly: to the return bin, take a good copy, carry it to its shelf, put it away,
+    /// rest a while. Nothing to shelve: she drifts between the shelves like the others.</summary>
+    void Shelve(Ghost g, bool stopped)
+    {
+        if (!stopped || Time.time < g.nextMoveAt) return;
+        var bin = ReturnBin.Instance;
+        if (g.held == null)
+        {
+            if (g.toBin)
+            {
+                g.toBin = false;
+                if (bin != null && bin.TakeGood(out var book, out var condition))
+                {
+                    var shelf = ShelfFor(book);
+                    if (shelf == null || !FloorNear(shelf.transform.position + shelf.transform.forward * 1f, out var to)) { book.AddCopy(condition); GM?.NotifyBooksChanged(); }
+                    else
+                    {
+                        g.held = book; g.heldCondition = condition;
+                        if (g.anim != null) g.anim.SetCarrying(true);
+                        Carrying(g, true);
+                        g.agent.SetDestination(to);
+                        return;
+                    }
+                }
+            }
+            else if (bin != null && bin.HasGood && FloorNear(bin.transform.position, out var binAt))
+            {
+                g.toBin = true;
+                g.agent.SetDestination(binAt);
+                return;
+            }
+            if (RandomSpot(out var spot)) g.agent.SetDestination(spot);
+            g.nextMoveAt = Time.time + Random.Range(6f, 10f);
+            return;
+        }
+        // At the shelf: put it away, then a rest before the next one.
+        g.held.AddCopy(g.heldCondition);
+        g.held = null;
+        GM?.NotifyBooksChanged();
+        if (g.anim != null) { g.anim.SetCarrying(false); g.anim.PlayReachShelf(); }
+        Carrying(g, false);
+        g.nextMoveAt = Time.time + Random.Range(5f, 9f);
+    }
+
+    /// <summary>With a book in her arms Ada drifts slower, and her steps play slower too (the carry walk at full
+    /// speed looked like a scurry).</summary>
+    static void Carrying(Ghost g, bool on)
+    {
+        g.agent.speed = on ? WalkSpeed * 0.6f : WalkSpeed;
+        var animator = g.go.GetComponent<Animator>();
+        if (animator != null) animator.speed = on ? 0.6f : 1f;
+    }
+
+    static ShelfInteractable ShelfFor(BookData b) =>
+        System.Array.Find(FindObjectsByType<ShelfInteractable>(), s => s.Belongs(b) && !RoomGate.IsLockedAt(s.transform.position));
+
+    /// <summary>Stands at the Whitmore shelf with a book in her hands, all night.</summary>
+    void ReadAtShelf(Ghost g, bool stopped)
+    {
+        var shelf = GhostLetter.WhitmoreShelf;
+        if (shelf == null || !stopped || Time.time < g.nextMoveAt) return;
+        if (!g.toBin) // (reused: "on my way to the shelf")
+        {
+            if (FloorNear(shelf.position + shelf.forward * 0.9f, out var to)) g.agent.SetDestination(to);
+            g.toBin = true;
+            return;
+        }
+        var face = shelf.position - g.go.transform.position; face.y = 0f;
+        if (face.sqrMagnitude > 0.01f) g.go.transform.rotation = Quaternion.LookRotation(face);
+        if (g.anim != null) g.anim.SetCarrying(true);
+        g.nextMoveAt = float.MaxValue;
     }
 
     void SetAlpha(Ghost g, float a)
