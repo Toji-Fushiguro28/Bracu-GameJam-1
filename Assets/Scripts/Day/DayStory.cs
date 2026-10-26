@@ -77,7 +77,7 @@ public class DayStory : MonoBehaviour
     }
 
     /// <summary>More visitors during the exam rush and the signing.</summary>
-    public static float VisitorBoost => Rush ? 1.6f : Signing ? 1.5f : 1f;
+    public static float VisitorBoost => Rush ? 2f : Signing ? 1.5f : 1f;
     /// <summary>Exam rush: more of them sit down to read.</summary>
     public static float ExtraReaders => Rush ? 0.25f : 0f;
     /// <summary>Exam rush: mostly students come in.</summary>
