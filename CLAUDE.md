@@ -1,6 +1,7 @@
 # The Whitmore Library (BracU Game Jam)
 A cozy 3D library-management game with a top-down camera. Built in Unity 6 URP and targeting **WebGL** (low tris, few materials, baked light).
 The main scene is `Assets/Scenes/MainGame.unity`. Read `DEV_NOTES.md` (systems and how to test them) and `TUNING_GUIDE.md` (balance numbers) before changing gameplay.
+Read `HANDOFF.md` at the start of a session: recent uncommitted work, the user's working rules and the secret story quest (keep its details out of public text).
 
 ## Working rules
 - Keep changes small and match the surrounding code style: short `///` summaries, plain-English comments, no extra abstractions.

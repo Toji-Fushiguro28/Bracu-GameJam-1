@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Whitmore: A New Face</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jersey+10&family=Jersey+15&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --page: #f3e4c4;
+    --card: #ead3a0;
+    --ink: #3b2a1d;
+    --ink-dim: #6b5238;
+    --rule: #a6844a;
+    --accent: #d67840;
+    --gold: rgb(235, 200, 120);
+    --walnut: #4a2e1f;
+    --ok: #4f6b3a;
+    --bad: #8e3b32;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page: #2a1d15;
+      --card: #3a2a1e;
+      --ink: #f0dfbf;
+      --ink-dim: #c9b08a;
+      --rule: #7a5f36;
+      --walnut: #1c120c;
+      --ok: #9cbf7f;
+      --bad: #e08a7e;
+    }
+  }
+  :root[data-theme="dark"] {
+    --page: #2a1d15; --card: #3a2a1e; --ink: #f0dfbf; --ink-dim: #c9b08a;
+    --rule: #7a5f36; --walnut: #1c120c; --ok: #9cbf7f; --bad: #e08a7e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--walnut);
+    color: var(--ink);
+    font-family: "Jersey 15", system-ui, sans-serif;
+    font-size: 21px;
+    line-height: 1.45;
+  }
+  .page {
+    max-width: 760px;
+    margin: 32px auto;
+    padding: 36px 40px 40px;
+    background: var(--page);
+    border: 4px solid var(--rule);
+    box-shadow: 0 6px 0 rgba(0, 0, 0, 0.35);
+  }
+  header { text-align: center; border-bottom: 3px dashed var(--rule); padding-bottom: 18px; margin-bottom: 26px; }
+  .kicker { font-family: "Jersey 10", sans-serif; letter-spacing: 3px; color: var(--accent); font-size: 20px; margin: 0; }
+  h1 { font-family: "Jersey 10", sans-serif; font-weight: normal; font-size: 52px; line-height: 1; margin: 6px 0 10px; }
+  .sub { color: var(--ink-dim); margin: 0; }
+  h2 { font-family: "Jersey 10", sans-serif; font-weight: normal; font-size: 32px; margin: 0 0 6px; }
+  p { margin: 0 0 12px; }
+  .fix {
+    background: var(--card);
+    border: 3px solid var(--rule);
+    padding: 18px 22px 8px;
+    margin-bottom: 18px;
+  }
+  .tag {
+    display: inline-block;
+    font-family: "Jersey 10", sans-serif;
+    font-size: 17px;
+    letter-spacing: 2px;
+    color: #fff6e8;
+    background: var(--accent);
+    padding: 1px 10px 3px;
+    margin-bottom: 8px;
+  }
+  .label { color: var(--ink-dim); font-size: 18px; letter-spacing: 1px; text-transform: uppercase; margin: 10px 0 2px; }
+  .before { color: var(--bad); }
+  .after { color: var(--ok); }
+  ul { margin: 0 0 12px; padding-left: 22px; }
+  li { margin-bottom: 4px; }
+  .also { border-top: 3px dashed var(--rule); margin-top: 26px; padding-top: 18px; }
+  .note {
+    background: var(--gold);
+    color: #3b2a1d;
+    border: 3px solid var(--rule);
+    padding: 12px 18px;
+    margin-top: 22px;
+  }
+  .secret {
+    background: var(--walnut);
+    color: #f0dfbf;
+    border: 3px solid var(--accent);
+    padding: 20px 22px 10px;
+    margin-bottom: 18px;
+    text-align: center;
+  }
+  .secret h2 { color: var(--gold); }
+  .secret .tag { background: var(--gold); color: #3b2a1d; }
+  footer { text-align: center; color: var(--ink-dim); margin-top: 26px; font-size: 18px; }
+  @media (max-width: 600px) {
+    .page { margin: 0; padding: 22px 16px 26px; border-left: 0; border-right: 0; }
+    h1 { font-size: 40px; }
+    .fix { padding: 14px 14px 6px; }
+  }
+</style>
+</head>
+<body>
+<main class="page">
+  <header>
+    <p class="kicker">DEVLOG · UPDATE</p>
+    <h1>A new face at the desk, and something in the walls</h1>
+    <p class="sub">This update lets you choose who runs the Whitmore. It also hides something new in the library. We'll tell you all about the first, and nothing about the second.</p>
+  </header>
+
+  <section class="fix">
+    <span class="tag">NEW</span>
+    <h2>Choose your librarian</h2>
+    <p>Lots of you asked for a librarian who looks a bit more like you. When you start a new game, the page where you write your name now has a second page beside it, with your librarian standing on it.</p>
+    <ul>
+      <li>Use the <b>◀ ▶</b> arrows to switch between the two librarians. They give a little wave each time.</li>
+      <li>Your name appears under them as you type it.</li>
+      <li>Press <b>That's me</b> and that's who sits in the chair at the interview and runs the library from then on.</li>
+    </ul>
+    <p class="label">Under the hood</p>
+    <p>Both librarians share the same skeleton, so every animation still works: carrying stacks, stamping cards, typing at the computer and sitting down to read. Only the body changes. Nobody in the game calls you "he" or "she", so every line of dialogue fits whoever you pick.</p>
+    <p class="label">Old saves</p>
+    <p class="after">Saves from before this update keep the librarian you already had. Nothing is lost.</p>
+  </section>
+
+  <section class="secret">
+    <span class="tag">???</span>
+    <h2>Something has changed at the Whitmore</h2>
+    <p>We won't say what. We won't even say where.</p>
+    <p>Look closely at the old things in the library. Read everything you find. And maybe don't rush out the door the moment the bell rings.</p>
+    <p>If you find it, please keep it to yourself. Let the next librarian find it too.</p>
+  </section>
+
+  <section class="also">
+    <h2>Also in this update</h2>
+    <ul>
+      <li><b>No surprise first look:</b> the name and character page is already up before the intro fades in, so you never see the room before you've chosen.</li>
+      <li><b>Even lighting on the preview:</b> your librarian's face is lit cleanly on the picker, with no strange dark shadows across the chin.</li>
+      <li><b>The ropes and the night:</b> a few small fixes to what happens after closing time. That's all we'll say.</li>
+    </ul>
+  </section>
+
+  <footer>Thank you for playing. The Whitmore keeps a few secrets. Now it keeps one more.</footer>
+</main>
+</body>
+</html>
